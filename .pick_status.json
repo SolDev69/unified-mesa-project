@@ -1462,7 +1462,7 @@
         "description": "etnaviv: Fully replicate back stencil config",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c8ccd63911dcec731d64c72a40ec6a3afe38eaa1"
     },
