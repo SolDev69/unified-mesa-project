@@ -2614,7 +2614,7 @@
         "description": "egl: Implement EGL_EXT_config_select_group",
         "nominated": false,
         "nomination_type": 3,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
