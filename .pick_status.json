@@ -27224,7 +27224,7 @@
         "description": "intel/eu/xe2+: Translate brw_reg fields in REG_SIZE units to physical 512b GRF units during codegen.",
         "nominated": false,
         "nomination_type": 3,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
