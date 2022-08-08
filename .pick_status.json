@@ -2924,7 +2924,7 @@
         "description": "intel/brw: ensure find_live_channel don't access arch register without sync",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "49ee3ae9e8be4fd2a4a9f658c06e0bf01e08d13c",
         "notes": null
