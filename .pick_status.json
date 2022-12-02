@@ -2659,7 +2659,7 @@
         "description": "iris: correctly set alignment to next power of two for struct size",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c24a574e6c78db038d7aa6c4605bf6a8a892f7ab"
     },
