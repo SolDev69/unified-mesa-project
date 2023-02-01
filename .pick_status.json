@@ -967,7 +967,7 @@
         "description": "virgl: Array cmdline on stack should initialized to 0",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b3b82fe8ea1f7d02c93513920143cba2fe145b6c"
     },
