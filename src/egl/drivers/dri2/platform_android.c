@@ -409,6 +409,64 @@ cros_get_buffer_info(struct dri2_egl_display *dri2_dpy,
    return -EINVAL;
 }
 
+static int
+kgsl_window_buffer_get_buffer_info(struct dri2_egl_display *dri2_dpy,
+                                   struct ANativeWindowBuffer *buf,
+                                   struct buffer_info *out_buf_info)
+{
+   /* The below code is tested against the version of gralloc shipped
+    * with the below properties. Different versions of gralloc could modifiy
+    * the internal format of the handle requiring the handle_data access to be different
+    * id: "gralloc"
+    * name: "Graphics Memory Module"
+    * author: "Code Aurora Forum"
+    * module_api_version: 0x100
+    * hal_api_version: 0x100
+    */
+
+   /* The below code does not handle the YUV texture case */
+   const uint32_t *handle_fds = (uint32_t *)buf->handle->data;
+   const uint32_t *handle_data = &handle_fds[buf->handle->numFds];
+   uint32_t gmsm = ('g' << 24) | ('m' << 16) | ('s' << 8) | 'm';
+   int drm_fourcc = 0;
+   int pitch = 0;
+   int fds[3];
+   int num_fds = get_native_buffer_fds(buf, fds);
+
+   if (num_fds == 2 && buf->handle->numInts >= 2 && handle_data[0] == gmsm) {
+      drm_fourcc = get_fourcc(buf->format);
+      if (drm_fourcc == -1) {
+         _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
+         return -EINVAL;
+      }
+
+      pitch = buf->stride * get_format_bpp(buf->format);
+      if (pitch == 0) {
+         _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
+         return -EINVAL;
+      }
+
+      *out_buf_info = (struct buffer_info){
+         .width = buf->width,
+         .height = buf->height,
+         .drm_fourcc = drm_fourcc,
+         .num_planes = 1,
+         .fds = { fds[0], -1, -1, -1 },
+         .modifier = handle_data[1] & 0x08000000 ? DRM_FORMAT_MOD_QCOM_COMPRESSED : DRM_FORMAT_MOD_LINEAR,
+         .offsets = { 0, 0, 0, 0 },
+         .pitches = { pitch, 0, 0, 0 },
+         .yuv_color_space = EGL_ITU_REC601_EXT,
+         .sample_range = EGL_YUV_NARROW_RANGE_EXT,
+         .horizontal_siting = EGL_YUV_CHROMA_SITING_0_EXT,
+         .vertical_siting = EGL_YUV_CHROMA_SITING_0_EXT,
+      };
+
+      return 0;
+   }
+
+   return -EINVAL;
+}
+
 static __DRIimage *
 droid_create_image_from_buffer_info(struct dri2_egl_display *dri2_dpy,
                                     struct buffer_info *buf_info,
@@ -454,6 +512,9 @@ droid_create_image_from_native_buffer(_EGLDisplay *disp,
       img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
 
    if (!img && !cros_get_buffer_info(dri2_dpy, buf, &buf_info))
+      img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
+
+   if (!img && !kgsl_window_buffer_get_buffer_info(dri2_dpy, buf, &buf_info))
       img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
 
    if (!img && !native_window_buffer_get_buffer_info(dri2_dpy, buf, &buf_info))
@@ -1557,7 +1618,7 @@ droid_probe_device(_EGLDisplay *disp, bool swrast)
 
 #ifdef HAVE_DRM_GRALLOC
 static EGLBoolean
-droid_open_device(_EGLDisplay *disp, bool swrast)
+droid_open_device_drm_gralloc(_EGLDisplay *disp, bool swrast)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    int fd = -1, err = -EINVAL;
@@ -1583,9 +1644,44 @@ droid_open_device(_EGLDisplay *disp, bool swrast)
 
    return droid_probe_device(disp, swrast);
 }
-#else
+#endif
+
 static EGLBoolean
-droid_open_device(_EGLDisplay *disp, bool swrast)
+droid_open_device_kgsl(_EGLDisplay *disp, bool swrast)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   static const char path[] = "/dev/kgsl-3d0";
+   static const char driver_name[] = "kgsl";
+
+   dri2_dpy->fd_render_gpu = loader_open_device(path);
+   if (dri2_dpy->fd_render_gpu < 0) {
+      _eglLog(_EGL_WARNING, "Failed to open kgsl");
+      return EGL_FALSE;
+   }
+
+   dri2_dpy->driver_name = strdup(driver_name);
+   dri2_dpy->loader_extensions = droid_image_loader_extensions;
+   if (!dri2_load_driver_dri3(disp)) {
+      free(dri2_dpy->driver_name);
+      dri2_dpy->driver_name = NULL;
+      goto error;
+   }
+
+   if (!dri2_create_screen(disp)) {
+      _eglLog(_EGL_WARNING, "DRI2: Failed to create screen");
+      droid_unload_driver(disp);
+      goto error;
+   }
+
+   return EGL_TRUE;
+error:
+   close(dri2_dpy->fd_render_gpu);
+   dri2_dpy->fd_render_gpu = -1;
+   return EGL_FALSE;
+}
+
+static EGLBoolean
+droid_open_device_drm(_EGLDisplay *disp, bool swrast)
 {
 #define MAX_DRM_DEVICES 64
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
@@ -1660,12 +1756,35 @@ droid_open_device(_EGLDisplay *disp, bool swrast)
 #undef MAX_DRM_DEVICES
 }
 
+static EGLBoolean
+droid_open_device(_EGLDisplay *disp, bool swrast)
+{
+#ifdef HAVE_DRM_GRALLOC
+   if (droid_open_device_drm_gralloc(disp, swrat))
+      goto done;
 #endif
+
+#ifdef HAVE_LIBDRM
+   if(droid_open_device_drm(disp, swrast))
+      goto done;
+#endif
+
+#ifdef HAVE_FREEDRENO_KGSL
+   if(droid_open_device_kgsl(disp, swrast))
+      goto done;
+#endif
+
+   /* If we got to here, all the above calls fails */
+   return EGL_FALSE;
+
+done:
+   return EGL_TRUE;
+}
 
 EGLBoolean
 dri2_initialize_android(_EGLDisplay *disp)
 {
-   _EGLDevice *dev;
+   _EGLDevice *dev = NULL;
    bool device_opened = false;
    struct dri2_egl_display *dri2_dpy;
    const char *err;
@@ -1694,10 +1813,13 @@ dri2_initialize_android(_EGLDisplay *disp)
 
    dri2_dpy->fd_display_gpu = dri2_dpy->fd_render_gpu;
 
-   dev = _eglAddDevice(dri2_dpy->fd_render_gpu, false);
-   if (!dev) {
-      err = "DRI2: failed to find EGLDevice";
-      goto cleanup;
+   /* Only add a egl device if this is not the kgsl driver */
+   if (strcmp(dri2_dpy->driver_name, "kgsl") != 0) {
+      dev = _eglAddDevice(dri2_dpy->fd_render_gpu, false);
+      if (!dev) {
+         err = "DRI2: failed to find EGLDevice";
+         goto cleanup;
+      }
    }
 
    disp->Device = dev;
