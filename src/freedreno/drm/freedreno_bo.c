@@ -222,7 +222,7 @@ out_unlock:
 }
 
 struct fd_bo *
-fd_bo_from_dmabuf(struct fd_device *dev, int fd)
+fd_bo_from_dmabuf_drm(struct fd_device *dev, int fd)
 {
    int ret, size;
    uint32_t handle;
@@ -255,6 +255,12 @@ out_unlock:
       goto restart;
 
    return bo;
+}
+
+struct fd_bo *
+fd_bo_from_dmabuf(struct fd_device *dev, int fd)
+{
+   return dev->funcs->bo_from_dmabuf(dev, fd);
 }
 
 struct fd_bo *
@@ -433,6 +439,15 @@ fd_bo_fini_fences(struct fd_bo *bo)
       free(bo->fences);
 }
 
+void
+fd_bo_close_handle_drm(struct fd_device *dev, uint32_t handle)
+{
+   struct drm_gem_close req = {
+      .handle = handle,
+   };
+   drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
+}
+
 /**
  * Helper called by backends bo->funcs->destroy()
  *
@@ -456,10 +471,7 @@ fd_bo_fini_common(struct fd_bo *bo)
 
    if (handle) {
       simple_mtx_lock(&table_lock);
-      struct drm_gem_close req = {
-         .handle = handle,
-      };
-      drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
+      dev->funcs->bo_close_handle(dev, handle);
       _mesa_hash_table_remove_key(dev->handle_table, &handle);
       if (bo->name)
          _mesa_hash_table_remove_key(dev->name_table, &bo->name);
@@ -554,8 +566,8 @@ fd_bo_is_cached(struct fd_bo *bo)
    return !!(bo->alloc_flags & FD_BO_CACHED_COHERENT);
 }
 
-static void *
-bo_map(struct fd_bo *bo)
+void *
+fd_bo_map_os_mmap(struct fd_bo *bo)
 {
    if (!bo->map) {
       uint64_t offset;
@@ -585,7 +597,7 @@ fd_bo_map(struct fd_bo *bo)
    if (bo->alloc_flags & FD_BO_NOMAP)
       return NULL;
 
-   return bo_map(bo);
+   return bo->funcs->map(bo);
 }
 
 void
@@ -596,7 +608,7 @@ fd_bo_upload(struct fd_bo *bo, void *src, unsigned off, unsigned len)
       return;
    }
 
-   memcpy((uint8_t *)bo_map(bo) + off, src, len);
+   memcpy((uint8_t *)bo->funcs->map(bo) + off, src, len);
 }
 
 bool
