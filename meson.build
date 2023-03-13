@@ -187,6 +187,10 @@ if freedreno_kmds.length() == 1 and freedreno_kmds.contains('kgsl') and not with
   system_has_kms_drm = false
 endif
 
+if freedreno_kmds.contains('kgsl')
+  pre_args += '-DHAVE_FREEDRENO_KGSL'
+endif
+
 with_gallium = gallium_drivers.length() != 0
 with_gallium_kmsro = system_has_kms_drm and [
   with_gallium_asahi,
