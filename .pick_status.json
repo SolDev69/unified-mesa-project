@@ -112,7 +112,7 @@
         "description": "zink: avoid recursion during msrtss blits from flushing clears",
         "nominated": false,
         "nomination_type": null,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
