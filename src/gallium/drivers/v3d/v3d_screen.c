@@ -146,9 +146,18 @@ v3d_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
         case PIPE_CAP_ANISOTROPIC_FILTER:
         case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
         case PIPE_CAP_INDEP_BLEND_FUNC:
+                return 1;
+
+        /*
+         * This feature is supported, but enabling it accidentally enables
+         * OpenGL 3.0 & 3.1, which are not supported.
+         * The feature is enabled in main and discussion to fix the issue is
+         * underway, but we're disabling it in releases until we find a better
+         * solution.
+         */
         case PIPE_CAP_CONDITIONAL_RENDER:
         case PIPE_CAP_CONDITIONAL_RENDER_INVERTED:
-                return 1;
+                return 0;
 
         case PIPE_CAP_POLYGON_OFFSET_CLAMP:
                 return screen->devinfo.ver >= 41;
