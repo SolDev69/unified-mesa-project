@@ -193,7 +193,7 @@
         "description": "nir: Fix serializing pointer initializers.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7acc81056f7ac6a869ef6403573b2572c77dbecf"
     },
