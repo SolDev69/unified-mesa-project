@@ -1201,7 +1201,7 @@
         "description": "asahi: Fix typo in debug/error message helper macro",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0a132b06406debc79565a7eb4dbe02e9f793e5cc"
     },
