@@ -121,7 +121,7 @@
         "description": "r600/sfn: make sure f2u32 is lowered late and correctly for 64 bit floats",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b3685f3ba7fddbe73f363ff4d53ca734841e4b06"
     },
