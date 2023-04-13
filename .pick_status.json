@@ -571,7 +571,7 @@
         "description": "vk/entry_points:: fix mingw build",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7e833713d83087934221cd47ece49e87199a00d1"
     },
