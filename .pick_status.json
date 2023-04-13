@@ -994,7 +994,7 @@
         "description": "ci: rework vulkan validation layer build script",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "512f1c160a63a7ba1b0097166d8ec0324542d639"
     },
