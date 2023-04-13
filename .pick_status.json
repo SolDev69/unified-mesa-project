@@ -589,7 +589,7 @@
         "description": "intel/vec4: force exec_all on float control instruction",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "daa8003e45c37d13f81958c0a74222e259d18538"
     },
