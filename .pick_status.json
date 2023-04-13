@@ -715,7 +715,7 @@
         "description": "zink: always defer query pool deletion",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7da78ffb697bfea5c20b31dca635971d00d27b3c"
     },
