@@ -193,7 +193,7 @@
         "description": "vulkan/wsi: fix -Wnarrowing warning",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d7730fcf22adae92b0e7a82e36cfe28200920b5f"
     },
