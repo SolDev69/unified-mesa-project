@@ -598,7 +598,7 @@
         "description": "egl/wayland: fix oob buffer access during buffer_fds clean up",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "967b9ad084ecf28f639aeb21b5bdf76813e65a8a"
     },
