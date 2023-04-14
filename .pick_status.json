@@ -553,7 +553,7 @@
         "description": "iris: Fix close of exported bos",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "910e659e31cb248e7ca4c487fa4207c3345db59b"
     },
