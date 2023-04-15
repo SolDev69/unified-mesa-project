@@ -31,7 +31,7 @@
         "description": "ci/freedreno: fix the a530_piglit job and switch to Weston",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "83c2b26acf1e6c5434d2183294103c959c7ab268"
     },
