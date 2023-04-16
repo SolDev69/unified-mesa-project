@@ -4,7 +4,7 @@
         "description": "v3dv/ci: drop fixed failure from fails.txt",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8976d8280ff45cd7f947524a23fc70223967d7ca"
     },
