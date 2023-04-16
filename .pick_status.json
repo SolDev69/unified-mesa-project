@@ -157,7 +157,7 @@
         "description": "Revert \"ci: disable lima farm, currently out-of-space, needs to be fixed\"",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "78644c9bb0d3b7920f7676c6388b472510a54f0b"
     },
