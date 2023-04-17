@@ -634,7 +634,7 @@
         "description": "radv/rt: Plug some memory leaks during shader creation",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "207ce6d658ac6d8f6421a02304b74645ff835e96"
     },
