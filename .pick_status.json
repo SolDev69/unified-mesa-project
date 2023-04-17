@@ -1,5 +1,167 @@
 [
     {
+        "sha": "0d7912d239dac5bf3c8b07f2a6ca467f760d6aa6",
+        "description": "radv: disable fast-clears with CMASK for 128-bit formats",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "134abe8344040f380c7b30cae79d44b82423b911",
+        "description": "radeonsi: remove separate_prolog parameter",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "51d994644826f2429734f7ee4af7a0046b807bba",
+        "description": "radeonsi: restructure mono merged shader build",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dcfe3eed80a55840cd84d8c680a9367ccc14d33d",
+        "description": "radeonsi: monolithic ps emit prolog in nir directly",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fbedbad0dd97afee7f4397f41f5598d903a60132",
+        "description": "radeonsi: handle lowered ps in scan_io_usage",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b8bd186788f361c184a4346c52359286e476599f",
+        "description": "radeonsi: add si_nir_emit_polygon_stipple",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "223878fbe24ec1a9ed0ce7964864d4d891664fc9",
+        "description": "radeonsi: add si_nir_lower_ps_color_input",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cc891e871edceb557f7e8720ed60cc415dc1f4ee",
+        "description": "ac/llvm,radeonsi: lower ps color load in nir",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "35d5c7c251fedaf697c961d1fb48d560e936d8cf",
+        "description": "ac/nir/ps: lower sample mask input when needed",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1103d4ed74dd5f10ba23abc41edfaa9c41aeaf2e",
+        "description": "ac/nir/ps: add force lower barycentric load options",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0e4ac0c1d628a88363abe39064677e1f7d80a197",
+        "description": "ac/nir/ps: lower barycentric load when bc_optimize",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d6c5596c377c8988b2759e78a77175bb8fdeff5c",
+        "description": "radeonsi: implement nir_load_barycentric_optimize_amd",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7fcc5aa9c0ab528bc9c6f68a4c457c408b9bbc08",
+        "description": "nir: add nir_load_barycentric_optimize_amd intrinsic",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "31a0de992127025519d405db5669bf5736ba4ae2",
+        "description": "zink: make general bo allocation more robust by iterating",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9d923b14f959e23bd5fc24d5542b00de2d3c0d38",
+        "description": "zink: restore BAR allocation failure demotion",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "f6d3a5755f63c81881ff5647fe783038c955e8e3"
+    },
+    {
+        "sha": "561b64cf55dbcc8abf0cb3aeeafa55d439cec7c9",
+        "description": "zink: slightly rework memoryTypeIndex selection to pre-determine heap",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "085c9efbf3f12fca4cfb210e89d6f2f31f1ebe72",
+        "description": "zink: move memoryTypeIndex selection down in general bo allocation",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fdf746cb2b0c56d061f54e73974b22b33abe2620",
+        "description": "Revert \"ci: disable lima farm, currently out-of-space, needs to be fixed\"",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "78644c9bb0d3b7920f7676c6388b472510a54f0b"
+    },
+    {
         "sha": "8ebc5cbe2b828f34b9bfb32c528d3514ead59798",
         "description": "v3dv/ci: drop fixed failure from fails.txt",
         "nominated": true,
