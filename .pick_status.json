@@ -625,7 +625,7 @@
         "description": "radv: Don't leak the RT prolog binary",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "063d0c90c81b62f03cacfacc05801610da5dbe2f"
     },
