@@ -598,7 +598,7 @@
         "description": "radv: track DB_COUNT_CONTROL changes to avoid context rolls",
         "nominated": false,
         "nomination_type": null,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
