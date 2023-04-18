@@ -1165,7 +1165,7 @@
         "description": "zink: fix non-db bindless texture buffers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "99ba529feed6f9917a44458a38acaf0b3d6d261d"
     },
