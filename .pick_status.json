@@ -4,7 +4,7 @@
         "description": "iris: use util_framebuffer_get_num_samples when setting ps dispatch samples",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
