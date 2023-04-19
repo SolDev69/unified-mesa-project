@@ -274,7 +274,7 @@
         "description": "zink: refcount the correct query pool",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e5d517f36228c0788be58b00bdf23aa02f4dcf0c"
     },
