@@ -355,7 +355,7 @@
         "description": "anv: rework Wa_14017076903 to only apply with occlusion queries",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c34916f841d35c6ec76981b0f56df25feef04b70"
     },
