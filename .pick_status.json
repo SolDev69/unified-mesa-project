@@ -337,7 +337,7 @@
         "description": "iris: Allow shared scanout buffer to be placed in smem as well",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c10ff1970461f59a1a0861ba79c3ea24ed4904aa"
     },
