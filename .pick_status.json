@@ -1138,7 +1138,7 @@
         "description": "util/log: Fix log messages over 1024 characters.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7a18a1712a0a19b4251beaf582baba03805bb9f3"
     },
