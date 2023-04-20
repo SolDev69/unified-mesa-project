@@ -472,7 +472,7 @@
         "description": "freedreno/a6xx: Fix valid_format_cast logic for newer a6xx",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "87978c39334045b6e998e62f7353c4c98e588f53"
     },
