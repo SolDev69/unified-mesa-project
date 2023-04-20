@@ -139,7 +139,7 @@
         "description": "zink: don't pin flush queue threads if no threads exist",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "270f9c0b0636bc0c7954f32e2b5920ec76f839e5"
     },
