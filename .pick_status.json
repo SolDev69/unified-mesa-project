@@ -445,7 +445,7 @@
         "description": "pvr: Don't advertise S8_UINT support",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "220356e0831bc870a189cf8d116a8b0ff6e1e500"
     },
