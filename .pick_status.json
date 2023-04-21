@@ -3190,7 +3190,7 @@
         "description": "glx: fix build with APPLEGL",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1eab7e69e2ba84244f551f6901f4307a687a9504"
     },
