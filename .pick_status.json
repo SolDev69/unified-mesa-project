@@ -256,7 +256,7 @@
         "description": "r600/sfn: Lower tess levels to vectors in TCS",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "84006587d7e5b87526a9b83135393251afeef777"
     },
