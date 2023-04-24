@@ -4606,6 +4606,9 @@ radv_flush_indirect_descriptor_sets(struct radv_cmd_buffer *cmd_buffer,
    uint64_t va = radv_buffer_get_va(cmd_buffer->upload.upload_bo);
    va += offset;
 
+   ASSERTED unsigned cdw_max =
+      radeon_check_space(device->ws, cs, MESA_VULKAN_SHADER_STAGES * 3);
+
    if (bind_point == VK_PIPELINE_BIND_POINT_GRAPHICS) {
       for (unsigned s = MESA_SHADER_VERTEX; s <= MESA_SHADER_FRAGMENT; s++)
          if (radv_cmdbuf_has_stage(cmd_buffer, s))
@@ -4618,11 +4621,13 @@ radv_flush_indirect_descriptor_sets(struct radv_cmd_buffer *cmd_buffer,
                                     cmd_buffer->state.shaders[MESA_SHADER_MESH]->info.user_data_0,
                                     AC_UD_INDIRECT_DESCRIPTOR_SETS, va);
 
-      if (radv_cmdbuf_has_stage(cmd_buffer, MESA_SHADER_TASK))
+      if (radv_cmdbuf_has_stage(cmd_buffer, MESA_SHADER_TASK)) {
+         radeon_check_space(device->ws, cmd_buffer->ace_internal.cs, 3);
          radv_emit_userdata_address(device, cmd_buffer->ace_internal.cs,
                                     cmd_buffer->state.shaders[MESA_SHADER_TASK],
                                     cmd_buffer->state.shaders[MESA_SHADER_TASK]->info.user_data_0,
                                     AC_UD_INDIRECT_DESCRIPTOR_SETS, va);
+      }
    } else {
       struct radv_shader *compute_shader = bind_point == VK_PIPELINE_BIND_POINT_COMPUTE
                                               ? cmd_buffer->state.shaders[MESA_SHADER_COMPUTE]
@@ -4631,6 +4636,8 @@ radv_flush_indirect_descriptor_sets(struct radv_cmd_buffer *cmd_buffer,
       radv_emit_userdata_address(device, cs, compute_shader, compute_shader->info.user_data_0,
                                  AC_UD_INDIRECT_DESCRIPTOR_SETS, va);
    }
+
+   assert(cmd_buffer->cs->cdw <= cdw_max);
 }
 
 ALWAYS_INLINE static void
