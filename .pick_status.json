@@ -1165,7 +1165,7 @@
         "description": "asahi: Fix disk cache disable with AGX_MESA_DEBUG",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5e9538c12e0f564af888e2d2c1804e960b9492ca"
     },
