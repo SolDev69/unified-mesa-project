@@ -652,7 +652,7 @@
         "description": "v3d: use util_unreference_framebuffer_state to unref fb state",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f5bde99cbdd208916795dc463663ddd97428ecc1"
     },
