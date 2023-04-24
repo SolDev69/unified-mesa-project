@@ -1,5 +1,464 @@
 [
     {
+        "sha": "c060b649c5a866f42e5df73f41c6e2809cf30e99",
+        "description": "ci/zink: Enable the validation layer on the TGL GL46 run.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "75a08b04d7d0c2b41f82d7bbab7a5bd932429119",
+        "description": "ci: Move zink's validation layer setup to deqp-runner.sh.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5ae6a9bd7081f3222bb42226385d40564193daca",
+        "description": "ci/zink: Re-enable traces now that !20319 has landed.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c0f5f852ab1daa551dcd879110047dffdea79ea4",
+        "description": "ci: Add the Vulkan validation layer to amd64 rootfs builds.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e38ca400821dce676e97fbfdcb0c6571d7372b99",
+        "description": "ci: Make a variable for the repeated rootfs directory name.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5307f6d03ff3d5b0cf96ef838a01d14d39215988",
+        "description": "frontends/va: return matching drm format for yuyv pipe format",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "edaf49160e5293d30aab1d3bcf5452b8c3178096",
+        "description": "zink: fix array copying in pv lowering",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "5a4083349f36ef6db36a962327de6952a30d0c92"
+    },
+    {
+        "sha": "99121c9b77930aa6b6da8fcd087e4f03aac19323",
+        "description": "nir/gs: fix array type copying for passthrough gs",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "d0342e28b32d7aa4b25cf045ac9933348ec053a9"
+    },
+    {
+        "sha": "796109cb08c5246400cd45d998d7babf7b0612c3",
+        "description": "dzn: Align-up heap sizes when allocating memory",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "bdc4e3a5a6a3f8445ece1cfe89c245f7b9799641",
+        "description": "radv: do not overallocate the CS array during submissions",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "41a36561491d0cd65c8813126db9ce41e4aff9c4",
+        "description": "radv: Search for guilty contexts at radv_check_status",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dc6f7045665e1b543ec19cb27ddfe9173e35fb7c",
+        "description": "freedreno: Enable A506",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "905264f27dd94971542a38ca603cc57e3e3a183b",
+        "description": "zink: add a driver workaround to disable background compiles",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b346c019d529200404b211b2024a28c41eb0cbf9",
+        "description": "v3d: add support for ARB_texture_cube_map_array",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1bc9efc10c2329d6442f39115a1c013fd870f48d",
+        "description": "zink: add z32s8 as mandatory GL3.0 profile attachment format",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e4c4fca16e92b3da4fc8ee4e40d06df5f085a804",
+        "description": "zink: don't pin flush queue threads if no threads exist",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "270f9c0b0636bc0c7954f32e2b5920ec76f839e5"
+    },
+    {
+        "sha": "a9cce40dab3218a8bda043387e1df0e27aba211b",
+        "description": "rusticl: don't set size_t-is-usize for >=bindgen-0.65",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "20c90fed5a0ab0202ee1ef474c71cb816164a448"
+    },
+    {
+        "sha": "62dd0370be99635ce8e789681b57e0768dafa281",
+        "description": "zink/ci: mark 77 multisample-related tests as fixed",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "a004825266fdcb43afd5e9fdf946ad9641f1e296"
+    },
+    {
+        "sha": "9d7ba3801396bac2b01cd4fa9486c6f20a55d0a0",
+        "description": "ac/llvm: support shifts on 16 bit vec2",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "037b56bf0fa589bdd9887937c089f4b50a75b351",
+        "description": "radeonsi: lower mul_high",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d8253efe9994d58d5fc348f8b0fedba5ce2e857a",
+        "description": "Revert \"ci: disable Collabora's LAVA lab for maintance\"",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8b791c24eae200c86b32fac215b4ff2f30bf0bf5",
+        "description": "v3d: document that `V3D_DEBUG=shaderdb` is *not* for shader-db",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "18a3a0d9151f97f7c1c0f29d80e770af17d54213",
+        "description": "broadcom/compiler: fix incorrect check for SFU op",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b3ac456eb1df0976ee4036cd191b557682923d04",
+        "description": "broadcom/compiler: add a v3d_qpu_instr_is_legacy_sfu helper",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4a3be610d5e5deb47aff1a9fc8bbab85cff9e502",
+        "description": "broadcom/compiler: fix v3d_qpu_uses_sfu",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ee4e7b9d4dcec46ddff0471b34dd654e82f288f0",
+        "description": "zink: fix line strip offsets in pv mode emulation",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "5a4083349f36ef6db36a962327de6952a30d0c92"
+    },
+    {
+        "sha": "bdb3daab7c550984b56539142f053ae7950c93ad",
+        "description": "zink: fix exit condition on pv emulation loop",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "5a4083349f36ef6db36a962327de6952a30d0c92"
+    },
+    {
+        "sha": "89077b866cabfe736dcd2d27994930c468138161",
+        "description": "zink: use ring buffer to preserve last element",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "5a4083349f36ef6db36a962327de6952a30d0c92"
+    },
+    {
+        "sha": "436dacf75410144589abb835c2906e1a149abffb",
+        "description": "zink: fix pv mode lowring index calculation",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "5a4083349f36ef6db36a962327de6952a30d0c92"
+    },
+    {
+        "sha": "aa45b13398547d7433479c91a5cf2ae904ef677e",
+        "description": "anv: move nir_shader_gather_info to anv_pipeline_nir_preprocess",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "16c7c3771862a5cd3655c7f4cc4f3a7d68ef5325"
+    },
+    {
+        "sha": "3291050cc18c4bd1b5244ca4f79a4b928f74386c",
+        "description": "zink: refcount the correct query pool",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "e5d517f36228c0788be58b00bdf23aa02f4dcf0c"
+    },
+    {
+        "sha": "f6b5e128c13fe77199fb39f1b6e0a11504201352",
+        "description": "zink: fix incorrect line mode check for bresenham",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8ca13afe15ae420f7b77516a64dcf33f9a99bc3e",
+        "description": "zink: take location_frac into account in lower_line_smooth_gs",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "657fc39b0997d78d98974b458888fbbba0a2cf29",
+        "description": "zink: do not emit line stipple dynamic state when emulating",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "16d0b868c6521415456f0d6f2b8828df5c454a11",
+        "description": "radv: add the perf counters BO to the preambles BO list",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ea5535090a9cb2de4200947faa415bf37069e1d0",
+        "description": "ci: disable Collabora's LAVA lab for maintance",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "483639d7382d004b86e511c6a09f585421fa8e66",
+        "description": "zink: add validation exceptions for shader object extension enable",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cd6625c6eb9699245b2fb6c9c704607d762a95ea",
+        "description": "zink: use EXT_shader_object to (re)implement separate shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3baa9ed6d8ba5be16b64050588ab4594c6fc3c81",
+        "description": "zink: remove redundant compute program batch ref",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a76bdcd34c13ef11d0ecf5e220cff4788a433a45",
+        "description": "zink: run bo lowering passes for separate shader compile with uniform inlining",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3e5e5e58af838aaad86202112b4e128b0d157be6",
+        "description": "zink: add a 'separate' flag to shader module compile to indicate separate shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "82abbe19c92ee26f581006e949196e85fd1a73c9",
+        "description": "zink: move separate shader dsl creation to compiler function",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7f7b229c89d032949ffdbd3d94ce235cf57f9ffb",
+        "description": "zink: minor whitespace cleanup",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "535a8f0e96db8512c322baef7e752934a09b2d07",
+        "description": "zink: use zink_shader_object for precompiled separate shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d733e24648b376a3cc01a6e6381815d4958438e1",
+        "description": "zink: more zink_shader_object conversion",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "76f477e8d505a09aac7ac6ceac1e9049fb14e1ad",
+        "description": "zink: make zink_shader_spirv_compile static",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a1c994d60db3a3be4a946903f5410eecbfb8e463",
+        "description": "zink: wrap return of compile_module()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "aa2cf4d7f3ed6333c5445cea7b9e41fd49499524",
+        "description": "zink: wrap zink_shader_compile_separate() return",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5383bb4315ac49b8474ffaeb25520c5f04440d44",
+        "description": "zink: hook up EXT_shader_object",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9c0497275fe27f52ae97949f5a8cd67794efa3f8",
+        "description": "zink: use tes to generate tcs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "bba644ce826e6d25fc5c6fe8f1add1b4d4d8bd70",
+        "description": "draw: fix viewmask iterating",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "03cbb7b104e532a9969e3d847e95bf52e55f0ab3"
+    },
+    {
         "sha": "a18a51a708a86f51e0a5ab031b379f65bc84fb49",
         "description": "nir/nir_lower_vec3_to_vec4: Use the nir_shader_instructions_pass() helper",
         "nominated": false,
