@@ -670,7 +670,7 @@
         "description": "freedreno: Fix resource tracking vs rebind/invalidate",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0a62a874fc5b7387fb4e1da9183fb2c5a9d4b700"
     },
