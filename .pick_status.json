@@ -751,7 +751,7 @@
         "description": "zink: fix store subsitution in `lower_pv_mode_gs_store`",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5a4083349f36ef6db36a962327de6952a30d0c92"
     },
