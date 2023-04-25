@@ -445,7 +445,7 @@
         "description": "ac/nir/ps: fix null export write mask miss set to 0xf",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c182154456288dbab23e87dbc5fc1962984caa92"
     },
