@@ -1579,7 +1579,7 @@
         "description": "anv: fix push range for descriptor offsets",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "379b9bb7b04dc87797e49933bbfac786b7ef38fb"
     },
