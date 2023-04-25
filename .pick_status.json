@@ -535,7 +535,7 @@
         "description": "radv/rt: properly destroy radv_ray_tracing_lib_pipeline on error",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4dafb69d61820c4a9b71856e62797b51f13df91c"
     },
