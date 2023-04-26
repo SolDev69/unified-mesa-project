@@ -49,7 +49,7 @@
         "description": "intel/compiler: make uses_pos_offset a tri-state",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d8dfd153c50f24ea50578202832b3eccfb61edf8"
     },
