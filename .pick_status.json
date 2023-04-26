@@ -1498,7 +1498,7 @@
         "description": "clover/llvm: Use std::nullopt already with LLVM 16",
         "nominated": false,
         "nomination_type": null,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
