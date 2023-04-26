@@ -67,7 +67,7 @@
         "description": "r300: fix unconditional KIL on R300/R400",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a8e1e5b5c2aeb7c2fb4eff2203a026090f0853b9"
     },
