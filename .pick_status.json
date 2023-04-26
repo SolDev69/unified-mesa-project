@@ -922,7 +922,7 @@
         "description": "dri/android: Fix MSAA resolve",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f9a074dd5506d1e883aa0b3c5f0173a8484bce09"
     },
