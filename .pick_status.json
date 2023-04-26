@@ -1507,7 +1507,7 @@
         "description": "clover/llvm: Use llvm::DataLayout::getABITypeAlign with LLVM >= 16",
         "nominated": false,
         "nomination_type": null,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
