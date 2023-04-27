@@ -346,7 +346,7 @@
         "description": "radv: add padding to radv_shader_binary_legacy",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "577d76f60f788c3a8d43b4b388bb5a04e4e64994"
     },
