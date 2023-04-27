@@ -193,7 +193,7 @@
         "description": "anv: Fix ANV_BO_ALLOC_NO_LOCAL_MEM flag",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fbd32a04daf84f7ed931a4a2510f2181083753cf"
     },
