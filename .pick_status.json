@@ -364,7 +364,7 @@
         "description": "vulkan/pipeline_cache: replace raw data objects on cache insertion of real objects",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8b13ee75ba9f27ceac6b6180ca05d321caa13612"
     },
