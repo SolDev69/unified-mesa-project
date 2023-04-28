@@ -175,7 +175,7 @@
         "description": "llvmpipe: fix native vector width init",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4a056807bc3b813f390d194bbe382b573761649e"
     },
