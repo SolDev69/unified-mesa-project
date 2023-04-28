@@ -265,7 +265,7 @@
         "description": "mesa/st: fix refcnt imbalance related to st_feedback_draw_vbo()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ff8c2a1748b9fe8fb76a4f01798846ff4021e16c"
     },
