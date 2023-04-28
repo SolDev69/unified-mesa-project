@@ -454,7 +454,7 @@
         "description": "radv: fix dynamic depth clamp enable support",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e48c0fbd8f70df5f74bdbe594f807d09fc3a4424"
     },
