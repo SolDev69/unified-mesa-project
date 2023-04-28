@@ -256,7 +256,7 @@
         "description": "ac/nir: fix 8-bit/10-bit PS exports clamping",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c182154456288dbab23e87dbc5fc1962984caa92"
     },
