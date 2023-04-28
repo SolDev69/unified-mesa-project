@@ -157,7 +157,7 @@
         "description": "zink: add extendedDynamicState3DepthClipNegativeOneToOne to profile",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3017d01c9ded9c9fd097b600081b1bbe86e90fb8"
     },
