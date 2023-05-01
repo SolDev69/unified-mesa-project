@@ -6499,6 +6499,8 @@ static void
 radv_bind_vertex_shader(struct radv_cmd_buffer *cmd_buffer, const struct radv_shader *vs)
 {
    radv_bind_pre_rast_shader(cmd_buffer, vs);
+
+   /* Can't put anything else here due to merged shaders */
 }
 
 static void
@@ -6508,10 +6510,11 @@ radv_bind_tess_ctrl_shader(struct radv_cmd_buffer *cmd_buffer, const struct radv
 
    cmd_buffer->tess_rings_needed = true;
 
-   /* Always re-emit patch control points when a new pipeline with tessellation is bound because a
-    * bunch of parameters (user SGPRs, TCS vertices out, ccw, etc) can be different.
+   /* Always re-emit patch control points/domain origin when a new pipeline with tessellation is
+    * bound because a bunch of parameters (user SGPRs, TCS vertices out, ccw, etc) can be different.
     */
-   cmd_buffer->state.dirty |= RADV_CMD_DIRTY_DYNAMIC_PATCH_CONTROL_POINTS;
+   cmd_buffer->state.dirty |=
+      RADV_CMD_DIRTY_DYNAMIC_PATCH_CONTROL_POINTS | RADV_CMD_DIRTY_DYNAMIC_TESS_DOMAIN_ORIGIN;
 }
 
 static void
@@ -6519,13 +6522,7 @@ radv_bind_tess_eval_shader(struct radv_cmd_buffer *cmd_buffer, const struct radv
 {
    radv_bind_pre_rast_shader(cmd_buffer, tes);
 
-   cmd_buffer->tess_rings_needed = true;
-
-   /* Always re-emit patch control points/domain origin when a new pipeline with tessellation is
-    * bound because a bunch of parameters (user SGPRs, TCS vertices out, ccw, etc) can be different.
-    */
-   cmd_buffer->state.dirty |= RADV_CMD_DIRTY_DYNAMIC_PATCH_CONTROL_POINTS |
-                              RADV_CMD_DIRTY_DYNAMIC_TESS_DOMAIN_ORIGIN;
+   /* Can't put anything else here due to merged shaders */
 }
 
 static void

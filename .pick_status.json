@@ -22,7 +22,7 @@
         "description": "radv: Move all the dirty flags from TES binding to TCS binding.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "879ddf97202fb4721be28f0efffeb064ea61c57b"
     },
