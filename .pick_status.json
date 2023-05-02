@@ -166,7 +166,7 @@
         "description": "dzn: Hook up subgroup size to compute shader compilation",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "db083070f03fc033ea5ff43200a9a1fcb2b73df0"
     },
