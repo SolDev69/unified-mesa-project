@@ -346,7 +346,7 @@
         "description": "iris: rework Wa_14017076903 to only apply with occlusion queries",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "415b824bc6dc8f0fce517f8fa1e38df94de15502"
     },
