@@ -130,7 +130,7 @@
         "description": "zink: block more flushes during unordered blits",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "89aa36359328ea48fa29be8dd439dd87043eaa03"
     },
