@@ -4063,7 +4063,7 @@
         "description": "aco/vn: compare all valu modifers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9b4ea9ff901cdc4cbe29ffdfc74b8c318a21a80f"
     },
