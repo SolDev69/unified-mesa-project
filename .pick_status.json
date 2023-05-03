@@ -1,5 +1,608 @@
 [
     {
+        "sha": "9f522ac0c65ceae11ad1a4e84ec9f32a9393a25c",
+        "description": "broadcom/compiler: don't allocate undef to rf0",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4ca8be82d5727337bb742ad205f0e156b597c3a6",
+        "description": "r600: fix refcnt imbalance related to atomic_buffer_state",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "06993e4ee350b9c2ab1e3ee7686878add3900d39"
+    },
+    {
+        "sha": "0937a02d96b96086bc5a8765485ceb908b402c80",
+        "description": "vulkan: rename vk_physical_device_features.py to vk_physical_device_features_gen.py",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9cf1cdfaa89bcbb8fde1851b3f358570954eb120",
+        "description": "vulkan: put TEMPLATE_H before TEMPLATE_C",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "005cfc63fc750c34f120a440b8c65ed079d5bb11",
+        "description": "vulkan: put interesting code before boring code",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "64f4b277ea66cf62ec1bee732e9b1e3dad45b5b1",
+        "description": "vulkan: inline vk_get_physical_device_features into vk_common_GetPhysicalDeviceFeatures2",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "528d430ca11166157d0bcf8a2a770c49f06a5be5",
+        "description": "v3dv: use common vkGetPhysicalDeviceFeatures2",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "99bc68f042fe1ded0fceeaf92e9131619a37b3bb",
+        "description": "panvk: use common vkGetPhysicalDeviceFeatures2",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a252a9dc24d4c9eaf40bd20d3cab4009aebf660d",
+        "description": "anv: move get_features after get_device_extensions (ugly diff)",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "430abb971a47f49d3dfbddb6ea0f7c34689073e3",
+        "description": "anv: switch to using the common vkGetPhysicalDeviceFeatures2",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "61413d70a0be6cc4de68bd67674bcc16b8266ddd",
+        "description": "vulkan: introduce supported_features parameter to vk_physical_device_init",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cc02214304d1586d9602facc46c99532b04ad583",
+        "description": "vulkan: add common implementation of vkGetPhysicalDeviceFeatures2",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c93b179d76adadfb44a5d6e7a878c719943a9dc2",
+        "description": "vulkan: Actually increment the count of objects in GetPipelineCacheData.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "591da9877900c56434f9e23e0ad0058b118b0be8"
+    },
+    {
+        "sha": "bc257928d7a431400dd8f83ff03590b7f5a1dda6",
+        "description": "vulkan: Handle alignment failure in the pipeline cache.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "591da9877900c56434f9e23e0ad0058b118b0be8"
+    },
+    {
+        "sha": "888bfa7f04b6639f4081e26c50d9189c9caf4f15",
+        "description": "dzn: Ensure bindless is factored into pipeline/nir hash",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "aa43b030866c32865bcb76f6eecf37a779fae199",
+        "description": "dzn: Ensure subgroup size control is factored into pipeline hash",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dacc3cc597068d6ac926cd850d45d9b5f711aeca",
+        "description": "dzn: Use the nir hash as an input to the dxil hash",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c9a34e6de0c121e908bf0ae02173d5b6e57eddcf",
+        "description": "dzn: Ensure sample-rate shading is factored into nir hash",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cc8cdbb0ef90673799d958663a7f0b4669170a93",
+        "description": "dzn: Hook up subgroup size to compute shader compilation",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "db083070f03fc033ea5ff43200a9a1fcb2b73df0"
+    },
+    {
+        "sha": "d615dfca409988298d544ca8aa19ac16851629f9",
+        "description": "crocus: fix refcnt imbalance related to crocus_create_surface()",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "f3630548f1da904ec6c63b43ece7e68afdb8867e"
+    },
+    {
+        "sha": "551e92d8a6b8dc2d1eb27539d7a6e4cdd57de822",
+        "description": "virgl: check a debug option again at context creation",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "73952bfbfd15bc64bc0d991d0931dea40c87f0db",
+        "description": "dzn: Fix UBO descriptors pointing to the end of the buffer",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "d34ac0a70b705963b7d4f09aedebdfc66e8a2956"
+    },
+    {
+        "sha": "905f7f83650fa8d9cfe97c9d164c8e0cc7c61c6c",
+        "description": "Revert \"zink: don't create separate shader dsls if there are no bindings\"",
+        "nominated": false,
+        "nomination_type": 2,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "83a1b74240df3afcdb0e723c5bf6514b3321b411"
+    },
+    {
+        "sha": "27d6a98638a5d3914c84ced7b4177bbc5adddedb",
+        "description": "zink: only unset a generated tcs if the bound tcs is the generated one",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cf13a1d791b840e010e5da4de48376be26e2271c",
+        "description": "radv/rt: Fix and improve VkPipelineCreationFeedback",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7070c4e5ff0f1d85a94b57c15ea215fc35bb2a8c",
+        "description": "radv/rt: remove merged VkPipelineShaderStageCreateInfo",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4408395a302a19607e1e4f249777e6da39b4dbc1",
+        "description": "radv/rt: refactor compute_rt_stack_size() to use radv_ray_tracing_stage information",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8ec81a43cba3c71440a054627f9e94b2a6b9122f",
+        "description": "radv/rt: use precompiled stages to create RT shader",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7836e327787c41731c978df67e51ca664204bd1b",
+        "description": "radv/rt: retain parsed NIR shaders in radv_ray_tracing_lib_pipeline",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "284ab601a5365cdf259e51becee93cd4c01b2179",
+        "description": "radv/rt: introduce struct radv_ray_tracing_stage",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a5b0b150df5eea17f912bd97be006689e306c370",
+        "description": "radv/rt: expose radv_parse_rt_stage()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8665506cbdebdace21c70e436febe7427390a0b9",
+        "description": "radv/pipeline_cache: add NIR caching capabilities",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9afb52a1223f402cccbe0250103627d567994bf2",
+        "description": "vulkan/pipeline_cache: expose vk_raw_data_cache_object",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "37c6c5c624b6d00443e7de1a43487b00eb30ff9f",
+        "description": "nvc0: do not randomly emit fences.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "df0a4d02f264a4c49b7503c5f564ac4c492f906f"
+    },
+    {
+        "sha": "a86e8969c7e6218416fe5dc39e6ada9893fc9e58",
+        "description": "ci: Uprev crosvm and virglrenderer",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "53605f226b32a16c4b153388ad8256c4ee8303fc",
+        "description": "nir/lower_non_uniform_access: add get_ssbo_size handling",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8c1bc1b964a5c92995b9285039c945b679496ed8",
+        "description": "rusticl/nir: finish blob after serializing",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fb7e9b1c36cad4a309c5e3743ceaa8a6f3a6165c",
+        "description": "clc: free kernel args in clc_free_kernels_info",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7fc259e4e7ad5afb131a575674d52937c5566a64",
+        "description": "radv: add padding to radv_shader_binary_legacy",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "577d76f60f788c3a8d43b4b388bb5a04e4e64994"
+    },
+    {
+        "sha": "df262d80da3ee019b364f3f83db9237130bdfec9",
+        "description": "vulkan/pipeline_cache: use vk_pipeline_cache_insert_object() to replace raw data objects",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cbab396f549fa7c1a948d469fe6b4df18a81adc9",
+        "description": "vulkan/pipeline_cache: replace raw data objects on cache insertion of real objects",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "8b13ee75ba9f27ceac6b6180ca05d321caa13612"
+    },
+    {
+        "sha": "edfc9d9d966f3bd273cc21fd6dc20d9844f42bcc",
+        "description": "etnaviv: Add util_blitter_save_so_targets(..) call",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "db6f94f2c40ae1bae2cdae95915690843dc46a47",
+        "description": "pvr: Correctly validate PBE accum format",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7cda715ad62182da5e8fdc8cb2aaebe3d9a67470",
+        "description": "radv: fix bc optimization with POS_W_FLOAT_ENA(1)",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "a4b60295a797cda88be111029da146117040081c"
+    },
+    {
+        "sha": "11b1a37553a9339b358ddae99df38160c4cc2252",
+        "description": "pvr: Unmap mapped memory on free",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "926ddc319cdfddd8acae546a06a4400e070685ca",
+        "description": "pvr: Fix unaligned VDMCTRL_PDS_STATE1 data address",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "78df1977fe3025eb2acc62b4658570e220a10c30",
+        "description": "pvr: Fix image to buffer copies",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "71980739a10d44eec5f5d9e5b2b9a4e7d9989cca",
+        "description": "pvr: Fix vtxin special var allocation count",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ddd3c66f5390b9e6b9aa84a2f15c05886ebaf455",
+        "description": "pvr: Improve support for image clears",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "955797d01566bac49b9f49eadcd075f3cb7c5291",
+        "description": "nir: fix constant-folding of 64-bit fpow",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "9076c4e289de0debf1fb2a7237bdeb9c11002347"
+    },
+    {
+        "sha": "e25e4c81de800f659665d28f9670c41bb3e857dc",
+        "description": "radv: fix dynamic depth clamp enable support",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "e48c0fbd8f70df5f74bdbe594f807d09fc3a4424"
+    },
+    {
+        "sha": "cc66d546dde059145facf06d8b3decaf871070d8",
+        "description": "microsoft/compiler: Unroll loops in opt passes",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "bb65d36c5c5bc4a8b4ff43e17c7ca06f6386b1f9",
+        "description": "spirv2dxil: Mark SSBO reads for bindless as CAN_REORDER",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "34cc37910f362dd8d51ef47de0ca592f0e42571a",
+        "description": "radv: respect VK_QUERY_RESULT_WAIT_BIT in GetQueryPoolResults",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cdf01be131292f5a2aba3206974a3840b0cf4fe9",
+        "description": "Revert \"ci: disable all a306/a530/a630 jobs\"",
+        "nominated": false,
+        "nomination_type": 2,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "af214c233b8612e9b063b268219a655f29d9aad6"
+    },
+    {
+        "sha": "98bb47ee4559f86bbeffa5148067971eaadb121b",
+        "description": "ci: Enable rusticl in the fedora-release job",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "96dd3947875cc617a389223b1a064956f2dbcfad",
+        "description": "ci: Upgrade fedora-release job to Fedora 38",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5c6b07246d8bfeb5674af27ff1b063a96b7ca44d",
+        "description": "ci: Drop -Wno-error=array-bounds from fedora-release job",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dce97f090a74f6f46df7999601fc16cdabe97782",
+        "description": "clover/llvm: Use std::nullopt already with LLVM 16",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4ee15720087d0b76423581aef14a98682c42558f",
+        "description": "clover/llvm: Use llvm::DataLayout::getABITypeAlign with LLVM >= 16",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6bab67f5a66d6235a261c84b45df56db0658f247",
+        "description": "svga: Make declaration of emit_input_declaration match definition",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ee8b572b4034bc4447df28f293d35d6382366f1e",
+        "description": "svga: Make vmw_svga_winsys_buffer_map definition match declaration",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6c7400f4e80fa0b912610f00cc42a015cd8800ed",
+        "description": "vulkan: Fix GetPhysicalDeviceSparseImageFormatProperties definitions",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dbab98d9d63d4de4307c28c0ea578b977ea3f0b7",
+        "description": "radv: enable RADV_THREAD_TRACE_CACHE_COUNTERS by default",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f092f548cb8202614c86b47ecd8906d16628ce24",
+        "description": "r600/sfn: assign window_space_position in shader state",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "79ca456b4837b3bc21cf9ef3c03c505c4b4909f6"
+    },
+    {
+        "sha": "bbd265b8e8b9bdf253958168eba70e4826508d2a",
+        "description": "r600+sfn: Assign ps_conservative_z and switch to NIR defines",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c81518911243db4ed4baa3bc0eff5bc04ed281b9",
+        "description": "v3d: apply 1D texture miplevel alignment in arrays",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "040aeb5a23e5cc8a71a352e55282d514dd2ab64f",
         "description": "radv: Add asserts in radeon_emit{,_array}.",
         "nominated": false,
