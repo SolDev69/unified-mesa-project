@@ -787,7 +787,7 @@
         "description": "zink: sync queries at the end of cmdbufs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7c96e989755029a21b78f9e9aaa00c7a3d267172"
     },
