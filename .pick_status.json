@@ -67,7 +67,7 @@
         "description": "bin: add wrapper to run scripts in a python venv",
         "nominated": false,
         "nomination_type": null,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
