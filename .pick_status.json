@@ -1,5 +1,68 @@
 [
     {
+        "sha": "efc94390f716b70ac1d5b09c6f949f938aeadcac",
+        "description": "docs: fix edit-links",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "7da0482636a3475232ed906cfd611b2d912227f7"
+    },
+    {
+        "sha": "2cbc24b9da01fb7cc38b42fd78d8f232ce7167b7",
+        "description": "turnip: fix buffer markers using wrong addresses",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "df08ed7d1c8f55fb0760902dffb3413b8466339a",
+        "description": "radv: Move all the dirty flags from TES binding to TCS binding.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "879ddf97202fb4721be28f0efffeb064ea61c57b"
+    },
+    {
+        "sha": "f572344901e40f457c39448e3e198cd2867bc66c",
+        "description": "radv: use lower_ballot_bit_count_to_mbcnt_amd",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b93c92eba3304e8d2def60734b1a34fc5ad818b9",
+        "description": "nir: lower ballot_bit_count_exclusive/inclusive to mbcnt_amd",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5489033fa8568ecacafe32ceab36f89f2e14f3dc",
+        "description": "intel/compiler: make uses_pos_offset a tri-state",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "d8dfd153c50f24ea50578202832b3eccfb61edf8"
+    },
+    {
+        "sha": "ef01a9cf3b465889fe8084732264dad0580270c3",
+        "description": "mesa/main: drop unused variable",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c5b3d488f9bed0616f42193073fa0014cb68284d"
+    },
+    {
         "sha": "9f522ac0c65ceae11ad1a4e84ec9f32a9393a25c",
         "description": "broadcom/compiler: don't allocate undef to rf0",
         "nominated": false,
