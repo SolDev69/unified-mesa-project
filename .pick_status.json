@@ -58,7 +58,7 @@
         "description": "radeonsi/vcn: fix decoding bs buffer alignement issue.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4f1646d73fa8bac82ff2195f06a5f6011853f647"
     },
