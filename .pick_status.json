@@ -328,7 +328,7 @@
         "description": "vulkan/pipeline_cache: remove a bogus assert when inserting objects",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "cbab396f549fa7c1a948d469fe6b4df18a81adc9"
     },
