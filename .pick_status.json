@@ -841,7 +841,7 @@
         "description": "radv: disable RB+ blend optimizations on GFX11 when a2c is enabled",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
