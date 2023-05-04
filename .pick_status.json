@@ -40,7 +40,7 @@
         "description": "ci/radeonsi: Mark glx-make-current as flaky.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "91b06ea8b254f2a0a60468746da5f7d835b1e764"
     },
