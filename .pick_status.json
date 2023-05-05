@@ -3001,7 +3001,7 @@
         "description": "zink: don't replace non generated gs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "eedbf9046e72d253b39e7065424ec6d1f2dbf598"
     },
