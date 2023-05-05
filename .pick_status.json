@@ -2524,7 +2524,7 @@
         "description": "nir/lower_shader_calls: Fix cursor if broken after nir_cf_extract() call",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e2dadda35f87af08358f0ea43a12434c1626ea82"
     },
