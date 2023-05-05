@@ -4,7 +4,7 @@
         "description": "dzn: fix pointer type mismatch",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "71dbb3120a9d0fb0de3296b5188c086c55673c04"
     },
