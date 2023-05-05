@@ -1,5 +1,68 @@
 [
     {
+        "sha": "cb4e4fc5de48886758a26ff19d322947b5abfcec",
+        "description": "dzn: fix pointer type mismatch",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "71dbb3120a9d0fb0de3296b5188c086c55673c04"
+    },
+    {
+        "sha": "191fa52d0cd3eb0626d9da9e7e265586f10b666c",
+        "description": "ci/turnip: Drop the IUB bug fallout flakes.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "12c10f2fe999ea517854f695b6fd18df0d0da959",
+        "description": "ci/turnip: Drop an xfail from the full run for a recent fix.",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "2cbc24b9da01fb7cc38b42fd78d8f232ce7167b7"
+    },
+    {
+        "sha": "80b541513dd5d5f8273e74ed500cfd13cc0b00dc",
+        "description": "ci/radv: Disable flaky heaven d3d9 trace.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a8af504041977d2ff7362ec84838697fc0749c7e",
+        "description": "ci/radeonsi: Mark glx-make-current as flaky.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "91b06ea8b254f2a0a60468746da5f7d835b1e764"
+    },
+    {
+        "sha": "d6ece34418d75c5604aab8aa2e634b9c1b1bd4dd",
+        "description": "intel/tools: decode ACTHD printed by newer kernels",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "499f332a3a5076b2d6f1f12bf728784b5e2df98b",
+        "description": "radeonsi/vcn: fix decoding bs buffer alignement issue.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "4f1646d73fa8bac82ff2195f06a5f6011853f647"
+    },
+    {
         "sha": "6d84b34359dcbad477209adb9f9d0592c5a71bb9",
         "description": "zink: add ZINK_DEBUG=optimal_keys",
         "nominated": false,
