@@ -2992,7 +2992,7 @@
         "description": "nir: handle interface blocks in `copy_vars`",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "99121c9b77930aa6b6da8fcd087e4f03aac19323"
     },
