@@ -2983,7 +2983,7 @@
         "description": "zink: handle interface blocks in `copy_vars`",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "edaf49160e5293d30aab1d3bcf5452b8c3178096"
     },
