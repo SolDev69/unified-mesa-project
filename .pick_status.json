@@ -2965,7 +2965,7 @@
         "description": "zink: don't create invalid inputs in `zink_create_quads_emulation_gs`",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e2220ee55e40ec5e1ef0d8f74ff6e7d7bb5db16a"
     },
