@@ -4900,7 +4900,7 @@
         "description": "ac: enable SHADOW_GLOBAL_CONFIG for preemptible ib",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "69014d8c94f99fbf0de26f3a76426a92762821a0"
     },
