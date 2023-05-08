@@ -202,7 +202,7 @@
         "description": "zink: block batching of unordered barriers if previous usage was write",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "bf0af0f8edeed8e2e8c74c2a4c3f4baae75ead24"
     },
