@@ -193,7 +193,7 @@
         "description": "zink: fix uncached memory readback",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "52f27cda05b9ff2eb93cbaf1cfae15198ed5a3d6"
     },
