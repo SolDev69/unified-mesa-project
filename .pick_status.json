@@ -913,7 +913,7 @@
         "description": "mesa: fix refcnt imbalance related to egl_image_target_texture()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6a3f5c65128b82b87c5fadcf1d42484f6489b11b"
     },
