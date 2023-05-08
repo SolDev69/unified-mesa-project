@@ -256,7 +256,7 @@
         "description": "zink: add PERSISTENT for db buffer maps",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "13c6ad0038aa42f1c908ca1adecde9bebf9f2509"
     },
