@@ -121,7 +121,7 @@
         "description": "zink: also cache swapchain semaphores",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7399b2241f86bf6106bfb4fb3dacdea010debc59"
     },
