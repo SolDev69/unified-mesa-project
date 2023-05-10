@@ -1,5 +1,302 @@
 [
     {
+        "sha": "31e6d15801a9904089aa2913c8eb5a31b79c7dfc",
+        "description": "radv: advertise LINEAR filter support for multiplanar/subsampled",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7accfbffd83377a40f16e6f5e0a04d5a14683fad",
+        "description": "drirc: Set limit_trig_input_range option for Nier games",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0e466efe417d8d8a32e360231e587ecc11c2dc35",
+        "description": "v3d: apply proper clamping when setting up RT",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b5a458859f4c787cef75991c35fe3d8d1912e5ad",
+        "description": "v3d: upgrade V3D 4.1 to 4.2 version",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d95bff8e1ce36e9ceb940af3297db490a53725f7",
+        "description": "v3d: add per hw-version caller macro",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1e334e98188a8c98a07cdcf9b1640750e4c83b2a",
+        "description": "radv/rt: store stack_sizes per stage instead of per group",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f50a5a62bfe6569bc4f6d3500f3e0ad8d75d2152",
+        "description": "radv/rt: use vk_multialloc for radv_ray_tracing_pipeline",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dfa5fd480cfa89e143e32c1d12aabafebf9eccdc",
+        "description": "radv/rt: refactor radv_rt_pipeline_compile()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b314c2aae22792b4e4386e2f49578fe9b87cd66e",
+        "description": "radv/rt: unify radv_rt_pipeline_create() and radv_rt_pipeline_library_create()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1100f7dcd5e5d07ace8c3d20b848c43ab57ef7c6",
+        "description": "radv/rt: unify radv_ray_tracing_lib_pipeline and radv_ray_tracing_pipeline",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "97721f32ca5718b32d0e13ef337d298844db9193",
+        "description": "radv/rt: change base of radv_ray_tracing_lib_pipeline to radv_compute_pipeline",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fbc0e74bdacca3ae9ea4503d8b6e57fe486e4a0a",
+        "description": "anv: enable graphics pipeline libraries by default",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c97b1eb08a971f72e8b1319c39379832616f9733",
+        "description": "anv: put EXT_mesh_shader behind an environment variable",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e9f18f64b9ec56ed0e89a5baa41b4536585a8a90",
+        "description": "zink: also cache swapchain semaphores",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "7399b2241f86bf6106bfb4fb3dacdea010debc59"
+    },
+    {
+        "sha": "c6fd58802784c453ea40818bfe1af3bb6e28b8b1",
+        "description": "zink: block more flushes during unordered blits",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "89aa36359328ea48fa29be8dd439dd87043eaa03"
+    },
+    {
+        "sha": "2df7ee528c6f499a5d29210a335fb91c3bef4741",
+        "description": "zink: adjust bindless texel buffer handle before indexing",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "99ba529feed6f9917a44458a38acaf0b3d6d261d"
+    },
+    {
+        "sha": "8ef098a6008860cf6a10c51adecd4a5d0c5f4aa7",
+        "description": "zink: compare desc set to detect bindless vars in separate shaders",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "e3b746e3a31e350e9f0962717e49acba28efee30"
+    },
+    {
+        "sha": "2991a7c11f8cf4239753f0a3170b5cce99e66cec",
+        "description": "zink: bind bindless db set when updating separate shader db sets",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "e3b746e3a31e350e9f0962717e49acba28efee30"
+    },
+    {
+        "sha": "7428b41618b13c545beb92332c0bac2455064706",
+        "description": "zink: set debug callback on context",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "391cda41acec03a68dcff293fbdb8e781833ec4f",
+        "description": "zink: add perf_debug for \"interesting\" shader compiles",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "443e098f7aa7ed9e3ff3387452b51024a94950f2",
+        "description": "zink: make mesa_logw separate from perf_debug",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6098c3f9c07b5ba4066a4a2e162aba224c0f406f",
+        "description": "zink: add ZINK_DEBUG=nobgc",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0fb5f81ab64309dbf5d1e2f553604bf0ca3423d8",
+        "description": "zink: add ZINK_DEBUG=noopt",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4d39ff67519078482fc9f6953b9ecd0829771fa3",
+        "description": "vc4/ci: disable VC4 jobs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6d52f08a76b1e2c0bdfd0dd6ca8a443172aa9691",
+        "description": "dzn/ci: Remove 'exclude' for graphicsfuzz cases",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cd91387cadfd558347de47c0ca81f80dbd17494f",
+        "description": "dzn: Run nir_opt_remove_phis before nir_lower_returns",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ca5bb27641b6645136b9a73a8930aba6e1bc0728",
+        "description": "frontends/va/config: check for QVBR support when creating",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "30a6363c8f6ff2cde85831cac11bdf78cb1e15e0"
+    },
+    {
+        "sha": "fcdd3cf0ad84202f4ef41b055d3b36668ff6b642",
+        "description": "frontends/va/context: check min supported resolution when creating",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c987eed9cd7ccf7836eb18ad8950a035ae002bbc"
+    },
+    {
+        "sha": "55d2973bce64279f029b4c88a89b4e0bdcd93b6f",
+        "description": "frontends/va/config: add disable packed headers as valid config",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "306c6e12a59be20bad8838f33382975d379d7db4"
+    },
+    {
+        "sha": "acdd6a2a6c3882ef6fa3acf612f9d55eaf55583e",
+        "description": "radeonsi: set proper drm_amdgpu_cs_chunk_fence alignment",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "ae7e4d7619e0f9aad41aac5424b051f8826afba1"
+    },
+    {
+        "sha": "e1ab32237227805775d5eedc14c9b3d41031ce0d",
+        "description": "iris: Add function to return mmap mode for aux map",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "743bf9597ce44a45398bf30e92617b7c210afda9",
+        "description": "iris: Add function to return mmap mode for userptr bos",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9ad8466a45ae1ab6455517153e610153a43439c8",
+        "description": "iris: Add a function to return allocated bo mmap mode",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "57afa7c0b12d6d0c9013368853080dfea5b50d07",
         "description": "lavapipe: honor dst base array layer when resolving color attachments",
         "nominated": true,
