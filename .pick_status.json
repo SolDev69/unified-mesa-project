@@ -4162,7 +4162,7 @@
         "description": "radv: re-emit fragment shading rate state when PA_CL_VRS_CNTL changes",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
