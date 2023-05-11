@@ -3201,8 +3201,6 @@ flush_batch(struct zink_context *ctx, bool sync)
    if (ctx->clears_enabled)
       /* start rp to do all the clears */
       zink_batch_rp(ctx);
-   bool conditional_render_active = ctx->render_condition.active;
-   zink_stop_conditional_render(ctx);
    zink_batch_no_rp_safe(ctx);
    zink_end_batch(ctx, batch);
    ctx->deferred_fence = NULL;
@@ -3231,8 +3229,6 @@ flush_batch(struct zink_context *ctx, bool sync)
          VKCTX(CmdSetPatchControlPointsEXT)(ctx->batch.state->cmdbuf, ctx->gfx_pipeline_state.dyn_state2.vertices_per_patch);
          VKCTX(CmdSetPatchControlPointsEXT)(ctx->batch.state->barrier_cmdbuf, 1);
       }
-      if (conditional_render_active)
-         zink_start_conditional_render(ctx);
       reapply_color_write(ctx);
       update_layered_rendering_state(ctx);
       tc_renderpass_info_reset(&ctx->dynamic_fb.tc_info);
