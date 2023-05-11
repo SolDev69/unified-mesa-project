@@ -2533,7 +2533,7 @@
         "description": "zink: flag batch usage on swapchain images",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "dc8c9d20568360d6756dcd62610d818991f479d8"
     },
