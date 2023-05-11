@@ -1606,7 +1606,7 @@
         "description": "anv: put private binding BOs into execlists",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f9fa09ec92f68a5c05a7019bde6e620d25e8ba48"
     },
