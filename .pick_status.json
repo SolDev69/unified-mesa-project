@@ -364,7 +364,7 @@
         "description": "zink: also declare int size caps inline with signed int type usage",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "854fd242faf00bf68555dce10fb0ae98a3ab34c0"
     },
