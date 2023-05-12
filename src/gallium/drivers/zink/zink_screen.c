@@ -2391,6 +2391,12 @@ init_driver_workarounds(struct zink_screen *screen)
    default:
       break;
    }
+   /* EDS2 is only used with EDS1 */
+   if (!screen->info.have_EXT_extended_dynamic_state)
+      screen->info.have_EXT_extended_dynamic_state2 = false;
+   /* EDS3 is only used with EDS2 */
+   if (!screen->info.have_EXT_extended_dynamic_state2)
+      screen->info.have_EXT_extended_dynamic_state3 = false;
    /* EXT_vertex_input_dynamic_state is only used with EDS2 and above */
    if (!screen->info.have_EXT_extended_dynamic_state2)
       screen->info.have_EXT_vertex_input_dynamic_state = false;
