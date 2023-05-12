@@ -481,7 +481,7 @@
         "description": "zink: add special-casing for (not) reordering certain image barriers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "bf0af0f8edeed8e2e8c74c2a4c3f4baae75ead24"
     },
