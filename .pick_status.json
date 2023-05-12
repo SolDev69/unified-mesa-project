@@ -1525,7 +1525,7 @@
         "description": "vulkan/pipeline_cache: don't log warnings for client-invisible caches",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d3f06cf5ce0764b37a03a0f2bfbb109a4d75884d"
     },
