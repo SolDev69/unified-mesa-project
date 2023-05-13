@@ -2227,7 +2227,7 @@
         "description": "nir/lower_shader_calls: Remat derefs earlier",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "200e551cbb36c201b0083c6a6ba8930c9077a6e8"
     },
