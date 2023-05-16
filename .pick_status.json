@@ -2371,7 +2371,7 @@
         "description": "zink: Move the workaround before the EDS setting.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d5cf6f7d2f9f399b08bac00f06be0470b8e0efb6"
     },
