@@ -1435,7 +1435,7 @@
         "description": "mesa/main: Exit early when trying to create an unsupported context API",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "adbe8b6c17a76bb5ee0b924d927473f81c593eba"
     },
