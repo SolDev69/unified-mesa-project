@@ -1363,7 +1363,7 @@
         "description": "radv: fix a sync issue with primitives generated query and NGG/legacy",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
