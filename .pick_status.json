@@ -2083,7 +2083,7 @@
         "description": "mesa: Drop dead TGSI serialization prototypes.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7221cc7657998c131eff3156913331eb1ae5705b"
     },
