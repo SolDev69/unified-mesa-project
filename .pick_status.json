@@ -760,7 +760,7 @@
         "description": "mesa: fix a VBO buffer reference leak in _mesa_bind_vertex_buffer",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "03ba57c6c53214b19aa0fdb66c680f2cadc3bbd9"
     },
