@@ -2101,7 +2101,7 @@
         "description": "anv: Fix calculation of guardband clipping region.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "893fa30afed10394fdee266e0dc772ddd36dfde8"
     },
