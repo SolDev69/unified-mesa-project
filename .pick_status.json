@@ -1381,7 +1381,7 @@
         "description": "loader/dri3: temporarily work around a crash when front is NULL",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c65bde7b1e03ccb3dcc53bd3d8c1e5560449ddb6"
     },
