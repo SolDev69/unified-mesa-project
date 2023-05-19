@@ -2902,7 +2902,7 @@
         "description": "radeonsi: fix uses_instanceid for merged mono shader stage",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "894d92995cdcecfabf061cbacf65c194ea84338b"
     },
