@@ -4666,7 +4666,7 @@
         "description": "radv: do not use a pipe offset for aliased images",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1c065650260dadf9c9a981f156459c7f4ce0a007"
     },

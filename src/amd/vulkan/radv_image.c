@@ -1967,7 +1967,8 @@ radv_image_create(VkDevice _device, const struct radv_image_create_info *create_
 
    image->shareable = external_info;
    if (!vk_format_is_depth_or_stencil(format) && !image->shareable &&
-       !(image->vk.create_flags & VK_IMAGE_CREATE_SPARSE_ALIASED_BIT) &&
+       !(image->vk.create_flags & (VK_IMAGE_CREATE_SPARSE_ALIASED_BIT |
+                                   VK_IMAGE_CREATE_ALIAS_BIT)) &&
        pCreateInfo->tiling != VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT) {
       image->info.surf_index = &device->image_mrt_offset_counter;
    }
