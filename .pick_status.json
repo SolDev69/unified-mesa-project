@@ -2137,7 +2137,7 @@
         "description": "radeonsi: re-enable fp16_rtz for compute blits to fix PBO tests on gfx11",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "bcdde99675d2721e30c2cdda4c7c964dc69c1cda"
     },
