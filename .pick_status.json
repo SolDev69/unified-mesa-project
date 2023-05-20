@@ -715,7 +715,7 @@
         "description": "glthread: fix typo related to upload_vertices()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "68a926a15b7b3724a29c050b8595177a32fc67a1"
     },
