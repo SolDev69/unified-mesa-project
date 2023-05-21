@@ -679,7 +679,7 @@
         "description": "anv: fix push descriptor deferred surface state packing",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b49b18f0b7acb4c64a0a9fd2ee55aeea868e701d"
     },
