@@ -1867,7 +1867,7 @@
         "description": "virgl/video: Fix out-of-bounds access in fill_mpeg4_picture_desc()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6b5aecb19558200fd39fda46db08456ba7acc180"
     },
