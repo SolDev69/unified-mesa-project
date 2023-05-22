@@ -2065,7 +2065,7 @@
         "description": "r600: fix cayman_convert_border_color() swizzle behavior",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "923d635357f6f8600c72fd9c972c6ec0c0b700ac"
     },
