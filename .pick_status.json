@@ -175,7 +175,7 @@
         "description": "nir_opt_algebraic: Don't shrink 64-bit bitwise ops if pack_split is going to be lowered",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "368be8725557f03e028f453df523baa6eda50d5d"
     },
