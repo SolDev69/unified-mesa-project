@@ -1156,7 +1156,7 @@
         "description": "ac/nir: fix slots in clamping legacy colors",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7c41cdb81f564ef52404e5f313ccfe2d723896e6"
     },
