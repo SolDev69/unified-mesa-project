@@ -814,7 +814,7 @@
         "description": "zink: use the per-context track_renderpasses flag in more places",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "215beee16d9e075a63fd1afc62cc00b28aae1086"
     },
