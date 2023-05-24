@@ -2425,7 +2425,7 @@
         "description": "virgl: Fix IB upload when a start >0 is given",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0cf5d1f22620d67659bbd632a2400c3a6956a011"
     },
