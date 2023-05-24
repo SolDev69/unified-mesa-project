@@ -652,7 +652,7 @@
         "description": "dzn: Partial revert of 8887852d",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8887852d208821b48c0b6d844e8224957fdcdef5"
     },
