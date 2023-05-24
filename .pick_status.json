@@ -625,7 +625,7 @@
         "description": "winsys/radeon: set has_image_opcodes to unbreak gfx6-7",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "96913bbf3eba74e2bf509fe7196be073eaf2ea60"
     },
