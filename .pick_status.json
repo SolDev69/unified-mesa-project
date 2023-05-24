@@ -211,7 +211,7 @@
         "description": "rusticl: bump rust req to 1.60",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
