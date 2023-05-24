@@ -1903,7 +1903,7 @@
         "description": "frontends/va: Fix memory leak of decrypt_key",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "deb7dc82f626e92525d01829d88f0ac348de03b8"
     },
