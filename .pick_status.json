@@ -634,7 +634,7 @@
         "description": "dzn: Fix src/dest confusion for some non-bindless descriptor copies",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5d2b4ee4f493bec3ddd510a742902dad87da5dde"
     },
