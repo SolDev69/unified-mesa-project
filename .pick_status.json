@@ -616,7 +616,7 @@
         "description": "winsys/radeon: fix the scratch buffer on gfx6-7",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1bf39b1f9d115d69aa7b192beb7cde5eea31dffe"
     },
