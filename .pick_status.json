@@ -1678,7 +1678,7 @@
         "description": "mesa: fix refcnt imbalance related to _mesa_delete_semaphore_object()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7b6cd912a59a63e8d479970137b706cb38bede02"
     },
