@@ -1660,7 +1660,7 @@
         "description": "radv/video: add missing offset to the dpb binding.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3e2c768aa860f96074df73cd3171960e76f5c312"
     },
