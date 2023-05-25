@@ -1669,7 +1669,7 @@
         "description": "radv/video: fix h264/265 dpb usage.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1693c03a39630a43e179b84b6cb4dadba72721c0"
     },
