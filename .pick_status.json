@@ -922,7 +922,7 @@
         "description": "aco: fix alignment check in emit_load",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "542733dbbf7ae49e2df81da6dde31aa2dcd9afe8"
     },
