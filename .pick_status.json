@@ -184,7 +184,7 @@
         "description": "mesa/st: fix buffer overflow related to set_program_string()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0b196b40a3ae88b822fc1ec98b3461469c7dec98"
     },
