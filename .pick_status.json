@@ -1624,7 +1624,7 @@
         "description": "radv/video: fix physical device format property count.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "db62c38091a3b244b1d720a6aa47bf1d1855db55"
     },
