@@ -958,7 +958,7 @@
         "description": "zink: compute correct location for line-smooth gs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "edecb66b01849effdf859f3cfaeebb9af5e1c1da"
     },
