@@ -229,7 +229,7 @@
         "description": "intel: Fix support of kernel versions without DRM_I915_QUERY_ENGINE_INFO",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a364f23a6cfa28e1843ef1e64dce56b4cef5a71e"
     },
