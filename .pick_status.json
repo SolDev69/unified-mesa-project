@@ -643,7 +643,7 @@
         "description": "zink: fix layout(local_size_variable) for vk1.3+",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "99bd1eaf3d20184abaff91e63d8aacded79d4d74"
     },
