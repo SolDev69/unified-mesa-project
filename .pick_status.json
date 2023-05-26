@@ -949,7 +949,7 @@
         "description": "zink: do not lower line-smooth for non-lines",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d80a35a7f760f8ac9a10a1f715859f4db37f883e"
     },
