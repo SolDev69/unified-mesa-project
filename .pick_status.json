@@ -2263,7 +2263,7 @@
         "description": "nouveau: fix nouveau_heap_destroy() memory leak",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "67635a0a713e54939f1f72ba8db2b3099988a925"
     },
