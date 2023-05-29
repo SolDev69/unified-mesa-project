@@ -121,7 +121,7 @@
         "description": "freedreno/a6xx: Fix memory leak on error path.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "de3b34df97326b793fac2152eedbd25a0c2d0812"
     },
