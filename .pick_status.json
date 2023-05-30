@@ -12334,7 +12334,7 @@
         "description": "freedreno/drm: Don't try to export suballoc bo",
         "nominated": false,
         "nomination_type": null,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
