@@ -445,7 +445,7 @@
         "description": "radv: fix msaa feedback loop without tc-compat cmask",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a38de4c011da73ae64d00565c6b4710ed1b3230e"
     },
