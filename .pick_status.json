@@ -3325,7 +3325,7 @@
         "description": "mesa: fix glBitmap in display lists when width <= 0 || height <= 0",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "bb860f63f6df60a00c5a97df4cb98a2e0850d3aa"
     },
