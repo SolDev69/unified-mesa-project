@@ -3487,7 +3487,7 @@
         "description": "r600/sfn: Don't rewrite TESS_EVAL inner tess level outputs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5cd3e395037250946ba2519600836341df02c8ca"
     },
