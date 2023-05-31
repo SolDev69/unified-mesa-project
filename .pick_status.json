@@ -2740,7 +2740,7 @@
         "description": "intel/compiler: Fix a fallthrough in components_read() for atomics",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "284f0c9a57e17b14c044c04c7cf9ae77d6694492"
     },
