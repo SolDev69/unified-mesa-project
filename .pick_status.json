@@ -1318,7 +1318,7 @@
         "description": "mapi: Fixes check_table.cpp for DrawArraysInstancedARB and DrawElementsInstancedARB",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5679ef99b82b7ae8803b91f6dcde19e53c223c5e"
     },
