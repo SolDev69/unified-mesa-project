@@ -1822,7 +1822,7 @@
         "description": "ci/amd: previously missed raven flake",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "1fa1c285fcadec60e93382d53b6723728ef05bbb"
     },
