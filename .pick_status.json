@@ -589,7 +589,7 @@
         "description": "radeonsi: don't use SET_SH_REG_INDEX on gfx7-9",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ccaaf8fe04c956d9f16f98b7f7fa69a2526283bc"
     },
