@@ -1102,7 +1102,7 @@
         "description": "vulkan/wsi: Remove duplicate NULL check",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "eadc64ab24842f478b4d31396c9b2900fc1d3361"
     },
