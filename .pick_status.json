@@ -1624,7 +1624,7 @@
         "description": "nv50: Fix memory leak in error path",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a1571333804d3267cc237419d18a587434750716"
     },
