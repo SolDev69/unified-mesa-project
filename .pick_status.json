@@ -733,7 +733,7 @@
         "description": "etnaviv: nir: do not call nir_lower_idiv(..) unconditionally",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f532202f2d55b9ac475b7e3f8c96a4dd23489299"
     },
