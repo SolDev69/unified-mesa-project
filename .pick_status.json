@@ -985,7 +985,7 @@
         "description": "radv: initialize the device cache UUID even if on-disk cache is disabled",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
