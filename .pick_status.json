@@ -2272,7 +2272,7 @@
         "description": "anv: split ANV_PIPE_RENDER_TARGET_BUFFER_WRITES for finer grained flushing",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3c4c18341aafbdd0c24665a56d0af32b1e4dc981"
     },
