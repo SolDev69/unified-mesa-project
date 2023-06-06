@@ -751,7 +751,7 @@
         "description": "radeonsi: fix RB+ and gfx11 issues with framebuffer state",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9fecac091f3159eb50a3e3dea2312218bb87d8c1"
     },
