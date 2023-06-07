@@ -229,7 +229,7 @@
         "description": "u_format: Use memcpy to avoid unaligned accesses",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "45ae4434b5bd779e74d12e5b63fcf91d88f4cb28"
     },
