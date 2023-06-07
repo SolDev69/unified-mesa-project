@@ -3262,7 +3262,7 @@
         "description": "util: fix gc_alloc_size alignment",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "69a9b343e8da235d5aa2e50556b73e39c0bd1e9e"
     },
