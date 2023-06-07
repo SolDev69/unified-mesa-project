@@ -5242,7 +5242,7 @@
         "description": "tu/kgsl: Fix memory overwrite with vkFlushMappedMemoryRanges when more than 1 range",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5a594109623fff43fcd3b874b160c711e81bf55d"
     },
