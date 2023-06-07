@@ -8590,7 +8590,7 @@
         "description": "tu: Fix missing unlock",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c20139c2922276238c12dc6a6cf0fbbc39e9d732"
     },
