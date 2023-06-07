@@ -193,7 +193,7 @@
         "description": "radv: fix non-square compressed image copy on gfx9",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "35f053ba8cd11a16077a79ebf5d3952f6112b096"
     },
