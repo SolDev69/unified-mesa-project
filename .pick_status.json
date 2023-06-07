@@ -2623,7 +2623,7 @@
         "description": "frontends/va: Fix missing unlock",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "af695149e96bf276b52ff3715076ddc847c6b959"
     },
