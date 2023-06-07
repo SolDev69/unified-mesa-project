@@ -1,5 +1,14 @@
 [
     {
+        "sha": "476022cbe1d1a06e43aacd81448a7a22c6331b1f",
+        "description": "zink: also disable bg compile for compute with nobgc",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "b222b34e789812301f4f7b79911f9edc599937e2",
         "description": "ci/etnaviv: Update some xfails common between the last 3 nightly runs.",
         "nominated": false,
