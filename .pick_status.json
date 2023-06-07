@@ -58,7 +58,7 @@
         "description": "vc4: mark buffers as initialized at vc4_texture_subdata",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
