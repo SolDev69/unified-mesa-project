@@ -238,7 +238,7 @@
         "description": "Revert \"gallium/u_threaded: buffer sharedness tracking\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8f159a8576efbb7bb3755d215a54b87c4c99a0d2"
     },
