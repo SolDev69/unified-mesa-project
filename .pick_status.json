@@ -3271,7 +3271,7 @@
         "description": "clc: relax spec constant validation",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a699844ffba20fb0bfe7103eb70938bac604748e"
     },
