@@ -3391,6 +3391,7 @@ static VkResult pvr_cmd_buffer_upload_patched_desc_set(
    struct pvr_device *device = cmd_buffer->device;
    struct pvr_bo *patched_desc_set_bo;
    uint32_t *mem_ptr;
+   uint32_t desc_idx_offset = 0;
    VkResult result;
 
    assert(desc_set->layout->dynamic_buffer_count > 0);
@@ -3465,7 +3466,7 @@ static VkResult pvr_cmd_buffer_upload_patched_desc_set(
             /* clang-format on */
             const pvr_dev_addr_t addr =
                PVR_DEV_ADDR_OFFSET(descriptors[desc_idx].buffer_dev_addr,
-                                   dynamic_offsets[desc_idx]);
+                                   dynamic_offsets[desc_idx + desc_idx_offset]);
             const VkDeviceSize range =
                MIN2(descriptors[desc_idx].buffer_desc_range,
                     descriptors[desc_idx].buffer_whole_range -
@@ -3507,6 +3508,8 @@ static VkResult pvr_cmd_buffer_upload_patched_desc_set(
                    size_info->secondary * sizeof(uint32_t));
          }
       }
+
+      desc_idx_offset += binding->descriptor_count;
    }
 
    pvr_bo_cpu_unmap(device, patched_desc_set_bo);
