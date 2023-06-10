@@ -886,7 +886,7 @@
         "description": "radeonsi: don't convert L8A8 to R8A8 when blitting via compute to fix gfx7",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0482ff31588d5c6f00b52edd1dea3bb512d6eee9"
     },
