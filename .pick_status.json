@@ -2317,7 +2317,7 @@
         "description": "aco: Mark exec write used when it writes other registers.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0211e66f65522caa1f6855b937ae4fc18af0c937"
     },
