@@ -2326,7 +2326,7 @@
         "description": "rusticl/event: ensure even status is updated in order",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "47a80d7ff4f966e3839640efd5f9d75e36af8906"
     },
