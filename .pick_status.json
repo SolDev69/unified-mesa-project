@@ -2308,7 +2308,7 @@
         "description": "aco: Reset scratch_rsrc on blocks without predecessors",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3d4f6a00b8e8710bbc265f8a5e3050d0550e1491"
     },
