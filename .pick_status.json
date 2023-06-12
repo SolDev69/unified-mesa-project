@@ -391,7 +391,7 @@
         "description": "radv: reset some dynamic states when the fragment shader stage is unbound",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
