@@ -2254,7 +2254,7 @@
         "description": "Revert \"glx: Remove pointless GLX_INTEL_swap_event paranoia\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "19c57ea3bf6d77cf6f07f2a56e781f55b0e6013b"
     },
