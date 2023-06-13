@@ -112,7 +112,7 @@
         "description": "util/blitter: fix util_blitter_clear_buffer() refcnt imbalance",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5f566faa46078500d0d70f510d3ce3e75d1f6e83"
     },
