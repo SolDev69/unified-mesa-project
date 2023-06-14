@@ -895,7 +895,7 @@
         "description": "radv/amdgpu: fix dumping cs with RADV_DEBUG=noibs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "50e6b16855d5f72c3a8e16bc131d6d88b5cddfff"
     },
