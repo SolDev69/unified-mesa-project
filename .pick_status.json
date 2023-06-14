@@ -1417,7 +1417,7 @@
         "description": "lavapipe: correctly update shader object per-stage push constant sizes",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8b3022c918086cd23b7f8a9e4dd61d1b074fef87"
     },
