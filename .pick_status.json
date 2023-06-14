@@ -1435,7 +1435,7 @@
         "description": "lavapipe: more fixes for sample shading",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "cc9e958053183a9507e40be02cd7decfef1c45d0"
     },
