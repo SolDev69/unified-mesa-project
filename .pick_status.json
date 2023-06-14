@@ -337,7 +337,7 @@
         "description": "ac: fix PIPE_FORMAT_R11G11B10_FLOAT DST_SEL_W",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6a2ada93b49b2317e25d433da1548843a14b25d7"
     },
