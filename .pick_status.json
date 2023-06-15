@@ -1930,7 +1930,7 @@
         "description": "pvr: Fix barrier insertion on merged subpasses",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6d672e0336836bdbf3d444f7febc74f5c91e7de1"
     },
