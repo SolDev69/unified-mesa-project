@@ -1336,7 +1336,7 @@
         "description": "virgl: Fix stack overflow in virgl_bind_sampler_states",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "63c4c559cbce22102bdac695db1cb1bf229f68c3"
     },
