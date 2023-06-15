@@ -1939,7 +1939,7 @@
         "description": "pvr: Fix seg fault on empty descriptor set",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ce67f5ac944bdc6ebf27e3b115706bec5b63f002"
     },
