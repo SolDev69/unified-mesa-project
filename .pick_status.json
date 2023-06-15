@@ -1462,7 +1462,7 @@
         "description": "meson: Remove reference to removed SWR driver",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e2de00876a7033b6923f912af8d2b0bbd100e113"
     },
