@@ -607,7 +607,7 @@
         "description": "r600: Split tex CF only if written component is read",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
