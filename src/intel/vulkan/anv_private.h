@@ -4057,6 +4057,9 @@ struct anv_image_create_info {
 
    /** An opt-in stride, should be 0 for implicit layouts */
    uint32_t stride;
+
+   /** Whether to allocate private binding */
+   bool no_private_binding_alloc;
 };
 
 VkResult anv_image_init(struct anv_device *device, struct anv_image *image,

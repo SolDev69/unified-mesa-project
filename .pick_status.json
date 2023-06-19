@@ -337,7 +337,7 @@
         "description": "anv: avoid private buffer allocations in vkGetDeviceImageMemoryRequirementsKHR",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4075dd16ab8ceb1abd852e685118e88a8c4cd749"
     },
