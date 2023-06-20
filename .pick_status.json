@@ -1147,7 +1147,7 @@
         "description": "venus: Fix detection of push descriptor set",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "91966f2eff17cc7c95ca8a89ac40d5d211e5b407"
     },
