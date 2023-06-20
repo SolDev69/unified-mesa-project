@@ -1075,7 +1075,7 @@
         "description": "egl: return correct error for EGL_KHR_image_pixmap",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "a1c4a8a3c855d52fbfef10023b9a8f116e163a97"
     },
