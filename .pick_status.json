@@ -94,7 +94,7 @@
         "description": "radv/video: drop incorrect defines for uapi ones.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9477f117f4d45445dd8d3ccc2497b5e4dfb48bd6"
     },
