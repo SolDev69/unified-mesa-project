@@ -1,5 +1,122 @@
 [
     {
+        "sha": "b687cbe36c12081921e03c8633fedea334642105",
+        "description": "isl: add surface creation reporting mechanism",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "750744143021f3925a6e35b0a1502ef4821c8b6b",
+        "description": "isl: assert on gfx8 condition that should not be met",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "31cc7a1887678dbc8f250559d87b6aa8e4c69d2e",
+        "description": "isl: assert on gfx7 condition that should not be met",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4616aa2fac29100be99afe0ff382e442f152d421",
+        "description": "isl: assert on gfx6 condition that should not be met",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7cf7ea2500232ac3ccf6ee2ee98a6188a784bfc0",
+        "description": "zink: radv vangogh ci updates",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1ca87a300dd0206bf802e30e9c3eebcbc8864361",
+        "description": "zink: always clamp NUM_QUERIES to 500",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0e32de0aed7279b680d0604ac45f1d1663e7c99d",
+        "description": "zink: recache present semaphores",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6b204c616223b2742e120218676f9d5575dd4cc0",
+        "description": "zink: acquire persistently bound swapchain descriptors before setting usage",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "98031749421ae328d5b38a3931b5b507ee0838b6",
+        "description": "zink: fix ubo array sizing in ntv",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "240b419c03aaf050aa06a4b7d308a633f414ea0f",
+        "description": "vulkan/video: consider removed bits when calculating the size of comsumed data.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a28994f73c791a909c92440d9cbc7d5dac57481d",
+        "description": "util/rbsp: keep track of removed bits for the emulation  prevention three bytes.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6f2e260d2bf8e47cabfa9cf844125255ad8da4a6",
+        "description": "vulkan/video: move parsing longterm rps in h265 slice parsing.",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "efdcacb230c7003685c0de9ef6bf9c72fae4a1db"
+    },
+    {
+        "sha": "b10631865d85b59b6b3acfbc1e2b5aa52db5d6cb",
+        "description": "vulkan/video: adds more conditions for setting loop_filter_across_slices_enable in h265 slice parsing.",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "efdcacb230c7003685c0de9ef6bf9c72fae4a1db"
+    },
+    {
         "sha": "48b32124c61f35ef39cee7e32ff7795dd49e0690",
         "description": "radv/rt: Store the prolog outside the shaders array",
         "nominated": false,
