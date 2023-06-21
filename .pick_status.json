@@ -1885,7 +1885,7 @@
         "description": "asahi: drop unnecessary DRM_FORMAT_MOD_{LINEAR,INVALID} fallbacks",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "afe134a49c5ef79ca6125f0263331b440b9c0e49"
     },
