@@ -6250,7 +6250,7 @@
         "description": "zink: fix assert for inline uniform invalidation with generated gs bound",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
