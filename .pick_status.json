@@ -1579,7 +1579,7 @@
         "description": "anv: Only expose video decode bits with KHR_video_decode_queue",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "93614817806b7a58b1dbbd0229d1a9c52df58746"
     },

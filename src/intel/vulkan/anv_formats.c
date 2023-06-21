@@ -556,7 +556,8 @@ anv_get_image_format_features2(const struct anv_physical_device *physical_device
 
    assert(aspects & VK_IMAGE_ASPECT_ANY_COLOR_BIT_ANV);
 
-   if (vk_format == VK_FORMAT_G8_B8R8_2PLANE_420_UNORM) {
+   if (physical_device->video_decode_enabled &&
+       vk_format == VK_FORMAT_G8_B8R8_2PLANE_420_UNORM) {
       flags |= VK_FORMAT_FEATURE_2_VIDEO_DECODE_OUTPUT_BIT_KHR |
                VK_FORMAT_FEATURE_2_VIDEO_DECODE_DPB_BIT_KHR;
    }
