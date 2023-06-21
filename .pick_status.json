@@ -1,5 +1,383 @@
 [
     {
+        "sha": "48b32124c61f35ef39cee7e32ff7795dd49e0690",
+        "description": "radv/rt: Store the prolog outside the shaders array",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ebe4e337fda951e01b87242a3d960c6d882b0fcc",
+        "description": "radv: Use _mesa_shader_stage_to_string for executable name",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "334a20ae28a140c26887d65a1856b7b5916ae394",
+        "description": "radv: Implement executable properties for ray tracing stages",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "bf5b74c3baeda7f29ea2be6595705a64bd7daea3",
+        "description": "radv: Use get_shader_from_executable_index for executable properties",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8a5c4b3ebf8f499a862642618e9e3be9a671f46c",
+        "description": "radv: Adjust the traversal shader description",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "eeae2fb5c4cbcfc8de7efec22295e5b3b4511110",
+        "description": "radv: Move the shader type to radv_shader_info",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "12d7aaf2b825fe49277b84a605733e8fc39e241d",
+        "description": "intel/compiler: add more validation for acc register usage",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "836990b6513c74160ea50a4ecd59552fc9ac970f",
+        "description": "radv: enable NV_device_generated_commands on GFX6",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a9c836626100bba2ccdcf6bca8d9a8aa71095f45",
+        "description": "radv: implement padding cmdbuffer for DGC on GFX6",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "65249c6f0a76bc671dbb216b4aed851ce99f00c9",
+        "description": "util: Fixes prototype of threads_timespec_compare",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "45bd24708a91420f8ea37c9d185b37af055756d9"
+    },
+    {
+        "sha": "146adbd2f49c2e25dc10a0cb388c3872c313d710",
+        "description": "radv/video: drop incorrect defines for uapi ones.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "9477f117f4d45445dd8d3ccc2497b5e4dfb48bd6"
+    },
+    {
+        "sha": "38f941c8a85b8bed4e955dda8b9a6e890cef24ec",
+        "description": "intel/stub_gpu: Don't run program again after using GDB",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c56dd678e4827a0d32f693d04f451ac45c890e82"
+    },
+    {
+        "sha": "23c003b88c54e00436b4e2684e6227e79538cf5a",
+        "description": "util/blitter: fix util_blitter_clear_buffer() refcnt imbalance",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "5f566faa46078500d0d70f510d3ce3e75d1f6e83"
+    },
+    {
+        "sha": "3d22bcb7903d168e1c79252b283adbad4124e8bb",
+        "description": "zink: only retry bo allocation after reclaim if reclaims actually happened",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d4757ea67e527fa4537b543aba07bb44073979b6",
+        "description": "aux/pipebuffer: add a return to pb_cache_release_all_buffers()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d065304367140c4a855fbbeccb1896ba84edccfc",
+        "description": "aux/pipebuffer: add a return to pb_slabs_reclaim()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fde8bf7b7f57a20f7355f67f840f7c3a2a9eb49f",
+        "description": "intel/compiler: Respect NIR_DEBUG_PRINT_INTERNAL flag",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "af9be8c024a34332964f69ce7629550e668222ef",
+        "description": "nir/print: Print whether the shader is internal or not",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "880a8bb943f24b79db7f27eddc7c5d15aee56df9",
+        "description": "rusticl/memory: fix clippy errors",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f1f01aaef53cd6a9593dade1e2fedcacbc2e45c2",
+        "description": "aco/gfx11: schedule for VMEM store clauses",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f837fec2134be7717108defcecdef47d0802bb25",
+        "description": "aco/gfx11: use s_clause with stores",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0c0143a4c0477ce092bb4cd3ab1667e057cbb5e7",
+        "description": "aco: don't try to form load+store clauses",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "414576aad54da8ec9df5f64ddd40f2f819d4dded",
+        "description": "zink: fix anv ci flake wildcarding",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c15b2491ec064d8bcb6252b9c35fc0c6667ecaed",
+        "description": "zink: ZINK_HEAP_HOST_VISIBLE_CACHED -> ZINK_HEAP_HOST_VISIBLE_COHERENT_CACHED",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7a169254c510f51eb3fbf7f5bcd642e23520d492",
+        "description": "zink: add COHERENT requirement for CACHED memory",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "59a72570b66ad7c4fd953e18e18a9b09b1a7ae7e",
+        "description": "compiler: Move spirv into a module of its own",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2af68d157b3b9e6bd3b6777eefda5d77059c34b1",
+        "description": "isl: Add and use size and alignment calculators",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "68f7c5381426b7e76ce3632631df602419d38e40",
+        "description": "aco/gfx10+: use v_cndmask with literal for reduction identity",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "71d30bcede5df1450bf4a1c018d241a94482ba16",
+        "description": "aco: combine scalar mul+pk_add to pk_fma",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6db61d0dc07173a276c2d6c487791774afc072ae",
+        "description": "aco: use uses helpers for pk_fma opt",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "532407094a0bb0d2ff65abe8033efefe29c6c218",
+        "description": "radv: use wave32 for small workgroups",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b765a27d73b4b2a36e171d699c467f81af0a05fc",
+        "description": "radv: refactor CS subgroup size determination",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "41d8837e89c3ef632151a50df4b7078ff7d6d2c4",
+        "description": "radeonsi/vcn: update luma and chroma size",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1359e806f25ea4b25be03821e356881eb528ff24",
+        "description": "radv: advertise VK_EXT_depth_bias_control",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "266b2cfe5bf3feda16747c50c1638fb5a0426958",
+        "description": "radv: implement VK_EXT_depth_bias_control",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0432a748ee077330afcb512b7b81cbf25a8701e6",
+        "description": "vulkan/runtime: call CmdSetDepthBias2EXT() from CmdSetDepthBias()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ae7d904a73b57f6f019346b3926cde5263bff787",
+        "description": "r600/sfn: Implement source mod optimization in backend",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "da92733d5a9d39c02d08a0c97ea29a0fdc96b74c",
+        "description": "r600/sfn: add source and dest mod info to opcode table",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2f6ded1098ade0b19c64a84653de843c4155f17b",
+        "description": "r600/sfn: allow source mods for per source with multi-slot ops",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0ff3c4bef21e6768a53610337c39d1e306b3869e",
+        "description": "r600/sfn: drop use of nir source mods",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "47152b6c09ba6b467b94b8f105744110fa734027",
+        "description": "r600/sfn: Fix typo",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "bd93d6b2fba4a9e78d12fc9c6cd2df4d2216dfbe",
+        "description": "virgl: don't allow vertex input arrays on GLES hosts",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "a2d40c09b72374db5d2dd4115c1ea51b2543f515",
         "description": "zink, drirc: Add Borderlands 2 workaround to fix spir-v 1.6 translated discard",
         "nominated": false,
