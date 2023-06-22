@@ -3766,7 +3766,7 @@
         "description": "radeonsi: fix refcnt imbalance related to util_blitter_save_fragment_constant_buffer_slot()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "03bc7503d471dd2d2795a8f18a7212e98209a051"
     },
