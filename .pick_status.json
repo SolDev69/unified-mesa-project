@@ -3496,7 +3496,7 @@
         "description": "vbo: correctly restore _VaryingInputs for display list fast path",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3a294ff01fb9d1d8b4f984a364ed7ef469624c49"
     },
