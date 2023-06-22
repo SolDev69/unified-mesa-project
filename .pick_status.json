@@ -238,7 +238,7 @@
         "description": "nir/lower_bool_to_int32: Fix progress reporting",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6a29cb2654ff059dcb59e3fcaa0bcc982656609d"
     },
