@@ -4018,7 +4018,7 @@
         "description": "renderonly: Fix potential NULL deref in the error path",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ad4d7ca8332488be8a75aff001f00306a9f6402e"
     },
