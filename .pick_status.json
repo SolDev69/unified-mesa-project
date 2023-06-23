@@ -4000,7 +4000,7 @@
         "description": "winsys/panfrost: Make sure we reset scanout on error in create_kms_dumb_buffer_for_resource()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ad4d7ca8332488be8a75aff001f00306a9f6402e"
     },
