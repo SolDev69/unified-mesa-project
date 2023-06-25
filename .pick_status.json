@@ -2929,7 +2929,7 @@
         "description": "r600: Pre-EG  - Set wrap texture modes to repeat when seemless cube is used",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "bf3027c3916ad5be172c22851e7172671709a9bc"
     },
