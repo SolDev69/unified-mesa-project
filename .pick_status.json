@@ -1,5 +1,590 @@
 [
     {
+        "sha": "f9e6d35f65c6c5913d54ba5306af391a8701a68a",
+        "description": "radv: Enable VK_EXT_fragment_shader_interlock",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8a8f2edd505da5a8b58e04822b77d89db04c8df6",
+        "description": "zink/ci: Add broken fragment shader interlock test to RADV flakes",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ec0778f59ee4a57bbe1e782e9fff4c1aabe966b3",
+        "description": "radv: Disable VRS forcing with Primitive Ordered Pixel Shading",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "787a5532625004ec83c6d5ee4ed10d7de9d1392f",
+        "description": "radv: Apply the POPS missed overlap hardware bug workaround",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "647952c8e31babd980f6feaaf2ee5cfe70ec72e3",
+        "description": "ac/gpu_info: Check whether the device has the POPS missed overlap bug",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3831860b2019941b9449095777738cd8f959a49c",
+        "description": "radv: Handle Primitive Ordered Pixel Shading in DB_SHADER_CONTROL",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "37e325fe15b3e5f42bcc7e9a5f904ce54e90e9df",
+        "description": "radv: Enable the null export workaround with POPS",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7eabc5d6fc08b0be9949289ba4e0227f3d33b74e",
+        "description": "radv: Enable POPS collision wave ID shader argument",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "50e680d05a97cdf27989ac7fecf8f3584fe02376",
+        "description": "radv: Declare POPS collision wave ID shader argument",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1812819e6693e0ca04af27bad0d0b350ecad3e9d",
+        "description": "radv: Ensure 1x1 shading rate on GFX10.3 with interlock execution mode",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "08c582ea6968b81aae08352188fb1f1d0d13d04d",
+        "description": "radv: Detect the use of Primitive Ordered Pixel Shading",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5449a2c98840254f07e46da2553a503cbd3dc92e",
+        "description": "radv: Remove unconditional POPS_DRAIN_PS_ON_OVERLAP setting",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "266ad83acd164a7dae5b29a727fd223381d60d20",
+        "description": "radeonsi: Remove unconditional POPS_DRAIN_PS_ON_OVERLAP setting",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dda425df098d1ef2c00532fafedcbcf8e80bbdd7",
+        "description": "aco: Implement fragment shader interlock intrinsics",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e0f4b52559942bb5a1d1b65e5544a2ec2265d227",
+        "description": "aco: Add Primitive Ordered Pixel Shading waitcnt rules",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a87628cd08860ae8e1e368c50e36f4bf04942531",
+        "description": "aco: Send MSG_ORDERED_PS_DONE where necessary",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2194e8bd82c1bcbcc2002e7d8a03e831c31d870a",
+        "description": "aco: Add Primitive Ordered Pixel Shading scheduling rules",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6082e126ebf157adfbc4b4295ff59e6da6a99a8e",
+        "description": "aco: Skip waitcnt insertion in the discard early exit block",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f8e744f07f1aa5dd2463b5912dc0a6eb83da4d8b",
+        "description": "aco: Add Primitive Ordered Pixel Shading pseudo-instructions",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "94d2888da225c4419dc65cbcf5755aaf3eb21caf",
+        "description": "aco: Add s_wait_event argument bit definitions",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b892f31e4d728acb87f48d27dce02e2860d75945",
+        "description": "ac: Define POPS collision wave ID argument SGPR",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "308a5ea43afeb2373bd4bb43a59e3ce74e264c3a",
+        "description": "aco: Support pops_exiting_wave_id PhysReg usage",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "90c88f5933ea71e57fd0741a3a733a9a8735295e",
+        "description": "ac/nir: Support Primitive Ordered Pixel Shading in lower_ps",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "365d342ee6e89973e94bb3bef594859bccd1c808",
+        "description": "docs/amd: Document Primitive Ordered Pixel Shading",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fadcd8d371a027e881cc443eabbbda9d5349be03",
+        "description": "gallivm: Use NIR_PASS macros",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6689c678fe50647c5e3f85b9a6d6c4cc640e473d",
+        "description": "nir/lower_locals_to_regs: Add bool bitsize knob",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5c8f21412f240c5197ee12293eedfba7307627e1",
+        "description": "nir/lower_bool_to_int32: Fix progress reporting",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "6a29cb2654ff059dcb59e3fcaa0bcc982656609d"
+    },
+    {
+        "sha": "8887be6206586d5fe048489ce7cb8e00cc31a7a0",
+        "description": "rusticl/api: Wire up CL_DEVICE_PROFILING_TIMER_RESOLUTION",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1bb523111b839628c623f81a46eaae56d24dc3a9",
+        "description": "rusticl/api: Implement get_{device_and_}host_timer",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2a41b1869f142d871a1e60e3171aa5f19106b422",
+        "description": "rusticl/device: Stash timestamp availability",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "748a1b357d1a6b69c8e2000062b0aed9368f5999",
+        "description": "rusticl/screen: Wrap get_timestamp",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9486b9e7857766fe0a5c984bb3320be5060ab7b8",
+        "description": "draw: use unsigned instead of uint",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "65591a3b25aaf4adda3adbba666414091c792e6a",
+        "description": "draw: match type of pipe_draw_start_count_bias::count",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b108e47091e70c199c9d0c55e52e3a2607fc6d1f",
+        "description": "cso: use unsigned instead of uint",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fda6cad85eff13d8af667f1d19dd4a97fdc27b60",
+        "description": "draw: use stdint.h types",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f4bd2d35cb21fe1d195fb1917a587ba768b4e2ca",
+        "description": "draw: track vertices and vertex_ptr as byte-pointers",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ed4bda804485515e9f3ddece1b318da8edeff49e",
+        "description": "draw: use enum for primitive-type",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1569507e265df05a76e252864c151687e5437093",
+        "description": "draw: use uint32_t instead of uint",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "57abc7d0379199a75e8721845c8dbc689bf0db3f",
+        "description": "draw: use enum for tgsi-semantic",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4844809edbeed44337b4557749c881d47ae5b07f",
+        "description": "cso: use enum for render-conditions",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "82e2802b7d69c4b64ba40868466aaf23630d949c",
+        "description": "radv/amdgpu: add a helper to get a new IB",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "148f42be1da84075be13f04658ca6cdd8ace13a9",
+        "description": "radv/amdgpu: rename old_ib_buffers to ib_buffers",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d74de6506922b71fc2f7435a7e9735e0ab0393c6",
+        "description": "radv/amdgpu: use cs_finalize() when growing a CS",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "437456b47c222270da850362d027822ac3da17dc",
+        "description": "radv/amdgpu: use the array of IB buffers for the chained IB path",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "81e308df72ce6dd7991e6a4dc542bb5848798cb7",
+        "description": "radv/amdgpu: do not set the IB size when ending a CS with RADV_DEBUG=noibs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "df0c742543d7fd256690f7757cd0d2fc6d62aeb5",
+        "description": "radv/amdgpu: rework growing a CS with the chained IB path slightly",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c11a62a7b05a6847d2126911cb0b0f127f5bc2ef",
+        "description": "radv/amdgpu: use the correct IB size when growing a CS with RADV_DEBUG=noibs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "91143f45b85d625261bf6af1dd3546a0f47439ab",
+        "description": "pvr: Advance entry pointer in pvr_setup_vertex_buffers()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "bc2828a436ada4b1264cb92fe2d50c8b833d83be",
+        "description": "compiler: Allow the explicit_stride of aoa types to be zero",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9f4299d6b24a206b059782df1cd40d233c49dcbb",
+        "description": "anv: fix to set predicted weight tables correctly.",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "8d519eb5f5947800279e4c02bf7aa79b0b65cd17"
+    },
+    {
+        "sha": "b8dc7675f27a3851403c3306a09b345c6a47aca5",
+        "description": "intel/genxml: changes the type for predicted weight to unsigned.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e2f95ad296d665891cf455030094e1e9d20d4b43",
+        "description": "vulkan/video: keep delta weight and offsets of predicted weight tables in h265 slice parsing",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c421ecea56e3587d197fd860952eaad72f52e202",
+        "description": "vulkan: Update XML and headers to 1.3.255",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "73af0475cbdfa016392edc5f3d42d3b01aaba53c",
+        "description": "vulkan: Add NV suffix to VK_NV_cooperative_matrix feature names",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "07597596588973cea5bfe064ecc4017dd24357be",
+        "description": "rusticl/program: skip linking compiled binaries",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "18f1087a21c738ad1270557c5541fe796262066b",
+        "description": "rusticl: bump bindgen requirement",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5b29463746d559c926cb84b35c749625123dec82",
+        "description": "nir: Add function nir_function_set_impl",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9fa38cf142716644cbe8e2ae2fcdea717e45062f",
+        "description": "vtn: Do not assign main_entry_point->impl twice",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0d9f474381b48fa3f0b695ea51298e3efbf86ca1",
+        "description": "draw: Update the comment and function name to match the type",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e7f0dd27107bac50aadef9cb56aa93b332597095",
+        "description": "draw: Replace usage of ubyte/ushort/uint with uint8_t/uint16_t/uint32_t in draw_pt_vsplit.c",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f35ebd221f5d269fdf57da67cd2ea018c87027f9",
+        "description": "draw: Replace usage of boolean/TRUE/FALSE with bool/true/false in draw_pt_vsplit*",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fbe9a7ca3e78b683266dac706d156c110dcefdfc",
+        "description": "rusticl/mesa: create proper build-id hash for the disk cache",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "29b932512a873abb932e2fde99081d705bf9d465",
+        "description": "rusticl/meson: extract common bindgen rust args",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c89637388967d83fa621cc674c414eceb299b776",
+        "description": "rusticl: generate bindings for build-id stuff",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d14af0043217150c299e6a6731caba30795ed1a6",
+        "description": "rusticl: structurize and reorder mesa binding args",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "337908440eefc95abef9fa4464e29d299072df73",
         "description": "v3dv: replace boolean and uint with bool and size_t",
         "nominated": false,
