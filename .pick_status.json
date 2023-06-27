@@ -823,7 +823,7 @@
         "description": "asahi: Revert \"Advertise ARB_texture_barrier\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "9e67d3f23780a818b9fc764105f39c6d595c6530"
     },
