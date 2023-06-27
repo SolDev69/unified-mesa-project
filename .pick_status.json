@@ -6592,7 +6592,7 @@
         "description": "nir/split_64bit_vec3_and_vec4: Use the right number of components",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "496fd59d711b9a0744878918caeeaafb961e3deb"
     },
