@@ -6421,7 +6421,7 @@
         "description": "radv: fix incorrect size for primitives generated query",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1ebf463a5a64af54a18b69ccaa2453449938df61"
     },
