@@ -6511,7 +6511,7 @@
         "description": "util/blitter: revert util_blitter_clear_buffer()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "23c003b88c54e00436b4e2684e6227e79538cf5a"
     },
