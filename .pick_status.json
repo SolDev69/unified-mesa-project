@@ -4534,7 +4534,7 @@
         "description": "vulkan/wsi: fix force_bgra8_unorm_first",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7c16a1ae4e629ccbae3979ec9be105e6b44e0acf",
         "notes": null
