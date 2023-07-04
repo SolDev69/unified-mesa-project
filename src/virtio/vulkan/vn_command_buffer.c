@@ -638,6 +638,10 @@ vn_DestroyCommandPool(VkDevice device,
                             &pool->command_buffers, head) {
       vn_cs_encoder_fini(&cmd->cs);
       vn_object_base_fini(&cmd->base);
+
+      if (cmd->builder.tmp.data)
+         vk_free(&cmd->allocator, cmd->builder.tmp.data);
+
       vk_free(alloc, cmd);
    }
 
