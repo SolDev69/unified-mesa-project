@@ -3055,7 +3055,7 @@
         "description": "venus: fix leaks from tracked present src images",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
