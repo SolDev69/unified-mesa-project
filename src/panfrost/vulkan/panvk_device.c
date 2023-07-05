@@ -1030,6 +1030,7 @@ panvk_AllocateMemory(VkDevice _device,
 {
    VK_FROM_HANDLE(panvk_device, device, _device);
    struct panvk_device_memory *mem;
+   bool can_be_exported = false;
 
    assert(pAllocateInfo->sType == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
 
@@ -1037,6 +1038,18 @@ panvk_AllocateMemory(VkDevice _device,
       /* Apparently, this is allowed */
       *pMem = VK_NULL_HANDLE;
       return VK_SUCCESS;
+   }
+
+   const VkExportMemoryAllocateInfo *export_info =
+      vk_find_struct_const(pAllocateInfo->pNext, EXPORT_MEMORY_ALLOCATE_INFO);
+
+   if (export_info) {
+      if (export_info->handleTypes &
+          ~(VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT |
+            VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT))
+         return vk_error(device, VK_ERROR_INVALID_EXTERNAL_HANDLE);
+      else if (export_info->handleTypes)
+         can_be_exported = true;
    }
 
    mem = vk_object_alloc(&device->vk, pAllocator, sizeof(*mem),
@@ -1064,9 +1077,9 @@ panvk_AllocateMemory(VkDevice _device,
       /* take ownership and close the fd */
       close(fd_info->fd);
    } else {
-      mem->bo = panfrost_bo_create(&device->physical_device->pdev,
-                                   pAllocateInfo->allocationSize, 0,
-                                   "User-requested memory");
+      mem->bo = panfrost_bo_create(
+         &device->physical_device->pdev, pAllocateInfo->allocationSize,
+         can_be_exported ? PAN_BO_SHAREABLE : 0, "User-requested memory");
    }
 
    assert(mem->bo);
