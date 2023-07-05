@@ -570,6 +570,7 @@
   <struct name="CEU RUN_COMPUTE" size="2">
     <field name="Task increment" size="14" start="0" type="uint"/>
     <field name="Task axis" size="2" start="14" type="Task Axis"/>
+    <field name="Progress increment" size="1" start="32" type="bool" default="true"/>
     <field name="SRT select" size="2" start="40" type="uint"/>
     <field name="SPD select" size="2" start="42" type="uint"/>
     <field name="TSD select" size="2" start="44" type="uint"/>
@@ -579,6 +580,7 @@
 
   <struct name="CEU RUN_IDVS" size="2">
     <field name="Flags override" size="32" start="0" type="hex"/>
+    <field name="Progress increment" size="1" start="32" type="bool" default="true"/>
     <field name="Malloc enable" size="1" start="33" type="bool"/>
     <field name="Draw ID register enable" size="1" start="34" type="bool"/>
     <field name="Varying SRT select" size="1" start="35" type="bool"/>
@@ -592,10 +594,12 @@
 
   <struct name="CEU RUN_FRAGMENT" size="2">
     <field name="Enable TEM" size="1" start="0" type="bool"/>
+    <field name="Progress increment" size="1" start="32" type="bool" default="true"/>
     <field name="Opcode" size="8" start="56" type="CEU Opcode" default="RUN_FRAGMENT"/>
   </struct>
 
   <struct name="CEU FINISH_TILING" size="2">
+    <field name="Progress increment" size="1" start="32" type="bool" default="true"/>
     <field name="Opcode" size="8" start="56" type="CEU Opcode" default="FINISH_TILING"/>
   </struct>
 
