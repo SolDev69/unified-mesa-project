@@ -2479,7 +2479,7 @@
         "description": "d3d12: Fix indexing of local_reference_state",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7edae456e2c64d0328037c42b61fd829e29c97c2"
     },
