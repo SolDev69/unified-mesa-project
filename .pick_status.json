@@ -1057,7 +1057,7 @@
         "description": "freedreno/a5xx: Skip emitting unused texture descriptors for images.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2e0ea3f09c79c657116cbc9cbc68377e364dfe28"
     },
