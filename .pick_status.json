@@ -355,7 +355,7 @@
         "description": "radv: fix 128bpp comp-to-single clears",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7451eb1d6112aed578ab89ba21830dc4eaef14ff"
     },
