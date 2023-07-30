@@ -2110,7 +2110,7 @@
         "description": "asahi,agx: Upload constant buffers immediately",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "080b05e29e1f04f22a776057631f4061cf7c1824"
     },
