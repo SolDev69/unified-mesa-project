@@ -1,5 +1,185 @@
 [
     {
+        "sha": "8d7f682bdbaee2cd7185203770bfc3f0e07ee427",
+        "description": "nv50/ir/nir: Fix zero source handling of tex instructions.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "85a31fa1fc906d500e10a7fa5c9973aa17e7f1d6"
+    },
+    {
+        "sha": "5df97c27dc8cafbeb27a4ca084e83328a4d1a276",
+        "description": "intel/compiler: Use nir SUBGROUP_INVOCATION for RT TOPOLOGY_ID",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dbf19b76e8f1226085083c2450466eb26d1b98e7",
+        "description": "intel/isl: Use intel_needs_workaround() for MTL CCS WA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "23b45c5a29120cab224b575a02c0ccb825593cf9",
+        "description": "lavapipe/ci: use tighter changes: rules",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0831f93e5f99efaab6ce48ae12d6e0b512ce95f2",
+        "description": "nir/builder: Add a nir_txs_deref() helper",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ee0942f7a6284570b3e5286d0943ce5e3429f53c",
+        "description": "nir/builder: Allow tex helpers on image types",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e690d88d69df0c5083aca2c1afe2ed6bc1df7e06",
+        "description": "freedreno/afuc: Initial a7xx support",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6fd00074475adff87a5f9c25ed739417d9c5e62c",
+        "description": "afuc: Fix writing $00",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7d7aa2251e1f77cefa217a46c4b83d2f9826b1cb",
+        "description": "afuc: Add setbit/clrbit",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1046ebbb89979eae3a4014e36a6111008994c710",
+        "description": "afuc: Convert to isaspec",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7376af0eef20891391a20bdd6c1b7aa80ff85e27",
+        "description": "afuc: Fix xmov lexer typo",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "038680c2f6273889f0454a701308f5813a983267",
+        "description": "isaspec: Add initial decoding support",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2faf344f037b41ceeaf14369854df5e1594c4590",
+        "description": "isaspec: Rename isa_decode() to isa_disasm()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "26cce0a1333f43f375a94059f9ca10d7f8ef18ce",
+        "description": "isaspec: Add callback after decoding an instruction",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b63782da16579f1343e97fbbff940ff084c7214e",
+        "description": "isaspec: Add \"custom\" field type",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dc874e465473e8bbc738e1684b9508b4ccb5907b",
+        "description": "isaspec: Add support for function and entrypoint labels",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "569d3ac5a15ddfb76c8cb4a0f182a18426a6375b",
+        "description": "isaspec: Add support for \"absolute\" branches",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "86b17d96b3af5940c61b88ac915ca431b271223b",
+        "description": "isaspec: Add \"displayname\" for altering {NAME} when decoding",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c237539d62184ce3b78c502067da6b696b95538f",
+        "description": "egl: Implement EGL_EXT_explicit_device",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "41e664f82580dbd9c86171933bf2d7cbd5607f46",
+        "description": "egl: android: Remove legacy name-based shared buffers support",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "2b7599dc495669a9f935dcb80e5b62a100a9b788",
         "description": "intel: Rename intel_gem_add_ext() to intel_i915_gem_add_ext()",
         "nominated": false,
