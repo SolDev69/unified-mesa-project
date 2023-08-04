@@ -1,5 +1,1148 @@
 [
     {
+        "sha": "d7fa2561a5e31b22b84b5735e2cdcbe27b8a7dfb",
+        "description": "virgl: Only PIPE_BUFFER with VIRGL_BIND_CUSTOM flag is considered busy during creation",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "95db3e87fee377c5fa8fb779bc151e8d7f4e790a",
+        "description": "intel/compiler: Fix sparse cube map array coordinate lowering",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "fe81d40bff26d5867e4880b361fe06722d0e0428"
+    },
+    {
+        "sha": "2a580bba76705bc6e6b1e850dd78fb56064af58f",
+        "description": "radv/video: Match function definitions to declarations",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b13473efe967f79bcea8f7e1683cf194d4df726a",
+        "description": "bin/pick-ui: use venv wrapper",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2eca558dd40c9f8e4d6cc407a402b5495ef75936",
+        "description": "bin/ci/update_traces_checksum: use venv wrapper",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ce49034bbbb0837630438fa2037a074c4b73f0ac",
+        "description": "bin/ci/gitlab_gql: use venv wrapper",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6e4843bb04a6a582f0d450fff3ccf42251e7e718",
+        "description": "bin/ci/ci_run_n_monitor: use venv wrapper",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "75f44bd79a01b8bec4b7cbb561bbb10cadc3db8c",
+        "description": "bin: add wrapper to run scripts in a python venv",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f34bae7d8cd0b667d69d8c718d0e22670b9cc0a0",
+        "description": "nir: Simplify alu_instr_is_copy",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3f5e8b85f71210c5da36cbe012bfcdc1b2255f0d",
+        "description": "nir: Drop no-op all_srcs_are_ssa",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "92e59b5af5fe91dc3af6a7d1b60eb431246b2ffc",
+        "description": "nir: Remove no-op remove_def_cb",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b2ddbecaadcdbfe4b34c3cd2d8f10e6e7abc2351",
+        "description": "lima: Clean up after deleting asserts",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "91ae717d0bc40d4e80a6618fffb2e51f0bafb6ef",
+        "description": "nir: Remove nir_foreach_def",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "42ee8a55dd38f025adcd20701989d46b0bbccfa4",
+        "description": "nir: Remove nir_alu_dest::write_mask",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f5b09fefe3eadd4d213b38e0cbfdbb4dbbe9fe79",
+        "description": "ntt: Evaluate write_mask check",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4828881e286a3768e9d9921b1885b0d4a121bb8e",
+        "description": "intel/vec4: Don't use legacy write mask",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "56be39996af2d926a5f9afb55894a532d820af7e",
+        "description": "etnaviv: What if we just didn't have a compiler?",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d878470bbc3d81ca30280c98bc1d9b23204dc238",
+        "description": "etnaviv: Don't use alu->dest.write_mask",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e93dd20451dc3d92fc7df793edd4c2540cea7ce9",
+        "description": "rogue: Stop reading write masks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d550dea81921c70a9e4f094bc7bb281aa7adae54",
+        "description": "ir3: Drop write_mask handling",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7be895f9605287ee7e1bbf09dd79387b9dbdb8e3",
+        "description": "nir/from_ssa: Remove pointless union",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b23d951e96cd0885d244f270d6ad6ab6705e29dd",
+        "description": "nir: Drop nir_register",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1c49586a1f37e3f90908595a40e72fc4c76a8ccb",
+        "description": "nir: Remove nir_{src,dest}::is_ssa",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "312c6472725866d0ba2b1aa28e9fd4c385a8aed2",
+        "description": "nir: Collapse more SSA checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d18dfe6e27f88afbdcaae7f148ae8f025c8c78d1",
+        "description": "nir: Initialize source as a NULL SSA def",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fb79497b4443dd595bba29e4b408b8adc8ac892c",
+        "description": "nir: Do not init dests",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "70c64b5d49d95be0a5fb7a509505549028b95bb2",
+        "description": "nir: Remove def_is_register",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "696fdde4858ddaf8c5d59b79fc4606875d6fd7a8",
+        "description": "nir: Collapse more SSA checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "312089fea74cbd492ae1fa70a3f511ce81c35a17",
+        "description": "nir/instr_set: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "306182c63e19afccdb56491b003642609ddb9ca9",
+        "description": "treewide: Collapse more SSA checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "700e270df502826bb907908dcd0d9ca485cff2c4",
+        "description": "nir/range_analysis: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d78ca1badfd2ffa210938ec393868d359461d0be",
+        "description": "nir/worklist: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "73e82b9281d10570421fdcbdc0bfe0b5dc4b6be9",
+        "description": "nir/gather_ssa_types: Collapse SSA checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "84f7fb70e11fbfb1c776d5a105c977205ab1f1ee",
+        "description": "radeonsi: Collapse SSA check",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b047016e70dfdbd2ce3b6b268ce1c9f00c0c95f8",
+        "description": "lima: Collapse is_ssa checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c3077d3ad498867156dc959431aacec2a5d535d3",
+        "description": "ir3: Collapse is_ssa checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2734f1b58630381dee2f63751f555ad6ef9fa43b",
+        "description": "llvmpipe: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "11fc4f969c24d2f2186ed150deeee325ce57a66d",
+        "description": "intel: Collapse is_ssa checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cf8ceb6e0ad74c759fdb101fb1286ddeb52a2aed",
+        "description": "aco: Remove is_ssa check",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ca9e2ceeebe866d38c54329d5961af40fe1d2e4c",
+        "description": "nir: Drop trivial reg handling",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "579bc1e72e9e8676d5432d705875cc70d392d3df",
+        "description": "treewide: Drop some is_ssa if's",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ba5aaf2ff745d356414ebebeb25a6ff47c27c184",
+        "description": "pan/mdg: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "95e3df39c0b9823526aa1dfd7d1cc5326a8e2f8f",
+        "description": "treewide: sed out more is_ssa",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a8013644a1e7d13e2a3164beb5f387195f797e36",
+        "description": "nir: Drop nir_alu_src::{negate,abs}",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "efc1c3261acdfc3f68fbbf4338fbe0032defcd1d",
+        "description": "nir/print: Drop legacy NIR",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "09d7f6d64b9354f43e6608daab8dd2b8dcae7ac2",
+        "description": "nir: Remove stale todo",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c512636cf0989f708239b972739aa622792a5d1e",
+        "description": "nir: Remove reg-only dest manipulation",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ab0d8789326177ae38c8c6e75f5051a7da1117d5",
+        "description": "treewide: Remove more is_ssa asserts",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "042a3eca00364dfa06bdf78a9ad5424caed65b75",
+        "description": "nir: Collapse some SSA checks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5fead24365d329d03a1db5ad7a3f546a49bbcab1",
+        "description": "treewide: Drop is_ssa asserts",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d559764e7ccb6b78f7ebb738301dedc712f97243",
+        "description": "nir: Remove nir_alu_dest::saturate",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0bbf458a32b6f9e259118b75a81d4385271b999a",
+        "description": "nir: Remove impl->{registers,reg_alloc}",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "20f38b4b41087bb7a95b19382c6f43861be5c6b6",
+        "description": "nir/validate: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "71699e59a3a5d8adde7e406075519d67e62593af",
+        "description": "nir/serialize: Drop legacy NIR",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "441188cd7a904e9ea8d949cc1f9d892d15e25ec4",
+        "description": "nir/clone: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "97a3302bf8f215239361ca7a37c9ca5fef0e0fa2",
+        "description": "nir/print: Assume SSA",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "08035ce388ee5ef7099840e94fdc480d09693b2e",
+        "description": "ntt: Drop nir_register reference",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5133dcebb484f0c591e45ed2d10b9fb2d1a93c74",
+        "description": "nir: remove nir_{src,dest}_for_reg",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ed018babf76be7cf035052a5256a15512db5aadd",
+        "description": "nir: Remove nir_foreach_register",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9f0427e3e32ff2d3e9a5c4537dc84b940e768adc",
+        "description": "nir/schedule: Drop more nir_register handling",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c11c75d1a1788884c2a59317278a1040700e6029",
+        "description": "nir: Remove nir_index_local_regs and callers",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1bc05bb847903024d93c1054d1934eba8f61ea00",
+        "description": "nir: Drop NIR reg create/destroy",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "068770aaa602f9cf753c08f15deaf70472623c40",
+        "description": "nir/schedule: Drop nir_schedule_dest_pressure",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b606a0b91e12edbeb5db5de6224bca40608fe44c",
+        "description": "nir/from_ssa: Drop legacy reg support",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "bbb9838b780eb07f9520811b802c035e98feef0b",
+        "description": "nir: Add {...} before case",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "86bcc90c0eb0614a33436c173339df91329d785c",
+        "description": "intel/compiler,intel/blorp,intel/vulkan: decouple vulkan driver and compiler from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fc73d275b9ea2386a37bd98727faecf6a7a1c7cf",
+        "description": "crocus: #include \"program/prog_instruction.h\" for SWIZZLE_*",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9eb8a0b16ac829397bba49818f41c454deb7394b",
+        "description": "intel/brw: Define and use BRW_SWIZZLE_* instead of SWIZZLE_*",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "846d620632b570e80850d316d8de687cfe3bcaa6",
+        "description": "intel/blorp: brw_sampler_prog_key_data::swizzles is only and should only accessed in crocus",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "66880eeaec558d9ea55fcabad15575d363242b5e",
+        "description": "intel/blorp: Use float directly to avoid #include \"mesa/main/format_utils.h\"",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8b2d2dd43dcb0434a700e011352809c1ef3edcd2",
+        "description": "compiler: Move WRITEMASK_* from prog_instruction.h into shader_enums.h",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ced762a8d30a8916fad93b41f8607f1eae2a4511",
+        "description": "bin/ci: handle errors more gracefully in update_traces_checksum script",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "356a268b4619ee396a9eeb3b2fd0f404cf31b44e",
+        "description": "nir/builder: Don't assume we have compiler options",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0a5fab555d7cf4e7e9b110431ddc0cf258cdfc91",
+        "description": "glx: There is no need to psc++",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6e7718dcea4159b358be46d709db05f0fb1b02b1",
+        "description": "anv: debug messaging for sparse texture usage",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "df349bc2befb860b2b00782f3770a1428ac19146",
+        "description": "anv: enable fake sparse for Elden Ring",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7db20032096143620c3bfe4aa8e572d6805595b8",
+        "description": "anv: add fake sparse support",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "17e505cb2d79221e92596c205365f47aaac8c173",
+        "description": "asahi: decouple layout from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "68c30215a9a360799df5a81533d615af8f351bdb",
+        "description": "etnaviv: decouple drm from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "74589123338c30b40f91e2df111c2b1577987aa7",
+        "description": "docs/ci: expand the description of test suites",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "774ce3ff88e21eee92df3e20321768330c7e0934",
+        "description": "docs/ci: drop mention of build systems variants in the CI",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a4df4fd0f5698d3cf10b0232d59e81b754f490cd",
+        "description": "docs/ci: in paragraph about the CI being overwhelmed, mention our tool to help with that",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "845518d5d40092068658eed13a40eab4429dcd75",
+        "description": "docs/ci: stop trying to enumerate drivers that are tested using VK-GL-CTS",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f5672d048e943fabf9ad40811f7a7a6bd901dc36",
+        "description": "ci: include some timing information in the git cache download script",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f8cc1ab04b1e7fe27e8974e7f4d754d58ccbc323",
+        "description": "docs/ci: remove default nginx config, which we don't need for proxy",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f9ebbcd8b67113eba795f1cc8a67a26bf9668ffa",
+        "description": "docs/ci: update to systemd and used version of the trace for testing",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e389234a5e1c52ccaa74568cf50e98027f278d8f",
+        "description": "docs/ci: default to port 80 for the caching proxy",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "57b0db63e12f111b06bf1d1e0f613145d9590ee1",
+        "description": "ci/amd: fix timeouting radeonsi-raven-va-full job",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "ae9c67d773a74d29f22059636f957892fcbf517e"
+    },
+    {
+        "sha": "95431435930a8b6110f2190b9206b1d0aa50905c",
+        "description": "radeonsi: Enable PIPE_VIDEO_CAP_SUPPORTS_CONTIGUOUS_PLANES_MAP",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4f047c9583a0ef3dc23017c3eb37d01aaf1d61dd",
+        "description": "radeonsi: Copy all planes with multi-plane staging textures",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2cb3c2cbfb2132d4b2f3c97bc3edd3cccdb70b47",
+        "description": "zink: Collapse is_ssa check",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "91f676819cdc74f2782f6e986e59008c56c05af1",
+        "description": "vc4,broadcom/compiler: Drop write_mask handling",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "59645f05a7f3886bffdf0287a395e9be03d514b0",
+        "description": "nouveau/codegen: Drop writemask check",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "30ff0857bef5be881a1cec7b269f472cc40dc4a4",
+        "description": "r600/sfn: Ignore instruction write masks",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b870988b77f70acd69feb1d4e52343b7c3d4e328",
+        "description": "r600/sfn: Stop referencing legacy functionality",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c545df7426a1e0fab3da64342ef28db72f81e1fb",
+        "description": "frontends/va: Init view_resources array in vlVaPut/GetImage",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "975a8ecc881873744d851ab0ef45ad7698eaa0ef"
+    },
+    {
+        "sha": "ca8647e29b77fe77c3ef5dc38b7f82e09031f5ce",
+        "description": "frontends/va: Don't allow multi-plane derive without driver support",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9e9d90c6c3814710b47001865967f27fcb68c4e4",
+        "description": "lavapipe: VK_EXT_host_image_copy",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6d3009d758576da3a5b1fe803cdb86ad4fe5cb74",
+        "description": "lavapipe: be slightly more permissive for bad apps (and cts) with dynrender",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cd3ea02da05164a1418b7f6ee1f0dcf810191a5e",
+        "description": "ac/radv: decouple radv vulkan driver and compiler from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b5401a4b0e84a6f24ff8e90cae8843c6763c5c23",
+        "description": "nouveau/drm-shim: Decouple from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9ecfd9feea405db2c358c644fe47f13377aee37c",
+        "description": "intel/tools: Use 'env bash' to find bash executable",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "37b56dfd7d07db2dad1df7025733f499718a4d07",
+        "description": "meson: Remove arm_neon_workaround",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4c4d2d35c25c3f93e42fba42ca4bd35448cd64e4",
+        "description": "glx: decouple from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3b731d92d9f80253f390b0655e6bc8497b170e2f",
+        "description": "freedreno: decouple compiler and vulkan driver from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d8ed2917519f8c2717770f8ec96462242d781187",
+        "description": "pvr: decouple vulkan driver and compiler from gallium",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f0e603583ef8f71c82a22b5c3e66298b993fcb6f",
+        "description": "broadcom/compiler: drop execution environment from the shader key",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b95bb44c61e20f30d646d735764130d73a3727d9",
+        "description": "broadcom/compiler: always clamp results from logic ops",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fb80e830ef63aef7d81271d02f152e467149d6d5",
+        "description": "v3dv: don't set lower_wpos_pntc for Vulkan",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "87e167baa141dbab1e6d39469e69c21967239fe4",
+        "description": "broadcom/compiler: move vulkan's point coord lowering to the driver",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "59018b022808dc7032f7faa0a5f76c6dc92d42c7",
+        "description": "broadcom/compiler: move uniform offset lowering from compiler to GL driver",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f5931ba6d890e5da56fa4cc7e900ee8c010048a4",
+        "description": "broadcom/compiler: use NIR's lowering for dispatch base",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9211b9afdffe91385d0d2d317af121ca3239e683",
+        "description": "broadcom/compiler: stop asserting on Vulkan environment",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "fc0ca7407b1b028f22fdb622a1b9842f50d67ba6",
+        "description": "v3dv: fix incorrect key setup",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ebe66479fbd3ff39407b632e6049df6e49921068",
+        "description": "nir/lower_robustness: drop skip_ubo_0 option",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e941732ab19d775b1654a3881961e68c61300293",
+        "description": "v3dv: stop incrementing UBO indices by one",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c733c166d7c572e6ad2917452dc32bea442fa4ce",
+        "description": "radv: add radv_graphics_shaders_compile() to compile graphics shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "5be4446abedccd66a2ae3bea580025da11df5c12",
+        "description": "radv: add a struct for the retained shaders and GPL",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2050f2fe4897ae1aabb58d8f5bdee4555df60b56",
+        "description": "radv: inline radv_pipeline_get_nir() in radv_graphics_pipeline_compile()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "581f4701be557f9ca1a4fd5c0cc9b7e5425b1474",
+        "description": "radv: stop passing a graphics pipeline to radv_pipeline_nir_to_asm()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "efbb6de0351f671e56787dc831c4b6c563aa516c",
+        "description": "radv: remove unnecessary check in radv_pipeline_nir_to_asm()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "19d0b2492764d703d59790faf4ea475d9d4b762a",
+        "description": "intel/dev: Support xe2 device init (for intel_device_info_test)",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b80bcd83279a39d68fd8d539a9bc7c99d07b0fad",
+        "description": "intel/dev: Add LNL platform enum",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "773d77dc7e467dc0ec23d7defa791c360716df5e",
+        "description": "llvmpipe: fix fragdata/lastfragdata heuristic a bit more.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "db1371cce1d4e0f0f4fa2518379db78efde53ea4"
+    },
+    {
+        "sha": "17ee184e258ee7c869a15b5531abb5c4176e3eb1",
+        "description": "docs: update calendar for 23.1.5",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "17b856d97adfabfa66d12da1b4d833d51387d4f0",
+        "description": "docs: add sha256sum for 23.1.5",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "71a07831a9bd49bc3441ed6d508f94d2b907539c",
+        "description": "docs: add release notes for 23.1.5",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "4c3fc03d7f74e30e4896121cd1aed90151f3d305",
         "description": "r600/sfn: AR loads should depend on all previous non ALU instructions",
         "nominated": false,
