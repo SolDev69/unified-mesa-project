@@ -1,5 +1,14 @@
 [
     {
+        "sha": "ee6eadb65ab7e09aa4ffaf4e6c7676fb7c51e86e",
+        "description": "ci/amd: Skip all VAAPI tests that creates too many huge surfaces",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "06c8ebaa66b6f12b577ad1aa5e2a11628fd3735d",
         "description": "pvr: Pad rogue_regarray_cache_key union members to avoid UB",
         "nominated": false,
