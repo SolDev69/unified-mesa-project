@@ -589,7 +589,7 @@
         "description": "docs/radv: mark VK_INTEL_shader_integer_functions2 as implemented",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "aa9d2d88935eda7612aa02e1fc7dc0568dff766d"
     },
