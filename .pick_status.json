@@ -22,7 +22,7 @@
         "description": "docs/v3dv: mark direct display extensions as implemented",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "bf5cfb64868a50b84df82d2df36585f95b2c492f"
     },
