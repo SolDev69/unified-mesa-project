@@ -436,7 +436,7 @@
         "description": "Revert \"intel/fs: only avoid SIMD32 if strictly inferior in throughput\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6b494745be0900a67004d6f3e4b730c3cd67da79"
     },
