@@ -175,7 +175,7 @@
         "description": "freedreno/a3-5xx: Don't try to emit ISAM for SSBO loads.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "75eb0d2891c2eb7574bd943a6a40493484047b48"
     },
