@@ -1075,7 +1075,7 @@
         "description": "nir/opt_move: fix handling of if-condition",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8a78706643ecad8a1f303cc9358873abc29978b4"
     },
