@@ -283,7 +283,7 @@
         "description": "nir: Fix nir_op_mov handling in nir_collect_src_uniforms",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a406fff78a57eab35c513042670500f4fc784042"
     },
