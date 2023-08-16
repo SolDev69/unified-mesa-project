@@ -859,7 +859,7 @@
         "description": "gallivm: Run nir_convert_to_lcssa before nir_convert_from_ssa",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": null
     },
