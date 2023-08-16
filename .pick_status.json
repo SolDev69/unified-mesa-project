@@ -58,7 +58,7 @@
         "description": "rusticl/kernel: optimize nir between lowering io and explicit types",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "66c6061491a7546349c04c40cbae1d23a07b5906"
     },
