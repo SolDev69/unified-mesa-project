@@ -823,7 +823,7 @@
         "description": "intel/isl: Don't over-allocate CLEAR_COLOR size to use whole cache line",
         "nominated": false,
         "nomination_type": 1,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "37b4eacc55d100075ecd05cd375ddafa15e3a3ca"
     },
