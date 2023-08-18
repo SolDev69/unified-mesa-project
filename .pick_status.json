@@ -445,7 +445,7 @@
         "description": "iris: ensure stalling pipe control before fast clear",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "87149cc545afdacb339a933d47ded5c1adf8f429"
     },
