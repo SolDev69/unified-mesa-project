@@ -2254,7 +2254,7 @@
         "description": "nir/passthrough_gs: Correctly set vertices_in",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "ea14579f3dc3144541c6e5944d14e0e257115b15"
     },
