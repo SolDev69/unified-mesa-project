@@ -1192,7 +1192,7 @@
         "description": "anv: Do fast clear color initialization more delicately",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "b4198e792c037dccb4d433abc1368bd8cc8d22ee"
     },
