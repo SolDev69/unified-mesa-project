@@ -2983,7 +2983,7 @@
         "description": "intel/compiler: fix dynamic alpha-to-coverage handling",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fd7debc8bbb8f6a13f1f0e69c05d5000287a8e2f"
     },
