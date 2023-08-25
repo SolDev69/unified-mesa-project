@@ -444,7 +444,7 @@
         "description": "aco: insert s_nop before discard early exit sendmsg(dealloc_vgpr)",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "37fbfa655a4dd73a1c95ade29362d8e93f5d1fcc",
         "notes": null
