@@ -1,5 +1,383 @@
 [
     {
+        "sha": "939845e424da7b2433902a9954cb6b615cd06d41",
+        "description": "zink: pass KERNEL shaders through successfully",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "226aefccd3e59e09cbb215efbd72f9b49d94a0e3",
+        "description": "rusticl: fixes for zink shader images",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "07272f6c359968980af4dd3fc67ccf3b2e3d0c95",
+        "description": "rusticl/device: _MAX_CONST_BUFFER0_SIZE is unsigned",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "54b37078ebf491e21b313885bb31232ca9a40a7e",
+        "description": "rusticl: add debug option to sync every event",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "43fe842b9228ab013656d1dac2b4ef575c87df3d",
+        "description": "radv,aco: remove unused clip/cull distances variables",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8ebb29245c5ac017c2d61734eddc29c5a06e94bd",
+        "description": "aco: add support for compiling {VS,TES}+GS separately on GFX9+",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "37aa6d25e1414aa62810bcae643d512424aacc17",
+        "description": "aco: ensure to initialize exec manually for non-monolithic {VS,TES}/GS on GFX9+",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "92015fe3dc4f750e4b02e9e0e5175d4199e603fd",
+        "description": "radv: preserve shader arguments for non-monolithic {VS,TES}/GS on GFX9+",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c906723009cd5a5f199879aa9596c7ecc0fe75db",
+        "description": "radv: always declare some arguments for non-monolithic {VS,TES}/GS shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d693027a00fe5f2cf2b9548b69b50078ec0113be",
+        "description": "iris: Check prog[] instead of uncompiled[] for BLORP state skipping",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0c529a61fc6f3df82d0149514256a2879923d6f1",
+        "description": "venus: set deviceMemoryReport feature",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1e46a810d6edc7854f3ea7bec156da06a126f554",
+        "description": "venus: Use the common GetPhysicalDeviceFeatures2 implementation",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8c98814874df588fa205d15ea08f93746e959952",
+        "description": "vulkan/wsi/x11: Implement capture hotkey using the keymap",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "291fa055453e2832423e6f82914131fa2c748abc"
+    },
+    {
+        "sha": "80177e0296299cc46a7c78e25717c1a3c2d0d19d",
+        "description": "aco: add support for compiling VS+TCS separately on GFX9+",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "196b355db61580e3bdd38e878e636898fbf796be",
+        "description": "aco: ensure to initialize exec manually for VS as LS on GFX9+",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "aba16211a8a7f62a6022545a6240f0f2e217ec04",
+        "description": "aco: disable shared VGPRs for non-monolithic shaders on GFX9+",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4224da67264618961bbe74520d1e94399293cfa2",
+        "description": "radv: preserve shader arguments for non-monolithic VS/TCS on GFX9+",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c161337029f648cf2c0cc9d809cb984b66c2a167",
+        "description": "ac: allow to mark shader arguments as preserved",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8ba1860fbd138445f69a544c69b327658ce8269f",
+        "description": "radv: add a new shader argument for non-monolithic shaders PC",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7b4f10b434744e65255126500ab34b6aec53cd23",
+        "description": "radv: always declare some arguments for non-monolithic VS/TCS shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a4933d2d7f822fc9c3c76b896a9991b0c2c89622",
+        "description": "radv: force indirect descriptor sets for non-monolithic shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e5d30462c991f9fd8f344a9c896e9a05db3b06e6",
+        "description": "radv: do not inline push constants for non-monolithic shaders",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "34ddde6d63924a4edc391353c6c57d1d88951aa8",
+        "description": "radv: use info->uses_view_index directly when declaring shader arguments",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "467bf4728121e86ce597be0900c1fb5fe8739dce",
+        "description": "radv: add radv_shader_info::is_monolithic",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f64f08a9e006e829db352b8d2878fd346e72bb10",
+        "description": "anv/video: send h264 scaling list in raster order",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dd20ec5655b235739547357f498886839039b1d5",
+        "description": "radv/video: send h264 scaling list in raster order",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1d2f7f068ce32a88101036bb8d0658ad9086284d",
+        "description": "util/vl: extract gallium vl scanning data to shared code",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e921b889e33319918e877385c96686955c454464",
+        "description": "anv/video: use vk_video_derive_h264_scaling_list",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d578e4416ad316c40458d09c685159b44634c612",
+        "description": "radv/video: use vk_video_derive_h264_scaling_list",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8daa329634e049b377c61eb3ada9f291584c971b",
+        "description": "vulkan/video: add helper to derive H264 scaling lists",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0d4df682b9d51a7d5ba1a2a613e130aab4e25eb8",
+        "description": "venus: add no_sparse debug option to disable sparse resource support",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d3e796da6b9a07bbfa19c6777261a88e52ee29f7",
+        "description": "util/driconf: add workarounds for the Chronicles of Riddick",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "640173cdbbbf54455c3bee50cc429e6fcf0a77eb",
+        "description": "zink: fix rewrite_read_as_0 filtering",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "9e42553ca8d30a2a2cb6781774631c45285d77dd"
+    },
+    {
+        "sha": "f9cf87274563aa9b3e4c8326f9045fc86ba40656",
+        "description": "nouveau/mme: Fix a compile warning",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "819d359d1d677a24872d9bf414fadc4652428e70",
+        "description": "nvk: Plumb no_prefetch through to the DRM back-end",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "458baeee5fa23552c7157b095bd035b8213aa602",
+        "description": "drm-uapi: Sync nouveau_drm.h",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8852e9cb2ee73c12a73b31b604e81aa3816eee9a",
+        "description": "util/rb-tree: Fix typo in comment",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2ff38260b9a794a84b059cb355f5ffb255739f8e",
+        "description": "util/rb-tree: Return the actual first node from rb_tree_search",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e51056f9f7d210e8730dac143a4aba53df33fd8c",
+        "description": "ci/iris: add GL46.arrays_of_arrays_gl.SizedDeclarationsPrimitive timeout",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2fdcc00b0154cb094a5fd2c9253904fc9073d96e",
+        "description": "tu: Pass real size of prime buffers to allocator",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cda196183578bbc0871c863ff8ec37771f3b4baa",
+        "description": "treewide: Also handle struct nir_builder form",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "465b138f01d041b17f4e590acf163c33e3d4f1c4",
+        "description": "treewide: Use nir_shader_intrinsic_pass sometimes",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "5fa9f842b09694a91310640ae949327a74d1bcd2",
         "description": "ci: switch to 6.4 kernel, improving Adreno 660 reliability",
         "nominated": false,
