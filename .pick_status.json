@@ -1057,7 +1057,7 @@
         "description": "ac/llvm: fix flat PS input corruption",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0a54fbb5b40fc4e4abd60f9ff7dd71dfe5c1d6cc"
     },
