@@ -2029,7 +2029,7 @@
         "description": "pvr: Use correct index when writing query availability data",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "279c7c6d5ad4509acd2e3d3d9c10e6107d1fbe08"
     },
