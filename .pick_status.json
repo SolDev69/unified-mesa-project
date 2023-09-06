@@ -1,5 +1,77 @@
 [
     {
+        "sha": "318b83899056d02ee83817cf16201a128fb81443",
+        "description": "r600/sfn: Simplify dependency chain for index loads on EG",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e9f60482fba70ed2b1d80dd1dc2cb8cf6e7419ca",
+        "description": "r600/sfn: factor out resource as extra class",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0dea86e8865363198df8afd6edc903e236c6dbd1",
+        "description": "r600/sfn: drop unused ControlFlowInstr type enum",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "16bef14dd4fb1e5ed3d3aba86fc55de6299d6311",
+        "description": "r600/sfn: Make use of four clause local registers",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c9739e8912286a212359f3a5a4f958c6165ce2cc",
+        "description": "intel/fs: limit register flag interaction of FIND_*LIVE_CHANNEL",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "421d8f14793b57cb1fd4b10302a9ae5a684f06a7",
+        "description": "pvr: Cleanup comments in pvr_physical_device_get_supported_*()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4f199175c444542904f804333745d7f0943d18ba",
+        "description": "ci: enforce -Wimplicit-const-int-float-conversion for clang",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "81a28fb3e2a5b6bec282ecb421cf4bfcce01565d",
+        "description": "Do explicit cast to suppress clang warnings",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "3a949de28c42d8714320e56bd99168148503da7d",
         "description": "pvr: Remove PVR_WINSYS_BO_FLAG_ZERO_ON_ALLOC flag",
         "nominated": false,
