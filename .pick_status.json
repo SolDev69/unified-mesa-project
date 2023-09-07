@@ -841,7 +841,7 @@
         "description": "ir3/lower_tex_prefetch: Fix crash with lowered load_barycentric_at_offset",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
