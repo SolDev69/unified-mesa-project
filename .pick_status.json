@@ -734,7 +734,7 @@
         "description": "ac/llvm: Fix DENORM_FLUSH_TO_ZERO with exact instructions",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
