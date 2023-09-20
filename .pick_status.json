@@ -1,5 +1,554 @@
 [
     {
+        "sha": "8d2dcd55d78cff504304e2c7aa8b76526c8be36b",
+        "description": "anv: refactor to fix pipe control debugging",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "747c7042df9149ab0934fda2bb708b482e91dafb",
+        "description": "v3dv: we can sample from 1D array too",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "95f881adbd7cce5a0d871b68b79005e1427365fb"
+    },
+    {
+        "sha": "62f931204b1805a4c19ad3b7f56dd6a39749a9ce",
+        "description": "freedreno/a6xx: Add L8_SRGB",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dac6f241777f54449a031351e8da183ee859a601",
+        "description": "ci/zink: Add a few updates for anv/tgl from the nightly runs.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d2ec7b4c35275cac1758a2fbe7842373c95b5145",
+        "description": "ci/virgl: Disable virgl-iris-traces.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "258d8b9c23ff36328c6357324a4299baf6fecc79",
+        "description": "ci/intel: Add various updates from our nightly runs.",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cb96dab5c8fb8cc7e8b927349b6b076600c470c9",
+        "description": "vc4: mark buffers as initialized at vc4_texture_subdata",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7c538b5ad8ef7b86164080c1639d993b7d7bdfb9",
+        "description": "iris: assert(bo->deps) after realloc()",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3cec15dd142b47c33b9e266a9b9f8e2c6540fa99",
+        "description": "iris: avoid stack overflow in iris_bo_wait_syncobj()",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "762b9aad01c9bdc78e10f7bf53d750942322b289",
+        "description": "iris: assert bufmgr->bo_deps_lock is held",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1c72c71bdf272812b0bc6976af42ef0afd20a928",
+        "description": "nir/move_vec_src_uses_to_dest: allow to skip reuse of constant sources",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dc601945992bb5d96bb4e5e20a813e6828532537",
+        "description": "nir/move_vec_src_uses_to_dest: skip reuse if vec is used only once in store_output",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8ac975fa5eccd3c3d19d1b6053159afae3d6e753",
+        "description": "r300: enable nir_move_vec_src_uses_to_dest",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "00aa8816a1a9f501515a40d63c7d0b4c4dda3e31",
+        "description": "docs: Update Clover's env variable documentation",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "981bc603b46ce9668fbfb5b766b4b4b9b47dd5a1"
+    },
+    {
+        "sha": "4c877ebfe50868d97a74b25576abdba4ae6c7139",
+        "description": "anv: define clear color localy within can_fast_clear_color_att",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "88efda1b24c643381bc1f15ae03ad88049646947",
+        "description": "v3dv: only handle Android Hardware Buffer on Android",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "733909a6379376938faa396545c5e9220a981881"
+    },
+    {
+        "sha": "67ed899cd6015c02331a6dee824204cbe2a8215c",
+        "description": "radv: remove absolute_depth_bias workaround",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4475c400a1fa64a1e7d2510e4678efc9ac0716ed",
+        "description": "radv: remove drirc workarounds for Path Of Exile",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f3790959c85e8699df61c9b1614730cde40602fe",
+        "description": "drirc: remove Path of Exile workarounds",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "604a9b7fae48c9eea9a7fff083023fb6c21454d9",
+        "description": "ac/perfcounter: add GFX11 groups",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0925d0d042813955ee4a3902ce89e687e49176cc",
+        "description": "ac/perfcounter: add SG_WQP group for GFX11",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "041d1150c138f50fa40bf74159f77a5e5c171925",
+        "description": "radv: fix missing ISA with RGP and GPL",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c314bc2ab95421b61522326c5962871703dc3157",
+        "description": "radv: fix checking if RGP is enabled with others tracing tools",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c773794943e950cb64b06c86d331298093ed61d3",
+        "description": "crocus: avoid issues with undefined clip distance",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d6d73aae4f833d1e5d7c1bef68a8db3915ec666b",
+        "description": "iris: avoid issues with undefined clip distance",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d6748c72d827f53bf525cd11eb6dcf305726e28f",
+        "description": "egl/wayland: enable WL_bind_wayland_display for zink",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1b4e877def1a93b7b6b2a2e22def2be5e140f5fe",
+        "description": "egl/wayland: use more registry listeners to better handle device init",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7ac0dbd73b61805297c2f6721ca4c167a3afee3a",
+        "description": "egl/wayland: split out wl drm extension init",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e0e812f34a3535b1e96cfd9b8c4b5a85d25ecc0c",
+        "description": "egl/swrast: expose EXT_swap_buffers_with_damage and EXT_present_opaque",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9197dba8bc250961a7ab2bf82808a6bb31fdbc28",
+        "description": "radeonsi/vcn: Don't hang GPU when using DCC surface as encoder input",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3166b14bd895f1831459af43b202ae479e19a627",
+        "description": "venus: drop device, family, index, flags tracking from vn_queue",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f5c706e438f5227599bba5f0e790346ad2091a12",
+        "description": "venus: use more common vk_queue related implementations",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3b58e934ebdb4d03d6099141d23587f5f912d229",
+        "description": "venus: use common ANB implementation",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4cb0da89a5064b4c0817ae276eb68e2db8a4512c",
+        "description": "venus: use common vk_queue object",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e8a61a8a6bee80f7fb63217fc82500439cd98c3d",
+        "description": "vulkan/android: drop vk_buffer dependency from common AHB impl",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cd0b86fce1fa8cef655a42bfc873dac2633c4615",
+        "description": "vulkan/android: add missing AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER usage",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ab1bc348fc9c28c6048be010daacf0e4c64ae789",
+        "description": "d3d12: Video - Relax ID3D12VideoDevice QI version for decode, process",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7a5948b3ee271b90299590a201d791c367cc6f2e",
+        "description": "vulkan/android: add missed STACK_ARRAY_FINISH()",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "3c4c263dc734ec75f72d36b1d0d1a9cd41310112"
+    },
+    {
+        "sha": "51840bbdced88a60389e8c24935d23145c3c814a",
+        "description": "nir: add a deref slot counter that handles compact",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b318b3d5209ffa3f381aa9a6d2a383f2695a8fd4",
+        "description": "nir: Remove nir_ssa_for_src",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "55333fce7713073e9f9eaa4ac3c684ccf80d9b03",
+        "description": "treewide: Remove remaining nir_ssa_for_src",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d1eb17e92e46e5b1618d0b2a0b551aad71a62568",
+        "description": "treewide: Drop nir_ssa_for_src users",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0df0980fc4e044c48c917c8d7d1666d892a08bad",
+        "description": "agx: Enable sinking ALU",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4bcb62d203a986b12fc595f6d2d5e93766b7d56a",
+        "description": "nir/opt_sink: Also consider load_preamble as const",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "aead5316d28e4b39c26225a99c45d9d3b7036305",
+        "description": "nir/opt_sink: Move ALU with constant sources",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "561df40211b70f14b2fa407bad9a0ac3503c2e5c",
+        "description": "nir/opt_sink: Do not move derivatives",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "469fd36fba88bc2f6880f98fe5d20d30d2ac615b",
+        "description": "nir/opt_sink: Sink frag coord instructions",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c07a9dca65845d30971fd0c88392f569338dd8c4",
+        "description": "nir/opt_sink: Sink load_local_pixel_agx",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "596682ad4b5f0449f463990914fe7895fd414143",
+        "description": "nir/opt_sink: Sink load_constant_agx",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d628be082b8ab9dc9d96c71cf32a61663ea71cfd",
+        "description": "nir/gather_info: Use nir_op_is_derivative",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6d3425653a29b40f5527c7fcce9c8a9c72a88164",
+        "description": "nir/opt_gcm: Use nir_op_is_derivative more",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e0246ed8e4f0c998d610f9414f28ed8fd25e4a6e",
+        "description": "nir/opt_preamble: Use nir_op_is_derivative",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "1a788a86c1288e6c5b738ee4e4c37f350f5287be",
+        "description": "nir: Hoist nir_op_is_derivative",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b77dc9f7d75603021f13d3d572efc1a649fa2900",
+        "description": "nir: Add NIR_OP_IS_DERIVATIVE property",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f6f9c07efed3f7cf8dd85d05db1662cd7beae75e",
+        "description": "radv: disable mesh dispatch XYZ_DIM when possible",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6dd751b3b94599f9948e86ec78e2c08163353f96",
+        "description": "aco: remove unused p_logical_end check when optimizing branching sequence",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8d5bd3ca48d9aa5dfe42a7a7c079d25478c005a2",
+        "description": "aco: check logical_phi_info at p_logical_end when eliminating exec writes",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "87b79078b5985d24fa7608121cb700dc0ad6c509",
+        "description": "meson: Update libarchive to v3.7.2-2",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ac48334ecd307054bb4176089898c6e19e32fc6f",
+        "description": "aco/optimizer_postRA: check overwritten_subdword in is_overwritten_since()",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "3d29779a25a98898163b1dc9c687e6e6211d13c5"
+    },
+    {
+        "sha": "92012c9bec4c99b62bf467f1994147d67727f6f0",
+        "description": "freedreno/replay: Fix implicit-function-declaration error",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "e3bbd1688b8892fad6297f0e84f76f9ecd2319cb"
+    },
+    {
+        "sha": "63a3a9b23b0a042fb751ed8f4e31bda25cf2ee23",
+        "description": "st/mesa: check renderbuffer before using it",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "af27ecb08990938a7fad2c0a91519bf6779f894e",
         "description": "device_select: add shortcut for MESA_VK_DEVICE_SELECT_FORCE_DEFAULT_DEVICE",
         "nominated": false,
