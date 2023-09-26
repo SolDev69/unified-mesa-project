@@ -121,7 +121,7 @@
         "description": "radv: fix COMPUTE_SHADER_INVOCATIONS query on compute queue",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null
     },
