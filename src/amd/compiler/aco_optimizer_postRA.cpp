@@ -510,6 +510,11 @@ try_combine_dpp(pr_opt_ctx& ctx, aco_ptr<Instruction>& instr)
       if (is_overwritten_since(ctx, mov->operands[0], op_instr_idx))
          continue;
 
+      /* GFX8/9 don't have fetch-inactive. */
+      if (ctx.program->gfx_level < GFX10 &&
+          is_overwritten_since(ctx, Operand(exec, ctx.program->lane_mask), op_instr_idx))
+         continue;
+
       if (i && !can_swap_operands(instr, &instr->opcode))
          continue;
 
