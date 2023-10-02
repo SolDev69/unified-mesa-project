@@ -1,5 +1,545 @@
 [
     {
+        "sha": "6ea2ea0bb0e04ee658ed8ebb4e51515b2f4d20fb",
+        "description": "anv: fix internal compute copy shader build",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "2cc5b3b1e02dfeaae3ef88a257e6e93396016f4d"
+    },
+    {
+        "sha": "d48d8aefdff44e8a6ece030a782dc9d152bb1d5d",
+        "description": "docs: Move isaspec out of drivers/freedreno",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4afbf4ad31b973b571998d46f29660ff856e2ce5",
+        "description": "v3d: get rid of shader_state pointer in v3d_key",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3fb9e27a3d2aacaf4f23042868b8fd3f8df7e1f8",
+        "description": "v3d: fix RAM shader cache",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8a4bd328cf1a2e5655294080a21baa60f8d84178",
+        "description": "v3d: use pre-computed shader sha1 for disk cache",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0ed36b524c8367d3caed934270997a97d8087c0f",
+        "description": "v3d: compute nir sha1 for uncompiled shader state",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "adc63d25032b8cc784b25922201de14a8eb5bec1",
+        "description": "broadcom/compiler: add a couple of shader key helpers",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ccd3e68146fd7ee8732d497f367a0574e4cf84a8",
+        "description": "ci: disable Collabora's LAVA lab for maintance",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b1156507ed2c647891161294a7f5e0d175a761b0",
+        "description": "ci/vkcts-navi21: mark more of the RT handles checks as flakes",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a7ed83949050738bd711f88f93cb7367505aa6fb",
+        "description": "ci/vkcts-vangogh: mark dEQP-VK.dynamic_rendering.primary_cmd_buff.basic.* as flake",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dbe2230408a5fefbd45188ead96f78a7490d9ad9",
+        "description": "asahi: decode: Fix uint64_t format modifiers in agxdecode_stateful()",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "acd5ed0451d64666dbeeddbff02aa913619a04c5"
+    },
+    {
+        "sha": "d99ed6d66d03d419813d7953e08c266e5d7b66c6",
+        "description": "asahi: Handle layered background programs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3715586580badb558fe552d35b551482e12dfa61",
+        "description": "asahi: Generate layered EOT programs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c87095e518df125e116400bd32475d320f79ca97",
+        "description": "asahi: Use a 2D Array texture for array render targets",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "87a7b239e1f659075c2132fe61ddf7479e93bcf3",
+        "description": "asahi: Write to cubes/etc attachments as 2D array",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0cbecc1ad14447c7b790bf657f73b38f58d5d6ae",
+        "description": "asahi: Predicate layer ID reads",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e2a0d64d52415994cfe2af8a830da3c52fa62d2a",
+        "description": "asahi: Add pass to predicate layer ID reads",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e518c92d26e5aab7d1308323cad87451fda269b3",
+        "description": "asahi: Assume LAYER is flat-shaded",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "68437eb0bab6403e149821e467fb8cf6273f2878",
+        "description": "asahi: Account for layering for attachment views",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9dc87a00fdf331fe6b58e060d2ba84269a6f3079",
+        "description": "asahi: Expose VS_LAYER_VIEWPORT behind a flag",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2396d3fe6267e6462dd7ed58e018df1a645d6091",
+        "description": "asahi: Use layered layouts",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8a48af4f8f98418b35e4dc4bf57b26ad80b65a30",
+        "description": "agx/lower_tilebuffer: Support spilled layered RTs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "041451b655c7f59d1baa2bca256312973bdffa24",
+        "description": "agx/tilebuffer: Support layered layouts",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b252630604e487be0dbbb7296511b45e7ac3eeb1",
+        "description": "agx: Support packed layered rendering writes",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4a954dff07e97e60aea5012859a304bc152144cc",
+        "description": "asahi,agx: Select layered rendering outputs",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "88fd76d378da515eb3a0848943690f147b7db231",
+        "description": "asahi: Add helper to get layer id in internal program",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "7d94f2ee49caa3201e8a6605a9103d719d2c5ffe",
+        "description": "agx: Add pass to lower layer ID writes",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "175819eec605a4548207ef028da735cc759ed31b",
+        "description": "agx: Handle layered block image stores",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c3a208d6d9efc19f15c6997465f3742abdfe8e0d",
+        "description": "agx: Pack block image store dim correctly",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "da0da5d6f8aecdec8e7ccf070c1dc054c9862a99",
+        "description": "agx/nir_lower_texture: Allow disabling layer clamping",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "10b9c2fa3644ad54dc9703f9e44f2a5de53e1de5",
+        "description": "nir: Support arrays in block_image_store_agx",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f4042afd5779f6e98b4369e90e9af4952bb0161c",
+        "description": "nir: Add layer_id_written_agx sysval",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d83d24e96af1dd82360fce5361c9fef25d3e657c",
+        "description": "agx: Insert jmp_exec_none instructions",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "79c4d4213c2ad4eeec284c991946cc4b5f0956b5",
+        "description": "agx: Add agx_prev_block helper",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "dd6106c8bd685e937db48ebe4ba0fca16fbd500b",
+        "description": "agx: Add jumps to block ends",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "22ab505a3d2abcc8a9dbc2bfd0259101f115764a",
+        "description": "agx: Augment if/else/while_cmp with a target",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "9a894c9a334816e5d7b10e05086937855213b8fb",
+        "description": "agx: Set PIPE_SHADER_CAP_CONT_SUPPORTED",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "d05657e0d675a80486e9325b558a5681d14a7a37",
+        "description": "agx: Hoist sample_mask/zs_emit",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "0d8362b8427414d5b89c4b5b70a7a6581282698e",
+        "description": "agx: Align the reg file for 256-bit vectors",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "cb14cddfa50759aea3f80bce07008f551c877ea2",
+        "description": "asahi: Clamp index buffer extent to what's read",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2be9b66cddbe56136adb95013f084b3d881b8b71",
+        "description": "radv: Fix check in insert_block",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a0fba1731193c2475843ab704a2b053abdcaab43",
+        "description": "radv: Initialize shader freelist on allocation",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "a43ee1ca5007b38c452ae98fb9f4ce18aa48fefa",
+        "description": "r600: Replace R600_BIG_ENDIAN with UTIL_ARCH_BIG_ENDIAN",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "43e72850697e42cdf6d794407a5523a5e481bd41",
+        "description": "winsys/amdgpu: pad gfx and compute IBs with a single NOP packet",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "4f660f99378382871f0c29e0d4b4d6a044dfe715",
+        "description": "ac/gpu_info: pad IBs according to ib_size_alignment",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b6f435888b718506e8b806eae2a17d6ecf027dfc",
+        "description": "ac/gpu_info: replace ib_alignment with per-IP IB base and size alignments",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "276caddbd9c94639241088cce4360b2daf88c290",
+        "description": "ci/deqp-runner: restore exit-on-error after getting deqp-runner's exit code",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "f8326d0950e91e7becf49e5a157e79a8dc4c1312",
+        "description": "ci/deqp-runner: fix indentation",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "6b29c16db87d048f79944797b90da3aa24c2374e",
+        "description": "amd: rename GFX110x to NAVI31-33",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "c7e08acd1283678a8f8ea3881b08ad97ea773d7e",
+        "description": "ac/llvm: fix flat PS input corruption",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "0a54fbb5b40fc4e4abd60f9ff7dd71dfe5c1d6cc"
+    },
+    {
+        "sha": "d50cc2e0cf6d74bf76053c83f499ae10034f4a92",
+        "description": "ac/gpu_info: don't align IBs to the GL2 cache line size",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2d928c7fee5f6c797c2cde6a9605305b31bfb1ce",
+        "description": "ac/llvm: set !fpmath 3.0 for llvm.sqrt",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "476529a692d57aeaa6f8f21e7adead37eba7d31d",
+        "description": "ac/perfcounter: remove a bogus assert to fix an assertion failure on gfx11",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "2e100bd69b67cbb70b8a8e813ed866618a2252ca",
+        "description": "ci: move shader-db clone/build into its own script",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "e7c0971b4f2656d43fc43c9a7d07f0ecb9b428dc",
+        "description": "ci: drop unused shader-db clone + build from fedora image",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "16201d58968da6cf073171f8a27b672ff772772f",
+        "description": "ci: drop unused shader-db clone + build from alpine image",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "ca92a10800bcb09749758ea1664dc0675955ffa0",
+        "description": "radv: Do not sync after radv_update_buffer_cp",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "3fd0ff21e0cdc3aac1dc3966b767d1809335d9b3",
+        "description": "radv: Merge the sync_data and header initialization",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "b3c43d6865c8c121c5e4459666410ea1edf3f5b8",
+        "description": "radv/bvh/ploc: Load child bounds from LDS",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
+        "sha": "8a80a3607c38b72e056f604265f3591b7073e293",
+        "description": "docs: document the merging process and what is allowed or not",
+        "nominated": false,
+        "nomination_type": null,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null
+    },
+    {
         "sha": "e7d393b1d7b8fd9b39942d4c2e5b32c46ffffff7",
         "description": "virgl:Fix ITEM_CPY macro pointer copy bug",
         "nominated": false,
