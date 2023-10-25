@@ -304,7 +304,7 @@
         "description": "etnaviv: Fix how we determine the max supported number of varyings",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "84816c22e4cf782bf521a005cff6063932a11872",
         "notes": null
