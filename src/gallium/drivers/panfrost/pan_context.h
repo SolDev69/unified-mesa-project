@@ -521,4 +521,6 @@ void panfrost_track_image_access(struct panfrost_batch *batch,
                                  enum pipe_shader_type stage,
                                  struct pipe_image_view *image);
 
+void panfrost_context_reinit(struct panfrost_context *ctx);
+
 #endif
