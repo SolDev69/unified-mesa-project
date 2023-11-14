@@ -452,6 +452,9 @@ panfrost_max_thread_count(unsigned arch, unsigned work_reg_count)
       return work_reg_count > 32 ? 384 : 768;
 
    /* Valhall (for completeness) */
+   case 10:
+      return 2048;
+
    default:
       return work_reg_count > 32 ? 512 : 1024;
    }
