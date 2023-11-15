@@ -43,6 +43,8 @@
 #include "drm-uapi/drm_fourcc.h"
 #include "drm-uapi/panfrost_drm.h"
 
+#include "genxml/ceu_builder.h"
+
 #include "decode.h"
 #include "pan_bo.h"
 #include "pan_fence.h"
@@ -902,6 +904,8 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
       panfrost_cmdstream_screen_init_v7(screen);
    else if (dev->arch == 9)
       panfrost_cmdstream_screen_init_v9(screen);
+   else if (dev->arch == 10)
+      panfrost_cmdstream_screen_init_v10(screen);
    else
       unreachable("Unhandled architecture major");
 
