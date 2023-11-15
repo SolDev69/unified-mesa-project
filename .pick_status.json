@@ -1104,7 +1104,7 @@
         "description": "anv: fix incorrect flushing on shader query copy",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b3b12c2c27fdd42668c041dd5428603d6cee4eb4",
         "notes": null
