@@ -83,7 +83,8 @@ struct pipe_screen *fd_screen_create(int fd, const struct pipe_screen_config *co
       if(kbase_device_fd == -1) { 
          printf("FD_OSMESA: Failed to open kbase device: %s", strerror(errno));
       }else {
-         screen = fd_screen_create(kbase_device_fd, NULL, NULL);
+         struct pipe_screen_config dummy_cfg;
+         screen = fd_screen_create(kbase_device_fd, &dummy_cfg, NULL);
       }
    }
 #else
