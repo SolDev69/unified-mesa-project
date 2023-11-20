@@ -1,7 +1,7 @@
 name: Build Android
 
 on:
-  [push, pull_request, workflow_dispatch]
+  [workflow_dispatch]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -37,7 +37,7 @@ jobs:
             -Damdgpu=disabled \
             -Dnouveau=disabled \
             -Dvmwgfx=disabled \
-            -Dfreedreno=disabled \
+            -Dfreedreno=enabled \
             -Dvc4=disabled \
             -Detnaviv=disabled
           ninja -C "build-android" install
