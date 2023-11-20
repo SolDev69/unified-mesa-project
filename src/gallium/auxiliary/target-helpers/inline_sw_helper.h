@@ -75,7 +75,7 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
       screen = agx_screen_create(0, NULL, winsys);
 #endif
 
-struct pipe_screen *fd_screen_create(int fd, const struct pipe_screen_config *config,struct renderonly *ro);
+struct pipe_screen *fd_screen_create(int fd, const struct pipe_screen_config *config, struct renderonly *ro);
 
 #if defined(GALLIUM_FREEDRENO)
    if(screen == NULL && strcmp(driver, "freedreno") == 0) {
@@ -83,7 +83,7 @@ struct pipe_screen *fd_screen_create(int fd, const struct pipe_screen_config *co
       if(kbase_device_fd == -1) { 
          printf("FD_OSMESA: Failed to open kbase device: %s", strerror(errno));
       }else {
-         screen = fd_screen_create(kbase_device_fd, NULL, winsys);
+         screen = fd_screen_create(kbase_device_fd, winsys, NULL);
       }
    }
 #else
