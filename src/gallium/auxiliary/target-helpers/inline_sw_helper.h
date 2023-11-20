@@ -32,7 +32,7 @@
 #ifdef GALLIUM_D3D12
 #include "d3d12/d3d12_public.h"
 #endif
-#ifdef
+
 #if defined(GALLIUM_ASAHI) && __APPLE__
 #include "asahi/agx_public.h"
 #endif
