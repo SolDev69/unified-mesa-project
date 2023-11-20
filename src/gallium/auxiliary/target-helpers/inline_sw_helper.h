@@ -8,6 +8,10 @@
 #include "frontend/sw_winsys.h"
 #include "target-helpers/inline_debug_helper.h"
 
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+
 /* Helper function to choose and instantiate one of the software rasterizers:
  * llvmpipe, softpipe.
  */
@@ -74,6 +78,18 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
    return screen ? debug_screen_wrap(screen) : NULL;
 }
 
+#if defined(GALLIUM_FREEDRENO)
+   if(screen == NULL && strcmp(driver, "freedreno") == 0) {
+      int kbase_device_fd = open("/dev/kgsl-3d0", O_RDWR | O_CLOEXEC | O_NONBLOCK);
+      if(kbase_device_fd == -1) { 
+         printf("FD_OSMESA: Failed to open kbase device: %s", strerror(errno));
+      }else {
+         screen = fd_screen_create(kbase_device_fd, NULL);
+      }
+   }
+#else
+#error You forgot to include Freedreno
+#endif
 
 static inline struct pipe_screen *
 sw_screen_create_vk(struct sw_winsys *winsys, bool sw_vk)
