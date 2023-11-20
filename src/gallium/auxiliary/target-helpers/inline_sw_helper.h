@@ -74,10 +74,7 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
    if (screen == NULL && strcmp(driver, "asahi") == 0)
       screen = agx_screen_create(0, NULL, winsys);
 #endif
-
-   return screen ? debug_screen_wrap(screen) : NULL;
-}
-
+   
 struct pipe_screen *fd_screen_create(int fd,
                                      const struct pipe_screen_config *config,
                                      struct renderonly *ro);
@@ -94,6 +91,9 @@ struct pipe_screen *fd_screen_create(int fd,
 #else
 #error You forgot to include Freedreno
 #endif
+
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
 
 static inline struct pipe_screen *
 sw_screen_create_vk(struct sw_winsys *winsys, bool sw_vk)
