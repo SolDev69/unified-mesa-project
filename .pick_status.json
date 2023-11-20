@@ -1114,7 +1114,7 @@
         "description": "intel/fs: rerun divergence prior to lowering non-uniform interpolate at sample",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "74a40cc4b6ed9440a0820c6f4a9cee296a8e191a",
         "notes": null
