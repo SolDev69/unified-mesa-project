@@ -133,7 +133,7 @@ fd_screen_get_timestamp(struct pipe_screen *pscreen)
 
    if (screen->has_timestamp) {
       uint64_t n;
-      fd_pipe_get_param(screen->pipe, FD_TIMESTAMP, &n);
+      kgsl_pipe_get_param(screen->pipe, FD_TIMESTAMP, &n);
       assert(screen->max_freq > 0);
       return n * 1000000000 / screen->max_freq;
    } else {
@@ -552,7 +552,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       if (fd_device_version(screen->dev) >= FD_VERSION_VA_SIZE) {
          uint64_t va_size;
 
-         if (!fd_pipe_get_param(screen->pipe, FD_VA_SIZE, &va_size)) {
+         if (!kgsl_pipe_get_param(screen->pipe, FD_VA_SIZE, &va_size)) {
             system_memory = MIN2(system_memory, va_size);
          }
       }
@@ -1035,20 +1035,20 @@ fd_screen_create(int fd,
    screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
-      goto fail;
+      //goto fail;
    }
 
-   if (fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
+   if (kgsl_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
       printf("could not get GMEM size\n");
-      goto fail;
+      //goto fail;
    }
    screen->gmemsize_bytes = debug_get_num_option("FD_MESA_GMEM", val);
 
    if (fd_device_version(dev) >= FD_VERSION_GMEM_BASE) {
-      fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
+      kgsl_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
-   if (fd_pipe_get_param(screen->pipe, FD_MAX_FREQ, &val)) {
+   if (kgsl_pipe_get_param(screen->pipe, FD_MAX_FREQ, &val)) {
       printf("could not get gpu freq\n");
       /* this limits what performance related queries are
        * supported but is not fatal
@@ -1056,19 +1056,19 @@ fd_screen_create(int fd,
       screen->max_freq = 0;
    } else {
       screen->max_freq = val;
-      if (fd_pipe_get_param(screen->pipe, FD_TIMESTAMP, &val) == 0)
+      if (kgsl_pipe_get_param(screen->pipe, FD_TIMESTAMP, &val) == 0)
          screen->has_timestamp = true;
    } 
    printf("piping dev id");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
    printf("dev id pipe done");
-   if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
+   if (kgsl_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
       printf("could not get gpu-id\n");
       //goto fail;
    }
    screen->gpu_id = val;
 
-   if (fd_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
+   if (kgsl_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
       printf("could not get chip-id\n");
       /* older kernels may not have this property: */
       unsigned core = screen->gpu_id / 100;
@@ -1081,7 +1081,7 @@ fd_screen_create(int fd,
    screen->chip_id = val;
    screen->gen = fd_dev_gen(screen->dev_id);
 
-   if (fd_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
+   if (kgsl_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
       printf("could not get # of rings\n");
       screen->priority_mask = 0;
    } else {

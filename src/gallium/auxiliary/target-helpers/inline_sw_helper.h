@@ -86,7 +86,7 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
          printf("FD_OSMESA: Failed to open kbase device: %s", strerror(errno));
       } else {
          struct pipe_screen_config dummy_cfg;
-         screen = fd_screen_create(0, &dummy_cfg, NULL);
+         screen = fd_screen_create(kbase_device_fd, &dummy_cfg, NULL);
       }
    }
 #else
