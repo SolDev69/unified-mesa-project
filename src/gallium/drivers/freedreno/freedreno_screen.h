@@ -28,8 +28,8 @@
 #define FREEDRENO_SCREEN_H_
 
 // #include "common/freedreno_dev_info.h"
-#include "drm/freedreno_drmif.h"
-#include "drm/freedreno_ringbuffer.h"
+// #include "drm/freedreno_drmif.h"
+// #include "drm/freedreno_ringbuffer.h"
 #include "perfcntrs/freedreno_perfcntr.h"
 
 #include "pipe/p_screen.h"
