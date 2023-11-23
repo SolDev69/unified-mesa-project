@@ -1122,14 +1122,14 @@ fd_screen_create(int fd,
    sysinfo(&si);
    screen->ram_size = si.totalram;
 
-   printf("Pipe Info:\n");
-   printf(" GPU-id:          %s\n", fd_dev_name(screen->dev_id));
-   printf(" Chip-id:         0x%016\n"PRIx64, screen->chip_id);
-   printf(" GMEM size:       0x%08x\n", screen->gmemsize_bytes);
+   DBG("Pipe Info:");
+   DBG(" GPU-id:          %s", fd_dev_name(screen->dev_id));
+   DBG(" Chip-id:         0x%016"PRIx64, screen->chip_id);
+   DBG(" GMEM size:       0x%08x", screen->gmemsize_bytes);
 
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
-      printf("unsupported GPU: a%03d\n", screen->gpu_id);
+      DBG("unsupported GPU: a%03d", screen->gpu_id);
       goto fail;
    }
 
