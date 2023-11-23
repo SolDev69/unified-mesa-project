@@ -1037,7 +1037,7 @@ kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
    screen->ro = ro;
 
    // maybe this should be in context?
-   screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D);
+   screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D, 1000);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
       //goto fail;
