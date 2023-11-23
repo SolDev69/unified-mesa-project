@@ -1064,7 +1064,7 @@ fd_screen_create(int fd,
 
    if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
       printf("could not get gpu-id\n");
-      goto fail;
+      //goto fail;
    }
    screen->gpu_id = val;
 
@@ -1130,7 +1130,7 @@ fd_screen_create(int fd,
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
       DBG("unsupported GPU: a%03d", screen->gpu_id);
-      goto fail;
+      //goto fail;
    }
 
    screen->info = info;
@@ -1164,7 +1164,7 @@ fd_screen_create(int fd,
       break;
    default:
       printf("unsupported GPU generation: a%uxx\n", screen->gen);
-      goto fail;
+      //goto fail;
    }
 
    /* fdN_screen_init() should set this: */
