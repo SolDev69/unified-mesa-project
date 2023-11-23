@@ -1052,7 +1052,7 @@ kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
    if (fd_device_version(dev) >= FD_VERSION_GMEM_BASE) {
       kgsl_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
-   printf("setting max freq")
+   printf("setting max freq");
    screen->max_freq = 0;
    printf("piping dev id");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
