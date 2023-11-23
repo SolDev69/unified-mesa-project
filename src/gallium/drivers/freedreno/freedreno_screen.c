@@ -65,6 +65,7 @@
 #include "ir3/ir3_descriptor.h"
 #include "ir3/ir3_gallium.h"
 #include "ir3/ir3_nir.h"
+#include "freedreno_public.h"
 
 /* clang-format off */
 static const struct debug_named_value fd_debug_options[] = {
