@@ -4344,7 +4344,7 @@
         "description": "egl/wayland: ensure wl_drm is available before use",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c60fea8c228ae3f32e20d6b65c473d9f04871d20",
         "notes": null
