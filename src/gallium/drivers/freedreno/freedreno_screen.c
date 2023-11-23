@@ -69,36 +69,36 @@
 
 /* clang-format off */
 static const struct debug_named_value fd_debug_options[] = {
-   {"msgs",      FD_printf_MSGS,     "Print debug messages"},
-   {"disasm",    FD_printf_DISASM,   "Dump TGSI and adreno shader disassembly (a2xx only, see IR3_SHADER_DEBUG)"},
-   {"dclear",    FD_printf_DCLEAR,   "Mark all state dirty after clear"},
-   {"ddraw",     FD_printf_DDRAW,    "Mark all state dirty after draw"},
-   {"noscis",    FD_printf_NOSCIS,   "Disable scissor optimization"},
-   {"direct",    FD_printf_DIRECT,   "Force inline (SS_DIRECT) state loads"},
-   {"gmem",      FD_printf_GMEM,     "Use gmem rendering when it is permitted"},
-   {"perf",      FD_printf_PERF,     "Enable performance warnings"},
-   {"nobin",     FD_printf_NOBIN,    "Disable hw binning"},
-   {"sysmem",    FD_printf_SYSMEM,   "Use sysmem only rendering (no tiling)"},
-   {"serialc",   FD_printf_SERIALC,  "Disable asynchronous shader compile"},
-   {"shaderdb",  FD_printf_SHADERDB, "Enable shaderdb output"},
-   {"flush",     FD_printf_FLUSH,    "Force flush after every draw"},
-   {"deqp",      FD_printf_DEQP,     "Enable dEQP hacks"},
-   {"inorder",   FD_printf_INORDER,  "Disable reordering for draws/blits"},
-   {"bstat",     FD_printf_BSTAT,    "Print batch stats at context destroy"},
-   {"nogrow",    FD_printf_NOGROW,   "Disable \"growable\" cmdstream buffers, even if kernel supports it"},
-   {"lrz",       FD_printf_LRZ,      "Enable experimental LRZ support (a5xx)"},
-   {"noindirect",FD_printf_NOINDR,   "Disable hw indirect draws (emulate on CPU)"},
-   {"noblit",    FD_printf_NOBLIT,   "Disable blitter (fallback to generic blit path)"},
-   {"hiprio",    FD_printf_HIPRIO,   "Force high-priority context"},
-   {"ttile",     FD_printf_TTILE,    "Enable texture tiling (a2xx/a3xx/a5xx)"},
-   {"perfcntrs", FD_printf_PERFC,    "Expose performance counters"},
-   {"noubwc",    FD_printf_NOUBWC,   "Disable UBWC for all internal buffers"},
-   {"nolrz",     FD_printf_NOLRZ,    "Disable LRZ (a6xx)"},
-   {"notile",    FD_printf_NOTILE,   "Disable tiling for all internal buffers"},
-   {"layout",    FD_printf_LAYOUT,   "Dump resource layouts"},
-   {"nofp16",    FD_printf_NOFP16,   "Disable mediump precision lowering"},
-   {"nohw",      FD_printf_NOHW,     "Disable submitting commands to the HW"},
-   {"nosbin",    FD_printf_NOSBIN,   "Execute GMEM bins in raster order instead of 'S' pattern"},
+   {"msgs",      FD_DBG_MSGS,     "Print debug messages"},
+   {"disasm",    FD_DBG_DISASM,   "Dump TGSI and adreno shader disassembly (a2xx only, see IR3_SHADER_DEBUG)"},
+   {"dclear",    FD_DBG_DCLEAR,   "Mark all state dirty after clear"},
+   {"ddraw",     FD_DBG_DDRAW,    "Mark all state dirty after draw"},
+   {"noscis",    FD_DBG_NOSCIS,   "Disable scissor optimization"},
+   {"direct",    FD_DBG_DIRECT,   "Force inline (SS_DIRECT) state loads"},
+   {"gmem",      FD_DBG_GMEM,     "Use gmem rendering when it is permitted"},
+   {"perf",      FD_DBG_PERF,     "Enable performance warnings"},
+   {"nobin",     FD_DBG_NOBIN,    "Disable hw binning"},
+   {"sysmem",    FD_DBG_SYSMEM,   "Use sysmem only rendering (no tiling)"},
+   {"serialc",   FD_DBG_SERIALC,  "Disable asynchronous shader compile"},
+   {"shaderdb",  FD_DBG_SHADERDB, "Enable shaderdb output"},
+   {"flush",     FD_DBG_FLUSH,    "Force flush after every draw"},
+   {"deqp",      FD_DBG_DEQP,     "Enable dEQP hacks"},
+   {"inorder",   FD_DBG_INORDER,  "Disable reordering for draws/blits"},
+   {"bstat",     FD_DBG_BSTAT,    "Print batch stats at context destroy"},
+   {"nogrow",    FD_DBG_NOGROW,   "Disable \"growable\" cmdstream buffers, even if kernel supports it"},
+   {"lrz",       FD_DBG_LRZ,      "Enable experimental LRZ support (a5xx)"},
+   {"noindirect",FD_DBG_NOINDR,   "Disable hw indirect draws (emulate on CPU)"},
+   {"noblit",    FD_DBG_NOBLIT,   "Disable blitter (fallback to generic blit path)"},
+   {"hiprio",    FD_DBG_HIPRIO,   "Force high-priority context"},
+   {"ttile",     FD_DBG_TTILE,    "Enable texture tiling (a2xx/a3xx/a5xx)"},
+   {"perfcntrs", FD_DBG_PERFC,    "Expose performance counters"},
+   {"noubwc",    FD_DBG_NOUBWC,   "Disable UBWC for all internal buffers"},
+   {"nolrz",     FD_DBG_NOLRZ,    "Disable LRZ (a6xx)"},
+   {"notile",    FD_DBG_NOTILE,   "Disable tiling for all internal buffers"},
+   {"layout",    FD_DBG_LAYOUT,   "Dump resource layouts"},
+   {"nofp16",    FD_DBG_NOFP16,   "Disable mediump precision lowering"},
+   {"nohw",      FD_DBG_NOHW,     "Disable submitting commands to the HW"},
+   {"nosbin",    FD_DBG_NOSBIN,   "Execute GMEM bins in raster order instead of 'S' pattern"},
    DEBUG_NAMED_VALUE_END
 };
 /* clang-format on */
@@ -607,7 +607,7 @@ fd_screen_get_paramf(struct pipe_screen *pscreen, enum pipe_capf param)
        *
        * See: https://code.google.com/p/android/issues/detail?id=206513
        */
-      if (FD_printf(DEQP))
+      if (FD_DBG(DEQP))
          return 48.0f;
       return 127.0f;
    case PIPE_CAPF_MAX_POINT_SIZE:
@@ -709,7 +709,7 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen,
       return (
          (is_a5xx(screen) || is_a6xx(screen)) &&
          (shader == PIPE_SHADER_COMPUTE || shader == PIPE_SHADER_FRAGMENT) &&
-         !FD_printf(NOFP16));
+         !FD_DBG(NOFP16));
    case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
    case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
       return 16;
@@ -962,12 +962,12 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
    } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
       bo = fd_bo_from_dmabuf(screen->dev, whandle->handle);
    } else {
-      printf("Attempt to import unsupported handle type %d", whandle->type);
+      printf("Attempt to import unsupported handle type %d\n", whandle->type);
       return NULL;
    }
 
    if (!bo) {
-      printf("ref name 0x%08x failed", whandle->handle);
+      printf("ref name 0x%08x failed\n", whandle->handle);
       return NULL;
    }
 
@@ -1016,7 +1016,7 @@ fd_screen_create(int fd,
    uint64_t val;
    fd_mesa_debug = debug_get_option_fd_mesa_debug();
 
-   if (FD_printf(NOBIN))
+   if (FD_DBG(NOBIN))
       fd_binning_enabled = false;
 
    if (!screen)
@@ -1174,7 +1174,7 @@ fd_screen_create(int fd,
       if (screen->primtypes[i])
          screen->primtypes_mask |= (1 << i);
 
-   if (FD_printf(PERFC)) {
+   if (FD_DBG(PERFC)) {
       screen->perfcntr_groups =
          fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
    }
@@ -1184,7 +1184,7 @@ fd_screen_create(int fd,
     * buffers would be too much otherwise.
     */
    if (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS)
-      screen->reorder = !FD_printf(INORDER);
+      screen->reorder = !FD_DBG(INORDER);
 
    fd_bc_init(&screen->batch_cache);
 
