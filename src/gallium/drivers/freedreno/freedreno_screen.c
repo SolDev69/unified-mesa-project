@@ -1047,18 +1047,8 @@ fd_screen_create(int fd,
    if (fd_device_version(dev) >= FD_VERSION_GMEM_BASE) {
       kgsl_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
-
-   if (kgsl_pipe_get_param(screen->pipe, FD_MAX_FREQ, &val)) {
-      printf("could not get gpu freq\n");
-      /* this limits what performance related queries are
-       * supported but is not fatal
-       */
-      screen->max_freq = 0;
-   } else {
-      screen->max_freq = val;
-      if (kgsl_pipe_get_param(screen->pipe, FD_TIMESTAMP, &val) == 0)
-         screen->has_timestamp = true;
-   } 
+   printf("setting max freq")
+   screen->max_freq = 0;
    printf("piping dev id");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
    printf("dev id pipe done");
