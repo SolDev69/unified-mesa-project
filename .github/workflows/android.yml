@@ -59,7 +59,8 @@ jobs:
             -Dosmesa=true \
             -Dvulkan-drivers= \
             -Dgallium-drivers=swrast,freedreno \
-            -Dfreedreno-kmds=kgsl
+            -Dfreedreno-kmds=kgsl \
+            -Dshared-glapi=false
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v2
