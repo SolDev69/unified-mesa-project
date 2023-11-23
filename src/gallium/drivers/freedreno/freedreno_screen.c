@@ -1013,7 +1013,7 @@ fd_screen_create(int fd,
    struct fd_screen *screen = CALLOC_STRUCT(fd_screen);
    struct pipe_screen *pscreen;
    uint64_t val;
-
+panfrost_create
    fd_mesa_debug = debug_get_option_fd_mesa_debug();
 
    if (FD_DBG(NOBIN))

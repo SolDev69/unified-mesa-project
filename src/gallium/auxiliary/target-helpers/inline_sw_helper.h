@@ -33,6 +33,10 @@
 #include "d3d12/d3d12_public.h"
 #endif
 
+#ifdef GALLIUM_FREEDRENO
+#include "freedreno/freedreno_public.h"
+#endif
+
 #if defined(GALLIUM_ASAHI) && __APPLE__
 #include "asahi/agx_public.h"
 #endif
@@ -74,8 +78,6 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
    if (screen == NULL && strcmp(driver, "asahi") == 0)
       screen = agx_screen_create(0, NULL, winsys);
 #endif
-
-struct pipe_screen *fd_screen_create(int fd, const struct pipe_screen_config *config, struct renderonly *ro);
 
 #if defined(GALLIUM_FREEDRENO)
    if(screen == NULL && strcmp(driver, "freedreno") == 0) {
