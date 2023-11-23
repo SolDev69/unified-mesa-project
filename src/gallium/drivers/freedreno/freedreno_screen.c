@@ -1058,10 +1058,10 @@ fd_screen_create(int fd,
       screen->max_freq = val;
       if (fd_pipe_get_param(screen->pipe, FD_TIMESTAMP, &val) == 0)
          screen->has_timestamp = true;
-   }
-
+   } 
+   printf("piping dev id");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
-
+   printf("dev id pipe done");
    if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
       printf("could not get gpu-id\n");
       //goto fail;
