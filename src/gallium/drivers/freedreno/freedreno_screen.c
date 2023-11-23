@@ -67,6 +67,8 @@
 #include "ir3/ir3_nir.h"
 #include "freedreno_public.h"
 
+#include "drm/kgsl/kgsl_priv.h"
+
 static int
 kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
                     uint64_t *value)
