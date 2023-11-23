@@ -1082,7 +1082,7 @@ fd_screen_create(int fd,
    screen->gen = fd_dev_gen(screen->dev_id);
 
    if (fd_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
-      printf("could not get # of rings\n")<;
+      printf("could not get # of rings\n");
       screen->priority_mask = 0;
    } else {
       /* # of rings equates to number of unique priority values: */
