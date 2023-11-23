@@ -35,6 +35,7 @@
 
 #ifdef GALLIUM_FREEDRENO
 #include "freedreno/freedreno_public.h"
+#include "drm/kgsl/kgsl_priv.h"
 #endif
 
 #if defined(GALLIUM_ASAHI) && __APPLE__

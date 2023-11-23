@@ -67,6 +67,45 @@
 #include "ir3/ir3_nir.h"
 #include "freedreno_public.h"
 
+static int
+kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
+                    uint64_t *value)
+{
+   struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
+   switch (param) {
+   case FD_DEVICE_ID:
+   case FD_GPU_ID:
+      *value = kgsl_pipe->dev_id.gpu_id;
+      return 0;
+   case FD_GMEM_SIZE:
+      *value = kgsl_pipe->gmem_size;
+      return 0;
+   case FD_GMEM_BASE:
+      *value = kgsl_pipe->gmem_base;
+      return 0;
+   case FD_CHIP_ID:
+      *value = kgsl_pipe->dev_id.chip_id;
+      return 0;
+   case FD_NR_PRIORITIES:
+      /* Take from kgsl kmd source code, if device is a4xx or newer
+       * it has KGSL_PRIORITY_MAX_RB_LEVELS=4 priorities otherwise it just has one.
+       * https://android.googlesource.com/kernel/msm/+/refs/tags/android-13.0.0_r0.21/drivers/gpu/msm/kgsl.h#56
+       */
+      *value = kgsl_pipe->dev_id.gpu_id >= 400 ? 4 : 1;
+      return 0;
+   case FD_MAX_FREQ:
+      /* Explicity fault on MAX_FREQ as we don't have a way to convert
+       * timestamp values from KGSL into time values. If we use the default
+       * path an error message would be generated when this is simply an
+       * unsupported feature.
+       */
+      return -1;
+   default:
+      ERROR_MSG("invalid param id: %d", param);
+      return -1;
+   }
+}
+
 /* clang-format off */
 static const struct debug_named_value fd_debug_options[] = {
    {"msgs",      FD_DBG_MSGS,     "Print debug messages"},
