@@ -52,7 +52,7 @@ jobs:
             -Dandroid-stub=true \
             -Dllvm=disabled \
             -Dxlib-lease=disabled \
-            -Degl=disabled \
+            -Degl=enabled \
             -Dgbm=disabled \
             -Dglx=disabled \
             -Dopengl=true \
