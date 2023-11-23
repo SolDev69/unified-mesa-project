@@ -1007,6 +1007,11 @@ fd_screen_create(int fd,
                  const struct pipe_screen_config *config,
                  struct renderonly *ro)
 {
+   static int
+kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
+                    uint64_t *value);
+   struct fd_pipe *kgsl_pipe_new(struct fd_device *dev, enum fd_pipe_id id,
+                              uint32_t prio);
    struct fd_device *dev = fd_device_new_dup(fd);
    if (!dev)
       return NULL;
@@ -1032,7 +1037,7 @@ fd_screen_create(int fd,
    screen->ro = ro;
 
    // maybe this should be in context?
-   screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
+   screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
       //goto fail;
