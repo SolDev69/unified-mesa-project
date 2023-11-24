@@ -1,6 +1,6 @@
 #ifndef KGSL_PRIV_H
 #define KGSL_PRIV_H
-#include "freedreno_priv.h"
+#include "../freedreno_priv.h"
 
 /* TODO the KGSL kernel interface should probably be moved */
 /* into someplace common that both turnip and freedreno can use */
