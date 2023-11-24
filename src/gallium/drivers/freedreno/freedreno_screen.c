@@ -1050,7 +1050,7 @@ fd_screen_create(int fd,
       fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
-   printf("setting max freq")
+   printf("setting max freq");
    screen->max_freq = 0;
 
    printf("piping dev id");
