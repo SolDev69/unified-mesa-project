@@ -1261,7 +1261,7 @@ fd_screen_create(int fd,
 
    // maybe this should be in context?
    printf("Initializing pipe\n");
-   screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D);
+   screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D, 0);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
       goto fail;
