@@ -1153,6 +1153,7 @@ fd_screen_create(int fd,
    screen->ro = ro;
 
    // maybe this should be in context?
+   printf("Initializing pipe\n")
    screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
@@ -1169,10 +1170,10 @@ fd_screen_create(int fd,
       kgsl_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
-   printf("setting max freq");
+   printf("setting max freq\n");
    screen->max_freq = 0;
 
-   printf("piping dev id");
+   printf("piping dev id\n");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
    printf("dev id pipe done");
    if (kgsl_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
