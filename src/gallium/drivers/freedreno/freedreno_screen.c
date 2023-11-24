@@ -1007,9 +1007,6 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
 #include "freedreno/drm/kgsl/kgsl_priv.h"
 #include "freedreno/drm/freedreno_ringbuffer_sp.h"
 
-#include "kgsl_priv.h"
-#include "freedreno_ringbuffer_sp.h"
-
 /* TODO this function is borrowed from turnip, can it be shared in some way? */
 int
 kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg)
