@@ -1001,6 +1001,7 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
    struct fd_screen *screen = fd_screen(pscreen);
    return fd_device_fd(screen->dev);
 }
+#include "freedreno/drm/kgsl/kgsl_priv.h"
 static int
 kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
                     uint64_t *value)
