@@ -1175,7 +1175,7 @@ fd_screen_create(int fd,
 
    printf("piping dev id\n");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
-   printf("dev id pipe done");
+   printf("dev id pipe done\n");
    if (kgsl_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
       printf("could not get gpu-id\n");
       //goto fail;
