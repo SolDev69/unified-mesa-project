@@ -1330,7 +1330,7 @@ fd_screen_create(int fd,
       printf("could not get gpu-id\n");
       //goto fail;
    }
-   screen->gpu_id = kgsl_pipe->dev_id.gpu_id;
+   screen->gpu_id = val;
 
    if (kgsl_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
       printf("could not get chip-id\n");
