@@ -1007,6 +1007,10 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
 #include "freedreno/drm/kgsl/kgsl_priv.h"
 #include "freedreno/drm/freedreno_ringbuffer_sp.h"
 
+#include "kgsl_priv.h"
+#include "freedreno_ringbuffer_sp.h"
+
+/* TODO this function is borrowed from turnip, can it be shared in some way? */
 int
 kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg)
 {
@@ -1017,6 +1021,44 @@ kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg)
    } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
 
    return ret;
+}
+
+/* TODO this function is borrowed from turnip, can it be shared in some way?
+ * safe_ioctl is not enough as restarted waits would not adjust the timeout
+ * which could lead to waiting substantially longer than requested
+ */
+static int
+wait_timestamp_safe(int fd,
+                    unsigned int context_id,
+                    unsigned int timestamp,
+                    int64_t timeout_ms)
+{
+   int64_t start_time = os_time_get_nano();
+   struct kgsl_device_waittimestamp_ctxtid wait = {
+      .context_id = context_id,
+      .timestamp = timestamp,
+      .timeout = timeout_ms,
+   };
+
+   while (true) {
+      int ret = kgsl_pipe_safe_ioctl(fd, IOCTL_KGSL_DEVICE_WAITTIMESTAMP_CTXTID, &wait);
+
+      if (ret == -1 && (errno == EINTR || errno == EAGAIN)) {
+         int64_t current_time = os_time_get_nano();
+
+         /* update timeout to consider time that has passed since the start */
+         timeout_ms -= (current_time - start_time) / 1000000;
+         if (timeout_ms <= 0) {
+            errno = ETIME;
+            return -1;
+         }
+
+         wait.timeout = (unsigned int) timeout_ms;
+         start_time = current_time;
+      } else {
+         return ret;
+      }
+   }
 }
 
 int
@@ -1069,6 +1111,62 @@ kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
       return -1;
    }
 }
+
+static int
+kgsl_pipe_set_param(struct fd_pipe *pipe, uint32_t param, uint64_t value)
+{
+    ERROR_MSG("kgsl_pipe_set_param not implemented");
+    return -1;
+}
+
+static int
+kgsl_pipe_wait(struct fd_pipe *pipe, const struct fd_fence *fence, uint64_t timeout)
+{
+    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
+    return wait_timestamp_safe(pipe->dev->fd, kgsl_pipe->queue_id, fence->kfence, timeout);
+}
+
+static void
+kgsl_pipe_destroy(struct fd_pipe *pipe)
+{
+    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
+    struct kgsl_drawctxt_destroy req = {
+        .drawctxt_id = kgsl_pipe->queue_id,
+    };
+
+    fd_pipe_sp_ringpool_fini(pipe);
+    kgsl_pipe_safe_ioctl(pipe->dev->fd, IOCTL_KGSL_DRAWCTXT_DESTROY, &req);
+    free(kgsl_pipe);
+}
+
+static int
+kgsl_reset_status(struct fd_pipe *pipe, enum fd_reset_status *status)
+{
+    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
+    uint32_t value = kgsl_pipe->queue_id;
+    int ret = kgsl_get_prop(pipe->dev->fd, KGSL_PROP_GPU_RESET_STAT, &value, sizeof(value));
+
+    if (!ret) {
+        switch (value) {
+        case KGSL_CTX_STAT_NO_ERROR:
+            *status = FD_RESET_NO_ERROR;
+            break;
+        case KGSL_CTX_STAT_GUILTY_CONTEXT_RESET_EXT:
+            *status = FD_RESET_GUILTY;
+            break;
+        case KGSL_CTX_STAT_INNOCENT_CONTEXT_RESET_EXT:
+            *status = FD_RESET_INNOCENT;
+            break;
+        case KGSL_CTX_STAT_UNKNOWN_CONTEXT_RESET_EXT:
+        default:
+            *status = FD_RESET_UNKNOWN;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 static const struct fd_pipe_funcs pipe_funcs = {
     .ringbuffer_new_object = fd_ringbuffer_sp_new_object,
     .submit_new = kgsl_submit_sp_new,
@@ -1079,6 +1177,7 @@ static const struct fd_pipe_funcs pipe_funcs = {
     .set_param = kgsl_pipe_set_param,
     .destroy = kgsl_pipe_destroy,
 };
+
 struct fd_pipe *kgsl_pipe_new(struct fd_device *dev, enum fd_pipe_id id,
                               uint32_t prio)
 {
