@@ -1005,6 +1005,8 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
 
 // kgsl_pipe.c
 #include "freedreno/drm/kgsl/kgsl_priv.h"
+#include "freedreno/drm/freedreno_ringbuffer_sp.h"
+
 int
 kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg)
 {
@@ -1067,7 +1069,16 @@ kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
       return -1;
    }
 }
-
+static const struct fd_pipe_funcs pipe_funcs = {
+    .ringbuffer_new_object = fd_ringbuffer_sp_new_object,
+    .submit_new = kgsl_submit_sp_new,
+    .reset_status = kgsl_reset_status,
+    .flush = fd_pipe_sp_flush,
+    .wait = kgsl_pipe_wait,
+    .get_param = kgsl_pipe_get_param,
+    .set_param = kgsl_pipe_set_param,
+    .destroy = kgsl_pipe_destroy,
+};
 struct fd_pipe *kgsl_pipe_new(struct fd_device *dev, enum fd_pipe_id id,
                               uint32_t prio)
 {
@@ -1153,7 +1164,7 @@ fd_screen_create(int fd,
    screen->ro = ro;
 
    // maybe this should be in context?
-   printf("Initializing pipe\n")
+   printf("Initializing pipe\n");
    screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
