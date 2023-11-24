@@ -223,6 +223,51 @@ fail:
     return NULL;
 }
 
+
+static const struct fd_device_funcs funcs = {
+    .bo_new = kgsl_bo_new,
+    .pipe_new = kgsl_pipe_new,
+    .bo_from_handle = kgsl_bo_from_handle,
+    .bo_from_dmabuf = kgsl_bo_from_dmabuf,
+    .bo_close_handle = kgsl_bo_close_handle,
+    .destroy = kgsl_device_destroy,
+};
+
+struct fd_device *
+kgsl_device_new(int fd)
+{
+    struct kgsl_device *kgsl_dev;
+    struct fd_device *dev;
+    struct kgsl_devinfo info;
+
+    /* Try to read the device info to detect if the FD is really KGSL */
+    if(kgsl_get_prop(fd, KGSL_PROP_DEVICE_INFO, &info, sizeof(info)))
+        return NULL;
+
+    kgsl_dev = calloc(1, sizeof(*kgsl_dev));
+    if (!kgsl_dev)
+      return NULL;
+
+    dev = &kgsl_dev->base;
+    dev->funcs = &funcs;
+    dev->fd = fd;
+    dev->version = FD_VERSION_ROBUSTNESS;
+    dev->features = FD_FEATURE_DIRECT_RESET | FD_FEATURE_IMPORT_DMABUF;
+
+    /* async submit_queue used for softpin deffered submits */
+    util_queue_init(&dev->submit_queue, "sq", 8, 1, 0, NULL);
+
+    dev->bo_size = sizeof(struct kgsl_bo);
+
+    return dev;
+}
+
+static void
+kgsl_device_destroy(struct fd_device *dev)
+{
+}
+
+
 /*
  * Copyright (C) 2012 Rob Clark <robclark@freedesktop.org>
  *
@@ -1233,7 +1278,7 @@ fd_screen_create(int fd,
                  const struct pipe_screen_config *config,
                  struct renderonly *ro)
 {
-   struct fd_device *dev = fd_device_new_dup(fd);
+   struct fd_device *dev = kgsl_device_new(fd);
    if (!dev)
       return NULL;
 
@@ -1281,17 +1326,23 @@ fd_screen_create(int fd,
    printf("piping dev id\n");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
    printf("dev id pipe done\n");
-   printf("setting gpu id");
+   if (kgsl_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
+      printf("could not get gpu-id\n");
+      //goto fail;
+   }
    screen->gpu_id = kgsl_pipe->dev_id.gpu_id;
-   printf("setting chip idd");
-   unsigned core = screen->gpu_id / 100;
-   unsigned major = (screen->gpu_id % 100) / 10;
-   unsigned minor = screen->gpu_id % 10;
-   unsigned patch = 0; /* assume the worst */
-   val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
-         ((core & 0xff) << 24);
+
+   if (kgsl_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
+      printf("could not get chip-id\n");
+      /* older kernels may not have this property: */
+      unsigned core = screen->gpu_id / 100;
+      unsigned major = (screen->gpu_id % 100) / 10;
+      unsigned minor = screen->gpu_id % 10;
+      unsigned patch = 0; /* assume the worst */
+      val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
+            ((core & 0xff) << 24);
+   }
    screen->chip_id = val;
-   printf("Get chip gen");
    screen->gen = fd_dev_gen(screen->dev_id);
 
    if (kgsl_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
