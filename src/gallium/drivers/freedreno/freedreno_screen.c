@@ -1083,7 +1083,7 @@ fd_screen_create(int fd,
    screen->gmemsize_bytes = debug_get_num_option("FD_MESA_GMEM", val);
 
    if (fd_device_version(dev) >= FD_VERSION_GMEM_BASE) {
-      fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
+      kgsl_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
    printf("setting max freq");
@@ -1098,7 +1098,7 @@ fd_screen_create(int fd,
    }
    screen->gpu_id = val;
 
-   if (fd_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
+   if (kgsl_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
       printf("could not get chip-id\n");
       /* older kernels may not have this property: */
       unsigned core = screen->gpu_id / 100;
