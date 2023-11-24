@@ -1001,7 +1001,32 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
    struct fd_screen *screen = fd_screen(pscreen);
    return fd_device_fd(screen->dev);
 }
-#include "freedreno/drm/kgsl/kgsl_priv.h"
+
+
+int
+kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg)
+{
+   int ret;
+
+   do {
+      ret = ioctl(fd, request, arg);
+   } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
+
+   return ret;
+}
+
+int
+kgsl_get_prop(int fd, unsigned int type, void *value, size_t size)
+{
+   struct kgsl_device_getproperty getprop = {
+      .type = type,
+      .value = value,
+      .sizebytes = size,
+   };
+
+   return kgsl_pipe_safe_ioctl(fd, IOCTL_KGSL_DEVICE_GETPROPERTY, &getprop);
+}
+
 static int
 kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
                     uint64_t *value)
@@ -1040,6 +1065,60 @@ kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
       return -1;
    }
 }
+
+struct fd_pipe *kgsl_pipe_new(struct fd_device *dev, enum fd_pipe_id id,
+                              uint32_t prio)
+{
+    struct kgsl_pipe *kgsl_pipe = NULL;
+    struct fd_pipe *pipe = NULL;
+    kgsl_pipe = calloc(1, sizeof(*kgsl_pipe));
+    if (!kgsl_pipe) {
+        ERROR_MSG("allocation failed");
+        goto fail;
+    }
+
+    pipe = &kgsl_pipe->base;
+    pipe->dev = dev;
+    pipe->funcs = &pipe_funcs;
+
+    struct kgsl_devinfo info;
+    if(kgsl_get_prop(dev->fd, KGSL_PROP_DEVICE_INFO, &info, sizeof(info)))
+        goto fail;
+
+    uint64_t gmem_iova;
+    if(kgsl_get_prop(dev->fd, KGSL_PROP_UCHE_GMEM_VADDR, &gmem_iova, sizeof(gmem_iova)))
+        goto fail;
+
+    kgsl_pipe->dev_id.gpu_id =
+        ((info.chip_id >> 24) & 0xff) * 100 +
+        ((info.chip_id >> 16) & 0xff) * 10 +
+        ((info.chip_id >>  8) & 0xff);
+
+    kgsl_pipe->dev_id.chip_id = info.chip_id;
+    kgsl_pipe->gmem_size = info.gmem_sizebytes;
+    kgsl_pipe->gmem_base = gmem_iova;
+
+    struct kgsl_drawctxt_create req = {
+        .flags = KGSL_CONTEXT_SAVE_GMEM |
+                 KGSL_CONTEXT_NO_GMEM_ALLOC |
+                 KGSL_CONTEXT_PREAMBLE,
+    };
+
+    int ret = kgsl_pipe_safe_ioctl(dev->fd, IOCTL_KGSL_DRAWCTXT_CREATE, &req);
+    if(ret)
+        goto fail;
+
+    kgsl_pipe->queue_id = req.drawctxt_id;
+
+    fd_pipe_sp_ringpool_init(pipe);
+
+    return pipe;
+fail:
+    if (pipe)
+        fd_pipe_del(pipe);
+    return NULL;
+}
+
 struct pipe_screen *
 fd_screen_create(int fd,
                  const struct pipe_screen_config *config,
@@ -1070,7 +1149,7 @@ fd_screen_create(int fd,
    screen->ro = ro;
 
    // maybe this should be in context?
-   screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
+   screen->pipe = kgsl_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
       goto fail;
