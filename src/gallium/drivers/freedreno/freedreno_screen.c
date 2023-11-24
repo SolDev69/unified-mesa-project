@@ -1003,6 +1003,8 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
 }
 
 
+// kgsl_pipe.c
+#include "freedreno/drm/kgsl/kgsl_priv.h"
 int
 kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg)
 {
@@ -1119,6 +1121,8 @@ fail:
     return NULL;
 }
 
+
+// Create screen, back to freedreno_screen.c code
 struct pipe_screen *
 fd_screen_create(int fd,
                  const struct pipe_screen_config *config,
