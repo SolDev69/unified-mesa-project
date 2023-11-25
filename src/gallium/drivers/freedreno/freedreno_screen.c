@@ -1344,7 +1344,9 @@ fd_screen_create(int fd,
       val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
             ((core & 0xff) << 24);
    }
+   printf("got chip id");
    screen->chip_id = val;
+   printf("piping gen");
    screen->gen = fd_dev_gen(screen->dev_id);
 
    if (kgsl_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
