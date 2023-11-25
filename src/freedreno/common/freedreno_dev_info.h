@@ -179,7 +179,7 @@ struct fd_dev_id {
 static inline uint32_t
 fd_dev_gpu_id(const struct fd_dev_id *id)
 {
-   // assert(id->gpu_id || id->chip_id);
+   assert(id->gpu_id || id->chip_id);
    if (!id->gpu_id) {
       return ((id->chip_id >> 24) & 0xff) * 100 +
              ((id->chip_id >> 16) & 0xff) * 10 +
@@ -192,7 +192,7 @@ fd_dev_gpu_id(const struct fd_dev_id *id)
 static uint8_t
 fd_dev_gen(const struct fd_dev_id *id)
 {
-   return fd_dev_gpu_id(id) / 100;
+   return 6; // test
 }
 
 static inline bool
