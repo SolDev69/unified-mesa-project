@@ -1344,11 +1344,11 @@ fd_screen_create(int fd,
       val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
             ((core & 0xff) << 24);
    }
-   printf("got chip id");
+   printf("got chip id\n");
    screen->chip_id = val;
-   printf("piping gen");
+   printf("piping gen\n");
    screen->gen = fd_dev_gen(screen->dev_id);
-
+   printf("get rings\n");
    if (kgsl_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
       printf("could not get # of rings\n");
       screen->priority_mask = 0;
@@ -1371,13 +1371,13 @@ fd_screen_create(int fd,
        */
       screen->prio_norm = val / 2;
    }
-
+   printf("get device version\n");
    if (fd_device_version(dev) >= FD_VERSION_ROBUSTNESS)
       screen->has_robustness = true;
-
+   printf("has_syncobj\n");
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
-   /* parse driconf configuration now for device specific overrides: */
+   printf("FD-OSMESA: parse driconf configuration now for device specific overrides: \n");
    driParseConfigFiles(config->options, config->options_info, 0, "msm",
                        NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
 
@@ -1389,11 +1389,6 @@ fd_screen_create(int fd,
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;
-
-   DBG("Pipe Info:");
-   DBG(" GPU-id:          %s", fd_dev_name(screen->dev_id));
-   DBG(" Chip-id:         0x%016"PRIx64, screen->chip_id);
-   DBG(" GMEM size:       0x%08x", screen->gmemsize_bytes);
 
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
