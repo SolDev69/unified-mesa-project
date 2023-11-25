@@ -1386,15 +1386,17 @@ fd_screen_create(int fd,
    screen->driconf.enable_throttling =
          !driQueryOptionb(config->options, "disable_throttling");
 
+   printf("sysinfo\n");
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;
-
+   printf("dev info\n");
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
       DBG("unsupported GPU: a%03d", screen->gpu_id);
       //goto fail;
    }
+   printf("screen info\n");
 
    screen->info = info;
 
@@ -1409,6 +1411,7 @@ fd_screen_create(int fd,
     * of the cases below and see what happens.  And if it works, please
     * send a patch ;-)
     */
+   printf("start screen\n");
    switch (screen->gen) {
    case 2:
       fd2_screen_init(pscreen);
@@ -1429,7 +1432,7 @@ fd_screen_create(int fd,
       printf("unsupported GPU generation: a%uxx\n", screen->gen);
       //goto fail;
    }
-
+   printf("prim types\n");
    /* fdN_screen_init() should set this: */
    assert(screen->primtypes);
    screen->primtypes_mask = 0;
