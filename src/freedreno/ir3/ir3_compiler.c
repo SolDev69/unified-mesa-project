@@ -131,29 +131,33 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
                     const struct ir3_compiler_options *options)
 {
    struct ir3_compiler *compiler = rzalloc(NULL, struct ir3_compiler);
-
+   printf("ir3: debug_get_option_ir3_shader_debug\n");
    ir3_shader_debug = debug_get_option_ir3_shader_debug();
+   printf("ir3: ir3_shader_override_path\n");
    ir3_shader_override_path =
       !__check_suid() ? debug_get_option_ir3_shader_override_path() : NULL;
 
    if (ir3_shader_override_path) {
       ir3_shader_debug |= IR3_DBG_NOCACHE;
    }
-
+   printf("ir3: dev\n");
    compiler->dev = dev;
+   printf("ir3: dev_id\n");
    compiler->dev_id = dev_id;
+   printf("ir3: gen\n");
    compiler->gen = fd_dev_gen(dev_id);
+   printf("ir3: options\n");
    compiler->options = *options;
 
-   /* All known GPU's have 32k local memory (aka shared) */
+   printf("All known GPU's have 32k local memory (aka shared)\n");
    compiler->local_mem_size = 32 * 1024;
-   /* TODO see if older GPU's were different here */
+   printf("TODO see if older GPU's were different here\n");
    compiler->branchstack_size = 64;
    compiler->wave_granularity = 2;
    compiler->max_waves = 16;
 
    compiler->max_variable_workgroup_size = 1024;
-
+   printf("ir3: fd_dev_info\n");
    const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
 
    if (compiler->gen >= 6) {
