@@ -173,11 +173,17 @@ fd6_screen_init(struct pipe_screen *pscreen)
    printf("FD6: create context\n");
    pscreen->context_create = fd6_context_create;
    pscreen->is_format_supported = fd6_screen_is_format_supported;
+   printf("FD6: tile mode\n");
 
    screen->tile_mode = fd6_tile_mode;
+   printf("FD6: screen init 1\n");
 
    fd6_resource_screen_init(pscreen);
+   printf("FD6: screen init 2\n");
+
    fd6_emit_init_screen(pscreen);
+   printf("FD6: screen init 3\n");
+
    ir3_screen_init(pscreen);
 
    screen->primtypes = primtypes;
