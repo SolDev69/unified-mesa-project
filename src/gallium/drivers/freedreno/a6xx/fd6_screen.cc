@@ -157,6 +157,7 @@ fd6_screen_init(struct pipe_screen *pscreen)
 
    screen->max_rts = A6XX_MAX_RENDER_TARGETS;
 
+   printf("FD6: ccu\n");
    screen->ccu_offset_bypass = screen->info->num_ccu * A6XX_CCU_DEPTH_SIZE;
    screen->ccu_offset_gmem = (screen->gmemsize_bytes -
          screen->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
@@ -168,7 +169,7 @@ fd6_screen_init(struct pipe_screen *pscreen)
          FD_GMEM_CLEARS_DEPTH_STENCIL |
          FD_GMEM_DEPTH_ENABLED | FD_GMEM_STENCIL_ENABLED |
          FD_GMEM_BLEND_ENABLED | FD_GMEM_LOGICOP_ENABLED);
-
+   printf("FD6: create context\n");
    pscreen->context_create = fd6_context_create;
    pscreen->is_format_supported = fd6_screen_is_format_supported;
 

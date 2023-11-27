@@ -1418,6 +1418,7 @@ fd_screen_create(int fd,
       fd5_screen_init(pscreen);
       break;
    case 6:
+      printf("p6\n");
       fd6_screen_init(pscreen);
       break;
    default:
