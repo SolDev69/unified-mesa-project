@@ -165,6 +165,7 @@ fd6_screen_init(struct pipe_screen *pscreen)
    /* Currently only FB_READ forces GMEM path, mostly because we'd have to
     * deal with cmdstream patching otherwise..
     */
+   printf("FD6: gmem mask\n");
    screen->gmem_reason_mask = (enum fd_gmem_reason)(
          FD_GMEM_CLEARS_DEPTH_STENCIL |
          FD_GMEM_DEPTH_ENABLED | FD_GMEM_STENCIL_ENABLED |
