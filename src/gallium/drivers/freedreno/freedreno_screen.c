@@ -1374,17 +1374,9 @@ fd_screen_create(int fd,
    printf("get device version\n");
    if (fd_device_version(dev) >= FD_VERSION_ROBUSTNESS)
       screen->has_robustness = true;
+
    printf("has_syncobj\n");
    screen->has_syncobj = fd_has_syncobj(screen->dev);
-
-   printf("FD-OSMESA: parse driconf configuration now for device specific overrides: \n");
-   driParseConfigFiles(config->options, config->options_info, 0, "msm",
-                       NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
-
-   screen->driconf.conservative_lrz =
-         !driQueryOptionb(config->options, "disable_conservative_lrz");
-   screen->driconf.enable_throttling =
-         !driQueryOptionb(config->options, "disable_throttling");
 
    printf("sysinfo\n");
    struct sysinfo si;
@@ -1440,6 +1432,7 @@ fd_screen_create(int fd,
       if (screen->primtypes[i])
          screen->primtypes_mask |= (1 << i);
 
+   printf("FD_DBG: Perfc\n");
    if (FD_DBG(PERFC)) {
       screen->perfcntr_groups =
          fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
