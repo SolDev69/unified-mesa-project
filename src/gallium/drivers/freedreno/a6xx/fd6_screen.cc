@@ -186,5 +186,6 @@ fd6_screen_init(struct pipe_screen *pscreen)
 
    ir3_screen_init(pscreen);
 
+   printf("FD6: screen init 4\n");
    screen->primtypes = primtypes;
 }
