@@ -252,22 +252,23 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    printf("nir options 2: \n");
    compiler->nir_options.vectorize_io = true,
    compiler->nir_options.force_indirect_unrolling = nir_var_all,
-
+   printf("nir options 3: \n");
    compiler->nir_options.lower_device_index_to_zero = true,
    compiler->nir_options.has_udot_4x8 = true,
    compiler->nir_options.has_sudot_4x8 = true,
-   compiler->nir_options.has_udot_4x8 = dev_info->a6xx.has_dp2acc; // let's hope C will work and I won't have to manually set these two to false
-   compiler->nir_options.has_sudot_4x8 = dev_info->a6xx.has_dp2acc;
+   compiler->nir_options.has_udot_4x8 = false;
+   compiler->nir_options.has_sudot_4x8 = false;
 
    /* 16-bit ALU op generation is mostly controlled by frontend compiler options, but
     * this core NIR option enables some optimizations of 16-bit operations.
     */
+   printf("ir3: shader debug\n");
    if (!(ir3_shader_debug & IR3_DBG_NOFP16))
       compiler->nir_options.support_16bit_alu = true;
-   printf("init disk cache!\n");
+   printf("ir3: init disk cache!\n");
    if (!options->disable_cache)
       ir3_disk_cache_init(compiler);
-   //printf("HERE WE GO!\n");
+   // printf("HERE WE GO!\n");
    // False alarm, we aren't done yet :(
    return compiler;
 }
