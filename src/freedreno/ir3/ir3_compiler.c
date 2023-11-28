@@ -203,7 +203,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       printf("ir3: preamble\n");
       compiler->has_preamble = true;
       printf("tess\n");
-      compiler->tess_use_shared = dev_info->a6xx.tess_use_shared;
+      compiler->tess_use_shared = false;
       printf("ir3: has getfibreid\n");
       compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
       printf("ir3: dp2\n");
