@@ -240,7 +240,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    compiler->instr_align = 16;
    compiler->const_upload_unit = 4;
    printf("ir3: compiler bools\n");
-   compiler->bool_type = TYPE_U16
+   compiler->bool_type = TYPE_U16;
    compiler->has_shared_regfile = true;
    printf("ir3: preambles\n");
    /* The driver can't request this unless preambles are supported. */
@@ -264,7 +264,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
     */
    if (!(ir3_shader_debug & IR3_DBG_NOFP16))
       compiler->nir_options.support_16bit_alu = true;
-   printf("init disk cache!\n", );
+   printf("init disk cache!\n");
    if (!options->disable_cache)
       ir3_disk_cache_init(compiler);
    printf("HERE WE GO!\n");
