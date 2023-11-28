@@ -178,9 +178,13 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        *
        * TODO: The shared limit seems to be different on different models.
        */
+      printf("ir3: pipeline\n");
       compiler->max_const_pipeline = 512;
+      printf("ir3: frag\n");
       compiler->max_const_frag = 512;
+      printf("ir3: geom\n");
       compiler->max_const_geom = 512;
+      printf("ir3: safe\n");
       compiler->max_const_safe = 100;
 
       /* Compute shaders don't share a const file with the FS. Instead they
@@ -188,25 +192,29 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        *
        * TODO: is this true on earlier gen's?
        */
+      printf("ir3: compute\n");
       compiler->max_const_compute = 256;
-
+      printf("ir3: has clip cull\n");
       /* TODO: implement clip+cull distances on earlier gen's */
       compiler->has_clip_cull = true;
-
+      printf("ir3: pvtmem\n");
       /* TODO: implement private memory on earlier gen's */
       compiler->has_pvtmem = true;
-
+      printf("ir3: preamble\n");
       compiler->has_preamble = true;
-
+      printf("tess\n");
       compiler->tess_use_shared = dev_info->a6xx.tess_use_shared;
-
+      printf("ir3: has getfibreid\n");
       compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
-
+      printf("ir3: dp2\n");
       compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
+      printf("ir3: dp4\n");
       compiler->has_dp4acc = dev_info->a6xx.has_dp4acc;
-
+      printf("ir3: shared consts offset\n");
       compiler->shared_consts_base_offset = 504;
+      printf("ir3: shared consts size\n");
       compiler->shared_consts_size = 8;
+      printf("ir3: geometry shared consts size quirk\n");
       compiler->geom_shared_consts_size_quirk = 16;
    } else {
       compiler->max_const_pipeline = 512;
@@ -219,7 +227,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        */
       compiler->max_const_safe = 256;
    }
-
+   printf("ir3: if statement 2 enter\n");
    if (compiler->gen >= 6) {
       compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;
    } else if (compiler->gen >= 4) {
@@ -231,7 +239,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       /* TODO: confirm this */
       compiler->reg_size_vec4 = 96;
    }
-   printf("ir3: if statement 2 enter\n");
+   printf("ir3: if statement 3 enter\n");
    if (compiler->gen >= 6) {
       compiler->threadsize_base = 64;
    } else if (compiler->gen >= 4) {
@@ -242,7 +250,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    } else {
       compiler->threadsize_base = 8;
    }
-   printf("ir3: if statement 3 enter\n");
+   printf("ir3: if statement 4 enter\n");
 
    if (compiler->gen >= 4) {
       /* need special handling for "flat" */
@@ -266,11 +274,11 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    printf("ir3: compiler bools\n");
    compiler->bool_type = (compiler->gen >= 5) ? TYPE_U16 : TYPE_U32;
    compiler->has_shared_regfile = compiler->gen >= 5;
-
+   printf("ir3: preambles\n");
    /* The driver can't request this unless preambles are supported. */
    if (options->push_ubo_with_preamble)
       assert(compiler->has_preamble);
-
+   printf("nir options: \n");
    /* Set up nir shader compiler options, using device-specific overrides of our base settings. */
    compiler->nir_options = ir3_base_options;
 
