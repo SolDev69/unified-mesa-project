@@ -205,7 +205,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       printf("tess\n");
       compiler->tess_use_shared = false;
       printf("ir3: has getfibreid\n");
-      compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
+      compiler->has_getfiberid = false;
       printf("ir3: dp2\n");
       compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
       printf("ir3: dp4\n");
