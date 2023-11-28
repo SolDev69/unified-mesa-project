@@ -228,7 +228,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       compiler->max_const_safe = 256;
    }
    printf("ir3: reg size vec\n");
-   compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;
+   compiler->reg_size_vec4 = 96;
    printf("ir3: threadsize_base\n");
    compiler->threadsize_base = 64;
    printf("ir3: if statement 4 enter\n");
@@ -256,7 +256,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    compiler->nir_options.lower_device_index_to_zero = true,
    compiler->nir_options.has_udot_4x8 = true,
    compiler->nir_options.has_sudot_4x8 = true,
-   compiler->nir_options.has_udot_4x8 = dev_info->a6xx.has_dp2acc;
+   compiler->nir_options.has_udot_4x8 = dev_info->a6xx.has_dp2acc; // let's hope C will work and I won't have to manually set these two to false
    compiler->nir_options.has_sudot_4x8 = dev_info->a6xx.has_dp2acc;
 
    /* 16-bit ALU op generation is mostly controlled by frontend compiler options, but
@@ -267,7 +267,8 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    printf("init disk cache!\n");
    if (!options->disable_cache)
       ir3_disk_cache_init(compiler);
-   printf("HERE WE GO!\n");
+   //printf("HERE WE GO!\n");
+   // False alarm, we aren't done yet :(
    return compiler;
 }
 
