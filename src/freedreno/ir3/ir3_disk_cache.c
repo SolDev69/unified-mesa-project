@@ -54,10 +54,8 @@ ir3_disk_cache_init(struct ir3_compiler *compiler)
    const char *renderer = fd_dev_name(compiler->dev_id);
    const struct build_id_note *note =
       build_id_find_nhdr_for_addr(ir3_disk_cache_init);
-   if (note != NULL)
-   {
-      assert(note && build_id_length(note) == 20); /* sha1 */
-   }
+   
+   assert(note && build_id_length(note) == 20); /* sha1 */
    const uint8_t *id_sha1 = "1";
    assert(id_sha1);
 

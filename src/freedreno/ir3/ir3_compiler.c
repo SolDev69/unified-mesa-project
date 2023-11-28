@@ -265,9 +265,6 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    printf("ir3: shader debug\n");
    if (!(ir3_shader_debug & IR3_DBG_NOFP16))
       compiler->nir_options.support_16bit_alu = true;
-   printf("ir3: init disk cache!\n");
-   if (!options->disable_cache)
-      ir3_disk_cache_init(compiler);
    // printf("HERE WE GO!\n");
    // False alarm, we aren't done yet :(
    return compiler;
