@@ -207,9 +207,9 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       printf("ir3: has getfibreid\n");
       compiler->has_getfiberid = false;
       printf("ir3: dp2\n");
-      compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
+      compiler->has_dp2acc = false;
       printf("ir3: dp4\n");
-      compiler->has_dp4acc = dev_info->a6xx.has_dp4acc;
+      compiler->has_dp4acc = false;
       printf("ir3: shared consts offset\n");
       compiler->shared_consts_base_offset = 504;
       printf("ir3: shared consts size\n");
