@@ -1433,38 +1433,48 @@ fd_screen_create(int fd,
       if (screen->primtypes[i])
          screen->primtypes_mask |= (1 << i);
 
-   printf("FD_DBG: Perfc\n");
-   if (FD_DBG(PERFC)) {
-      screen->perfcntr_groups =
-         fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
-   }
+   // printf("FD_DBG: Perfc\n");
+   // if (FD_DBG(PERFC)) {
+   //    screen->perfcntr_groups =
+   //       fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
+   // }
 
    /* NOTE: don't enable if we have too old of a kernel to support
     * growable cmdstream buffers, since memory requirement for cmdstream
     * buffers would be too much otherwise.
     */
+   printf("FD6: get dev version\n");
    if (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS)
       screen->reorder = !FD_DBG(INORDER);
-
+   printf("fd_bc_init\n");
    fd_bc_init(&screen->batch_cache);
-
+   printf("list_inithead\n");
    list_inithead(&screen->context_list);
-
+   printf("util_idalloc_mt_init_tc\n");
    util_idalloc_mt_init_tc(&screen->buffer_ids);
-
+   printf("mtx init\n");
    (void)simple_mtx_init(&screen->lock, mtx_plain);
-
+   printf("   pscreen->destroy = fd_screen_destroy; \n");
    pscreen->destroy = fd_screen_destroy;
+   printf("   pscreen->get_screen_fd = fd_screen_get_fd; \n");
    pscreen->get_screen_fd = fd_screen_get_fd;
+   printf("   pscreen->get_param = fd_screen_get_param; \n");
    pscreen->get_param = fd_screen_get_param;
+   printf("   pscreen->get_paramf = fd_screen_get_paramf; \n");
    pscreen->get_paramf = fd_screen_get_paramf;
+   printf("   pscreen->get_shader_param = fd_screen_get_shader_param; \n");
    pscreen->get_shader_param = fd_screen_get_shader_param;
+   printf("   pscreen->get_compute_param = fd_get_compute_param; \n", );
    pscreen->get_compute_param = fd_get_compute_param;
+   printf("   pscreen->get_compiler_options = fd_get_compiler_options; \n");
    pscreen->get_compiler_options = fd_get_compiler_options;
+   printf("   pscreen->get_disk_shader_cache = fd_get_disk_shader_cache; \n");
    pscreen->get_disk_shader_cache = fd_get_disk_shader_cache;
-
+   printf("resource screen init\n");
    fd_resource_screen_init(pscreen);
+   printf("query screen init\n");
    fd_query_screen_init(pscreen);
+   printf("gmem screen init\n");
    fd_gmem_screen_init(pscreen);
 
    pscreen->get_name = fd_screen_get_name;
