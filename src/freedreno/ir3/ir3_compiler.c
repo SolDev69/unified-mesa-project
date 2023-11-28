@@ -227,53 +227,21 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        */
       compiler->max_const_safe = 256;
    }
-   printf("ir3: if statement 2 enter\n");
-   if (compiler->gen >= 6) {
-      compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;
-   } else if (compiler->gen >= 4) {
-      /* On a4xx-a5xx, using r24.x and above requires using the smallest
-       * threadsize.
-       */
-      compiler->reg_size_vec4 = 48;
-   } else {
-      /* TODO: confirm this */
-      compiler->reg_size_vec4 = 96;
-   }
-   printf("ir3: if statement 3 enter\n");
-   if (compiler->gen >= 6) {
-      compiler->threadsize_base = 64;
-   } else if (compiler->gen >= 4) {
-      /* TODO: Confirm this for a4xx. For a5xx this is based on the Vulkan
-       * 1.1 subgroupSize which is 32.
-       */
-      compiler->threadsize_base = 32;
-   } else {
-      compiler->threadsize_base = 8;
-   }
+   printf("ir3: reg size vec\n");
+   compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;
+   printf("ir3: threadsize_base\n");
+   compiler->threadsize_base = 64;
    printf("ir3: if statement 4 enter\n");
-
-   if (compiler->gen >= 4) {
-      /* need special handling for "flat" */
-      compiler->flat_bypass = true;
-      compiler->levels_add_one = false;
-      compiler->unminify_coords = false;
-      compiler->txf_ms_with_isaml = false;
-      compiler->array_index_add_half = true;
-      compiler->instr_align = 16;
-      compiler->const_upload_unit = 4;
-   } else {
-      /* no special handling for "flat" */
-      compiler->flat_bypass = false;
-      compiler->levels_add_one = true;
-      compiler->unminify_coords = true;
-      compiler->txf_ms_with_isaml = true;
-      compiler->array_index_add_half = false;
-      compiler->instr_align = 4;
-      compiler->const_upload_unit = 8;
-   }
+   compiler->flat_bypass = true;
+   compiler->levels_add_one = false;
+   compiler->unminify_coords = false;
+   compiler->txf_ms_with_isaml = false;
+   compiler->array_index_add_half = true;
+   compiler->instr_align = 16;
+   compiler->const_upload_unit = 4;
    printf("ir3: compiler bools\n");
-   compiler->bool_type = (compiler->gen >= 5) ? TYPE_U16 : TYPE_U32;
-   compiler->has_shared_regfile = compiler->gen >= 5;
+   compiler->bool_type = TYPE_U16
+   compiler->has_shared_regfile = true;
    printf("ir3: preambles\n");
    /* The driver can't request this unless preambles are supported. */
    if (options->push_ubo_with_preamble)
@@ -281,32 +249,25 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    printf("nir options: \n");
    /* Set up nir shader compiler options, using device-specific overrides of our base settings. */
    compiler->nir_options = ir3_base_options;
+   printf("nir options 2: \n");
+   compiler->nir_options.vectorize_io = true,
+   compiler->nir_options.force_indirect_unrolling = nir_var_all,
 
-   if (compiler->gen >= 6) {
-      compiler->nir_options.vectorize_io = true,
-      compiler->nir_options.force_indirect_unrolling = nir_var_all,
-
-      compiler->nir_options.lower_device_index_to_zero = true,
-      compiler->nir_options.has_udot_4x8 = true,
-      compiler->nir_options.has_sudot_4x8 = true,
-      compiler->nir_options.has_udot_4x8 = dev_info->a6xx.has_dp2acc;
-      compiler->nir_options.has_sudot_4x8 = dev_info->a6xx.has_dp2acc;
-   } else if (compiler->gen >= 3 && compiler->gen <= 5) {
-      compiler->nir_options.vertex_id_zero_based = true;
-   } else if (compiler->gen <= 2) {
-      /* a2xx compiler doesn't handle indirect: */
-      compiler->nir_options.force_indirect_unrolling = nir_var_all;
-   }
+   compiler->nir_options.lower_device_index_to_zero = true,
+   compiler->nir_options.has_udot_4x8 = true,
+   compiler->nir_options.has_sudot_4x8 = true,
+   compiler->nir_options.has_udot_4x8 = dev_info->a6xx.has_dp2acc;
+   compiler->nir_options.has_sudot_4x8 = dev_info->a6xx.has_dp2acc;
 
    /* 16-bit ALU op generation is mostly controlled by frontend compiler options, but
     * this core NIR option enables some optimizations of 16-bit operations.
     */
-   if (compiler->gen >= 5 && !(ir3_shader_debug & IR3_DBG_NOFP16))
+   if (!(ir3_shader_debug & IR3_DBG_NOFP16))
       compiler->nir_options.support_16bit_alu = true;
-
+   printf("init disk cache!\n", );
    if (!options->disable_cache)
       ir3_disk_cache_init(compiler);
-
+   printf("HERE WE GO!\n");
    return compiler;
 }
 
