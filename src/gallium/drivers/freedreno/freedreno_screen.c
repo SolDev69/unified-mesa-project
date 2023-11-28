@@ -1464,7 +1464,7 @@ fd_screen_create(int fd,
    pscreen->get_paramf = fd_screen_get_paramf;
    printf("   pscreen->get_shader_param = fd_screen_get_shader_param; \n");
    pscreen->get_shader_param = fd_screen_get_shader_param;
-   printf("   pscreen->get_compute_param = fd_get_compute_param; \n", );
+   printf("   pscreen->get_compute_param = fd_get_compute_param; \n");
    pscreen->get_compute_param = fd_get_compute_param;
    printf("   pscreen->get_compiler_options = fd_get_compiler_options; \n");
    pscreen->get_compiler_options = fd_get_compiler_options;
