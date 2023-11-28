@@ -159,7 +159,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    compiler->max_variable_workgroup_size = 1024;
    printf("ir3: fd_dev_info\n");
    const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
-
+   printf("ir3: if statement 1 enter\n");
    if (compiler->gen >= 6) {
       compiler->samgq_workaround = true;
       /* a6xx split the pipeline state into geometry and fragment state, in
@@ -231,7 +231,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       /* TODO: confirm this */
       compiler->reg_size_vec4 = 96;
    }
-
+   printf("ir3: if statement 2 enter\n");
    if (compiler->gen >= 6) {
       compiler->threadsize_base = 64;
    } else if (compiler->gen >= 4) {
@@ -242,6 +242,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    } else {
       compiler->threadsize_base = 8;
    }
+   printf("ir3: if statement 3 enter\n");
 
    if (compiler->gen >= 4) {
       /* need special handling for "flat" */
@@ -262,7 +263,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       compiler->instr_align = 4;
       compiler->const_upload_unit = 8;
    }
-
+   printf("ir3: compiler bools\n");
    compiler->bool_type = (compiler->gen >= 5) ? TYPE_U16 : TYPE_U32;
    compiler->has_shared_regfile = compiler->gen >= 5;
 
