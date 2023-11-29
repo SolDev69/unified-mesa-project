@@ -68,6 +68,17 @@ if freedreno_kmds.contains('virtio')
   libfreedreno_drm_includes += inc_virtio_gpu
 endif
 
+libfreedreno_kgsl_files = files(
+  'kgsl/kgsl_device.c',
+  'kgsl/kgsl_bo.c',
+  'kgsl/kgsl_pipe.c',
+  'kgsl/kgsl_ringbuffer_sp.c',
+)
+
+if freedreno_kmds.contains('kgsl')
+  libfreedreno_drm_files += libfreedreno_kgsl_files
+endif
+
 libfreedreno_drm = static_library(
   'freedreno_drm',
   [
@@ -83,4 +94,3 @@ libfreedreno_drm = static_library(
   ],
   build_by_default : false,
 )
-
