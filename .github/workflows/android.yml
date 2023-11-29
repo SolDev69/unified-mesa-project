@@ -58,7 +58,7 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=freedreno \
+            -Dgallium-drivers=swrast,freedreno \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false
           ninja -C "build-android" install
