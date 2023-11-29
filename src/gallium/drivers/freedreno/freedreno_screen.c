@@ -799,7 +799,7 @@ fd_get_compute_param(struct pipe_screen *pscreen, enum pipe_shader_ir ir_type,
 
    case PIPE_COMPUTE_CAP_IR_TARGET:
       if (ret)
-         sprintf(ret, "%s", ir);
+         s
       return strlen(ir) * sizeof(char);
 
    case PIPE_COMPUTE_CAP_GRID_DIMENSION:
@@ -962,12 +962,12 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
    } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
       bo = fd_bo_from_dmabuf(screen->dev, whandle->handle);
    } else {
-      printf("Attempt to import unsupported handle type %d\n", whandle->type);
+      
       return NULL;
    }
 
    if (!bo) {
-      printf("ref name 0x%08x failed\n", whandle->handle);
+      
       return NULL;
    }
 
@@ -1033,15 +1033,15 @@ fd_screen_create(int fd,
    screen->ro = ro;
 
    // maybe this should be in context?
-   printf("Initializing pipe\n");
+   
    screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
-      printf("could not create 3d pipe\n");
+      
       goto fail;
    }
 
    if (fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
-      printf("could not get GMEM size\n");
+      
       goto fail;
    }
    screen->gmemsize_bytes = debug_get_num_option("FD_MESA_GMEM", val);
@@ -1050,22 +1050,22 @@ fd_screen_create(int fd,
       fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
-   printf("setting max freq\n");
+   
    screen->max_freq = 0;
 
-   printf("piping dev id\n");
+   
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
-   printf("dev id pipe done\n");
-   printf("get gpu id\n");
+   
+   
    if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
-      printf("could not get gpu-id\n");
+      
       goto fail;
    }
    screen->gpu_id = val;
-   printf("get chip id\n");
+   
 
    if (fd_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
-      printf("could not get chip-id\n");
+      
       /* older kernels may not have this property: */
       unsigned core = screen->gpu_id / 100;
       unsigned major = (screen->gpu_id % 100) / 10;
@@ -1074,13 +1074,13 @@ fd_screen_create(int fd,
       val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
             ((core & 0xff) << 24);
    }
-   printf("got chip id\n");
+   
    screen->chip_id = val;
-   printf("piping gen\n");
+   
    screen->gen = fd_dev_gen(screen->dev_id);
-   printf("get rings\n");
+   
    if (fd_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
-      printf("could not get # of rings\n");
+      
       screen->priority_mask = 0;
    } else {
       /* # of rings equates to number of unique priority values: */
@@ -1101,24 +1101,24 @@ fd_screen_create(int fd,
        */
       screen->prio_norm = val / 2;
    }
-   printf("get device version\n");
+   
    if (fd_device_version(dev) >= FD_VERSION_ROBUSTNESS)
       screen->has_robustness = true;
 
-   printf("has_syncobj\n");
+   
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
-   printf("sysinfo\n");
+   
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;
-   printf("dev info\n");
+   
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
       DBG("unsupported GPU: a%03d", screen->gpu_id);
       //goto fail;
    }
-   printf("screen info\n");
+   
 
    screen->info = info;
 
@@ -1133,7 +1133,7 @@ fd_screen_create(int fd,
     * of the cases below and see what happens.  And if it works, please
     * send a patch ;-)
     */
-   printf("start screen\n");
+   
    switch (screen->gen) {
    case 2:
       fd2_screen_init(pscreen);
@@ -1148,14 +1148,14 @@ fd_screen_create(int fd,
       fd5_screen_init(pscreen);
       break;
    case 6:
-      printf("p6\n");
+      
       fd6_screen_init(pscreen);
       break;
    default:
-      printf("unsupported GPU generation: a%uxx\n", screen->gen);
+      
       //goto fail;
    }
-   printf("prim types\n");
+   
    /* fdN_screen_init() should set this: */
    assert(screen->primtypes);
    screen->primtypes_mask = 0;
@@ -1163,7 +1163,7 @@ fd_screen_create(int fd,
       if (screen->primtypes[i])
          screen->primtypes_mask |= (1 << i);
 
-   // printf("FD_DBG: Perfc\n");
+   // 
    // if (FD_DBG(PERFC)) {
    //    screen->perfcntr_groups =
    //       fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
@@ -1173,66 +1173,66 @@ fd_screen_create(int fd,
     * growable cmdstream buffers, since memory requirement for cmdstream
     * buffers would be too much otherwise.
     */
-   printf("FD6: get dev version\n");
+   
    if (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS)
       screen->reorder = !FD_DBG(INORDER);
-   printf("fd_bc_init\n");
+   
    fd_bc_init(&screen->batch_cache);
-   printf("list_inithead\n");
+   
    list_inithead(&screen->context_list);
-   printf("util_idalloc_mt_init_tc\n");
+   
    util_idalloc_mt_init_tc(&screen->buffer_ids);
-   printf("mtx init\n");
+   
    (void)simple_mtx_init(&screen->lock, mtx_plain);
-   printf("   pscreen->destroy = fd_screen_destroy; \n");
+   
    pscreen->destroy = fd_screen_destroy;
-   printf("   pscreen->get_screen_fd = fd_screen_get_fd; \n");
+   
    pscreen->get_screen_fd = fd_screen_get_fd;
-   printf("   pscreen->get_param = fd_screen_get_param; \n");
+   
    pscreen->get_param = fd_screen_get_param;
-   printf("   pscreen->get_paramf = fd_screen_get_paramf; \n");
+   
    pscreen->get_paramf = fd_screen_get_paramf;
-   printf("   pscreen->get_shader_param = fd_screen_get_shader_param; \n");
+   
    pscreen->get_shader_param = fd_screen_get_shader_param;
-   printf("   pscreen->get_compute_param = fd_get_compute_param; \n");
+   
    pscreen->get_compute_param = fd_get_compute_param;
-   printf("   pscreen->get_compiler_options = fd_get_compiler_options; \n");
+   
    pscreen->get_compiler_options = fd_get_compiler_options;
-   printf("   pscreen->get_disk_shader_cache = fd_get_disk_shader_cache; \n");
+   
    pscreen->get_disk_shader_cache = fd_get_disk_shader_cache;
-   printf("resource screen init\n");
+   
    fd_resource_screen_init(pscreen);
-   printf("query screen init\n");
+   
    fd_query_screen_init(pscreen);
-   printf("gmem screen init\n");
+   
    fd_gmem_screen_init(pscreen);
-   printf("get name\n");
+   
    pscreen->get_name = fd_screen_get_name;
-   printf("get vendor\n");
+   
    pscreen->get_vendor = fd_screen_get_vendor;
-   printf("get device vendor\n");
+   
    pscreen->get_device_vendor = fd_screen_get_device_vendor;
-   printf("get timestamp\n");
+   
    pscreen->get_timestamp = fd_screen_get_timestamp;
-   printf("fence fence_reference\n");
+   
    pscreen->fence_reference = _fd_fence_ref;
-   printf("fence fence_finish\n");
+   
    pscreen->fence_finish = fd_pipe_fence_finish;
-   printf("fence get fd\n");
+   
    pscreen->fence_get_fd = fd_pipe_fence_get_fd;
-   printf("query dmabuf modifiers\n");
+   
    pscreen->query_dmabuf_modifiers = fd_screen_query_dmabuf_modifiers;
-   printf("is dmabuf modifier supported\n");
+   
    pscreen->is_dmabuf_modifier_supported =
       fd_screen_is_dmabuf_modifier_supported;
-   printf("get device uuid\n");
+   
    pscreen->get_device_uuid = fd_screen_get_device_uuid;
-   printf("get driver uuid\n");
+   
    pscreen->get_driver_uuid = fd_screen_get_driver_uuid;
 
-   printf("slab create parent\n");
+   
    slab_create_parent(&screen->transfer_pool, sizeof(struct fd_transfer), 16);
-   printf("DONE!\n");
+   
    return pscreen;
 
 fail:

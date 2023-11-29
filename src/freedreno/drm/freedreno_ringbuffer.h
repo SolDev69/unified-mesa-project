@@ -151,7 +151,7 @@ ref(int32_t *ref)
    /* We should never see a refcnt transition 0->1, this is a sign of a
     * zombie coming back from the dead!
     */
-   //assert(count != 1); Ignore this
+   assert(count != 1);
 }
 
 static inline bool
