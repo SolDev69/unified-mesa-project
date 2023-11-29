@@ -1034,7 +1034,7 @@ fd_screen_create(int fd,
 
    // maybe this should be in context?
    printf("Initializing pipe\n");
-   screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D, 0);
+   screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
       printf("could not create 3d pipe\n");
       goto fail;
