@@ -1116,7 +1116,7 @@ fd_screen_create(int fd,
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
       DBG("unsupported GPU: a%03d", screen->gpu_id);
-      //goto fail;
+      goto fail;
    }
    
 
@@ -1148,12 +1148,10 @@ fd_screen_create(int fd,
       fd5_screen_init(pscreen);
       break;
    case 6:
-      
       fd6_screen_init(pscreen);
       break;
    default:
-      
-      //goto fail;
+      goto fail;
    }
    
    /* fdN_screen_init() should set this: */
