@@ -572,9 +572,11 @@ ir3_screen_init(struct pipe_screen *pscreen)
 
    /* Create at least one thread - even on single core CPU systems. */
    num_threads = MAX2(1, num_threads);
+
    util_queue_init(&screen->compile_queue, "ir3q", 64, num_threads,
                    UTIL_QUEUE_INIT_RESIZE_IF_FULL |
                       UTIL_QUEUE_INIT_SET_FULL_THREAD_AFFINITY, NULL);
+
    pscreen->finalize_nir = ir3_screen_finalize_nir;
    pscreen->set_max_shader_compiler_threads =
       ir3_set_max_shader_compiler_threads;
