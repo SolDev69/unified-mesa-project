@@ -1037,12 +1037,12 @@ fd_screen_create(int fd,
    // maybe this should be in context?
    screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
-      DBG("ref name 0x%08x failed", whandle->handle);
+      DBG("could not create 3d pipe");
       goto fail;
    }
 
    if (fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
-      DBG("ref name 0x%08x failed", whandle->handle);
+      DBG("could not get GMEM size");
       goto fail;
    }
    screen->gmemsize_bytes = debug_get_num_option("FD_MESA_GMEM", val);
@@ -1056,7 +1056,7 @@ fd_screen_create(int fd,
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
 
    if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
-      DBG("could not get chip-id");
+      DBG("could not get gpu-id");
       goto fail;
    }
    screen->gpu_id = val;
