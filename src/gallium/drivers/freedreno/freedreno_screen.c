@@ -1160,13 +1160,13 @@ fd_screen_create(int fd,
       screen->reorder = !FD_DBG(INORDER);
 
    fd_bc_init(&screen->batch_cache);
-   
+
    list_inithead(&screen->context_list);
-   
+
    util_idalloc_mt_init_tc(&screen->buffer_ids);
-   
+
    (void)simple_mtx_init(&screen->lock, mtx_plain);
-   
+
    pscreen->destroy = fd_screen_destroy;
    pscreen->get_screen_fd = fd_screen_get_fd;
    pscreen->get_param = fd_screen_get_param;
@@ -1185,9 +1185,9 @@ fd_screen_create(int fd,
    pscreen->get_device_vendor = fd_screen_get_device_vendor;
 
    pscreen->get_timestamp = fd_screen_get_timestamp;
+   
    pscreen->fence_reference = _fd_fence_ref;
    pscreen->fence_finish = fd_pipe_fence_finish;
-
    pscreen->fence_get_fd = fd_pipe_fence_get_fd;
    pscreen->query_dmabuf_modifiers = fd_screen_query_dmabuf_modifiers;
    pscreen->is_dmabuf_modifier_supported =
