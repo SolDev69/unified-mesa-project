@@ -1099,7 +1099,6 @@ fd_screen_create(int fd,
    if (fd_device_version(dev) >= FD_VERSION_ROBUSTNESS)
       screen->has_robustness = true;
 
-   
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
    struct sysinfo si;
@@ -1108,7 +1107,7 @@ fd_screen_create(int fd,
    
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
-      DBG("unsupported GPU: a%03d", screen->gpu_id);
+      mesa_loge("unsupported GPU: a%03d", screen->gpu_id);
       goto fail;
    }
    
@@ -1143,6 +1142,7 @@ fd_screen_create(int fd,
       fd6_screen_init(pscreen);
       break;
    default:
+      mesa_loge("unsupported GPU generation: a%uxx", screen->gen);
       goto fail;
    }
    /* fdN_screen_init() should set this: */
@@ -1185,7 +1185,7 @@ fd_screen_create(int fd,
    pscreen->get_device_vendor = fd_screen_get_device_vendor;
 
    pscreen->get_timestamp = fd_screen_get_timestamp;
-   
+
    pscreen->fence_reference = _fd_fence_ref;
    pscreen->fence_finish = fd_pipe_fence_finish;
    pscreen->fence_get_fd = fd_pipe_fence_get_fd;
@@ -1195,7 +1195,6 @@ fd_screen_create(int fd,
 
    pscreen->get_device_uuid = fd_screen_get_device_uuid;
    pscreen->get_driver_uuid = fd_screen_get_driver_uuid;
-
 
    slab_create_parent(&screen->transfer_pool, sizeof(struct fd_transfer), 16);
 
