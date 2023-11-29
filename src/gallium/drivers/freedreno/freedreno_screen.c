@@ -1502,7 +1502,7 @@ fd_screen_create(int fd,
 
    printf("slab create parent\n");
    slab_create_parent(&screen->transfer_pool, sizeof(struct fd_transfer), 16);
-
+   printf("DONE!\n");
    return pscreen;
 
 fail:
