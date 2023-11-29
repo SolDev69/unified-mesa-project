@@ -1096,14 +1096,13 @@ fd_screen_create(int fd,
        */
       screen->prio_norm = val / 2;
    }
-   
+
    if (fd_device_version(dev) >= FD_VERSION_ROBUSTNESS)
       screen->has_robustness = true;
 
    
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
-   
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;
@@ -1156,71 +1155,40 @@ fd_screen_create(int fd,
       if (screen->primtypes[i])
          screen->primtypes_mask |= (1 << i);
 
-   // 
-   // if (FD_DBG(PERFC)) {
-   //    screen->perfcntr_groups =
-   //       fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
-   // }
+
 
    /* NOTE: don't enable if we have too old of a kernel to support
     * growable cmdstream buffers, since memory requirement for cmdstream
     * buffers would be too much otherwise.
     */
-   
    if (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS)
       screen->reorder = !FD_DBG(INORDER);
-   
    fd_bc_init(&screen->batch_cache);
-   
    list_inithead(&screen->context_list);
-   
    util_idalloc_mt_init_tc(&screen->buffer_ids);
-   
    (void)simple_mtx_init(&screen->lock, mtx_plain);
-   
    pscreen->destroy = fd_screen_destroy;
-   
    pscreen->get_screen_fd = fd_screen_get_fd;
-   
    pscreen->get_param = fd_screen_get_param;
-   
    pscreen->get_paramf = fd_screen_get_paramf;
-   
    pscreen->get_shader_param = fd_screen_get_shader_param;
-   
    pscreen->get_compute_param = fd_get_compute_param;
-   
    pscreen->get_compiler_options = fd_get_compiler_options;
-   
    pscreen->get_disk_shader_cache = fd_get_disk_shader_cache;
-   
    fd_resource_screen_init(pscreen);
-   
    fd_query_screen_init(pscreen);
-   
    fd_gmem_screen_init(pscreen);
-   
    pscreen->get_name = fd_screen_get_name;
-   
    pscreen->get_vendor = fd_screen_get_vendor;
-   
    pscreen->get_device_vendor = fd_screen_get_device_vendor;
-   
    pscreen->get_timestamp = fd_screen_get_timestamp;
-   
    pscreen->fence_reference = _fd_fence_ref;
-   
    pscreen->fence_finish = fd_pipe_fence_finish;
-   
    pscreen->fence_get_fd = fd_pipe_fence_get_fd;
-   
    pscreen->query_dmabuf_modifiers = fd_screen_query_dmabuf_modifiers;
-   
    pscreen->is_dmabuf_modifier_supported =
       fd_screen_is_dmabuf_modifier_supported;
-   
    pscreen->get_device_uuid = fd_screen_get_device_uuid;
-   
    pscreen->get_driver_uuid = fd_screen_get_driver_uuid;
 
    
