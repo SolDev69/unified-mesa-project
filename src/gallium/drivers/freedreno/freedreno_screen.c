@@ -893,6 +893,7 @@ fd_screen_bo_get_handle(struct pipe_screen *pscreen, struct fd_bo *bo,
       whandle->handle = fd_bo_dmabuf(bo);
       return true;
    } else {
+      DBG("Attempt to import unsupported handle type %d", whandle->type);
       return false;
    }
 }
