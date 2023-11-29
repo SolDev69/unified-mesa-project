@@ -1016,6 +1016,7 @@ fd_screen_create(int fd,
    struct fd_screen *screen = CALLOC_STRUCT(fd_screen);
    struct pipe_screen *pscreen;
    uint64_t val;
+
    fd_mesa_debug = debug_get_option_fd_mesa_debug();
 
    if (FD_DBG(NOBIN))
@@ -1034,15 +1035,14 @@ fd_screen_create(int fd,
    screen->ro = ro;
 
    // maybe this should be in context?
-   
    screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
-      
+      DBG("ref name 0x%08x failed", whandle->handle);
       goto fail;
    }
 
    if (fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
-      
+      DBG("ref name 0x%08x failed", whandle->handle);
       goto fail;
    }
    screen->gmemsize_bytes = debug_get_num_option("FD_MESA_GMEM", val);
@@ -1051,22 +1051,18 @@ fd_screen_create(int fd,
       fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
-   
    screen->max_freq = 0;
 
-   
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
-   
-   
+
    if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
-      
+      DBG("could not get chip-id");
       goto fail;
    }
    screen->gpu_id = val;
-   
 
    if (fd_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
-      
+      DBG("could not get chip-id");
       /* older kernels may not have this property: */
       unsigned core = screen->gpu_id / 100;
       unsigned major = (screen->gpu_id % 100) / 10;
@@ -1075,13 +1071,11 @@ fd_screen_create(int fd,
       val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
             ((core & 0xff) << 24);
    }
-   
    screen->chip_id = val;
-   
    screen->gen = fd_dev_gen(screen->dev_id);
-   
+
    if (fd_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
-      
+      DBG("could not get # of rings");
       screen->priority_mask = 0;
    } else {
       /* # of rings equates to number of unique priority values: */
