@@ -893,7 +893,6 @@ fd_screen_bo_get_handle(struct pipe_screen *pscreen, struct fd_bo *bo,
       whandle->handle = fd_bo_dmabuf(bo);
       return true;
    } else {
-      DBG("Attempt to import unsupported handle type %d", whandle->type);
       return false;
    }
 }
@@ -963,12 +962,12 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
    } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
       bo = fd_bo_from_dmabuf(screen->dev, whandle->handle);
    } else {
-      
+      DBG("Attempt to import unsupported handle type %d", whandle->type);
       return NULL;
    }
 
    if (!bo) {
-      
+      DBG("ref name 0x%08x failed", whandle->handle);
       return NULL;
    }
 
