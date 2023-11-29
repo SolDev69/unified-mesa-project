@@ -65,6 +65,7 @@
 #include "ir3/ir3_descriptor.h"
 #include "ir3/ir3_gallium.h"
 #include "ir3/ir3_nir.h"
+#include "freedreno_public.h"
 
 /* clang-format off */
 static const struct debug_named_value fd_debug_options[] = {
@@ -1061,7 +1062,7 @@ fd_screen_create(int fd,
                  const struct pipe_screen_config *config,
                  struct renderonly *ro)
 {
-   struct fd_device *dev = fd_device_new_dup(fd);
+   struct fd_device *dev = fd_device_new(fd);
    if (!dev)
       return NULL;
 
