@@ -1476,24 +1476,31 @@ fd_screen_create(int fd,
    fd_query_screen_init(pscreen);
    printf("gmem screen init\n");
    fd_gmem_screen_init(pscreen);
-
+   printf("get name\n");
    pscreen->get_name = fd_screen_get_name;
+   printf("get vendor\n");
    pscreen->get_vendor = fd_screen_get_vendor;
+   printf("get device vendor\n");
    pscreen->get_device_vendor = fd_screen_get_device_vendor;
-
+   printf("get timestamp\n");
    pscreen->get_timestamp = fd_screen_get_timestamp;
-
+   printf("fence fence_reference\n");
    pscreen->fence_reference = _fd_fence_ref;
+   printf("fence fence_finish\n");
    pscreen->fence_finish = fd_pipe_fence_finish;
+   printf("fence get fd\n");
    pscreen->fence_get_fd = fd_pipe_fence_get_fd;
-
+   printf("query dmabuf modifiers\n");
    pscreen->query_dmabuf_modifiers = fd_screen_query_dmabuf_modifiers;
+   printf("is dmabuf modifier supported\n");
    pscreen->is_dmabuf_modifier_supported =
       fd_screen_is_dmabuf_modifier_supported;
-
+   printf("get device uuid\n");
    pscreen->get_device_uuid = fd_screen_get_device_uuid;
+   printf("get driver uuid\n");
    pscreen->get_driver_uuid = fd_screen_get_driver_uuid;
 
+   printf("slab create parent\n");
    slab_create_parent(&screen->transfer_pool, sizeof(struct fd_transfer), 16);
 
    return pscreen;
