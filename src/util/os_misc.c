@@ -56,7 +56,6 @@
 #  define LOG_TAG "MESA"
 #  include <unistd.h>
 #  include <log/log.h>
-#  include <cutils/properties.h>
 #elif DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || DETECT_OS_HURD
 #  include <unistd.h>
 #elif DETECT_OS_OPENBSD || DETECT_OS_FREEBSD
@@ -128,62 +127,10 @@ os_log_message(const char *message)
 #endif
 }
 
-#if DETECT_OS_ANDROID
-#  include <ctype.h>
-#  include "c11/threads.h"
-
-/**
- * Get an option value from android's property system, as a fallback to
- * getenv() (which is generally less useful on android due to processes
- * typically being forked from the zygote.
- *
- * The option name used for getenv is translated into a property name
- * by:
- *
- *  1) convert to lowercase
- *  2) replace '_' with '.'
- *  3) if necessary, prepend "mesa."
- *
- * For example:
- *  - MESA_EXTENSION_OVERRIDE -> mesa.extension.override
- *  - GALLIUM_HUD -> mesa.gallium.hud
- *
- */
-static char *
-os_get_android_option(const char *name)
-{
-   static thread_local char os_android_option_value[PROPERTY_VALUE_MAX];
-   char key[PROPERTY_KEY_MAX];
-   char *p = key, *end = key + PROPERTY_KEY_MAX;
-   /* add "mesa." prefix if necessary: */
-   if (strstr(name, "MESA_") != name)
-      p += strlcpy(p, "mesa.", end - p);
-   p += strlcpy(p, name, end - p);
-   for (int i = 0; key[i]; i++) {
-      if (key[i] == '_') {
-         key[i] = '.';
-      } else {
-         key[i] = tolower(key[i]);
-      }
-   }
-
-   int len = property_get(key, os_android_option_value, NULL);
-   if (len > 1) {
-      return os_android_option_value;
-   }
-   return NULL;
-}
-#endif
-
 const char *
 os_get_option(const char *name)
 {
    const char *opt = getenv(name);
-#if DETECT_OS_ANDROID
-   if (!opt) {
-      opt = os_get_android_option(name);
-   }
-#endif
    return opt;
 }
 

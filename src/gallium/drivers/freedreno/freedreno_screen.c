@@ -65,6 +65,7 @@
 #include "ir3/ir3_descriptor.h"
 #include "ir3/ir3_gallium.h"
 #include "ir3/ir3_nir.h"
+#include "freedreno_public.h"
 
 /* clang-format off */
 static const struct debug_named_value fd_debug_options[] = {
@@ -970,7 +971,7 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
    } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
       bo = fd_bo_from_dmabuf(screen->dev, whandle->handle);
    } else {
-      DBG("Attempt to import unsupported handle type %d", whandle->type);
+      mesa_loge("Attempt to import unsupported handle type %d", whandle->type);
       return NULL;
    }
 
@@ -1010,12 +1011,13 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
    return fd_device_fd(screen->dev);
 }
 
+// Create screen, back to freedreno_screen.c code
 struct pipe_screen *
 fd_screen_create(int fd,
                  const struct pipe_screen_config *config,
                  struct renderonly *ro)
 {
-   struct fd_device *dev = fd_device_new_dup(fd);
+   struct fd_device *dev = fd_device_new(fd);
    if (!dev)
       return NULL;
 
@@ -1057,17 +1059,7 @@ fd_screen_create(int fd,
       fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
-   if (fd_pipe_get_param(screen->pipe, FD_MAX_FREQ, &val)) {
-      DBG("could not get gpu freq");
-      /* this limits what performance related queries are
-       * supported but is not fatal
-       */
-      screen->max_freq = 0;
-   } else {
-      screen->max_freq = val;
-      if (fd_pipe_get_param(screen->pipe, FD_TIMESTAMP, &val) == 0)
-         screen->has_timestamp = true;
-   }
+   screen->max_freq = 0;
 
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
 
@@ -1118,24 +1110,10 @@ fd_screen_create(int fd,
 
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
-   /* parse driconf configuration now for device specific overrides: */
-   driParseConfigFiles(config->options, config->options_info, 0, "msm",
-                       NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
-
-   screen->driconf.conservative_lrz =
-         !driQueryOptionb(config->options, "disable_conservative_lrz");
-   screen->driconf.enable_throttling =
-         !driQueryOptionb(config->options, "disable_throttling");
-
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;
-
-   DBG("Pipe Info:");
-   DBG(" GPU-id:          %s", fd_dev_name(screen->dev_id));
-   DBG(" Chip-id:         0x%016"PRIx64, screen->chip_id);
-   DBG(" GMEM size:       0x%08x", screen->gmemsize_bytes);
-
+   
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
       mesa_loge("unsupported GPU: a%03d", screen->gpu_id);
@@ -1175,18 +1153,12 @@ fd_screen_create(int fd,
       mesa_loge("unsupported GPU generation: a%uxx", screen->gen);
       goto fail;
    }
-
    /* fdN_screen_init() should set this: */
    assert(screen->primtypes);
    screen->primtypes_mask = 0;
    for (unsigned i = 0; i <= PIPE_PRIM_MAX; i++)
       if (screen->primtypes[i])
          screen->primtypes_mask |= (1 << i);
-
-   if (FD_DBG(PERFC)) {
-      screen->perfcntr_groups =
-         fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
-   }
 
    /* NOTE: don't enable if we have too old of a kernel to support
     * growable cmdstream buffers, since memory requirement for cmdstream
