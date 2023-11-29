@@ -99,20 +99,26 @@ fd_bo_init_common(struct fd_bo *bo, struct fd_device *dev)
    VG_BO_ALLOC(bo);
 }
 
+void
+fd_bo_close_handle_drm(struct fd_device *dev, uint32_t handle)
+{
+   struct drm_gem_close req = {
+      .handle = handle,
+   };
+   drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
+}
+
 /* allocate a new buffer object, call w/ table_lock held */
 static struct fd_bo *
 import_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle)
 {
-   struct fd_bo *bo;
+   struct fd_bo *bo;req
 
    simple_mtx_assert_locked(&table_lock);
 
    bo = dev->funcs->bo_from_handle(dev, size, handle);
    if (!bo) {
-      struct drm_gem_close req = {
-         .handle = handle,
-      };
-      drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
+      dev->funcs->bo_close_handle(dev, handle);
       return NULL;
    }
 
@@ -449,9 +455,7 @@ fd_bo_fini_fences(struct fd_bo *bo)
 void
 fd_bo_close_handle_drm(struct fd_bo *bo)
 {
-   struct drm_gem_close req = {
-      .handle = bo->handle,
-   };
+   bo->dev->funcs->bo_close_handle(dev, handle);
    drmIoctl(bo->dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
 }
 
@@ -629,7 +633,7 @@ fd_bo_map(struct fd_bo *bo)
    if (bo->alloc_flags & FD_BO_NOMAP)
       return NULL;
 
-   return __fd_bo_map(bo);
+   return bo->funcs->map(bo);
 }
 
 void
@@ -640,7 +644,7 @@ fd_bo_upload(struct fd_bo *bo, void *src, unsigned off, unsigned len)
       return;
    }
 
-   memcpy((uint8_t *)__fd_bo_map(bo) + off, src, len);
+   memcpy((uint8_t *)bo->funcs->map(bo) + off, src, len);
 }
 
 bool

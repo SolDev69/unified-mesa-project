@@ -252,9 +252,12 @@ with_nouveau_vk = _vulkan_drivers.contains('nouveau-experimental')
 with_any_vk = _vulkan_drivers.length() != 0
 
 freedreno_kmds = get_option('freedreno-kmds')
+
 if freedreno_kmds.length() != 0 and freedreno_kmds != [ 'msm' ] and with_freedreno_vk
   if freedreno_kmds.contains('msm')
       warning('Turnip with the DRM KMD will require libdrm to always be present at runtime which may not always be the case on platforms such as Android.')
+  elif freedreno_kmds.contains('kgsl')
+      pre_args += '-DHAVE_FREEDRENO_KGSL'
   elif with_gallium_kmsro
       warning('As a side-effect, Turnip is forced to link with libdrm when built alongside Gallium DRM drivers which platforms such as Android may not have available at runtime.')
   elif _vulkan_drivers != [ 'freedreno' ]

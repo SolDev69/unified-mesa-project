@@ -410,6 +410,65 @@ cros_get_buffer_info(struct dri2_egl_display *dri2_dpy,
    return -EINVAL;
 }
 
+static int
+kgsl_window_buffer_get_buffer_info(struct dri2_egl_display *dri2_dpy,
+                                   struct ANativeWindowBuffer *buf,
+                                   struct buffer_info *out_buf_info)
+{
+   /* The below code is tested against the version of gralloc shipped
+    * with the below properties. Different versions of gralloc could modifiy
+    * the internal format of the handle requiring the handle_data access to be different
+    * id: "gralloc"
+    * name: "Graphics Memory Module"
+    * author: "Code Aurora Forum"
+    * module_api_version: 0x100
+    * hal_api_version: 0x100
+    */
+
+   /* The below code does not handle the YUV texture case */
+   const uint32_t *handle_fds = (uint32_t *)buf->handle->data;
+   const uint32_t *handle_data = &handle_fds[buf->handle->numFds];
+   uint32_t gmsm = ('g' << 24) | ('m' << 16) | ('s' << 8) | 'm';
+   int drm_fourcc = 0;
+   int pitch = 0;
+   int fds[3];
+   int num_fds = get_native_buffer_fds(buf, fds);
+
+   if (num_fds == 2 && buf->handle->numInts >= 2 && handle_data[0] == gmsm) {
+      drm_fourcc = get_fourcc(buf->format);
+      if (drm_fourcc == -1) {
+         _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
+         return -EINVAL;
+      }
+
+      pitch = buf->stride * get_format_bpp(buf->format);
+      if (pitch == 0) {
+         _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
+         return -EINVAL;
+      }
+
+      *out_buf_info = (struct buffer_info){
+         .width = buf->width,
+         .height = buf->height,
+         .drm_fourcc = drm_fourcc,
+         .num_planes = 1,
+         .fds = { fds[0], -1, -1, -1 },
+         .modifier = handle_data[1] & 0x08000000 ? DRM_FORMAT_MOD_QCOM_COMPRESSED : DRM_FORMAT_MOD_LINEAR,
+         .offsets = { 0, 0, 0, 0 },
+         .pitches = { pitch, 0, 0, 0 },
+         .yuv_color_space = EGL_ITU_REC601_EXT,
+         .sample_range = EGL_YUV_NARROW_RANGE_EXT,
+         .horizontal_siting = EGL_YUV_CHROMA_SITING_0_EXT,
+         .vertical_siting = EGL_YUV_CHROMA_SITING_0_EXT,
+      };
+
+      return 0;
+   }
+
+   return -EINVAL;
+}
+
+
 static __DRIimage *
 droid_create_image_from_buffer_info(struct dri2_egl_display *dri2_dpy,
                                     struct buffer_info *buf_info, void *priv)
@@ -453,6 +512,9 @@ droid_create_image_from_native_buffer(_EGLDisplay *disp,
       img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
 
    if (!img && !cros_get_buffer_info(dri2_dpy, buf, &buf_info))
+      img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
+
+   if (!img && !kgsl_window_buffer_get_buffer_info(dri2_dpy, buf, &buf_info))
       img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
 
    if (!img && !native_window_buffer_get_buffer_info(dri2_dpy, buf, &buf_info))
