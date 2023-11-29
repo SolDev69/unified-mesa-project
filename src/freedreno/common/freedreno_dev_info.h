@@ -192,7 +192,7 @@ fd_dev_gpu_id(const struct fd_dev_id *id)
 static uint8_t
 fd_dev_gen(const struct fd_dev_id *id)
 {
-   return 6; // test
+   return fd_dev_gpu_id(id) / 100;
 }
 
 static inline bool

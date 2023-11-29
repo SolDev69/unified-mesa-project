@@ -131,35 +131,31 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
                     const struct ir3_compiler_options *options)
 {
    struct ir3_compiler *compiler = rzalloc(NULL, struct ir3_compiler);
-   printf("ir3: debug_get_option_ir3_shader_debug\n");
+
    ir3_shader_debug = debug_get_option_ir3_shader_debug();
-   printf("ir3: ir3_shader_override_path\n");
    ir3_shader_override_path =
       !__check_suid() ? debug_get_option_ir3_shader_override_path() : NULL;
 
    if (ir3_shader_override_path) {
       ir3_shader_debug |= IR3_DBG_NOCACHE;
    }
-   printf("ir3: dev\n");
+
    compiler->dev = dev;
-   printf("ir3: dev_id\n");
    compiler->dev_id = dev_id;
-   printf("ir3: gen\n");
    compiler->gen = fd_dev_gen(dev_id);
-   printf("ir3: options\n");
    compiler->options = *options;
 
-   printf("All known GPU's have 32k local memory (aka shared)\n");
+   /* All known GPU's have 32k local memory (aka shared) */
    compiler->local_mem_size = 32 * 1024;
-   printf("TODO see if older GPU's were different here\n");
+   /* TODO see if older GPU's were different here */
    compiler->branchstack_size = 64;
    compiler->wave_granularity = 2;
    compiler->max_waves = 16;
 
    compiler->max_variable_workgroup_size = 1024;
-   printf("ir3: fd_dev_info\n");
+
    const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
-   printf("ir3: if statement 1 enter\n");
+
    if (compiler->gen >= 6) {
       compiler->samgq_workaround = true;
       /* a6xx split the pipeline state into geometry and fragment state, in
@@ -178,13 +174,9 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        *
        * TODO: The shared limit seems to be different on different models.
        */
-      printf("ir3: pipeline\n");
       compiler->max_const_pipeline = 512;
-      printf("ir3: frag\n");
       compiler->max_const_frag = 512;
-      printf("ir3: geom\n");
       compiler->max_const_geom = 512;
-      printf("ir3: safe\n");
       compiler->max_const_safe = 100;
 
       /* Compute shaders don't share a const file with the FS. Instead they
@@ -192,29 +184,25 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        *
        * TODO: is this true on earlier gen's?
        */
-      printf("ir3: compute\n");
       compiler->max_const_compute = 256;
-      printf("ir3: has clip cull\n");
+
       /* TODO: implement clip+cull distances on earlier gen's */
       compiler->has_clip_cull = true;
-      printf("ir3: pvtmem\n");
+
       /* TODO: implement private memory on earlier gen's */
       compiler->has_pvtmem = true;
-      printf("ir3: preamble\n");
+
       compiler->has_preamble = true;
-      printf("tess\n");
-      compiler->tess_use_shared = false;
-      printf("ir3: has getfibreid\n");
-      compiler->has_getfiberid = false;
-      printf("ir3: dp2\n");
-      compiler->has_dp2acc = false;
-      printf("ir3: dp4\n");
-      compiler->has_dp4acc = false;
-      printf("ir3: shared consts offset\n");
+
+      compiler->tess_use_shared = dev_info->a6xx.tess_use_shared;
+
+      compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
+
+      compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
+      compiler->has_dp4acc = dev_info->a6xx.has_dp4acc;
+
       compiler->shared_consts_base_offset = 504;
-      printf("ir3: shared consts size\n");
       compiler->shared_consts_size = 8;
-      printf("ir3: geometry shared consts size quirk\n");
       compiler->geom_shared_consts_size_quirk = 16;
    } else {
       compiler->max_const_pipeline = 512;
@@ -227,46 +215,82 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        */
       compiler->max_const_safe = 256;
    }
-   printf("ir3: reg size vec\n");
-   compiler->reg_size_vec4 = 96;
-   printf("ir3: threadsize_base\n");
-   compiler->threadsize_base = 64;
-   printf("ir3: if statement 4 enter\n");
-   compiler->flat_bypass = true;
-   compiler->levels_add_one = false;
-   compiler->unminify_coords = false;
-   compiler->txf_ms_with_isaml = false;
-   compiler->array_index_add_half = true;
-   compiler->instr_align = 16;
-   compiler->const_upload_unit = 4;
-   printf("ir3: compiler bools\n");
-   compiler->bool_type = TYPE_U16;
-   compiler->has_shared_regfile = true;
-   printf("ir3: preambles\n");
+
+   if (compiler->gen >= 6) {
+      compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;
+   } else if (compiler->gen >= 4) {
+      /* On a4xx-a5xx, using r24.x and above requires using the smallest
+       * threadsize.
+       */
+      compiler->reg_size_vec4 = 48;
+   } else {
+      /* TODO: confirm this */
+      compiler->reg_size_vec4 = 96;
+   }
+
+   if (compiler->gen >= 6) {
+      compiler->threadsize_base = 64;
+   } else if (compiler->gen >= 4) {
+      /* TODO: Confirm this for a4xx. For a5xx this is based on the Vulkan
+       * 1.1 subgroupSize which is 32.
+       */
+      compiler->threadsize_base = 32;
+   } else {
+      compiler->threadsize_base = 8;
+   }
+
+   if (compiler->gen >= 4) {
+      /* need special handling for "flat" */
+      compiler->flat_bypass = true;
+      compiler->levels_add_one = false;
+      compiler->unminify_coords = false;
+      compiler->txf_ms_with_isaml = false;
+      compiler->array_index_add_half = true;
+      compiler->instr_align = 16;
+      compiler->const_upload_unit = 4;
+   } else {
+      /* no special handling for "flat" */
+      compiler->flat_bypass = false;
+      compiler->levels_add_one = true;
+      compiler->unminify_coords = true;
+      compiler->txf_ms_with_isaml = true;
+      compiler->array_index_add_half = false;
+      compiler->instr_align = 4;
+      compiler->const_upload_unit = 8;
+   }
+
+   compiler->bool_type = (compiler->gen >= 5) ? TYPE_U16 : TYPE_U32;
+   compiler->has_shared_regfile = compiler->gen >= 5;
+
    /* The driver can't request this unless preambles are supported. */
    if (options->push_ubo_with_preamble)
       assert(compiler->has_preamble);
-   printf("nir options: \n");
+
    /* Set up nir shader compiler options, using device-specific overrides of our base settings. */
    compiler->nir_options = ir3_base_options;
-   printf("nir options 2: \n");
-   compiler->nir_options.vectorize_io = true,
-   compiler->nir_options.force_indirect_unrolling = nir_var_all,
-   printf("nir options 3: \n");
-   compiler->nir_options.lower_device_index_to_zero = true,
-   compiler->nir_options.has_udot_4x8 = true,
-   compiler->nir_options.has_sudot_4x8 = true,
-   compiler->nir_options.has_udot_4x8 = false;
-   compiler->nir_options.has_sudot_4x8 = false;
+
+   if (compiler->gen >= 6) {
+      compiler->nir_options.vectorize_io = true,
+      compiler->nir_options.force_indirect_unrolling = nir_var_all,
+
+      compiler->nir_options.lower_device_index_to_zero = true,
+      compiler->nir_options.has_udot_4x8 = true,
+      compiler->nir_options.has_sudot_4x8 = true,
+      compiler->nir_options.has_udot_4x8 = dev_info->a6xx.has_dp2acc;
+      compiler->nir_options.has_sudot_4x8 = dev_info->a6xx.has_dp2acc;
+   } else if (compiler->gen >= 3 && compiler->gen <= 5) {
+      compiler->nir_options.vertex_id_zero_based = true;
+   } else if (compiler->gen <= 2) {
+      /* a2xx compiler doesn't handle indirect: */
+      compiler->nir_options.force_indirect_unrolling = nir_var_all;
+   }
 
    /* 16-bit ALU op generation is mostly controlled by frontend compiler options, but
     * this core NIR option enables some optimizations of 16-bit operations.
     */
-   printf("ir3: shader debug\n");
-   if (!(ir3_shader_debug & IR3_DBG_NOFP16))
+   if (compiler->gen >= 5 && !(ir3_shader_debug & IR3_DBG_NOFP16))
       compiler->nir_options.support_16bit_alu = true;
-   // printf("HERE WE GO!\n");
-   // False alarm, we aren't done yet :(
+
    return compiler;
 }
 
