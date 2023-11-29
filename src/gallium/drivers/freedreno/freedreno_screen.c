@@ -1110,7 +1110,6 @@ fd_screen_create(int fd,
       mesa_loge("unsupported GPU: a%03d", screen->gpu_id);
       goto fail;
    }
-   
 
    screen->info = info;
 
@@ -1169,6 +1168,7 @@ fd_screen_create(int fd,
 
    pscreen->destroy = fd_screen_destroy;
    pscreen->get_screen_fd = fd_screen_get_fd;
+
    pscreen->get_param = fd_screen_get_param;
    pscreen->get_paramf = fd_screen_get_paramf;
    pscreen->get_shader_param = fd_screen_get_shader_param;

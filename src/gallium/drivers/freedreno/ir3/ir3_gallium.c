@@ -560,7 +560,6 @@ ir3_screen_init(struct pipe_screen *pscreen)
       .bindless_fb_read_slot = IR3_BINDLESS_IMAGE_OFFSET +
                                IR3_BINDLESS_IMAGE_COUNT - 1 - screen->max_rts,
    };
-   printf("ir3: compiler init\n");
    screen->compiler = ir3_compiler_create(screen->dev, screen->dev_id, &options);
 
    /* TODO do we want to limit things to # of fast cores, or just limit
@@ -569,21 +568,16 @@ ir3_screen_init(struct pipe_screen *pscreen)
     * big cores.  OTOH if they are sitting idle, maybe it is useful to
     * use them?
     */
-   printf("ir3: init threads\n");
    unsigned num_threads = sysconf(_SC_NPROCESSORS_ONLN) / 2;
 
    /* Create at least one thread - even on single core CPU systems. */
    num_threads = MAX2(1, num_threads);
-   printf("ir3: queue init\n");
    util_queue_init(&screen->compile_queue, "ir3q", 64, num_threads,
                    UTIL_QUEUE_INIT_RESIZE_IF_FULL |
                       UTIL_QUEUE_INIT_SET_FULL_THREAD_AFFINITY, NULL);
-   printf("ir3: finalize nir\n");
    pscreen->finalize_nir = ir3_screen_finalize_nir;
-   printf("ir3: set max shader compiler threads\n");
    pscreen->set_max_shader_compiler_threads =
       ir3_set_max_shader_compiler_threads;
-   printf("ir3: shader comp\n");
    pscreen->is_parallel_shader_compilation_finished =
       ir3_is_parallel_shader_compilation_finished;
 }
