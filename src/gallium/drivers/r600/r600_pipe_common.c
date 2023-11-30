@@ -37,6 +37,8 @@
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
 #include "radeon_video.h"
+#include "git_sha1.h"
+
 #include <inttypes.h>
 #include <sys/utsname.h>
 #include <stdlib.h>
@@ -204,10 +206,9 @@ void r600_draw_rectangle(struct blitter_context *blitter,
 	/* draw */
 	struct pipe_vertex_buffer vbuffer = {};
 	vbuffer.buffer.resource = buf;
-	vbuffer.stride = 2 * 4 * sizeof(float); /* vertex size */
 	vbuffer.buffer_offset = offset;
 
-	rctx->b.set_vertex_buffers(&rctx->b, blitter->vb_slot, 1, 0, false, &vbuffer);
+	rctx->b.set_vertex_buffers(&rctx->b, 1, 0, false, &vbuffer);
 	util_draw_arrays_instanced(&rctx->b, R600_PRIM_RECTANGLE_LIST, 0, 3,
 				   0, num_instances);
 	pipe_resource_reference(&buf, NULL);
@@ -633,13 +634,13 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	if (!rctx->b.const_uploader)
 		return false;
 
-	rctx->ctx = rctx->ws->ctx_create(rctx->ws, RADEON_CTX_PRIORITY_MEDIUM);
+	rctx->ctx = rctx->ws->ctx_create(rctx->ws, RADEON_CTX_PRIORITY_MEDIUM, false);
 	if (!rctx->ctx)
 		return false;
 
 	if (rscreen->info.ip[AMD_IP_SDMA].num_queues && !(rscreen->debug_flags & DBG_NO_ASYNC_DMA)) {
 		rctx->ws->cs_create(&rctx->dma.cs, rctx->ctx, AMD_IP_SDMA,
-                                    r600_flush_dma_ring, rctx, false);
+                                    r600_flush_dma_ring, rctx);
 		rctx->dma.flush = r600_flush_dma_ring;
 	}
 
@@ -1208,6 +1209,50 @@ static int r600_get_screen_fd(struct pipe_screen *screen)
 	return ws->get_fd(ws);
 }
 
+static void r600_get_driver_uuid(UNUSED struct pipe_screen *screen, char *uuid)
+{
+	const char *driver_id = PACKAGE_VERSION MESA_GIT_SHA1 "r600";
+
+	/* The driver UUID is used for determining sharability of images and
+	 * memory between two Vulkan instances in separate processes, but also
+	 * to determining memory objects and sharability between Vulkan and
+	 * OpenGL driver. People who want to share memory need to also check
+	 * the device UUID.
+	 */
+	struct mesa_sha1 sha1_ctx;
+	_mesa_sha1_init(&sha1_ctx);
+
+	_mesa_sha1_update(&sha1_ctx, driver_id, strlen(driver_id));
+
+	uint8_t sha1[SHA1_DIGEST_LENGTH];
+	_mesa_sha1_final(&sha1_ctx, sha1);
+
+	assert(SHA1_DIGEST_LENGTH >= PIPE_UUID_SIZE);
+	memcpy(uuid, sha1, PIPE_UUID_SIZE);
+}
+
+static void r600_get_device_uuid(struct pipe_screen *screen, char *uuid)
+{
+	uint32_t *uint_uuid = (uint32_t *)uuid;
+	struct r600_common_screen* rs = (struct r600_common_screen*)screen;
+
+	assert(PIPE_UUID_SIZE >= sizeof(uint32_t) * 4);
+
+	/* Copied from ac_device_info
+	 * Use the device info directly instead of using a sha1. GL/VK UUIDs
+	 * are 16 byte vs 20 byte for sha1, and the truncation that would be
+	 * required would get rid of part of the little entropy we have.
+	 */
+	memset(uuid, 0, PIPE_UUID_SIZE);
+	if (!rs->info.pci.valid)
+		fprintf(stderr,
+		"r600 device_uuid output is based on invalid pci bus info.\n");
+	uint_uuid[0] = rs->info.pci.domain;
+	uint_uuid[1] = rs->info.pci.bus;
+	uint_uuid[2] = rs->info.pci.dev;
+	uint_uuid[3] = rs->info.pci.func;
+}
+
 bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws)
 {
@@ -1248,6 +1293,8 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->b.resource_destroy = r600_resource_destroy;
 	rscreen->b.resource_from_user_memory = r600_buffer_from_user_memory;
 	rscreen->b.query_memory_info = r600_query_memory_info;
+	rscreen->b.get_device_uuid = r600_get_device_uuid;
+	rscreen->b.get_driver_uuid = r600_get_driver_uuid;
 
 	if (rscreen->info.ip[AMD_IP_UVD].num_queues) {
 		rscreen->b.get_video_param = rvid_get_video_param;
@@ -1340,6 +1387,8 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 		.lower_fmod = true,
 		.lower_uadd_carry = true,
 		.lower_usub_borrow = true,
+		.lower_bitfield_extract = true,
+		.lower_bitfield_insert = true,
 		.lower_extract_byte = true,
 		.lower_extract_word = true,
 		.lower_insert_byte = true,
@@ -1359,11 +1408,13 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 		.use_interpolated_input_intrinsics = true,
 		.has_fsub = true,
 		.has_isub = true,
+		.has_find_msb_rev = true,
 		.lower_iabs = true,
 		.lower_uadd_sat = true,
 		.lower_usub_sat = true,
 		.has_fused_comp_and_csel = true,
-		.lower_find_msb_to_reverse = true,
+		.lower_ifind_msb = true,
+		.lower_ufind_msb = true,
 		.lower_to_scalar = true,
 		.lower_to_scalar_filter = r600_lower_to_scalar_instr_filter,
 		.linker_ignore_precision = true,
@@ -1381,16 +1432,15 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 		rscreen->nir_options.force_indirect_unrolling_sampler = true;
 
 	if (rscreen->info.gfx_level >= EVERGREEN) {
-		rscreen->nir_options.lower_bitfield_extract = true;
-		rscreen->nir_options.lower_bitfield_insert_to_bitfield_select = true;
+		rscreen->nir_options.has_bfe = true;
+		rscreen->nir_options.has_bfm = true;
+		rscreen->nir_options.has_bitfield_select = true;
 	}
 
 	if (rscreen->info.gfx_level < EVERGREEN) {
 		/* Pre-EG doesn't have these ALU ops */
 		rscreen->nir_options.lower_bit_count = true;
 		rscreen->nir_options.lower_bitfield_reverse = true;
-		rscreen->nir_options.lower_bitfield_insert_to_shifts = true;
-		rscreen->nir_options.lower_bitfield_extract_to_shifts = true;
 	}
 
 	if (rscreen->info.gfx_level < CAYMAN) {

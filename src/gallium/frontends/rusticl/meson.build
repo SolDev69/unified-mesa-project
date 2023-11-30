@@ -114,7 +114,17 @@ rusticl_bindgen_args = [
   '--anon-fields-prefix', 'anon_',
 ]
 
-if find_program('bindgen').version().version_compare('< 0.65')
+bindgen_version = find_program('bindgen').version()
+
+if bindgen_version == 'unknown'
+  error('Failed to detect bindgen version. If you are using bindgen 0.69.0, please either update to 0.69.1 or downgrade to 0.68.1. You can install the latest version for your user with `cargo install bindgen-cli`.')
+endif
+
+if bindgen_version.version_compare('< 0.62')
+  error('rusticl requires bindgen 0.62 or newer. If your distribution does not ship a recent enough version, you can install the latest version for your user with `cargo install bindgen-cli`.')
+endif
+
+if bindgen_version.version_compare('< 0.65')
   rusticl_bindgen_args += [
     '--size_t-is-usize',
   ]
@@ -153,6 +163,9 @@ rusticl_opencl_bindings_rs = rust.bindgen(
     '--ignore-functions',
     # needed because bindgen adds *mut void fields...
     '--raw-line', 'unsafe impl std::marker::Sync for _cl_icd_dispatch {}',
+    # _cl_image_desc contains a pointer to _cl_mem
+    '--raw-line', 'unsafe impl std::marker::Send for _cl_image_desc {}',
+    '--raw-line', 'unsafe impl std::marker::Sync for _cl_image_desc {}',
     '--allowlist-type', 'cl_.*',
     '--allowlist-var', 'CL_.*',
     # some info types need to be strongly typed so we can implement various get_infos
@@ -194,6 +207,7 @@ rusticl_mesa_bindings_inline_wrapper = static_library(
     'rusticl_mesa_inline_bindings_wrapper.h',
     'rusticl_nir.c',
     'rusticl_nir.h',
+    sha1_h,
   ],
   gnu_symbol_visibility : 'hidden',
   include_directories : [
@@ -217,14 +231,13 @@ rusticl_mesa_bindings_rs = rust.bindgen(
   input : 'rusticl_mesa_bindings.h',
   output : 'rusticl_mesa_bindings.rs',
   include_directories : [
-    inc_compiler,
     inc_gallium,
     inc_gallium_aux,
     inc_include,
-    inc_nir,
     inc_src,
   ],
   dependencies: [
+    idep_nir_headers,
     dep_valgrind,
   ],
   c_args : [
@@ -267,9 +280,12 @@ rusticl_mesa_bindings_rs = rust.bindgen(
 
     # nir and spirv
     '--allowlist-function',     'nir_.*',
+    '--allowlist-var',          'nir_debug',
+    '--allowlist-var',          'NIR_DEBUG_.*',
     '--bitfield-enum',          'nir_lower_int64_options',
     '--bitfield-enum',          'nir_opt_if_options',
     '--bitfield-enum',          'nir_variable_mode',
+    '--allowlist-function',     'should_.*_nir',
     '--allowlist-function',     'spirv_.*',
 
     # gallium
@@ -277,6 +293,8 @@ rusticl_mesa_bindings_rs = rust.bindgen(
     '--allowlist-var',          'PIPE_.*',
     '--allowlist-type',         'pipe_endian',
     '--bitfield-enum',          'pipe_map_flags',
+    '--allowlist-type',         'pipe_query_type',
+    '--constified-enum-module', 'pipe_query_type',
     '--allowlist-type',         'pipe_resource_usage',
     '--bitfield-enum',          'pipe_resource_usage',
     '--allowlist-type',         'pipe_tex_filter',

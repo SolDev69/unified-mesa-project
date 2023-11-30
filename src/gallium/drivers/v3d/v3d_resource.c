@@ -26,6 +26,7 @@
 #include "util/u_memory.h"
 #include "util/format/u_format.h"
 #include "util/u_inlines.h"
+#include "util/u_resource.h"
 #include "util/u_surface.h"
 #include "util/u_transfer_helper.h"
 #include "util/u_upload_mgr.h"
@@ -99,7 +100,17 @@ v3d_resource_bo_alloc(struct v3d_resource *rsc)
         struct pipe_screen *pscreen = prsc->screen;
         struct v3d_bo *bo;
 
-        bo = v3d_bo_alloc(v3d_screen(pscreen), rsc->size, "resource");
+        /* Buffers may be read using ldunifa, which prefetches the next
+         * 4 bytes after a read. If the buffer's size is exactly a multiple
+         * of a page size and the shader reads the last 4 bytes with ldunifa
+         * the prefetching would read out of bounds and cause an MMU error,
+         * so we allocate extra space to avoid kernel error spamming.
+         */
+        uint32_t size = rsc->size;
+        if (rsc->base.target == PIPE_BUFFER && (size % 4096 == 0))
+                size += 4;
+
+        bo = v3d_bo_alloc(v3d_screen(pscreen), size, "resource");
         if (bo) {
                 v3d_bo_unreference(&rsc->bo);
                 rsc->bo = bo;
@@ -463,17 +474,21 @@ v3d_resource_get_param(struct pipe_screen *pscreen,
                        enum pipe_resource_param param,
                        unsigned usage, uint64_t *value)
 {
-        struct v3d_resource *rsc = v3d_resource(prsc);
+        struct v3d_resource *rsc =
+                (struct v3d_resource *)util_resource_at_index(prsc, plane);
 
         switch (param) {
         case PIPE_RESOURCE_PARAM_STRIDE:
                 *value = rsc->slices[level].stride;
                 return true;
         case PIPE_RESOURCE_PARAM_OFFSET:
-                *value = 0;
+                *value = rsc->slices[level].offset;
                 return true;
         case PIPE_RESOURCE_PARAM_MODIFIER:
                 *value = v3d_resource_modifier(rsc);
+                return true;
+        case PIPE_RESOURCE_PARAM_NPLANES:
+                *value = util_resource_num(prsc);
                 return true;
         default:
                 return false;
@@ -1006,6 +1021,9 @@ v3d_resource_from_handle(struct pipe_screen *pscreen,
         } else if (!rsc->tiled) {
                 slice->stride = whandle->stride;
         }
+
+        /* Prevent implicit clearing of the imported buffer contents. */
+        rsc->writes = 1;
 
         return prsc;
 

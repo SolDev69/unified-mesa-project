@@ -95,8 +95,8 @@ static const nir_shader_compiler_options ir3_base_options = {
    .lower_insert_byte = true,
    .lower_insert_word = true,
    .lower_helper_invocation = true,
-   .lower_bitfield_insert_to_shifts = true,
-   .lower_bitfield_extract_to_shifts = true,
+   .lower_bitfield_insert = true,
+   .lower_bitfield_extract = true,
    .lower_pack_half_2x16 = true,
    .lower_pack_snorm_4x8 = true,
    .lower_pack_snorm_2x16 = true,
@@ -145,16 +145,15 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    compiler->is_64bit = fd_dev_64b(dev_id);
    compiler->options = *options;
 
-   /* All known GPU's have 32k local memory (aka shared) */
-   compiler->local_mem_size = 32 * 1024;
    /* TODO see if older GPU's were different here */
+   const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
    compiler->branchstack_size = 64;
-   compiler->wave_granularity = 2;
+   compiler->wave_granularity = dev_info->wave_granularity;
    compiler->max_waves = 16;
 
    compiler->max_variable_workgroup_size = 1024;
 
-   const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
+   compiler->local_mem_size = dev_info->cs_shared_mem_size;
 
    if (compiler->gen >= 6) {
       compiler->samgq_workaround = true;
@@ -188,30 +187,32 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        *
        * TODO: is this true on earlier gen's?
        */
-      printf("ir3: compute\n");
       compiler->max_const_compute = 256;
-      printf("ir3: has clip cull\n");
+
       /* TODO: implement clip+cull distances on earlier gen's */
       compiler->has_clip_cull = true;
-      printf("ir3: pvtmem\n");
-      /* TODO: implement private memory on earlier gen's */
-      compiler->has_pvtmem = true;
-      printf("ir3: preamble\n");
+
       compiler->has_preamble = true;
-      printf("tess\n");
-      compiler->tess_use_shared = false;
-      printf("ir3: has getfibreid\n");
-      compiler->has_getfiberid = false;
-      printf("ir3: dp2\n");
-      compiler->has_dp2acc = false;
-      printf("ir3: dp4\n");
-      compiler->has_dp4acc = false;
-      printf("ir3: shared consts offset\n");
-      compiler->shared_consts_base_offset = 504;
-      printf("ir3: shared consts size\n");
-      compiler->shared_consts_size = 8;
-      printf("ir3: geometry shared consts size quirk\n");
-      compiler->geom_shared_consts_size_quirk = 16;
+
+      compiler->tess_use_shared = dev_info->a6xx.tess_use_shared;
+
+      compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
+
+      compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
+      compiler->has_dp4acc = dev_info->a6xx.has_dp4acc;
+
+      if (compiler->gen == 6 && options->shared_push_consts) {
+         compiler->shared_consts_base_offset = 504;
+         compiler->shared_consts_size = 8;
+         compiler->geom_shared_consts_size_quirk = 16;
+      } else {
+         compiler->shared_consts_base_offset = -1;
+         compiler->shared_consts_size = 0;
+         compiler->geom_shared_consts_size_quirk = 0;
+      }
+
+      compiler->has_fs_tex_prefetch = dev_info->a6xx.has_fs_tex_prefetch;
+      compiler->stsc_duplication_quirk = dev_info->a7xx.stsc_duplication_quirk;
    } else {
       compiler->max_const_pipeline = 512;
       compiler->max_const_geom = 512;
@@ -223,6 +224,13 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        */
       compiler->max_const_safe = 256;
    }
+
+   /* This is just a guess for a4xx. */
+   compiler->pvtmem_per_fiber_align = compiler->gen >= 4 ? 512 : 128;
+   /* TODO: implement private memory on earlier gen's */
+   compiler->has_pvtmem = compiler->gen >= 5;
+
+   compiler->has_isam_ssbo = compiler->gen >= 6;
 
    if (compiler->gen >= 6) {
       compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;

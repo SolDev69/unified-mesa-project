@@ -35,7 +35,7 @@ vn_feedback_buffer_create(struct vn_device *dev,
 {
    const bool exclusive = dev->queue_family_count == 1;
    const VkPhysicalDeviceMemoryProperties *mem_props =
-      &dev->physical_device->memory_properties.memoryProperties;
+      &dev->physical_device->memory_properties;
    VkDevice dev_handle = vn_device_to_handle(dev);
    struct vn_feedback_buffer *feedback_buf;
    VkResult result;
@@ -513,25 +513,38 @@ vn_feedback_cmd_record(VkCommandBuffer cmd_handle,
    return vn_EndCommandBuffer(cmd_handle);
 }
 
-void
-vn_feedback_query_copy_cmd_record(VkCommandBuffer cmd_handle,
-                                  VkQueryPool pool_handle,
-                                  uint32_t query,
-                                  uint32_t count)
+static void
+vn_feedback_query_cmd_record(VkCommandBuffer cmd_handle,
+                             VkQueryPool pool_handle,
+                             uint32_t query,
+                             uint32_t count,
+                             bool copy)
 {
    struct vn_query_pool *pool = vn_query_pool_from_handle(pool_handle);
-
    if (!pool->feedback)
       return;
 
    /* Results are always 64 bit and include availability bit (also 64 bit) */
-   const size_t slot_size = (pool->result_array_size * 8) + 8;
-   const size_t offset = slot_size * query;
+   const VkDeviceSize slot_size = (pool->result_array_size * 8) + 8;
+   const VkDeviceSize offset = slot_size * query;
+   const VkDeviceSize buf_size = slot_size * count;
 
    /* The first synchronization scope of vkCmdCopyQueryPoolResults does not
     * include the query feedback buffer. Insert a barrier to ensure ordering
     * against feedback buffer fill cmd injected in vkCmdResetQueryPool.
+    *
+    * The second synchronization scope of vkCmdResetQueryPool does not include
+    * the query feedback buffer. Insert a barrer to ensure ordering against
+    * prior cmds referencing the queries.
+    *
+    * For srcAccessMask, VK_ACCESS_TRANSFER_WRITE_BIT is sufficient since the
+    * gpu cache invalidation for feedback buffer fill in vkResetQueryPool is
+    * done implicitly via queue submission.
     */
+   const VkPipelineStageFlags src_stage_mask =
+      copy ? VK_PIPELINE_STAGE_TRANSFER_BIT
+           : VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
    const VkBufferMemoryBarrier buf_barrier_before = {
       .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
       .pNext = NULL,
@@ -541,76 +554,119 @@ vn_feedback_query_copy_cmd_record(VkCommandBuffer cmd_handle,
       .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .buffer = pool->feedback->buffer,
       .offset = offset,
-      .size = slot_size * count,
+      .size = buf_size,
    };
-   vn_CmdPipelineBarrier(cmd_handle, VK_PIPELINE_STAGE_TRANSFER_BIT,
+   vn_CmdPipelineBarrier(cmd_handle, src_stage_mask,
                          VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 1,
                          &buf_barrier_before, 0, NULL);
 
-   /* Per spec: "The first synchronization scope includes all commands
-    * which reference the queries in queryPool indicated by query that
-    * occur earlier in submission order. If flags does not include
-    * VK_QUERY_RESULT_WAIT_BIT, vkCmdEndQueryIndexedEXT,
-    * vkCmdWriteTimestamp2, vkCmdEndQuery, and vkCmdWriteTimestamp are
-    * excluded from this scope."
-    *
-    * Set VK_QUERY_RESULT_WAIT_BIT to ensure ordering after
-    * vkCmdEndQuery or vkCmdWriteTimestamp makes the query available.
-    *
-    * Set VK_QUERY_RESULT_64_BIT as we can convert it to 32 bit if app
-    * requested that.
-    */
-   vn_CmdCopyQueryPoolResults(cmd_handle, pool_handle, query, count,
-                              pool->feedback->buffer, offset, slot_size,
-                              VK_QUERY_RESULT_WITH_AVAILABILITY_BIT |
-                                 VK_QUERY_RESULT_64_BIT |
-                                 VK_QUERY_RESULT_WAIT_BIT);
+   if (copy) {
+      /* Per spec: "The first synchronization scope includes all commands
+       * which reference the queries in queryPool indicated by query that
+       * occur earlier in submission order. If flags does not include
+       * VK_QUERY_RESULT_WAIT_BIT, vkCmdEndQueryIndexedEXT,
+       * vkCmdWriteTimestamp2, vkCmdEndQuery, and vkCmdWriteTimestamp are
+       * excluded from this scope."
+       *
+       * Set VK_QUERY_RESULT_WAIT_BIT to ensure ordering after
+       * vkCmdEndQuery or vkCmdWriteTimestamp makes the query available.
+       *
+       * Set VK_QUERY_RESULT_64_BIT as we can convert it to 32 bit if app
+       * requested that.
+       *
+       * Per spec: "vkCmdCopyQueryPoolResults is considered to be a transfer
+       * operation, and its writes to buffer memory must be synchronized using
+       * VK_PIPELINE_STAGE_TRANSFER_BIT and VK_ACCESS_TRANSFER_WRITE_BIT
+       * before using the results."
+       *
+       * So we can reuse the flush barrier after this copy cmd.
+       */
+      vn_CmdCopyQueryPoolResults(cmd_handle, pool_handle, query, count,
+                                 pool->feedback->buffer, offset, slot_size,
+                                 VK_QUERY_RESULT_WITH_AVAILABILITY_BIT |
+                                    VK_QUERY_RESULT_64_BIT |
+                                    VK_QUERY_RESULT_WAIT_BIT);
+   } else {
+      vn_CmdFillBuffer(cmd_handle, pool->feedback->buffer, offset, buf_size,
+                       0);
+   }
 
-   /* Per spec: "vkCmdCopyQueryPoolResults is considered to be a transfer
-    * operation, and its writes to buffer memory must be synchronized using
-    * VK_PIPELINE_STAGE_TRANSFER_BIT and VK_ACCESS_TRANSFER_WRITE_BIT
-    * before using the results."
-    */
    vn_feedback_cmd_record_flush_barrier(cmd_handle, pool->feedback->buffer,
-                                        offset, slot_size * count);
+                                        offset, buf_size);
 }
 
-void
-vn_feedback_query_reset_cmd_record(VkCommandBuffer cmd_handle,
-                                   VkQueryPool pool_handle,
-                                   uint32_t first_query,
-                                   uint32_t count)
+static void
+vn_cmd_record_batched_query_feedback(VkCommandBuffer *cmd_handle,
+                                     struct list_head *combined_query_batches)
 {
-   struct vn_query_pool *pool = vn_query_pool_from_handle(pool_handle);
+   list_for_each_entry_safe(struct vn_feedback_query_batch, batch,
+                            combined_query_batches, head) {
+      vn_feedback_query_cmd_record(
+         *cmd_handle, vn_query_pool_to_handle(batch->query_pool),
+         batch->query, batch->query_count, batch->copy);
+   }
+}
 
-   if (!pool->feedback)
-      return;
-
-   /* Results are always 64 bit and include availability bit (also 64 bit) */
-   const size_t slot_size = (pool->result_array_size * 8) + 8;
-   const size_t offset = slot_size * first_query;
-
-   const VkBufferMemoryBarrier buf_barrier_before = {
-      .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+VkResult
+vn_feedback_query_batch_record(VkDevice dev_handle,
+                               struct vn_feedback_cmd_pool *feedback_pool,
+                               struct list_head *combined_query_batches,
+                               VkCommandBuffer *out_cmd_handle)
+{
+   const VkCommandBufferAllocateInfo info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       .pNext = NULL,
-      .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
-      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .buffer = pool->feedback->buffer,
-      .offset = offset,
-      .size = slot_size * count,
+      .commandPool = feedback_pool->pool,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = 1,
+   };
+   struct vn_command_pool *cmd_pool =
+      vn_command_pool_from_handle(feedback_pool->pool);
+   VkCommandBuffer feedback_cmd_handle;
+   VkResult result;
+
+   simple_mtx_lock(&feedback_pool->mutex);
+
+   if (!list_is_empty(&cmd_pool->free_query_feedback_cmds)) {
+      struct vn_command_buffer *free_cmd =
+         list_first_entry(&cmd_pool->free_query_feedback_cmds,
+                          struct vn_command_buffer, feedback_head);
+      feedback_cmd_handle = vn_command_buffer_to_handle(free_cmd);
+      list_del(&free_cmd->feedback_head);
+   } else {
+      result =
+         vn_AllocateCommandBuffers(dev_handle, &info, &feedback_cmd_handle);
+      if (result != VK_SUCCESS)
+         goto out_unlock;
+   }
+
+   static const VkCommandBufferBeginInfo begin_info = {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
    };
 
-   vn_CmdPipelineBarrier(cmd_handle, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 1,
-                         &buf_barrier_before, 0, NULL);
+   result = vn_BeginCommandBuffer(feedback_cmd_handle, &begin_info);
+   if (result != VK_SUCCESS) {
+      vn_FreeCommandBuffers(dev_handle, feedback_pool->pool, 1,
+                            &feedback_cmd_handle);
+      goto out_unlock;
+   }
 
-   vn_CmdFillBuffer(cmd_handle, pool->feedback->buffer, offset,
-                    slot_size * count, 0);
+   vn_cmd_record_batched_query_feedback(&feedback_cmd_handle,
+                                        combined_query_batches);
 
-   vn_feedback_cmd_record_flush_barrier(cmd_handle, pool->feedback->buffer,
-                                        offset, slot_size * count);
+   result = vn_EndCommandBuffer(feedback_cmd_handle);
+   if (result != VK_SUCCESS) {
+      vn_FreeCommandBuffers(dev_handle, feedback_pool->pool, 1,
+                            &feedback_cmd_handle);
+      goto out_unlock;
+   }
+
+   *out_cmd_handle = feedback_cmd_handle;
+
+out_unlock:
+   simple_mtx_unlock(&feedback_pool->mutex);
+
+   return result;
 }
 
 VkResult
@@ -671,7 +727,8 @@ vn_feedback_cmd_pools_init(struct vn_device *dev)
       .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
    };
 
-   if (VN_PERF(NO_FENCE_FEEDBACK) && VN_PERF(NO_TIMELINE_SEM_FEEDBACK))
+   if (VN_PERF(NO_FENCE_FEEDBACK) && VN_PERF(NO_TIMELINE_SEM_FEEDBACK) &&
+       VN_PERF(NO_QUERY_FEEDBACK))
       return VK_SUCCESS;
 
    assert(dev->queue_family_count);

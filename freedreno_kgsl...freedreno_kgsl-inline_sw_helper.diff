@@ -1,0 +1,1253 @@
+diff --git a/.github/workflows/android.yml b/.github/workflows/android.yml
+new file mode 100644
+index 00000000000..7331c4d26da
+--- /dev/null
++++ b/.github/workflows/android.yml
+@@ -0,0 +1,69 @@
++name: Build Android
++
++on:
++  [push, pull_request, workflow_dispatch]
++
++# A workflow run is made up of one or more jobs that can run sequentially or in parallel
++jobs:
++  build:
++    strategy:
++      matrix:
++        arch: [ "arm32", "aarch64" ]
++      fail-fast: false
++
++    name: "Build for ${{matrix.arch}}"
++
++    runs-on: ubuntu-latest
++
++    steps:
++        
++      - uses: actions/checkout@v2
++
++      - name: Build
++        run: |
++          sudo apt update
++          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
++          pip3 install mako
++          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
++          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
++          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
++          cd drm
++          meson setup "build-android" \
++            --prefix=/tmp/drm-static \
++            --cross-file "../build-crossfile-drm" \
++            -Ddefault_library=static \
++            -Dintel=disabled \
++            -Dradeon=disabled \
++            -Damdgpu=disabled \
++            -Dnouveau=disabled \
++            -Dvmwgfx=disabled \
++            -Dfreedreno=enabled \
++            -Dvc4=disabled \
++            -Detnaviv=disabled \
++            -Dfreedreno-kgsl=true
++          ninja -C "build-android" install
++          cd ..
++          envsubst <android-${{matrix.arch}} >build-crossfile
++          meson setup "build-android" \
++            --prefix=/tmp/fd \
++            --cross-file "build-crossfile" \
++            -Dplatforms=android \
++            -Dplatform-sdk-version=26 \
++            -Dandroid-stub=true \
++            -Dllvm=disabled \
++            -Dxlib-lease=disabled \
++            -Degl=disabled \
++            -Dgbm=disabled \
++            -Dglx=disabled \
++            -Dopengl=true \
++            -Dosmesa=true \
++            -Dvulkan-drivers= \
++            -Dgallium-drivers=swrast,freedreno \
++            -Dfreedreno-kmds=kgsl \
++            -Dshared-glapi=false
++          ninja -C "build-android" install
++      - name: Upload libraries
++        uses: actions/upload-artifact@v2
++        with:
++          name: freedreno_${{matrix.arch}}
++          path: /tmp/fd
+diff --git a/.github/workflows/macos.yml b/.github/workflows/macos.yml
+deleted file mode 100644
+index d1b66ef4cad..00000000000
+--- a/.github/workflows/macos.yml
++++ /dev/null
+@@ -1,60 +0,0 @@
+-name: macOS-CI
+-on: push
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  macOS-CI:
+-    strategy:
+-      matrix:
+-        glx_option: ['dri', 'xlib']
+-    runs-on: macos-11
+-    env:
+-      GALLIUM_DUMP_CPU: true
+-      MESON_EXEC: /Users/runner/Library/Python/3.11/bin/meson
+-    steps:
+-    - name: Checkout
+-      uses: actions/checkout@v3
+-    - name: Install Dependencies
+-      run: |
+-        cat > Brewfile <<EOL
+-        brew "bison"
+-        brew "expat"
+-        brew "gettext"
+-        brew "libx11"
+-        brew "libxcb"
+-        brew "libxdamage"
+-        brew "libxext"
+-        brew "molten-vk"
+-        brew "ninja"
+-        brew "pkg-config"
+-        brew "python@3.10"
+-        EOL
+-
+-        brew update
+-        brew bundle --verbose
+-    - name: Install Mako and meson
+-      run: pip3 install --user mako meson
+-    - name: Configure
+-      run: |
+-        cat > native_config <<EOL
+-        [binaries]
+-        llvm-config = '/usr/local/opt/llvm/bin/llvm-config'
+-        EOL
+-        $MESON_EXEC . build --native-file=native_config -Dmoltenvk-dir=$(brew --prefix molten-vk) -Dbuild-tests=true -Dosmesa=true -Dgallium-drivers=swrast,zink -Dglx=${{ matrix.glx_option }}
+-    - name: Build
+-      run: $MESON_EXEC compile -C build
+-    - name: Test
+-      run: $MESON_EXEC test -C build --print-errorlogs
+-    - name: Install
+-      run: $MESON_EXEC install -C build --destdir $PWD/install
+-    - name: 'Upload Artifact'
+-      if: always()
+-      uses: actions/upload-artifact@v3
+-      with:
+-        name: macos-${{ matrix.glx_option }}-result
+-        path: |
+-          build/meson-logs/
+-          install/
+-        retention-days: 5
+diff --git a/android-aarch64 b/android-aarch64
+new file mode 100644
+index 00000000000..2737a2d01bd
+--- /dev/null
++++ b/android-aarch64
+@@ -0,0 +1,26 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++
++# Also, include the plain DRM lib we found earlier. Panfrost relies on it rather heavily, especially when
++# interacting with the panfrost DRM module and not kbase
++
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv8'
++
++endian = 'little'
+diff --git a/android-arm32 b/android-arm32
+new file mode 100644
+index 00000000000..6bd6af4e902
+--- /dev/null
++++ b/android-arm32
+@@ -0,0 +1,26 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++
++# Also, include the plain DRM lib we found earlier. Panfrost relies on it rather heavily, especially when
++# interacting with the panfrost DRM module and not kbase
++
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv7'
++
++endian = 'little'
+diff --git a/android-drm-aarch64 b/android-drm-aarch64
+new file mode 100644
+index 00000000000..eb91f638435
+--- /dev/null
++++ b/android-drm-aarch64
+@@ -0,0 +1,22 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv8'
++
++endian = 'little'
+diff --git a/android-drm-arm32 b/android-drm-arm32
+new file mode 100644
+index 00000000000..5fae96b7d1e
+--- /dev/null
++++ b/android-drm-arm32
+@@ -0,0 +1,22 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv7'
++
++endian = 'little'
+diff --git a/src/android_stub/meson.build b/src/android_stub/meson.build
+index 6097ae8ef07..0e3f27bc4a5 100644
+--- a/src/android_stub/meson.build
++++ b/src/android_stub/meson.build
+@@ -1,6 +1,6 @@
+ if with_android_stub
+   stub_libs = []
+-  lib_names = ['cutils', 'hardware', 'log', 'nativewindow', 'sync']
++  lib_names = ['hardware', 'log', 'nativewindow', 'sync']
+ 
+   if with_libbacktrace
+     lib_names += ['backtrace']
+diff --git a/src/freedreno/common/freedreno_dev_info.c b/src/freedreno/common/freedreno_dev_info.c
+index d32695c5fc4..314aa2b3b5b 100644
+--- a/src/freedreno/common/freedreno_dev_info.c
++++ b/src/freedreno/common/freedreno_dev_info.c
+@@ -45,7 +45,7 @@ dev_id_compare(const struct fd_dev_id *ref, const struct fd_dev_id *id)
+    if (ref->gpu_id && id->gpu_id) {
+       return ref->gpu_id == id->gpu_id;
+    } else {
+-      assert(ref->chip_id && id->chip_id);
++      // assert(ref->chip_id && id->chip_id);
+       /* Match on either:
+        * (a) exact match:
+        */
+diff --git a/src/freedreno/common/freedreno_dev_info.h b/src/freedreno/common/freedreno_dev_info.h
+index 13e7a6ca4ea..b117b3b9a3e 100644
+--- a/src/freedreno/common/freedreno_dev_info.h
++++ b/src/freedreno/common/freedreno_dev_info.h
+@@ -192,7 +192,7 @@ fd_dev_gpu_id(const struct fd_dev_id *id)
+ static uint8_t
+ fd_dev_gen(const struct fd_dev_id *id)
+ {
+-   return fd_dev_gpu_id(id) / 100;
++   return 6; // test
+ }
+ 
+ static inline bool
+diff --git a/src/freedreno/drm/freedreno_ringbuffer.h b/src/freedreno/drm/freedreno_ringbuffer.h
+index 3c2be706907..e726ff28187 100644
+--- a/src/freedreno/drm/freedreno_ringbuffer.h
++++ b/src/freedreno/drm/freedreno_ringbuffer.h
+@@ -151,7 +151,7 @@ ref(int32_t *ref)
+    /* We should never see a refcnt transition 0->1, this is a sign of a
+     * zombie coming back from the dead!
+     */
+-   assert(count != 1);
++   //assert(count != 1); Ignore this
+ }
+ 
+ static inline bool
+diff --git a/src/freedreno/drm/kgsl/kgsl_priv.h b/src/freedreno/drm/kgsl/kgsl_priv.h
+index 382b64f2ae5..0beb5119ac9 100644
+--- a/src/freedreno/drm/kgsl/kgsl_priv.h
++++ b/src/freedreno/drm/kgsl/kgsl_priv.h
+@@ -1,6 +1,6 @@
+ #ifndef KGSL_PRIV_H
+ #define KGSL_PRIV_H
+-#include "freedreno_priv.h"
++#include "../freedreno_priv.h"
+ 
+ /* TODO the KGSL kernel interface should probably be moved */
+ /* into someplace common that both turnip and freedreno can use */
+diff --git a/src/freedreno/ir3/ir3_compiler.c b/src/freedreno/ir3/ir3_compiler.c
+index 4636a7398c7..1d4f769ccb4 100644
+--- a/src/freedreno/ir3/ir3_compiler.c
++++ b/src/freedreno/ir3/ir3_compiler.c
+@@ -131,31 +131,35 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+                     const struct ir3_compiler_options *options)
+ {
+    struct ir3_compiler *compiler = rzalloc(NULL, struct ir3_compiler);
+-
++   printf("ir3: debug_get_option_ir3_shader_debug\n");
+    ir3_shader_debug = debug_get_option_ir3_shader_debug();
++   printf("ir3: ir3_shader_override_path\n");
+    ir3_shader_override_path =
+       !__check_suid() ? debug_get_option_ir3_shader_override_path() : NULL;
+ 
+    if (ir3_shader_override_path) {
+       ir3_shader_debug |= IR3_DBG_NOCACHE;
+    }
+-
++   printf("ir3: dev\n");
+    compiler->dev = dev;
++   printf("ir3: dev_id\n");
+    compiler->dev_id = dev_id;
++   printf("ir3: gen\n");
+    compiler->gen = fd_dev_gen(dev_id);
++   printf("ir3: options\n");
+    compiler->options = *options;
+ 
+-   /* All known GPU's have 32k local memory (aka shared) */
++   printf("All known GPU's have 32k local memory (aka shared)\n");
+    compiler->local_mem_size = 32 * 1024;
+-   /* TODO see if older GPU's were different here */
++   printf("TODO see if older GPU's were different here\n");
+    compiler->branchstack_size = 64;
+    compiler->wave_granularity = 2;
+    compiler->max_waves = 16;
+ 
+    compiler->max_variable_workgroup_size = 1024;
+-
++   printf("ir3: fd_dev_info\n");
+    const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
+-
++   printf("ir3: if statement 1 enter\n");
+    if (compiler->gen >= 6) {
+       compiler->samgq_workaround = true;
+       /* a6xx split the pipeline state into geometry and fragment state, in
+@@ -174,9 +178,13 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+        *
+        * TODO: The shared limit seems to be different on different models.
+        */
++      printf("ir3: pipeline\n");
+       compiler->max_const_pipeline = 512;
++      printf("ir3: frag\n");
+       compiler->max_const_frag = 512;
++      printf("ir3: geom\n");
+       compiler->max_const_geom = 512;
++      printf("ir3: safe\n");
+       compiler->max_const_safe = 100;
+ 
+       /* Compute shaders don't share a const file with the FS. Instead they
+@@ -184,25 +192,29 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+        *
+        * TODO: is this true on earlier gen's?
+        */
++      printf("ir3: compute\n");
+       compiler->max_const_compute = 256;
+-
++      printf("ir3: has clip cull\n");
+       /* TODO: implement clip+cull distances on earlier gen's */
+       compiler->has_clip_cull = true;
+-
++      printf("ir3: pvtmem\n");
+       /* TODO: implement private memory on earlier gen's */
+       compiler->has_pvtmem = true;
+-
++      printf("ir3: preamble\n");
+       compiler->has_preamble = true;
+-
+-      compiler->tess_use_shared = dev_info->a6xx.tess_use_shared;
+-
+-      compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
+-
+-      compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
+-      compiler->has_dp4acc = dev_info->a6xx.has_dp4acc;
+-
++      printf("tess\n");
++      compiler->tess_use_shared = false;
++      printf("ir3: has getfibreid\n");
++      compiler->has_getfiberid = false;
++      printf("ir3: dp2\n");
++      compiler->has_dp2acc = false;
++      printf("ir3: dp4\n");
++      compiler->has_dp4acc = false;
++      printf("ir3: shared consts offset\n");
+       compiler->shared_consts_base_offset = 504;
++      printf("ir3: shared consts size\n");
+       compiler->shared_consts_size = 8;
++      printf("ir3: geometry shared consts size quirk\n");
+       compiler->geom_shared_consts_size_quirk = 16;
+    } else {
+       compiler->max_const_pipeline = 512;
+@@ -215,85 +227,46 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+        */
+       compiler->max_const_safe = 256;
+    }
+-
+-   if (compiler->gen >= 6) {
+-      compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;
+-   } else if (compiler->gen >= 4) {
+-      /* On a4xx-a5xx, using r24.x and above requires using the smallest
+-       * threadsize.
+-       */
+-      compiler->reg_size_vec4 = 48;
+-   } else {
+-      /* TODO: confirm this */
+-      compiler->reg_size_vec4 = 96;
+-   }
+-
+-   if (compiler->gen >= 6) {
+-      compiler->threadsize_base = 64;
+-   } else if (compiler->gen >= 4) {
+-      /* TODO: Confirm this for a4xx. For a5xx this is based on the Vulkan
+-       * 1.1 subgroupSize which is 32.
+-       */
+-      compiler->threadsize_base = 32;
+-   } else {
+-      compiler->threadsize_base = 8;
+-   }
+-
+-   if (compiler->gen >= 4) {
+-      /* need special handling for "flat" */
+-      compiler->flat_bypass = true;
+-      compiler->levels_add_one = false;
+-      compiler->unminify_coords = false;
+-      compiler->txf_ms_with_isaml = false;
+-      compiler->array_index_add_half = true;
+-      compiler->instr_align = 16;
+-      compiler->const_upload_unit = 4;
+-   } else {
+-      /* no special handling for "flat" */
+-      compiler->flat_bypass = false;
+-      compiler->levels_add_one = true;
+-      compiler->unminify_coords = true;
+-      compiler->txf_ms_with_isaml = true;
+-      compiler->array_index_add_half = false;
+-      compiler->instr_align = 4;
+-      compiler->const_upload_unit = 8;
+-   }
+-
+-   compiler->bool_type = (compiler->gen >= 5) ? TYPE_U16 : TYPE_U32;
+-   compiler->has_shared_regfile = compiler->gen >= 5;
+-
++   printf("ir3: reg size vec\n");
++   compiler->reg_size_vec4 = 96;
++   printf("ir3: threadsize_base\n");
++   compiler->threadsize_base = 64;
++   printf("ir3: if statement 4 enter\n");
++   compiler->flat_bypass = true;
++   compiler->levels_add_one = false;
++   compiler->unminify_coords = false;
++   compiler->txf_ms_with_isaml = false;
++   compiler->array_index_add_half = true;
++   compiler->instr_align = 16;
++   compiler->const_upload_unit = 4;
++   printf("ir3: compiler bools\n");
++   compiler->bool_type = TYPE_U16;
++   compiler->has_shared_regfile = true;
++   printf("ir3: preambles\n");
+    /* The driver can't request this unless preambles are supported. */
+    if (options->push_ubo_with_preamble)
+       assert(compiler->has_preamble);
+-
++   printf("nir options: \n");
+    /* Set up nir shader compiler options, using device-specific overrides of our base settings. */
+    compiler->nir_options = ir3_base_options;
+-
+-   if (compiler->gen >= 6) {
+-      compiler->nir_options.vectorize_io = true,
+-      compiler->nir_options.force_indirect_unrolling = nir_var_all,
+-
+-      compiler->nir_options.lower_device_index_to_zero = true,
+-      compiler->nir_options.has_udot_4x8 = true,
+-      compiler->nir_options.has_sudot_4x8 = true,
+-      compiler->nir_options.has_udot_4x8 = dev_info->a6xx.has_dp2acc;
+-      compiler->nir_options.has_sudot_4x8 = dev_info->a6xx.has_dp2acc;
+-   } else if (compiler->gen >= 3 && compiler->gen <= 5) {
+-      compiler->nir_options.vertex_id_zero_based = true;
+-   } else if (compiler->gen <= 2) {
+-      /* a2xx compiler doesn't handle indirect: */
+-      compiler->nir_options.force_indirect_unrolling = nir_var_all;
+-   }
++   printf("nir options 2: \n");
++   compiler->nir_options.vectorize_io = true,
++   compiler->nir_options.force_indirect_unrolling = nir_var_all,
++   printf("nir options 3: \n");
++   compiler->nir_options.lower_device_index_to_zero = true,
++   compiler->nir_options.has_udot_4x8 = true,
++   compiler->nir_options.has_sudot_4x8 = true,
++   compiler->nir_options.has_udot_4x8 = false;
++   compiler->nir_options.has_sudot_4x8 = false;
+ 
+    /* 16-bit ALU op generation is mostly controlled by frontend compiler options, but
+     * this core NIR option enables some optimizations of 16-bit operations.
+     */
+-   if (compiler->gen >= 5 && !(ir3_shader_debug & IR3_DBG_NOFP16))
++   printf("ir3: shader debug\n");
++   if (!(ir3_shader_debug & IR3_DBG_NOFP16))
+       compiler->nir_options.support_16bit_alu = true;
+-
+-   if (!options->disable_cache)
+-      ir3_disk_cache_init(compiler);
+-
++   // printf("HERE WE GO!\n");
++   // False alarm, we aren't done yet :(
+    return compiler;
+ }
+ 
+diff --git a/src/freedreno/ir3/ir3_disk_cache.c b/src/freedreno/ir3/ir3_disk_cache.c
+index ff73b37a0db..1b491a7db34 100644
+--- a/src/freedreno/ir3/ir3_disk_cache.c
++++ b/src/freedreno/ir3/ir3_disk_cache.c
+@@ -54,9 +54,9 @@ ir3_disk_cache_init(struct ir3_compiler *compiler)
+    const char *renderer = fd_dev_name(compiler->dev_id);
+    const struct build_id_note *note =
+       build_id_find_nhdr_for_addr(ir3_disk_cache_init);
++   
+    assert(note && build_id_length(note) == 20); /* sha1 */
+-
+-   const uint8_t *id_sha1 = build_id_data(note);
++   const uint8_t *id_sha1 = "1";
+    assert(id_sha1);
+ 
+    char timestamp[41];
+diff --git a/src/gallium/auxiliary/target-helpers/inline_sw_helper.h b/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
+index d821008b534..9362139a0fd 100644
+--- a/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
++++ b/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
+@@ -8,6 +8,10 @@
+ #include "frontend/sw_winsys.h"
+ #include "target-helpers/inline_debug_helper.h"
+ 
++#include <stdio.h>
++#include <fcntl.h>
++#include <errno.h>
++
+ /* Helper function to choose and instantiate one of the software rasterizers:
+  * llvmpipe, softpipe.
+  */
+@@ -29,6 +33,10 @@
+ #include "d3d12/d3d12_public.h"
+ #endif
+ 
++#ifdef GALLIUM_FREEDRENO
++#include "freedreno/freedreno_public.h"
++#endif
++
+ #if defined(GALLIUM_ASAHI) && __APPLE__
+ #include "asahi/agx_public.h"
+ #endif
+@@ -71,10 +79,23 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
+       screen = agx_screen_create(0, NULL, winsys);
+ #endif
+ 
++#if defined(GALLIUM_FREEDRENO)
++   if(screen == NULL && strcmp(driver, "freedreno") == 0) {
++      int kbase_device_fd = open("/dev/kgsl-3d0", O_RDWR | O_CLOEXEC | O_NONBLOCK);
++      if (kbase_device_fd == -1) { 
++         printf("FD_OSMESA: Failed to open kbase device: %s", strerror(errno));
++      } else {
++         struct pipe_screen_config dummy_cfg = { NULL, NULL };
++         screen = fd_screen_create(kbase_device_fd, &dummy_cfg, NULL);
++      }
++   }
++#else
++#error You forgot to include Freedreno
++#endif
++
+    return screen ? debug_screen_wrap(screen) : NULL;
+ }
+ 
+-
+ static inline struct pipe_screen *
+ sw_screen_create_vk(struct sw_winsys *winsys, bool sw_vk)
+ {
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc b/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc
+index 010a151e227..109c2f1518a 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc
+@@ -157,26 +157,35 @@ fd6_screen_init(struct pipe_screen *pscreen)
+ 
+    screen->max_rts = A6XX_MAX_RENDER_TARGETS;
+ 
+-   screen->ccu_offset_bypass = screen->info->num_ccu * A6XX_CCU_DEPTH_SIZE;
++   printf("FD6: ccu\n");
++   screen->ccu_offset_bypass = 1 * A6XX_CCU_DEPTH_SIZE;
+    screen->ccu_offset_gmem = (screen->gmemsize_bytes -
+-         screen->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
++         1 * A6XX_CCU_GMEM_COLOR_SIZE);
+ 
+    /* Currently only FB_READ forces GMEM path, mostly because we'd have to
+     * deal with cmdstream patching otherwise..
+     */
++   printf("FD6: gmem mask\n");
+    screen->gmem_reason_mask = (enum fd_gmem_reason)(
+          FD_GMEM_CLEARS_DEPTH_STENCIL |
+          FD_GMEM_DEPTH_ENABLED | FD_GMEM_STENCIL_ENABLED |
+          FD_GMEM_BLEND_ENABLED | FD_GMEM_LOGICOP_ENABLED);
+-
++   printf("FD6: create context\n");
+    pscreen->context_create = fd6_context_create;
+    pscreen->is_format_supported = fd6_screen_is_format_supported;
++   printf("FD6: tile mode\n");
+ 
+    screen->tile_mode = fd6_tile_mode;
++   printf("FD6: screen init 1\n");
+ 
+    fd6_resource_screen_init(pscreen);
++   printf("FD6: screen init 2\n");
++
+    fd6_emit_init_screen(pscreen);
++   printf("FD6: screen init 3\n");
++
+    ir3_screen_init(pscreen);
+ 
++   printf("FD6: screen init 4\n");
+    screen->primtypes = primtypes;
+ }
+diff --git a/src/gallium/drivers/freedreno/freedreno_public.h b/src/gallium/drivers/freedreno/freedreno_public.h
+new file mode 100644
+index 00000000000..36b87cf86ff
+--- /dev/null
++++ b/src/gallium/drivers/freedreno/freedreno_public.h
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (C) 2018 Alyssa Rosenzweig
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the next
++ * paragraph) shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef FD_PUBLIC_H
++#define FD_PUBLIC_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct pipe_screen;
++struct pipe_screen_config;
++struct renderonly;
++
++struct pipe_screen *fd_screen_create(int fd, const struct pipe_screen_config *config, struct renderonly *ro);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/src/gallium/drivers/freedreno/freedreno_screen.c b/src/gallium/drivers/freedreno/freedreno_screen.c
+index c0c22cc2a08..ff5990fbb73 100644
+--- a/src/gallium/drivers/freedreno/freedreno_screen.c
++++ b/src/gallium/drivers/freedreno/freedreno_screen.c
+@@ -65,6 +65,7 @@
+ #include "ir3/ir3_descriptor.h"
+ #include "ir3/ir3_gallium.h"
+ #include "ir3/ir3_nir.h"
++#include "freedreno_public.h"
+ 
+ /* clang-format off */
+ static const struct debug_named_value fd_debug_options[] = {
+@@ -961,12 +962,12 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
+    } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
+       bo = fd_bo_from_dmabuf(screen->dev, whandle->handle);
+    } else {
+-      DBG("Attempt to import unsupported handle type %d", whandle->type);
++      printf("Attempt to import unsupported handle type %d\n", whandle->type);
+       return NULL;
+    }
+ 
+    if (!bo) {
+-      DBG("ref name 0x%08x failed", whandle->handle);
++      printf("ref name 0x%08x failed\n", whandle->handle);
+       return NULL;
+    }
+ 
+@@ -1001,19 +1002,19 @@ fd_screen_get_fd(struct pipe_screen *pscreen)
+    return fd_device_fd(screen->dev);
+ }
+ 
++// Create screen, back to freedreno_screen.c code
+ struct pipe_screen *
+ fd_screen_create(int fd,
+                  const struct pipe_screen_config *config,
+                  struct renderonly *ro)
+ {
+-   struct fd_device *dev = fd_device_new_dup(fd);
++   struct fd_device *dev = fd_device_new(fd);
+    if (!dev)
+       return NULL;
+ 
+    struct fd_screen *screen = CALLOC_STRUCT(fd_screen);
+    struct pipe_screen *pscreen;
+    uint64_t val;
+-
+    fd_mesa_debug = debug_get_option_fd_mesa_debug();
+ 
+    if (FD_DBG(NOBIN))
+@@ -1032,14 +1033,15 @@ fd_screen_create(int fd,
+    screen->ro = ro;
+ 
+    // maybe this should be in context?
++   printf("Initializing pipe\n");
+    screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
+    if (!screen->pipe) {
+-      DBG("could not create 3d pipe");
++      printf("could not create 3d pipe\n");
+       goto fail;
+    }
+ 
+    if (fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
+-      DBG("could not get GMEM size");
++      printf("could not get GMEM size\n");
+       goto fail;
+    }
+    screen->gmemsize_bytes = debug_get_num_option("FD_MESA_GMEM", val);
+@@ -1048,28 +1050,22 @@ fd_screen_create(int fd,
+       fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
+    }
+ 
+-   if (fd_pipe_get_param(screen->pipe, FD_MAX_FREQ, &val)) {
+-      DBG("could not get gpu freq");
+-      /* this limits what performance related queries are
+-       * supported but is not fatal
+-       */
+-      screen->max_freq = 0;
+-   } else {
+-      screen->max_freq = val;
+-      if (fd_pipe_get_param(screen->pipe, FD_TIMESTAMP, &val) == 0)
+-         screen->has_timestamp = true;
+-   }
++   printf("setting max freq\n");
++   screen->max_freq = 0;
+ 
++   printf("piping dev id\n");
+    screen->dev_id = fd_pipe_dev_id(screen->pipe);
+-
++   printf("dev id pipe done\n");
++   printf("get gpu id\n");
+    if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
+-      DBG("could not get gpu-id");
++      printf("could not get gpu-id\n");
+       goto fail;
+    }
+    screen->gpu_id = val;
++   printf("get chip id\n");
+ 
+    if (fd_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
+-      DBG("could not get chip-id");
++      printf("could not get chip-id\n");
+       /* older kernels may not have this property: */
+       unsigned core = screen->gpu_id / 100;
+       unsigned major = (screen->gpu_id % 100) / 10;
+@@ -1078,11 +1074,13 @@ fd_screen_create(int fd,
+       val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
+             ((core & 0xff) << 24);
+    }
++   printf("got chip id\n");
+    screen->chip_id = val;
++   printf("piping gen\n");
+    screen->gen = fd_dev_gen(screen->dev_id);
+-
++   printf("get rings\n");
+    if (fd_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
+-      DBG("could not get # of rings");
++      printf("could not get # of rings\n");
+       screen->priority_mask = 0;
+    } else {
+       /* # of rings equates to number of unique priority values: */
+@@ -1103,35 +1101,24 @@ fd_screen_create(int fd,
+        */
+       screen->prio_norm = val / 2;
+    }
+-
++   printf("get device version\n");
+    if (fd_device_version(dev) >= FD_VERSION_ROBUSTNESS)
+       screen->has_robustness = true;
+ 
++   printf("has_syncobj\n");
+    screen->has_syncobj = fd_has_syncobj(screen->dev);
+ 
+-   /* parse driconf configuration now for device specific overrides: */
+-   driParseConfigFiles(config->options, config->options_info, 0, "msm",
+-                       NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
+-
+-   screen->driconf.conservative_lrz =
+-         !driQueryOptionb(config->options, "disable_conservative_lrz");
+-   screen->driconf.enable_throttling =
+-         !driQueryOptionb(config->options, "disable_throttling");
+-
++   printf("sysinfo\n");
+    struct sysinfo si;
+    sysinfo(&si);
+    screen->ram_size = si.totalram;
+-
+-   DBG("Pipe Info:");
+-   DBG(" GPU-id:          %s", fd_dev_name(screen->dev_id));
+-   DBG(" Chip-id:         0x%016"PRIx64, screen->chip_id);
+-   DBG(" GMEM size:       0x%08x", screen->gmemsize_bytes);
+-
++   printf("dev info\n");
+    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
+    if (!info) {
+-      mesa_loge("unsupported GPU: a%03d", screen->gpu_id);
+-      goto fail;
++      DBG("unsupported GPU: a%03d", screen->gpu_id);
++      //goto fail;
+    }
++   printf("screen info\n");
+ 
+    screen->info = info;
+ 
+@@ -1146,6 +1133,7 @@ fd_screen_create(int fd,
+     * of the cases below and see what happens.  And if it works, please
+     * send a patch ;-)
+     */
++   printf("start screen\n");
+    switch (screen->gen) {
+    case 2:
+       fd2_screen_init(pscreen);
+@@ -1160,13 +1148,14 @@ fd_screen_create(int fd,
+       fd5_screen_init(pscreen);
+       break;
+    case 6:
++      printf("p6\n");
+       fd6_screen_init(pscreen);
+       break;
+    default:
+-      mesa_loge("unsupported GPU generation: a%uxx", screen->gen);
+-      goto fail;
++      printf("unsupported GPU generation: a%uxx\n", screen->gen);
++      //goto fail;
+    }
+-
++   printf("prim types\n");
+    /* fdN_screen_init() should set this: */
+    assert(screen->primtypes);
+    screen->primtypes_mask = 0;
+@@ -1174,58 +1163,76 @@ fd_screen_create(int fd,
+       if (screen->primtypes[i])
+          screen->primtypes_mask |= (1 << i);
+ 
+-   if (FD_DBG(PERFC)) {
+-      screen->perfcntr_groups =
+-         fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
+-   }
++   // printf("FD_DBG: Perfc\n");
++   // if (FD_DBG(PERFC)) {
++   //    screen->perfcntr_groups =
++   //       fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
++   // }
+ 
+    /* NOTE: don't enable if we have too old of a kernel to support
+     * growable cmdstream buffers, since memory requirement for cmdstream
+     * buffers would be too much otherwise.
+     */
++   printf("FD6: get dev version\n");
+    if (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS)
+       screen->reorder = !FD_DBG(INORDER);
+-
++   printf("fd_bc_init\n");
+    fd_bc_init(&screen->batch_cache);
+-
++   printf("list_inithead\n");
+    list_inithead(&screen->context_list);
+-
++   printf("util_idalloc_mt_init_tc\n");
+    util_idalloc_mt_init_tc(&screen->buffer_ids);
+-
++   printf("mtx init\n");
+    (void)simple_mtx_init(&screen->lock, mtx_plain);
+-
++   printf("   pscreen->destroy = fd_screen_destroy; \n");
+    pscreen->destroy = fd_screen_destroy;
++   printf("   pscreen->get_screen_fd = fd_screen_get_fd; \n");
+    pscreen->get_screen_fd = fd_screen_get_fd;
++   printf("   pscreen->get_param = fd_screen_get_param; \n");
+    pscreen->get_param = fd_screen_get_param;
++   printf("   pscreen->get_paramf = fd_screen_get_paramf; \n");
+    pscreen->get_paramf = fd_screen_get_paramf;
++   printf("   pscreen->get_shader_param = fd_screen_get_shader_param; \n");
+    pscreen->get_shader_param = fd_screen_get_shader_param;
++   printf("   pscreen->get_compute_param = fd_get_compute_param; \n");
+    pscreen->get_compute_param = fd_get_compute_param;
++   printf("   pscreen->get_compiler_options = fd_get_compiler_options; \n");
+    pscreen->get_compiler_options = fd_get_compiler_options;
++   printf("   pscreen->get_disk_shader_cache = fd_get_disk_shader_cache; \n");
+    pscreen->get_disk_shader_cache = fd_get_disk_shader_cache;
+-
++   printf("resource screen init\n");
+    fd_resource_screen_init(pscreen);
++   printf("query screen init\n");
+    fd_query_screen_init(pscreen);
++   printf("gmem screen init\n");
+    fd_gmem_screen_init(pscreen);
+-
++   printf("get name\n");
+    pscreen->get_name = fd_screen_get_name;
++   printf("get vendor\n");
+    pscreen->get_vendor = fd_screen_get_vendor;
++   printf("get device vendor\n");
+    pscreen->get_device_vendor = fd_screen_get_device_vendor;
+-
++   printf("get timestamp\n");
+    pscreen->get_timestamp = fd_screen_get_timestamp;
+-
++   printf("fence fence_reference\n");
+    pscreen->fence_reference = _fd_fence_ref;
++   printf("fence fence_finish\n");
+    pscreen->fence_finish = fd_pipe_fence_finish;
++   printf("fence get fd\n");
+    pscreen->fence_get_fd = fd_pipe_fence_get_fd;
+-
++   printf("query dmabuf modifiers\n");
+    pscreen->query_dmabuf_modifiers = fd_screen_query_dmabuf_modifiers;
++   printf("is dmabuf modifier supported\n");
+    pscreen->is_dmabuf_modifier_supported =
+       fd_screen_is_dmabuf_modifier_supported;
+-
++   printf("get device uuid\n");
+    pscreen->get_device_uuid = fd_screen_get_device_uuid;
++   printf("get driver uuid\n");
+    pscreen->get_driver_uuid = fd_screen_get_driver_uuid;
+ 
++   printf("slab create parent\n");
+    slab_create_parent(&screen->transfer_pool, sizeof(struct fd_transfer), 16);
+-
++   printf("DONE!\n");
+    return pscreen;
+ 
+ fail:
+diff --git a/src/gallium/drivers/freedreno/ir3/ir3_gallium.c b/src/gallium/drivers/freedreno/ir3/ir3_gallium.c
+index ff622d6aa5a..835362a1e20 100644
+--- a/src/gallium/drivers/freedreno/ir3/ir3_gallium.c
++++ b/src/gallium/drivers/freedreno/ir3/ir3_gallium.c
+@@ -560,6 +560,7 @@ ir3_screen_init(struct pipe_screen *pscreen)
+       .bindless_fb_read_slot = IR3_BINDLESS_IMAGE_OFFSET +
+                                IR3_BINDLESS_IMAGE_COUNT - 1 - screen->max_rts,
+    };
++   printf("ir3: compiler init\n");
+    screen->compiler = ir3_compiler_create(screen->dev, screen->dev_id, &options);
+ 
+    /* TODO do we want to limit things to # of fast cores, or just limit
+@@ -568,18 +569,21 @@ ir3_screen_init(struct pipe_screen *pscreen)
+     * big cores.  OTOH if they are sitting idle, maybe it is useful to
+     * use them?
+     */
++   printf("ir3: init threads\n");
+    unsigned num_threads = sysconf(_SC_NPROCESSORS_ONLN) / 2;
+ 
+    /* Create at least one thread - even on single core CPU systems. */
+    num_threads = MAX2(1, num_threads);
+-
++   printf("ir3: queue init\n");
+    util_queue_init(&screen->compile_queue, "ir3q", 64, num_threads,
+                    UTIL_QUEUE_INIT_RESIZE_IF_FULL |
+                       UTIL_QUEUE_INIT_SET_FULL_THREAD_AFFINITY, NULL);
+-
++   printf("ir3: finalize nir\n");
+    pscreen->finalize_nir = ir3_screen_finalize_nir;
++   printf("ir3: set max shader compiler threads\n");
+    pscreen->set_max_shader_compiler_threads =
+       ir3_set_max_shader_compiler_threads;
++   printf("ir3: shader comp\n");
+    pscreen->is_parallel_shader_compilation_finished =
+       ir3_is_parallel_shader_compilation_finished;
+ }
+diff --git a/src/gallium/drivers/freedreno/meson.build b/src/gallium/drivers/freedreno/meson.build
+index f0d1e4b569e..40be4eb2b81 100644
+--- a/src/gallium/drivers/freedreno/meson.build
++++ b/src/gallium/drivers/freedreno/meson.build
+@@ -19,6 +19,7 @@
+ # SOFTWARE.
+ 
+ files_libfreedreno = files(
++  'freedreno_public.h',
+   'driinfo_freedreno.h',
+   'freedreno_autotune.c',
+   'freedreno_autotune.h',
+diff --git a/src/gallium/targets/osmesa/meson.build b/src/gallium/targets/osmesa/meson.build
+index d16e7858c63..009b19926dc 100644
+--- a/src/gallium/targets/osmesa/meson.build
++++ b/src/gallium/targets/osmesa/meson.build
+@@ -55,10 +55,10 @@ libosmesa = shared_library(
+     libmesa, libgallium, libws_null, osmesa_link_with,
+   ],
+   dependencies : [
+-    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_swrast
++    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_freedreno, dep_libdrm
+   ],
+   name_prefix : host_machine.system() == 'windows' ? '' : [],  # otherwise mingw will create libosmesa.dll
+-  soversion : host_machine.system() == 'windows' ? '' : '8',
++  soversion : '',
+   version : '8.0.0',
+   darwin_versions : '9.0.0',
+   install : true,
+diff --git a/src/util/os_misc.c b/src/util/os_misc.c
+index 6ae97b983bb..c7eb58bdfaa 100644
+--- a/src/util/os_misc.c
++++ b/src/util/os_misc.c
+@@ -56,7 +56,6 @@
+ #  define LOG_TAG "MESA"
+ #  include <unistd.h>
+ #  include <log/log.h>
+-#  include <cutils/properties.h>
+ #elif DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || DETECT_OS_HURD
+ #  include <unistd.h>
+ #elif DETECT_OS_OPENBSD || DETECT_OS_FREEBSD
+@@ -128,62 +127,10 @@ os_log_message(const char *message)
+ #endif
+ }
+ 
+-#if DETECT_OS_ANDROID
+-#  include <ctype.h>
+-#  include "c11/threads.h"
+-
+-/**
+- * Get an option value from android's property system, as a fallback to
+- * getenv() (which is generally less useful on android due to processes
+- * typically being forked from the zygote.
+- *
+- * The option name used for getenv is translated into a property name
+- * by:
+- *
+- *  1) convert to lowercase
+- *  2) replace '_' with '.'
+- *  3) if necessary, prepend "mesa."
+- *
+- * For example:
+- *  - MESA_EXTENSION_OVERRIDE -> mesa.extension.override
+- *  - GALLIUM_HUD -> mesa.gallium.hud
+- *
+- */
+-static char *
+-os_get_android_option(const char *name)
+-{
+-   static thread_local char os_android_option_value[PROPERTY_VALUE_MAX];
+-   char key[PROPERTY_KEY_MAX];
+-   char *p = key, *end = key + PROPERTY_KEY_MAX;
+-   /* add "mesa." prefix if necessary: */
+-   if (strstr(name, "MESA_") != name)
+-      p += strlcpy(p, "mesa.", end - p);
+-   p += strlcpy(p, name, end - p);
+-   for (int i = 0; key[i]; i++) {
+-      if (key[i] == '_') {
+-         key[i] = '.';
+-      } else {
+-         key[i] = tolower(key[i]);
+-      }
+-   }
+-
+-   int len = property_get(key, os_android_option_value, NULL);
+-   if (len > 1) {
+-      return os_android_option_value;
+-   }
+-   return NULL;
+-}
+-#endif
+-
+ const char *
+ os_get_option(const char *name)
+ {
+    const char *opt = getenv(name);
+-#if DETECT_OS_ANDROID
+-   if (!opt) {
+-      opt = os_get_android_option(name);
+-   }
+-#endif
+    return opt;
+ }
+ 
+diff --git a/src/util/perf/cpu_trace.h b/src/util/perf/cpu_trace.h
+index a4ba4d73d9e..4dbc30c841f 100644
+--- a/src/util/perf/cpu_trace.h
++++ b/src/util/perf/cpu_trace.h
+@@ -27,19 +27,6 @@
+          util_perfetto_trace_end(category);                                  \
+    } while (0)
+ 
+-/* NOTE: for now disable atrace for C++ to workaround a ndk bug with ordering
+- * between stdatomic.h and atomic.h.  See:
+- *
+- *   https://github.com/android/ndk/issues/1178
+- */
+-#elif defined(ANDROID) && !defined(__cplusplus)
+-
+-#include <cutils/trace.h>
+-
+-#define _MESA_TRACE_BEGIN(category, name)                                    \
+-   atrace_begin(ATRACE_TAG_GRAPHICS, name)
+-#define _MESA_TRACE_END(category) atrace_end(ATRACE_TAG_GRAPHICS)
+-
+ #else
+ 
+ #define _MESA_TRACE_BEGIN(category, name)
+diff --git a/src/util/slab.c b/src/util/slab.c
+index 9dee236217b..9a072ce5da4 100644
+--- a/src/util/slab.c
++++ b/src/util/slab.c
+@@ -106,10 +106,14 @@ slab_create_parent(struct slab_parent_pool *parent,
+                    unsigned item_size,
+                    unsigned num_items)
+ {
++   printf("1\n");
+    simple_mtx_init(&parent->mutex, mtx_plain);
++   printf("2\n");
+    parent->element_size = ALIGN_POT(sizeof(struct slab_element_header) + item_size,
+                                     sizeof(intptr_t));
++   printf("3\n");
+    parent->num_elements = num_items;
++   printf("4\n");
+    parent->item_size = item_size;
+ }
+ 
+diff --git a/src/util/u_debug_stack_android.cpp b/src/util/u_debug_stack_android.cpp
+index 4481771baf9..1677740b07f 100644
+--- a/src/util/u_debug_stack_android.cpp
++++ b/src/util/u_debug_stack_android.cpp
+@@ -25,8 +25,6 @@
+ 
+ #if WITH_LIBBACKTRACE
+ 
+-#include <backtrace/Backtrace.h>
+-
+ #include "util/simple_mtx.h"
+ #include "util/u_debug.h"
+ #include "util/hash_table.h"
+@@ -55,56 +53,14 @@ debug_backtrace_capture(debug_stack_frame *backtrace,
+                         unsigned start_frame,
+                         unsigned nr_frames)
+ {
+-   Backtrace *bt;
+-
+-   if (!nr_frames)
+-      return;
+-
+-   bt = Backtrace::Create(BACKTRACE_CURRENT_PROCESS,
+-                          BACKTRACE_CURRENT_THREAD);
+-   if (bt == NULL) {
+-      for (unsigned i = 0; i < nr_frames; i++)
+-         backtrace[i].procname = NULL;
+-      return;
+-   }
+-
+-   /* Add one to exclude this call. Unwind already ignores itself. */
+-   bt->Unwind(start_frame + 1);
+-
+-   simple_mtx_lock(&table_mutex);
+-
+-   for (unsigned i = 0; i < nr_frames; i++) {
+-      const backtrace_frame_data_t* frame = bt->GetFrame(i);
+-      if (frame) {
+-         backtrace[i].procname = intern_symbol(frame->func_name.c_str());
+-         backtrace[i].start_ip = frame->pc;
+-         backtrace[i].off = frame->func_offset;
+-         backtrace[i].map = intern_symbol(frame->map.Name().c_str());
+-         backtrace[i].map_off = frame->rel_pc;
+-      } else {
+-         backtrace[i].procname = NULL;
+-      }
+-   }
+-
+-   simple_mtx_unlock(&table_mutex);
+-
+-   delete bt;
++
+ }
+ 
+ void
+ debug_backtrace_dump(const debug_stack_frame *backtrace,
+                      unsigned nr_frames)
+ {
+-   for (unsigned i = 0; i < nr_frames; i++) {
+-      if (backtrace[i].procname)
+-         debug_printf(
+-            "%s(+0x%x)\t%012" PRIx64 ": %s+0x%x\n",
+-            backtrace[i].map,
+-            backtrace[i].map_off,
+-            backtrace[i].start_ip,
+-            backtrace[i].procname,
+-            backtrace[i].off);
+-   }
++
+ }
+ 
+ void
+@@ -112,16 +68,7 @@ debug_backtrace_print(FILE *f,
+                       const debug_stack_frame *backtrace,
+                       unsigned nr_frames)
+ {
+-   for (unsigned i = 0; i < nr_frames; i++) {
+-      if (backtrace[i].procname)
+-         fprintf(f,
+-                 "%s(+0x%x)\t%012" PRIx64 ": %s+0x%x\n",
+-                 backtrace[i].map,
+-                 backtrace[i].map_off,
+-                 backtrace[i].start_ip,
+-                 backtrace[i].procname,
+-                 backtrace[i].off);
+-   }
++
+ }
+ 
+ #else

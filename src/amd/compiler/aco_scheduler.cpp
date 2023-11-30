@@ -596,13 +596,15 @@ perform_hazard_query(hazard_query* query, Instruction* instr, bool upwards)
       return hazard_fail_exec;
 
    /* Don't move exports so that they stay closer together.
+    * Since GFX11, export order matters. MRTZ must come first,
+    * then color exports sorted from first to last.
     * Also, with Primitive Ordered Pixel Shading on GFX11+, the `done` export must not be moved
     * above the memory accesses before the queue family scope (more precisely, fragment interlock
     * scope, but it's not available in ACO) release barrier that is expected to be inserted before
     * the export, as well as before any `s_wait_event export_ready` which enters the ordered
     * section, because the `done` export exits the ordered section.
     */
-   if (instr->isEXP())
+   if (instr->isEXP() || instr->opcode == aco_opcode::p_dual_src_export_gfx11)
       return hazard_fail_export;
 
    /* don't move non-reorderable instructions */
@@ -611,7 +613,8 @@ perform_hazard_query(hazard_query* query, Instruction* instr, bool upwards)
        instr->opcode == aco_opcode::p_init_scratch ||
        instr->opcode == aco_opcode::p_jump_to_epilog ||
        instr->opcode == aco_opcode::s_sendmsg_rtn_b32 ||
-       instr->opcode == aco_opcode::s_sendmsg_rtn_b64)
+       instr->opcode == aco_opcode::s_sendmsg_rtn_b64 ||
+       instr->opcode == aco_opcode::p_end_with_regs)
       return hazard_fail_unreorderable;
 
    memory_event_set instr_set;

@@ -27,13 +27,10 @@ traces:
       label: [unsupported]
       text: needs GL 4.1
 
-  freedoom/freedoom-phase2-gl-high.trace:
-    broadcom-rpi4:
-      label: [unsupported]
-      text: needs GL 4.6
-
   glxgears/glxgears-2-v2.trace:
     broadcom-rpi4:
+      label: [skip, flakes]
+      text: "Often fails when running on xwayland, with what looks like an incorrect resolution"
       checksum: 2a9c5e35fa5693fd7d3a76f7b9746edb
 
   godot/godot-thrive.trace:
@@ -113,14 +110,6 @@ traces:
   jvgs/jvgs-d27fb67-v2.trace:
     broadcom-rpi4:
       checksum: 831138a408cc9557528ef68381b080f2
-
-  minetest/minetest-high-v2.trace:
-    broadcom-rpi4:
-      checksum: ade651f34a154d4508a00c47e532c482
-
-  minetest/minetest-v2.trace:
-    broadcom-rpi4:
-      checksum: 0e00019366845e1fae9727df8b24c149
 
   neverball/neverball-v2.trace:
     broadcom-rpi4:

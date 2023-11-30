@@ -41,6 +41,47 @@ diff a/src/freedreno/ir3/ir3_compiler.c b/src/freedreno/ir3/ir3_compiler.c	(reje
     if (compiler->gen >= 6) {
        compiler->samgq_workaround = true;
        /* a6xx split the pipeline state into geometry and fragment state, in
+@@ -184,25 +192,29 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+        *
+        * TODO: is this true on earlier gen's?
+        */
++      printf("ir3: compute\n");
+       compiler->max_const_compute = 256;
+-
++      printf("ir3: has clip cull\n");
+       /* TODO: implement clip+cull distances on earlier gen's */
+       compiler->has_clip_cull = true;
+-
++      printf("ir3: pvtmem\n");
+       /* TODO: implement private memory on earlier gen's */
+       compiler->has_pvtmem = true;
+-
++      printf("ir3: preamble\n");
+       compiler->has_preamble = true;
+-
+-      compiler->tess_use_shared = dev_info->a6xx.tess_use_shared;
+-
+-      compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
+-
+-      compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
+-      compiler->has_dp4acc = dev_info->a6xx.has_dp4acc;
+-
++      printf("tess\n");
++      compiler->tess_use_shared = false;
++      printf("ir3: has getfibreid\n");
++      compiler->has_getfiberid = false;
++      printf("ir3: dp2\n");
++      compiler->has_dp2acc = false;
++      printf("ir3: dp4\n");
++      compiler->has_dp4acc = false;
++      printf("ir3: shared consts offset\n");
+       compiler->shared_consts_base_offset = 504;
++      printf("ir3: shared consts size\n");
+       compiler->shared_consts_size = 8;
++      printf("ir3: geometry shared consts size quirk\n");
+       compiler->geom_shared_consts_size_quirk = 16;
+    } else {
+       compiler->max_const_pipeline = 512;
 @@ -215,85 +227,46 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
         */
        compiler->max_const_safe = 256;
