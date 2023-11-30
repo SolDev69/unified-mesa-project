@@ -97,7 +97,7 @@ tu6_lazy_emit_vsc(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
     */
    mtx_lock(&dev->mutex);
 
-   struct tu6_global *global = dev->global_bo_map;
+   struct tu6_global *global = dev->global_bo->map;
 
    uint32_t vsc_draw_overflow = global->vsc_draw_overflow;
    uint32_t vsc_prim_overflow = global->vsc_prim_overflow;
@@ -135,13 +135,13 @@ tu6_emit_flushes(struct tu_cmd_buffer *cmd_buffer,
                  struct tu_cs *cs,
                  struct tu_cache_state *cache)
 {
-   BITMASK_ENUM(tu_cmd_flush_bits) flushes = cache->flush_bits;
+   enum tu_cmd_flush_bits flushes = cache->flush_bits;
    cache->flush_bits = 0;
 
-   if (TU_DEBUG(FLUSHALL))
+   if (unlikely(cmd_buffer->device->physical_device->instance->debug_flags & TU_DEBUG_FLUSHALL))
       flushes |= TU_CMD_FLAG_ALL_FLUSH | TU_CMD_FLAG_ALL_INVALIDATE;
 
-   if (TU_DEBUG(SYNCDRAW))
+   if (unlikely(cmd_buffer->device->physical_device->instance->debug_flags & TU_DEBUG_SYNCDRAW))
       flushes |= TU_CMD_FLAG_WAIT_MEM_WRITES |
                  TU_CMD_FLAG_WAIT_FOR_IDLE |
                  TU_CMD_FLAG_WAIT_FOR_ME;
@@ -167,8 +167,8 @@ tu6_emit_flushes(struct tu_cmd_buffer *cmd_buffer,
       tu6_emit_event_write(cmd_buffer, cs, CACHE_INVALIDATE);
    if (flushes & TU_CMD_FLAG_BINDLESS_DESCRIPTOR_INVALIDATE) {
       tu_cs_emit_regs(cs, A6XX_HLSQ_INVALIDATE_CMD(
-            .cs_bindless = 0x1f,
             .gfx_bindless = 0x1f,
+            .cs_bindless = 0x1f,
       ));
    }
    if (flushes & TU_CMD_FLAG_WAIT_MEM_WRITES)
@@ -182,7 +182,7 @@ tu6_emit_flushes(struct tu_cmd_buffer *cmd_buffer,
 }
 
 /* "Normal" cache flushes outside the renderpass, that don't require any special handling */
-void
+static void
 tu_emit_cache_flush(struct tu_cmd_buffer *cmd_buffer)
 {
    tu6_emit_flushes(cmd_buffer, &cmd_buffer->cs, &cmd_buffer->state.cache);
@@ -193,22 +193,10 @@ void
 tu_emit_cache_flush_renderpass(struct tu_cmd_buffer *cmd_buffer)
 {
    if (!cmd_buffer->state.renderpass_cache.flush_bits &&
-       likely(!tu_env.debug))
+       likely(!cmd_buffer->device->physical_device->instance->debug_flags))
       return;
    tu6_emit_flushes(cmd_buffer, &cmd_buffer->draw_cs,
                     &cmd_buffer->state.renderpass_cache);
-}
-
-static struct fd_reg_pair
-rb_ccu_cntl(uint32_t color_offset, bool gmem)
-{
-   uint32_t color_offset_hi = color_offset >> 21;
-   color_offset &= 0x1fffff;
-   return A6XX_RB_CCU_CNTL(
-         .color_offset_hi = color_offset_hi,
-         .gmem = gmem,
-         .color_offset = color_offset,
-   );
 }
 
 /* Cache flushes for things that use the color/depth read/write path (i.e.
@@ -221,6 +209,8 @@ tu_emit_cache_flush_ccu(struct tu_cmd_buffer *cmd_buffer,
                         struct tu_cs *cs,
                         enum tu_cmd_ccu_state ccu_state)
 {
+   uint32_t gpu_id = cmd_buffer->device->physical_device->dev_id.gpu_id;
+   bool set_gmem_bit = ccu_state == TU_CMD_CCU_GMEM && gpu_id != 610;
    assert(ccu_state != TU_CMD_CCU_UNKNOWN);
    /* It's unsafe to flush inside condition because we clear flush_bits */
    assert(!cs->cond_stack_depth);
@@ -254,10 +244,13 @@ tu_emit_cache_flush_ccu(struct tu_cmd_buffer *cmd_buffer,
    if (ccu_state != cmd_buffer->state.ccu_state) {
       struct tu_physical_device *phys_dev = cmd_buffer->device->physical_device;
       tu_cs_emit_regs(cs,
-                      rb_ccu_cntl(ccu_state == TU_CMD_CCU_GMEM ?
-                                  phys_dev->ccu_offset_gmem :
-                                  phys_dev->ccu_offset_bypass,
-                                  ccu_state == TU_CMD_CCU_GMEM));
+                      A6XX_RB_CCU_CNTL(.color_offset =
+                                          ccu_state == TU_CMD_CCU_GMEM ?
+                                          phys_dev->ccu_offset_gmem :
+                                          phys_dev->ccu_offset_bypass,
+                                       .gmem = set_gmem_bit,
+                                       .unk21 = !set_gmem_bit,
+                                       .unk0 = gpu_id == 610));
       cmd_buffer->state.ccu_state = ccu_state;
    }
 }
@@ -328,7 +321,7 @@ tu6_emit_mrt(struct tu_cmd_buffer *cmd,
 {
    const struct tu_framebuffer *fb = cmd->state.framebuffer;
 
-   enum a6xx_format mrt0_format = FMT6_NONE;
+   enum a6xx_format mrt0_format = 0;
 
    for (uint32_t i = 0; i < subpass->color_count; ++i) {
       uint32_t a = subpass->color_attachments[i].attachment;
@@ -368,7 +361,7 @@ tu6_emit_mrt(struct tu_cmd_buffer *cmd,
       tu_cs_image_flag_ref(cs, &iview->view, 0);
 
       if (i == 0)
-         mrt0_format = (enum a6xx_format) (iview->view.SP_FS_MRT_REG & 0xff);
+         mrt0_format = iview->view.SP_FS_MRT_REG & 0xff;
    }
 
    tu_cs_emit_regs(cs, A6XX_GRAS_LRZ_MRT_BUF_INFO_0(.color_format = mrt0_format));
@@ -566,14 +559,8 @@ tu_cs_emit_draw_state(struct tu_cs *cs, uint32_t id, struct tu_draw_state state)
       enable_mask = CP_SET_DRAW_STATE__0_GMEM;
       break;
    case TU_DRAW_STATE_INPUT_ATTACHMENTS_SYSMEM:
-      enable_mask = CP_SET_DRAW_STATE__0_SYSMEM;
-      break;
    case TU_DRAW_STATE_PRIM_MODE_SYSMEM:
-      /* By also applying the state during binning we ensure that there
-       * is no rotation applied, by previous A6XX_GRAS_SC_CNTL::rotation.
-       */
-      enable_mask =
-         CP_SET_DRAW_STATE__0_SYSMEM | CP_SET_DRAW_STATE__0_BINNING;
+      enable_mask = CP_SET_DRAW_STATE__0_SYSMEM;
       break;
    default:
       enable_mask = CP_SET_DRAW_STATE__0_GMEM |
@@ -699,11 +686,12 @@ static bool
 use_sysmem_rendering(struct tu_cmd_buffer *cmd,
                      struct tu_renderpass_result **autotune_result)
 {
-   if (TU_DEBUG(SYSMEM))
+   if (unlikely(cmd->device->physical_device->instance->debug_flags & TU_DEBUG_SYSMEM))
       return true;
 
    /* can't fit attachments into gmem */
-   if (!cmd->state.tiling->possible)
+   if (!cmd->state.pass->gmem_pixels[cmd->state.gmem_layout] ||
+       !cmd->state.tiling->possible)
       return true;
 
    if (cmd->state.framebuffer->layers > 1)
@@ -732,7 +720,7 @@ use_sysmem_rendering(struct tu_cmd_buffer *cmd,
        !cmd->state.tiling->binning_possible)
       return true;
 
-   if (TU_DEBUG(GMEM))
+   if (unlikely(cmd->device->physical_device->instance->debug_flags & TU_DEBUG_GMEM))
       return false;
 
    bool use_sysmem = tu_autotune_use_bypass(&cmd->device->autotune,
@@ -751,14 +739,13 @@ use_sysmem_rendering(struct tu_cmd_buffer *cmd,
  */
 static void
 tu6_emit_cond_for_load_stores(struct tu_cmd_buffer *cmd, struct tu_cs *cs,
-                              uint32_t pipe, uint32_t slot, bool skip_wfm)
+                              uint32_t pipe, uint32_t slot, bool wfm)
 {
-   if (cmd->state.tiling->binning_possible &&
-       cmd->state.pass->has_cond_load_store) {
+   if (cmd->state.tiling->binning_possible) {
       tu_cs_emit_pkt7(cs, CP_REG_TEST, 1);
       tu_cs_emit(cs, A6XX_CP_REG_TEST_0_REG(REG_A6XX_VSC_STATE_REG(pipe)) |
                      A6XX_CP_REG_TEST_0_BIT(slot) |
-                     COND(skip_wfm, A6XX_CP_REG_TEST_0_SKIP_WAIT_FOR_ME));
+                     COND(wfm, A6XX_CP_REG_TEST_0_WAIT_FOR_ME));
    } else {
       /* COND_REG_EXECs are not emitted in non-binning case */
    }
@@ -873,10 +860,8 @@ tu6_emit_tile_load(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 {
    tu6_emit_blit_scissor(cmd, cs, true);
 
-   const bool cond_exec_allowed = cmd->state.tiling->binning &&
-                                  cmd->state.pass->has_cond_load_store;
    for (uint32_t i = 0; i < cmd->state.pass->attachment_count; ++i)
-      tu_load_gmem_attachment(cmd, cs, i, cond_exec_allowed, false);
+      tu_load_gmem_attachment(cmd, cs, i, cmd->state.tiling->binning, false);
 }
 
 static void
@@ -893,11 +878,9 @@ tu6_emit_tile_store(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 
    for (uint32_t a = 0; a < pass->attachment_count; ++a) {
       if (pass->attachments[a].gmem) {
-         const bool cond_exec_allowed = cmd->state.tiling->binning_possible &&
-                                        cmd->state.pass->has_cond_load_store;
          tu_store_gmem_attachment(cmd, cs, a, a,
                                   fb->layers, subpass->multiview_mask,
-                                  cond_exec_allowed);
+                                  cmd->state.tiling->binning_possible);
       }
    }
 
@@ -941,23 +924,20 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
          .gs_state = true,
          .fs_state = true,
          .cs_state = true,
-         .cs_ibo = true,
          .gfx_ibo = true,
-         .cs_shared_const = true,
+         .cs_ibo = true,
          .gfx_shared_const = true,
-         .cs_bindless = 0x1f,
-         .gfx_bindless = 0x1f,));
+         .cs_shared_const = true,
+         .gfx_bindless = 0x1f,
+         .cs_bindless = 0x1f));
 
    tu_cs_emit_wfi(cs);
-
-   if (dev->dbg_cmdbuf_stomp_cs) {
-      tu_cs_emit_call(cs, dev->dbg_cmdbuf_stomp_cs);
-   }
 
    cmd->state.cache.pending_flush_bits &=
       ~(TU_CMD_FLAG_WAIT_FOR_IDLE | TU_CMD_FLAG_CACHE_INVALIDATE);
 
-   tu_cs_emit_regs(cs, rb_ccu_cntl(phys_dev->ccu_offset_bypass, false));
+   tu_cs_emit_regs(cs,
+                   A6XX_RB_CCU_CNTL(.color_offset = phys_dev->ccu_offset_bypass));
    cmd->state.ccu_state = TU_CMD_CCU_SYSMEM;
    tu_cs_emit_write_reg(cs, REG_A6XX_RB_DBG_ECO_CNTL,
                         phys_dev->info->a6xx.magic.RB_DBG_ECO_CNTL);
@@ -1026,11 +1006,11 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
    tu_cs_emit_write_reg(cs, REG_A6XX_SP_TP_MODE_CNTL,
                         0x000000a0 |
                         A6XX_SP_TP_MODE_CNTL_ISAMMODE(ISAMMODE_GL));
-   tu_cs_emit_write_reg(cs, REG_A6XX_HLSQ_CONTROL_5_REG, 0xfc);
+   tu_cs_emit_write_reg(cs, REG_A6XX_HLSQ_CONTROL_5_REG, 0xfcfc);
 
    tu_cs_emit_write_reg(cs, REG_A6XX_VFD_MODE_CNTL, 0x00000000);
 
-   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, 0x0000001f);
+   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, phys_dev->info->a6xx.magic.PC_MODE_CNTL);
 
    tu_cs_emit_regs(cs, A6XX_RB_ALPHA_CONTROL()); /* always disable alpha test */
    tu_cs_emit_regs(cs, A6XX_RB_DITHER_CNTL()); /* always disable dithering */
@@ -1048,7 +1028,7 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
 }
 
 static void
-update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs, uint32_t num_vsc_pipes)
 {
    const struct tu_tiling_config *tiling = cmd->state.tiling;
 
@@ -1060,8 +1040,8 @@ update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
                    A6XX_VSC_BIN_COUNT(.nx = tiling->tile_count.width,
                                       .ny = tiling->tile_count.height));
 
-   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), 32);
-   tu_cs_emit_array(cs, tiling->pipe_config, 32);
+   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), num_vsc_pipes);
+   tu_cs_emit_array(cs, tiling->pipe_config, num_vsc_pipes);
 
    tu_cs_emit_regs(cs,
                    A6XX_VSC_PRIM_STRM_PITCH(cmd->vsc_prim_strm_pitch),
@@ -1126,7 +1106,7 @@ tu6_emit_binning_pass(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
    tu_cs_emit_regs(cs,
                    A6XX_VFD_MODE_CNTL(.render_mode = BINNING_PASS));
 
-   update_vsc_pipe(cmd, cs);
+   update_vsc_pipe(cmd, cs, phys_dev->info->num_vsc_pipes);
 
    tu_cs_emit_regs(cs,
                    A6XX_PC_POWER_CNTL(phys_dev->info->a6xx.magic.PC_POWER_CNTL));
@@ -1237,9 +1217,8 @@ tu_emit_input_attachments(struct tu_cmd_buffer *cmd,
        * of a renderpass. We have to patch the descriptor to make it compatible
        * with how it is sampled in shader.
        */
-      enum a6xx_tex_type tex_type =
-         (enum a6xx_tex_type)((dst[2] & A6XX_TEX_CONST_2_TYPE__MASK) >>
-                              A6XX_TEX_CONST_2_TYPE__SHIFT);
+      enum a6xx_tex_type tex_type = (dst[2] & A6XX_TEX_CONST_2_TYPE__MASK) >>
+                                    A6XX_TEX_CONST_2_TYPE__SHIFT;
       if (tex_type == A6XX_TEX_CUBE) {
          dst[2] &= ~A6XX_TEX_CONST_2_TYPE__MASK;
          dst[2] |= A6XX_TEX_CONST_2_TYPE(A6XX_TEX_2D);
@@ -1303,7 +1282,7 @@ tu_emit_input_attachments(struct tu_cmd_buffer *cmd,
        */
       dst[3] = 0;
       dst[4] = cmd->device->physical_device->gmem_base + gmem_offset;
-      dst[5] &= A6XX_TEX_CONST_5_DEPTH__MASK;
+      dst[5] = A6XX_TEX_CONST_5_DEPTH(1);
       for (unsigned i = 6; i < A6XX_TEX_CONST_DWORDS; i++)
          dst[i] = 0;
    }
@@ -1453,7 +1432,7 @@ tu6_tile_render_begin(struct tu_cmd_buffer *cmd, struct tu_cs *cs,
                         A6XX_RB_BIN_CONTROL_LRZ_FEEDBACK_ZMODE_MASK(0x6));
 
       tu_cs_emit_regs(cs,
-                      A6XX_VFD_MODE_CNTL(RENDERING_PASS));
+                      A6XX_VFD_MODE_CNTL(0));
 
       tu_cs_emit_regs(cs,
                       A6XX_PC_POWER_CNTL(phys_dev->info->a6xx.magic.PC_POWER_CNTL));
@@ -1676,16 +1655,14 @@ tu_create_cmd_buffer(struct vk_command_pool *pool,
       container_of(pool->base.device, struct tu_device, vk);
    struct tu_cmd_buffer *cmd_buffer;
 
-   cmd_buffer = (struct tu_cmd_buffer *) vk_zalloc2(
-      &device->vk.alloc, NULL, sizeof(*cmd_buffer), 8,
-      VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+   cmd_buffer = vk_zalloc2(&device->vk.alloc, NULL, sizeof(*cmd_buffer), 8,
+                           VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
 
    if (cmd_buffer == NULL)
       return vk_error(device, VK_ERROR_OUT_OF_HOST_MEMORY);
 
-   VkResult result =
-      vk_command_buffer_init(pool, &cmd_buffer->vk, &tu_cmd_buffer_ops,
-                             VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+   VkResult result = vk_command_buffer_init(pool, &cmd_buffer->vk,
+                                            &tu_cmd_buffer_ops, 0);
    if (result != VK_SUCCESS) {
       vk_free2(&device->vk.alloc, NULL, cmd_buffer);
       return result;
@@ -1860,13 +1837,12 @@ tu_BeginCommandBuffer(VkCommandBuffer commandBuffer,
       vk_foreach_struct_const(ext, pBeginInfo->pInheritanceInfo) {
          switch (ext->sType) {
          case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT: {
-            const VkCommandBufferInheritanceConditionalRenderingInfoEXT *cond_rend =
-               (VkCommandBufferInheritanceConditionalRenderingInfoEXT *) ext;
+            const VkCommandBufferInheritanceConditionalRenderingInfoEXT *cond_rend = (void *) ext;
             cmd_buffer->state.predication_active = cond_rend->conditionalRenderingEnable;
             break;
-         }
          default:
             break;
+         }
          }
       }
 
@@ -1875,7 +1851,7 @@ tu_BeginCommandBuffer(VkCommandBuffer commandBuffer,
             vk_find_struct_const(pBeginInfo->pInheritanceInfo->pNext,
                                  COMMAND_BUFFER_INHERITANCE_RENDERING_INFO);
 
-         if (TU_DEBUG(DYNAMIC)) {
+         if (unlikely(cmd_buffer->device->instance->debug_flags & TU_DEBUG_DYNAMIC)) {
             rendering_info =
                vk_get_command_buffer_inheritance_rendering_info(cmd_buffer->vk.level,
                                                                 pBeginInfo);
@@ -2192,8 +2168,7 @@ tu_CmdBindDescriptorSets(VkCommandBuffer commandBuffer,
       TU_FROM_HANDLE(tu_descriptor_set, set, pDescriptorSets[i]);
 
       descriptors_state->sets[idx] = set;
-      descriptors_state->set_iova[idx] = set ?
-         (set->va | BINDLESS_DESCRIPTOR_64B) : 0;
+      descriptors_state->set_iova[idx] = set->va | BINDLESS_DESCRIPTOR_64B;
 
       if (!set)
          continue;
@@ -2371,10 +2346,10 @@ tu_push_descriptor_set_update_layout(struct tu_device *device,
    if (set->host_size < layout->size) {
       void *new_buf =
          vk_realloc(&device->vk.alloc, set->mapped_ptr, layout->size, 8,
-                    VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+                    VK_QUERY_SCOPE_COMMAND_BUFFER_KHR);
       if (!new_buf)
          return VK_ERROR_OUT_OF_HOST_MEMORY;
-      set->mapped_ptr = (uint32_t *) new_buf;
+      set->mapped_ptr = new_buf;
       set->host_size = layout->size;
    }
    return VK_SUCCESS;
@@ -2415,9 +2390,9 @@ tu_CmdPushDescriptorSetKHR(VkCommandBuffer commandBuffer,
    memcpy(set_mem.map, set->mapped_ptr, layout->size);
    set->va = set_mem.iova;
 
-   const VkDescriptorSet desc_set[] = { tu_descriptor_set_to_handle(set) };
    tu_CmdBindDescriptorSets(commandBuffer, pipelineBindPoint, _layout, _set,
-                            1, desc_set, 0, NULL);
+                            1, (VkDescriptorSet[]) { tu_descriptor_set_to_handle(set) },
+                            0, NULL);
 }
 
 VKAPI_ATTR void VKAPI_CALL
@@ -2454,9 +2429,9 @@ tu_CmdPushDescriptorSetWithTemplateKHR(VkCommandBuffer commandBuffer,
    memcpy(set_mem.map, set->mapped_ptr, layout->size);
    set->va = set_mem.iova;
 
-   const VkDescriptorSet desc_set[] = { tu_descriptor_set_to_handle(set) };
    tu_CmdBindDescriptorSets(commandBuffer, templ->bind_point, _layout, _set,
-                            1, desc_set, 0, NULL);
+                            1, (VkDescriptorSet[]) { tu_descriptor_set_to_handle(set) },
+                            0, NULL);
 }
 
 VKAPI_ATTR void VKAPI_CALL
@@ -2569,8 +2544,8 @@ tu_CmdEndTransformFeedbackEXT(VkCommandBuffer commandBuffer,
    for (uint32_t i = 0; i < IR3_MAX_SO_BUFFERS; i++) {
       /* note: FLUSH_BASE is always the same, so it could go in init_hw()? */
       tu_cs_emit_pkt4(cs, REG_A6XX_VPC_SO_FLUSH_BASE(i), 2);
-      tu_cs_emit_qw(cs, global_iova_arr(cmd, flush_base, i));
-      tu6_emit_event_write(cmd, cs, (enum vgt_event_type) (FLUSH_SO_0 + i));
+      tu_cs_emit_qw(cs, global_iova(cmd, flush_base[i]));
+      tu6_emit_event_write(cmd, cs, FLUSH_SO_0 + i);
    }
 
    for (uint32_t i = 0; i < (pCounterBuffers ? counterBufferCount : 0); i++) {
@@ -2590,7 +2565,7 @@ tu_CmdEndTransformFeedbackEXT(VkCommandBuffer commandBuffer,
                      0x40000 | /* ??? */
                      CP_MEM_TO_REG_0_UNK31 |
                      CP_MEM_TO_REG_0_CNT(1));
-      tu_cs_emit_qw(cs, global_iova_arr(cmd, flush_base, idx));
+      tu_cs_emit_qw(cs, global_iova(cmd, flush_base[idx]));
 
       if (offset) {
          tu_cs_emit_pkt7(cs, CP_REG_RMW, 3);
@@ -2620,7 +2595,7 @@ tu_CmdPushConstants(VkCommandBuffer commandBuffer,
                     const void *pValues)
 {
    TU_FROM_HANDLE(tu_cmd_buffer, cmd, commandBuffer);
-   memcpy((char *) cmd->push_constants + offset, pValues, size);
+   memcpy((void*) cmd->push_constants + offset, pValues, size);
    cmd->state.dirty |= TU_CMD_DIRTY_SHADER_CONSTS;
 }
 
@@ -3559,7 +3534,7 @@ tu_flush_for_access(struct tu_cache_state *cache,
                     enum tu_cmd_access_mask src_mask,
                     enum tu_cmd_access_mask dst_mask)
 {
-   BITMASK_ENUM(tu_cmd_flush_bits) flush_bits = 0;
+   enum tu_cmd_flush_bits flush_bits = 0;
 
    if (src_mask & TU_ACCESS_SYSMEM_WRITE) {
       cache->pending_flush_bits |= TU_CMD_FLAG_ALL_INVALIDATE;
@@ -3691,7 +3666,7 @@ gfx_write_access(VkAccessFlags2 flags, VkPipelineStageFlags2 stages,
 static enum tu_cmd_access_mask
 vk2tu_access(VkAccessFlags2 flags, VkPipelineStageFlags2 stages, bool image_only, bool gmem)
 {
-   BITMASK_ENUM(tu_cmd_access_mask) mask = 0;
+   enum tu_cmd_access_mask mask = 0;
 
    if (gfx_read_access(flags, stages,
                        VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT |
@@ -3922,10 +3897,10 @@ vk2tu_single_stage(VkPipelineStageFlags2 vk_stage, bool dst)
 }
 
 static enum tu_stage
-vk2tu_src_stage(VkPipelineStageFlags2 vk_stages)
+vk2tu_src_stage(VkPipelineStageFlags vk_stages)
 {
    enum tu_stage stage = TU_STAGE_CP;
-   u_foreach_bit64 (bit, vk_stages) {
+   u_foreach_bit (bit, vk_stages) {
       enum tu_stage new_stage = vk2tu_single_stage(1ull << bit, false);
       stage = MAX2(stage, new_stage);
    }
@@ -3934,10 +3909,10 @@ vk2tu_src_stage(VkPipelineStageFlags2 vk_stages)
 }
 
 static enum tu_stage
-vk2tu_dst_stage(VkPipelineStageFlags2 vk_stages)
+vk2tu_dst_stage(VkPipelineStageFlags vk_stages)
 {
    enum tu_stage stage = TU_STAGE_PS;
-   u_foreach_bit64 (bit, vk_stages) {
+   u_foreach_bit (bit, vk_stages) {
       enum tu_stage new_stage = vk2tu_single_stage(1ull << bit, true);
       stage = MIN2(stage, new_stage);
    }
@@ -4272,9 +4247,9 @@ tu_subpass_barrier(struct tu_cmd_buffer *cmd_buffer,
       sanitize_src_stage(barrier->src_stage_mask);
    VkPipelineStageFlags2 dst_stage_vk =
       sanitize_dst_stage(barrier->dst_stage_mask);
-   BITMASK_ENUM(tu_cmd_access_mask) src_flags =
+   enum tu_cmd_access_mask src_flags =
       vk2tu_access(barrier->src_access_mask, src_stage_vk, false, false);
-   BITMASK_ENUM(tu_cmd_access_mask) dst_flags =
+   enum tu_cmd_access_mask dst_flags =
       vk2tu_access(barrier->dst_access_mask, dst_stage_vk, false, false);
 
    if (barrier->incoherent_ccu_color)
@@ -4311,7 +4286,7 @@ tu_CmdBeginRenderPass2(VkCommandBuffer commandBuffer,
 {
    TU_FROM_HANDLE(tu_cmd_buffer, cmd, commandBuffer);
 
-   if (TU_DEBUG(DYNAMIC)) {
+   if (unlikely(cmd->device->instance->debug_flags & TU_DEBUG_DYNAMIC)) {
       vk_common_CmdBeginRenderPass2(commandBuffer, pRenderPassBegin,
                                     pSubpassBeginInfo);
       return;
@@ -4329,7 +4304,7 @@ tu_CmdBeginRenderPass2(VkCommandBuffer commandBuffer,
    cmd->state.framebuffer = fb;
    cmd->state.render_area = pRenderPassBegin->renderArea;
 
-   cmd->state.attachments = (const struct tu_image_view **)
+   cmd->state.attachments =
       vk_alloc(&cmd->vk.pool->alloc, pass->attachment_count *
                sizeof(cmd->state.attachments[0]), 8,
                VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
@@ -4337,10 +4312,6 @@ tu_CmdBeginRenderPass2(VkCommandBuffer commandBuffer,
    if (!cmd->state.attachments) {
       vk_command_buffer_set_error(&cmd->vk, VK_ERROR_OUT_OF_HOST_MEMORY);
       return;
-   }
-
-   if (cmd->device->dbg_renderpass_stomp_cs) {
-      tu_cs_emit_call(&cmd->cs, cmd->device->dbg_renderpass_stomp_cs);
    }
 
    for (unsigned i = 0; i < pass->attachment_count; i++) {
@@ -4438,6 +4409,22 @@ tu_CmdBeginRendering(VkCommandBuffer commandBuffer,
       }
    }
 
+   if (unlikely(cmd->device->instance->debug_flags & TU_DEBUG_DYNAMIC)) {
+      const VkRenderingSelfDependencyInfoMESA *self_dependency =
+         vk_find_struct_const(pRenderingInfo->pNext, RENDERING_SELF_DEPENDENCY_INFO_MESA);
+      if (self_dependency &&
+          (self_dependency->colorSelfDependencies ||
+           self_dependency->depthSelfDependency ||
+           self_dependency->stencilSelfDependency)) {
+         /* Mesa's renderpass emulation requires us to use normal attachments
+          * for input attachments, and currently doesn't try to keep track of
+          * which color/depth attachment an input attachment corresponds to.
+          * So when there's a self-dependency, we have to use sysmem.
+          */
+         cmd->state.rp.disable_gmem = true;
+      }
+   }
+
    tu_choose_gmem_layout(cmd);
 
    cmd->state.renderpass_cache.pending_flush_bits =
@@ -4513,7 +4500,7 @@ tu_CmdNextSubpass2(VkCommandBuffer commandBuffer,
 {
    TU_FROM_HANDLE(tu_cmd_buffer, cmd, commandBuffer);
 
-   if (TU_DEBUG(DYNAMIC)) {
+   if (unlikely(cmd->device->instance->debug_flags & TU_DEBUG_DYNAMIC)) {
       vk_common_CmdNextSubpass2(commandBuffer, pSubpassBeginInfo,
                                 pSubpassEndInfo);
       return;
@@ -4536,42 +4523,39 @@ tu_CmdNextSubpass2(VkCommandBuffer commandBuffer,
       cmd->state.dirty |= TU_CMD_DIRTY_LRZ;
    }
 
-   if (cmd->state.tiling->possible) {
-      tu_cond_exec_start(cs, CP_COND_EXEC_0_RENDER_MODE_GMEM);
+   tu_cond_exec_start(cs, CP_COND_EXEC_0_RENDER_MODE_GMEM);
 
-      if (subpass->resolve_attachments) {
-         tu6_emit_blit_scissor(cmd, cs, true);
+   if (subpass->resolve_attachments) {
+      tu6_emit_blit_scissor(cmd, cs, true);
 
-         for (unsigned i = 0; i < subpass->resolve_count; i++) {
-            uint32_t a = subpass->resolve_attachments[i].attachment;
-            if (a == VK_ATTACHMENT_UNUSED)
-               continue;
+      for (unsigned i = 0; i < subpass->resolve_count; i++) {
+         uint32_t a = subpass->resolve_attachments[i].attachment;
+         if (a == VK_ATTACHMENT_UNUSED)
+            continue;
 
-            uint32_t gmem_a = tu_subpass_get_attachment_to_resolve(subpass, i);
+         uint32_t gmem_a = tu_subpass_get_attachment_to_resolve(subpass, i);
 
-            tu_store_gmem_attachment(cmd, cs, a, gmem_a, fb->layers,
-                                    subpass->multiview_mask, false);
+         tu_store_gmem_attachment(cmd, cs, a, gmem_a, fb->layers,
+                                  subpass->multiview_mask, false);
 
-            if (!pass->attachments[a].gmem)
-               continue;
+         if (!pass->attachments[a].gmem)
+            continue;
 
-            /* check if the resolved attachment is needed by later subpasses,
-            * if it is, should be doing a GMEM->GMEM resolve instead of GMEM->MEM->GMEM..
-            */
-            perf_debug(cmd->device, "TODO: missing GMEM->GMEM resolve path\n");
-            tu_load_gmem_attachment(cmd, cs, a, false, true);
-         }
+         /* check if the resolved attachment is needed by later subpasses,
+          * if it is, should be doing a GMEM->GMEM resolve instead of GMEM->MEM->GMEM..
+          */
+         perf_debug(cmd->device, "TODO: missing GMEM->GMEM resolve path\n");
+         tu_load_gmem_attachment(cmd, cs, a, false, true);
       }
-
-      tu_cond_exec_end(cs);
-
-      tu_cond_exec_start(cs, CP_COND_EXEC_0_RENDER_MODE_SYSMEM);
    }
+
+   tu_cond_exec_end(cs);
+
+   tu_cond_exec_start(cs, CP_COND_EXEC_0_RENDER_MODE_SYSMEM);
 
    tu6_emit_sysmem_resolves(cmd, cs, subpass);
 
-   if (cmd->state.tiling->possible)
-      tu_cond_exec_end(cs);
+   tu_cond_exec_end(cs);
 
    /* Handle dependencies for the next subpass */
    tu_subpass_barrier(cmd, &cmd->state.subpass->start_barrier, false);
@@ -4633,9 +4617,6 @@ tu6_emit_user_consts(struct tu_cs *cs,
    for (unsigned i = 0; i < link->tu_const_state.num_inline_ubos; i++) {
       const struct tu_inline_ubo *ubo = &link->tu_const_state.ubos[i];
 
-      if (link->constlen <= ubo->const_offset_vec4)
-         continue;
-
       uint64_t va = descriptors->set_iova[ubo->base] & ~0x3f;
 
       tu_cs_emit_pkt7(cs, tu6_stage2opcode(type), ubo->push_address ? 7 : 3);
@@ -4643,7 +4624,7 @@ tu6_emit_user_consts(struct tu_cs *cs,
             CP_LOAD_STATE6_0_STATE_TYPE(ST6_CONSTANTS) |
             CP_LOAD_STATE6_0_STATE_SRC(ubo->push_address ? SS6_DIRECT : SS6_INDIRECT) |
             CP_LOAD_STATE6_0_STATE_BLOCK(tu6_stage2shadersb(type)) |
-            CP_LOAD_STATE6_0_NUM_UNIT(MIN2(ubo->size_vec4, link->constlen - ubo->const_offset_vec4)));
+            CP_LOAD_STATE6_0_NUM_UNIT(ubo->size_vec4));
       if (ubo->push_address) {
          tu_cs_emit(cs, 0);
          tu_cs_emit(cs, 0);
@@ -4699,7 +4680,7 @@ tu6_const_size(struct tu_cmd_buffer *cmd,
       dwords += tu6_user_consts_size(pipeline, MESA_SHADER_COMPUTE);
    } else {
       for (uint32_t type = MESA_SHADER_VERTEX; type <= MESA_SHADER_FRAGMENT; type++)
-         dwords += tu6_user_consts_size(pipeline, (gl_shader_stage) type);
+         dwords += tu6_user_consts_size(pipeline, type);
    }
 
    return dwords;
@@ -4738,8 +4719,7 @@ tu6_emit_consts(struct tu_cmd_buffer *cmd,
       struct tu_descriptor_state *descriptors  =
          tu_get_descriptors_state(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS);
       for (uint32_t type = MESA_SHADER_VERTEX; type <= MESA_SHADER_FRAGMENT; type++)
-         tu6_emit_user_consts(&cs, pipeline, (gl_shader_stage) type,
-                              descriptors, cmd->push_constants);
+         tu6_emit_user_consts(&cs, pipeline, type, descriptors, cmd->push_constants);
    }
 
    return tu_cs_end_draw_state(&cmd->sub_cs, &cs);
@@ -4771,18 +4751,18 @@ tu6_update_simplified_stencil_state(struct tu_cmd_buffer *cmd)
       ((cmd->state.dynamic_stencil_wrmask & 0xff00) >> 8) :
       (cmd->state.pipeline->ds.stencil_wrmask & 0xff00) >> 8;
 
-   VkStencilOp front_fail_op = (VkStencilOp)
-      ((cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_FAIL__MASK) >> A6XX_RB_STENCIL_CONTROL_FAIL__SHIFT);
-   VkStencilOp front_pass_op = (VkStencilOp)
-      ((cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZPASS__MASK) >> A6XX_RB_STENCIL_CONTROL_ZPASS__SHIFT);
-   VkStencilOp front_depth_fail_op = (VkStencilOp)
-      ((cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZFAIL__MASK) >> A6XX_RB_STENCIL_CONTROL_ZFAIL__SHIFT);
-   VkStencilOp back_fail_op = (VkStencilOp)
-      ((cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_FAIL_BF__MASK) >> A6XX_RB_STENCIL_CONTROL_FAIL_BF__SHIFT);
-   VkStencilOp back_pass_op = (VkStencilOp)
-      ((cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZPASS_BF__MASK) >> A6XX_RB_STENCIL_CONTROL_ZPASS_BF__SHIFT);
-   VkStencilOp back_depth_fail_op = (VkStencilOp)
-      ((cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZFAIL_BF__MASK) >> A6XX_RB_STENCIL_CONTROL_ZFAIL_BF__SHIFT);
+   VkStencilOp front_fail_op =
+      (cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_FAIL__MASK) >> A6XX_RB_STENCIL_CONTROL_FAIL__SHIFT;
+   VkStencilOp front_pass_op =
+      (cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZPASS__MASK) >> A6XX_RB_STENCIL_CONTROL_ZPASS__SHIFT;
+   VkStencilOp front_depth_fail_op =
+      (cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZFAIL__MASK) >> A6XX_RB_STENCIL_CONTROL_ZFAIL__SHIFT;
+   VkStencilOp back_fail_op =
+      (cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_FAIL_BF__MASK) >> A6XX_RB_STENCIL_CONTROL_FAIL_BF__SHIFT;
+   VkStencilOp back_pass_op =
+      (cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZPASS_BF__MASK) >> A6XX_RB_STENCIL_CONTROL_ZPASS_BF__SHIFT;
+   VkStencilOp back_depth_fail_op =
+      (cmd->state.rb_stencil_cntl & A6XX_RB_STENCIL_CONTROL_ZFAIL_BF__MASK) >> A6XX_RB_STENCIL_CONTROL_ZFAIL_BF__SHIFT;
 
    bool stencil_front_op_writes =
       front_pass_op != VK_STENCIL_OP_KEEP ||
@@ -4806,8 +4786,8 @@ tu6_writes_depth(struct tu_cmd_buffer *cmd, bool depth_test_enable)
    bool depth_write_enable =
       cmd->state.rb_depth_cntl & A6XX_RB_DEPTH_CNTL_Z_WRITE_ENABLE;
 
-   VkCompareOp depth_compare_op = (VkCompareOp)
-      ((cmd->state.rb_depth_cntl & A6XX_RB_DEPTH_CNTL_ZFUNC__MASK) >> A6XX_RB_DEPTH_CNTL_ZFUNC__SHIFT);
+   VkCompareOp depth_compare_op =
+      (cmd->state.rb_depth_cntl & A6XX_RB_DEPTH_CNTL_ZFUNC__MASK) >> A6XX_RB_DEPTH_CNTL_ZFUNC__SHIFT;
 
    bool depth_compare_op_writes = depth_compare_op != VK_COMPARE_OP_NEVER;
 
@@ -5176,12 +5156,12 @@ tu_draw_initiator(struct tu_cmd_buffer *cmd, enum pc_di_src_sel src_sel)
    enum pc_di_primtype primtype = cmd->state.primtype;
 
    if (primtype == DI_PT_PATCHES0)
-      primtype = (enum pc_di_primtype) (primtype + cmd->state.patch_control_points);
+      primtype += cmd->state.patch_control_points;
 
    uint32_t initiator =
       CP_DRAW_INDX_OFFSET_0_PRIM_TYPE(primtype) |
       CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT(src_sel) |
-      CP_DRAW_INDX_OFFSET_0_INDEX_SIZE((enum a4xx_index_size) cmd->state.index_size) |
+      CP_DRAW_INDX_OFFSET_0_INDEX_SIZE(cmd->state.index_size) |
       CP_DRAW_INDX_OFFSET_0_VIS_CULL(USE_VISIBILITY);
 
    if (pipeline->active_stages & VK_SHADER_STAGE_GEOMETRY_BIT)
@@ -5649,14 +5629,10 @@ tu_emit_compute_driver_params(struct tu_cmd_buffer *cmd,
          [IR3_DP_NUM_WORK_GROUPS_X] = info->blocks[0],
          [IR3_DP_NUM_WORK_GROUPS_Y] = info->blocks[1],
          [IR3_DP_NUM_WORK_GROUPS_Z] = info->blocks[2],
-         [IR3_DP_WORK_DIM] = 0,
          [IR3_DP_BASE_GROUP_X] = info->offsets[0],
          [IR3_DP_BASE_GROUP_Y] = info->offsets[1],
          [IR3_DP_BASE_GROUP_Z] = info->offsets[2],
          [IR3_DP_CS_SUBGROUP_SIZE] = subgroup_size,
-         [IR3_DP_LOCAL_GROUP_SIZE_X] = 0,
-         [IR3_DP_LOCAL_GROUP_SIZE_Y] = 0,
-         [IR3_DP_LOCAL_GROUP_SIZE_Z] = 0,
          [IR3_DP_SUBGROUP_ID_SHIFT] = subgroup_shift,
       };
 
@@ -5692,7 +5668,7 @@ tu_emit_compute_driver_params(struct tu_cmd_buffer *cmd,
       for (uint32_t i = 0; i < 3; i++) {
          tu_cs_emit_pkt7(cs, CP_MEM_TO_MEM, 5);
          tu_cs_emit(cs, 0);
-         tu_cs_emit_qw(cs, global_iova_arr(cmd, cs_indirect_xyz, i));
+         tu_cs_emit_qw(cs, global_iova(cmd, cs_indirect_xyz[i]));
          tu_cs_emit_qw(cs, indirect_iova + i * 4);
       }
 
@@ -5888,7 +5864,7 @@ tu_CmdEndRenderPass2(VkCommandBuffer commandBuffer,
 {
    TU_FROM_HANDLE(tu_cmd_buffer, cmd_buffer, commandBuffer);
 
-   if (TU_DEBUG(DYNAMIC)) {
+   if (unlikely(cmd_buffer->device->instance->debug_flags & TU_DEBUG_DYNAMIC)) {
       vk_common_CmdEndRenderPass2(commandBuffer, pSubpassEndInfo);
       return;
    }
@@ -5921,11 +5897,6 @@ tu_CmdEndRendering(VkCommandBuffer commandBuffer)
       if (cmd_buffer->state.suspend_resume == SR_IN_PRE_CHAIN) {
          cmd_buffer->trace_renderpass_end = u_trace_end_iterator(&cmd_buffer->trace);
          tu_save_pre_chain(cmd_buffer);
-
-         /* Even we don't call tu_cmd_render here, renderpass is finished
-          * and draw states should be disabled.
-          */
-         tu_disable_draw_states(cmd_buffer, &cmd_buffer->cs);
       } else {
          tu_cmd_render(cmd_buffer);
       }
@@ -5955,8 +5926,8 @@ tu_barrier(struct tu_cmd_buffer *cmd,
 {
    VkPipelineStageFlags2 srcStage = 0;
    VkPipelineStageFlags2 dstStage = 0;
-   BITMASK_ENUM(tu_cmd_access_mask) src_flags = 0;
-   BITMASK_ENUM(tu_cmd_access_mask) dst_flags = 0;
+   enum tu_cmd_access_mask src_flags = 0;
+   enum tu_cmd_access_mask dst_flags = 0;
 
    /* Inside a renderpass, we don't know yet whether we'll be using sysmem
     * so we have to use the sysmem flushes.
@@ -6240,7 +6211,7 @@ tu_CmdWriteBufferMarker2AMD(VkCommandBuffer commandBuffer,
     * Flush CCU in order to make the results of previous transfer
     * operation visible to CP.
     */
-   tu_flush_for_access(cache, TU_ACCESS_NONE, TU_ACCESS_SYSMEM_WRITE);
+   tu_flush_for_access(cache, 0, TU_ACCESS_SYSMEM_WRITE);
 
    /* Flags that only require a top-of-pipe event. DrawIndirect parameters are
     * read by the CP, so the draw indirect stage counts as top-of-pipe too.
@@ -6257,7 +6228,7 @@ tu_CmdWriteBufferMarker2AMD(VkCommandBuffer commandBuffer,
     * - There was a barrier to synchronize other writes with WriteBufferMarkerAMD
     *   and they had to include our pipelineStage which forces the WFI.
     */
-   if (cache->flush_bits && is_top_of_pipe) {
+   if (cache->flush_bits != 0 && is_top_of_pipe) {
       cache->flush_bits |= TU_CMD_FLAG_WAIT_FOR_IDLE;
    }
 
@@ -6280,5 +6251,5 @@ tu_CmdWriteBufferMarker2AMD(VkCommandBuffer commandBuffer,
    }
 
    /* Make sure the result of this write is visible to others. */
-   tu_flush_for_access(cache, TU_ACCESS_CP_WRITE, TU_ACCESS_NONE);
+   tu_flush_for_access(cache, TU_ACCESS_CP_WRITE, 0);
 }

@@ -42,7 +42,6 @@
 #include "fd6_blend.h"
 #include "fd6_const.h"
 #include "fd6_context.h"
-#include "fd6_compute.h"
 #include "fd6_emit.h"
 #include "fd6_image.h"
 #include "fd6_pack.h"
@@ -51,7 +50,11 @@
 #include "fd6_texture.h"
 #include "fd6_zsa.h"
 
-/* Helper to get tex stateobj.
+/* Helper to get tex stateobj.  Because resource rebind on other
+ * contexts can race with us and cause the texture state to be
+ * destroyed, a bit of extra care is needed to ensure we own the
+ * state reference before dropping the tex reference.  This helper
+ * handles that.
  */
 static struct fd_ringbuffer *
 tex_state(struct fd_context *ctx, enum pipe_shader_type type)
@@ -60,7 +63,12 @@ tex_state(struct fd_context *ctx, enum pipe_shader_type type)
    if (ctx->tex[type].num_textures == 0)
       return NULL;
 
-   return fd_ringbuffer_ref(fd6_texture_state(ctx, type)->stateobj);
+   struct fd6_texture_state *tex = fd6_texture_state(ctx, type, &ctx->tex[type]);
+   struct fd_ringbuffer *state = fd_ringbuffer_ref(tex->stateobj);
+
+   fd6_texture_state_reference(&tex, NULL);
+
+   return state;
 }
 
 static struct fd_ringbuffer *
@@ -107,15 +115,16 @@ build_vbo_state(struct fd6_emit *emit) assert_dt
 static enum a6xx_ztest_mode
 compute_ztest_mode(struct fd6_emit *emit, bool lrz_valid) assert_dt
 {
-   if (emit->prog->lrz_mask.z_mode != A6XX_INVALID_ZTEST)
-      return emit->prog->lrz_mask.z_mode;
-
    struct fd_context *ctx = emit->ctx;
    struct pipe_framebuffer_state *pfb = &ctx->batch->framebuffer;
    struct fd6_zsa_stateobj *zsa = fd6_zsa_stateobj(ctx->zsa);
    const struct ir3_shader_variant *fs = emit->fs;
 
-   if (!zsa->base.depth_enabled) {
+   if (fs->fs.early_fragment_tests)
+      return A6XX_EARLY_Z;
+
+   if (fs->no_earlyz || fs->writes_pos || !zsa->base.depth_enabled ||
+       fs->writes_stencilref) {
       return A6XX_LATE_Z;
    } else if ((fs->has_kill || zsa->alpha_test) &&
               (zsa->writes_zs || !pfb->zsbuf)) {
@@ -141,6 +150,7 @@ compute_lrz_state(struct fd6_emit *emit) assert_dt
 {
    struct fd_context *ctx = emit->ctx;
    struct pipe_framebuffer_state *pfb = &ctx->batch->framebuffer;
+   const struct ir3_shader_variant *fs = emit->fs;
    struct fd6_lrz_state lrz;
 
    if (!pfb->zsbuf) {
@@ -156,10 +166,9 @@ compute_lrz_state(struct fd6_emit *emit) assert_dt
 
    lrz = zsa->lrz;
 
-   lrz.val &= emit->prog->lrz_mask.val;
-
    /* normalize lrz state: */
-   if (reads_dest || blend->base.alpha_to_coverage) {
+   if (reads_dest || fs->writes_pos || fs->no_earlyz || fs->has_kill ||
+       blend->base.alpha_to_coverage) {
       lrz.write = false;
    }
 
@@ -194,7 +203,7 @@ compute_lrz_state(struct fd6_emit *emit) assert_dt
     * enable LRZ write.  But this would cause early-z/lrz to discard
     * fragments from draw A which should be visible due to draw B.
     */
-   if (reads_dest && zsa->writes_z && ctx->screen->driconf.conservative_lrz) {
+   if (reads_dest && zsa->writes_z && ctx->screen->conservative_lrz) {
       if (!zsa->perf_warn_blend && rsc->lrz_valid) {
          perf_debug_ctx(ctx, "Invalidating LRZ due to blend+depthwrite");
          zsa->perf_warn_blend = true;
@@ -219,6 +228,12 @@ compute_lrz_state(struct fd6_emit *emit) assert_dt
    if (zsa->invalidate_lrz || !rsc->lrz_valid) {
       rsc->lrz_valid = false;
       memset(&lrz, 0, sizeof(lrz));
+   }
+
+   if (fs->no_earlyz || fs->writes_pos) {
+      lrz.enable = false;
+      lrz.write = false;
+      lrz.test = false;
    }
 
    lrz.z_mode = compute_ztest_mode(emit, rsc->lrz_valid);
@@ -248,7 +263,8 @@ build_lrz(struct fd6_emit *emit) assert_dt
    struct fd6_lrz_state lrz = compute_lrz_state(emit);
 
    /* If the LRZ state has not changed, we can skip the emit: */
-   if (!ctx->last.dirty && (fd6_ctx->last.lrz.val == lrz.val))
+   if (!ctx->last.dirty &&
+       !memcmp(&fd6_ctx->last.lrz, &lrz, sizeof(lrz)))
       return NULL;
 
    fd6_ctx->last.lrz = lrz;
@@ -513,28 +529,6 @@ fd6_emit_non_ring(struct fd_ringbuffer *ring, struct fd6_emit *emit) assert_dt
    }
 }
 
-static struct fd_ringbuffer*
-build_prim_mode(struct fd6_emit *emit, struct fd_context *ctx, bool gmem)
-   assert_dt
-{
-   struct fd_ringbuffer *ring =
-      fd_submit_new_ringbuffer(emit->ctx->batch->submit, 2 * 4, FD_RINGBUFFER_STREAMING);
-   uint32_t prim_mode = NO_FLUSH;
-   if (emit->fs->fs.uses_fbfetch_output) {
-      if (gmem) {
-         prim_mode = (ctx->blend->blend_coherent || emit->fs->fs.fbfetch_coherent)
-            ? FLUSH_PER_OVERLAP : NO_FLUSH;
-      } else {
-         prim_mode = FLUSH_PER_OVERLAP_AND_OVERWRITE;
-      }
-   } else {
-      prim_mode = NO_FLUSH;
-   }
-   OUT_REG(ring, A6XX_GRAS_SC_CNTL(.ccusinglecachelinesize = 2,
-                                   .single_prim_mode = (enum a6xx_single_prim_mode)prim_mode));
-   return ring;
-}
-
 void
 fd6_emit_3d_state(struct fd_ringbuffer *ring, struct fd6_emit *emit)
 {
@@ -554,7 +548,7 @@ fd6_emit_3d_state(struct fd_ringbuffer *ring, struct fd6_emit *emit)
    }
 
    u_foreach_bit (b, emit->dirty_groups) {
-      enum fd6_state_id group = (enum fd6_state_id)b;
+      enum fd6_state_id group = b;
       struct fd_ringbuffer *state = NULL;
 
       switch (group) {
@@ -667,14 +661,6 @@ fd6_emit_3d_state(struct fd_ringbuffer *ring, struct fd6_emit *emit)
       case FD6_GROUP_SO:
          fd6_emit_streamout(ring, emit);
          break;
-      case FD6_GROUP_PRIM_MODE_SYSMEM:
-         state = build_prim_mode(emit, ctx, false);
-         fd6_state_take_group(&emit->state, state, FD6_GROUP_PRIM_MODE_SYSMEM);
-         break;
-      case FD6_GROUP_PRIM_MODE_GMEM:
-         state = build_prim_mode(emit, ctx, true);
-         fd6_state_take_group(&emit->state, state, FD6_GROUP_PRIM_MODE_GMEM);
-         break;
       case FD6_GROUP_NON_GROUP:
          fd6_emit_non_ring(ring, emit);
          break;
@@ -688,31 +674,14 @@ fd6_emit_3d_state(struct fd_ringbuffer *ring, struct fd6_emit *emit)
 
 void
 fd6_emit_cs_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
-                  struct fd6_compute_state *cs)
+                  struct ir3_shader_variant *cp)
 {
    struct fd6_state state = {};
 
-   /* We want CP_SET_DRAW_STATE to execute immediately, otherwise we need to
-    * emit consts as draw state groups (which otherwise has no benefit outside
-    * of GMEM 3d using viz stream from binning pass).
-    *
-    * In particular, the PROG state group sets up the configuration for the
-    * const state, so it must execute before we start loading consts, rather
-    * than be deferred until CP_EXEC_CS.
-    */
-   OUT_PKT7(ring, CP_SET_MODE, 1);
-   OUT_RING(ring, 1);
-
-   uint32_t gen_dirty = ctx->gen_dirty &
-         (BIT(FD6_GROUP_PROG) | BIT(FD6_GROUP_CS_TEX) | BIT(FD6_GROUP_CS_BINDLESS));
-
-   u_foreach_bit (b, gen_dirty) {
-      enum fd6_state_id group = (enum fd6_state_id)b;
+   u_foreach_bit (b, ctx->gen_dirty) {
+      enum fd6_state_id group = b;
 
       switch (group) {
-      case FD6_GROUP_PROG:
-         fd6_state_add_group(&state, cs->stateobj, FD6_GROUP_PROG);
-         break;
       case FD6_GROUP_CS_TEX:
          fd6_state_take_group(
                &state,
@@ -734,21 +703,6 @@ fd6_emit_cs_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
    fd6_state_emit(&state, ring);
 }
 
-void
-fd6_emit_ccu_cntl(struct fd_ringbuffer *ring, struct fd_screen *screen, bool gmem)
-{
-   uint32_t offset = gmem ? screen->ccu_offset_gmem : screen->ccu_offset_bypass;
-   uint32_t offset_hi = offset >> 21;
-   offset &= 0x1fffff;
-
-   OUT_REG(ring, A6XX_RB_CCU_CNTL(
-         .concurrent_resolve = gmem && screen->info->a6xx.concurrent_resolve,
-         .color_offset_hi = offset_hi,
-         .gmem = gmem,
-         .color_offset = offset,
-   ));
-}
-
 /* emit setup at begin of new cmdstream buffer (don't rely on previous
  * state, there could have been a context switch between ioctls):
  */
@@ -761,46 +715,43 @@ fd6_emit_restore(struct fd_batch *batch, struct fd_ringbuffer *ring)
       trace_start_state_restore(&batch->trace, ring);
    }
 
-   OUT_PKT7(ring, CP_SET_MODE, 1);
-   OUT_RING(ring, 0);
-
    fd6_cache_inv(batch, ring);
 
    OUT_REG(ring,
            A6XX_HLSQ_INVALIDATE_CMD(.vs_state = true, .hs_state = true,
                                     .ds_state = true, .gs_state = true,
                                     .fs_state = true, .cs_state = true,
-                                    .cs_ibo = true, .gfx_ibo = true,
-                                    .cs_shared_const = true,
+                                    .gfx_ibo = true, .cs_ibo = true,
                                     .gfx_shared_const = true,
-                                    .cs_bindless = 0x1f, .gfx_bindless = 0x1f));
+                                    .cs_shared_const = true,
+                                    .gfx_bindless = 0x1f, .cs_bindless = 0x1f));
 
    OUT_WFI5(ring);
 
    WRITE(REG_A6XX_RB_DBG_ECO_CNTL, screen->info->a6xx.magic.RB_DBG_ECO_CNTL);
    WRITE(REG_A6XX_SP_FLOAT_CNTL, A6XX_SP_FLOAT_CNTL_F16_NO_INF);
-   WRITE(REG_A6XX_SP_DBG_ECO_CNTL, 0);
+   WRITE(REG_A6XX_SP_DBG_ECO_CNTL, screen->info->a6xx.magic.SP_DBG_ECO_CNTL);
    WRITE(REG_A6XX_SP_PERFCTR_ENABLE, 0x3f);
    WRITE(REG_A6XX_TPL1_UNKNOWN_B605, 0x44);
    WRITE(REG_A6XX_TPL1_DBG_ECO_CNTL, screen->info->a6xx.magic.TPL1_DBG_ECO_CNTL);
    WRITE(REG_A6XX_HLSQ_UNKNOWN_BE00, 0x80);
    WRITE(REG_A6XX_HLSQ_UNKNOWN_BE01, 0);
 
-   WRITE(REG_A6XX_VPC_DBG_ECO_CNTL, 0);
-   WRITE(REG_A6XX_GRAS_DBG_ECO_CNTL, 0x880);
-   WRITE(REG_A6XX_HLSQ_DBG_ECO_CNTL, 0x80000);
-   WRITE(REG_A6XX_SP_CHICKEN_BITS, 0x1430);
+   WRITE(REG_A6XX_VPC_DBG_ECO_CNTL, screen->info->a6xx.magic.VPC_DBG_ECO_CNTL);
+   WRITE(REG_A6XX_GRAS_DBG_ECO_CNTL, screen->info->a6xx.magic.GRAS_DBG_ECO_CNTL);
+   WRITE(REG_A6XX_HLSQ_DBG_ECO_CNTL, screen->info->a6xx.magic.HLSQ_DBG_ECO_CNTL);
+   WRITE(REG_A6XX_SP_CHICKEN_BITS, screen->info->a6xx.magic.SP_CHICKEN_BITS);
    WRITE(REG_A6XX_SP_IBO_COUNT, 0);
    WRITE(REG_A6XX_SP_UNKNOWN_B182, 0);
    WRITE(REG_A6XX_HLSQ_SHARED_CONSTS, 0);
-   WRITE(REG_A6XX_UCHE_UNKNOWN_0E12, 0x3200000);
-   WRITE(REG_A6XX_UCHE_CLIENT_PF, 4);
-   WRITE(REG_A6XX_RB_UNKNOWN_8E01, 0x1);
+   WRITE(REG_A6XX_UCHE_UNKNOWN_0E12, screen->info->a6xx.magic.UCHE_UNKNOWN_0E12);
+   WRITE(REG_A6XX_UCHE_CLIENT_PF, screen->info->a6xx.magic.UCHE_CLIENT_PF);
+   WRITE(REG_A6XX_RB_UNKNOWN_8E01, screen->info->a6xx.magic.RB_UNKNOWN_8E01);
    WRITE(REG_A6XX_SP_MODE_CONTROL,
          A6XX_SP_MODE_CONTROL_CONSTANT_DEMOTION_ENABLE | 4);
    WRITE(REG_A6XX_VFD_ADD_OFFSET, A6XX_VFD_ADD_OFFSET_VERTEX);
    WRITE(REG_A6XX_RB_UNKNOWN_8811, 0x00000010);
-   WRITE(REG_A6XX_PC_MODE_CNTL, 0x1f);
+   WRITE(REG_A6XX_PC_MODE_CNTL, screen->info->a6xx.magic.PC_MODE_CNTL);
 
    WRITE(REG_A6XX_GRAS_LRZ_PS_INPUT_CNTL, 0);
    WRITE(REG_A6XX_GRAS_SAMPLE_CNTL, 0);
@@ -844,7 +795,7 @@ fd6_emit_restore(struct fd_batch *batch, struct fd_ringbuffer *ring)
    WRITE(REG_A6XX_GRAS_SAMPLE_CONFIG, 0);
    WRITE(REG_A6XX_RB_Z_BOUNDS_MIN, 0);
    WRITE(REG_A6XX_RB_Z_BOUNDS_MAX, 0);
-   WRITE(REG_A6XX_HLSQ_CONTROL_5_REG, 0xfc);
+   WRITE(REG_A6XX_HLSQ_CONTROL_5_REG, 0xfcfc);
 
    emit_marker6(ring, 7);
 

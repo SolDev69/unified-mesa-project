@@ -2538,7 +2538,10 @@ to upconvert to 32b float internally?
 		<bitfield name="COLOR_OFFSET_HI" pos="9" type="hex"/>
 		<!-- GMEM offset of CCU depth cache -->
 		<bitfield name="DEPTH_OFFSET" low="12" high="20" shr="12" type="hex"/>
-		<bitfield name="GMEM" pos="22" type="boolean"/> <!-- set for GMEM path -->
+		<bitfield name="GMEM" pos="22" type="boolean"/> 
+		<bitfield name="UNK21" pos="21" type="boolean"/>
+		<bitfield name="UNK0" pos="0" type="boolean"/>
+		<!-- set for GMEM path -->
 		<!-- GMEM offset of CCU color cache
 			for GMEM rendering, we set it to GMEM size minus the minimum
 			CCU color cache size. CCU color cache will be needed in some
