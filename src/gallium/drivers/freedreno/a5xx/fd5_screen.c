@@ -136,17 +136,25 @@ static const enum pc_di_primtype primtypes[] = {
 void
 fd5_screen_init(struct pipe_screen *pscreen)
 {
+   printf("fd5: init\n");
    struct fd_screen *screen = fd_screen(pscreen);
+   printf("fd5: set max_rts\n");
    screen->max_rts = A5XX_MAX_RENDER_TARGETS;
+   printf("fd5: set context_create\n");
    pscreen->context_create = fd5_context_create;
+   printf("fd5: set is_format_supported\n");
    pscreen->is_format_supported = fd5_screen_is_format_supported;
 
+   printf("fd5: set setup_slices\n");
    screen->setup_slices = fd5_setup_slices;
+   printf("fd5: debug title\n");
    if (FD_DBG(TTILE))
       screen->tile_mode = fd5_tile_mode;
-
+   printf("fd5: emit init screen\n");
    fd5_emit_init_screen(pscreen);
+   printf("fd5: ir3 screen init\n");
    ir3_screen_init(pscreen);
-
+   printf("fd5: primtypes\n");
    screen->primtypes = primtypes;
+   printf("fd5: done\n");
 }
