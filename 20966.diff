@@ -1,0 +1,442 @@
+diff --git a/src/freedreno/common/freedreno_dev_info.h b/src/freedreno/common/freedreno_dev_info.h
+index 13e7a6ca4eaa6425a878828bfc47ba92c05a51ac..7d2870a9d0cd38af2e8db12d6af8754c466f5297 100644
+--- a/src/freedreno/common/freedreno_dev_info.h
++++ b/src/freedreno/common/freedreno_dev_info.h
+@@ -160,7 +160,11 @@ struct fd_dev_info {
+             uint32_t RB_UNKNOWN_8E01;
+             uint32_t VPC_DBG_ECO_CNTL;
+             uint32_t UCHE_UNKNOWN_0E12;
++            uint32_t HLSQ_CONTROL_1_REG_MODE;
+          } magic;
++
++         uint32_t ccu_offset_bypass;
++         uint32_t ccu_offset_gmem;
+       } a6xx;
+    };
+ };
+diff --git a/src/freedreno/common/freedreno_devices.py b/src/freedreno/common/freedreno_devices.py
+index e9fd3b5c9c3104e4bba0fa326aa3e0376f8f5a23..e6d15bd35e6481b6fee1ba49aab46a9c3ec042fa 100644
+--- a/src/freedreno/common/freedreno_devices.py
++++ b/src/freedreno/common/freedreno_devices.py
+@@ -102,18 +102,20 @@ class GPUInfo(Struct):
+ 
+         s.gpu_infos.append(self)
+ 
+-
++# From freedreno_dev_info.h
++A6XX_CCU_DEPTH_SIZE = 64 * 1024
+ class A6xxGPUInfo(GPUInfo):
+     """The a6xx generation has a lot more parameters, and is broken down
+        into distinct sub-generations.  The template parameter avoids
+        duplication of parameters that are unique to the sub-generation.
+     """
+-    def __init__(self, template, num_sp_cores, num_ccu, magic_regs):
++    def __init__(self, template, num_sp_cores, num_ccu, magic_regs, num_vsc_pipes = 32,
++                 ccu_offset_bypass = 0, ccu_offset_gmem = 0):
+         super().__init__(gmem_align_w = 16, gmem_align_h = 4,
+                          tile_align_w = 32, tile_align_h = 32,
+                          tile_max_w   = 1024, # max_bitfield_val(5, 0, 5)
+                          tile_max_h   = max_bitfield_val(14, 8, 4),
+-                         num_vsc_pipes = 32)
++                         num_vsc_pipes = num_vsc_pipes)
+         assert(num_sp_cores == num_ccu)
+ 
+         self.num_sp_cores = num_sp_cores
+@@ -133,6 +135,13 @@ class A6xxGPUInfo(GPUInfo):
+         self.a6xx.has_cp_reg_write = True
+         self.a6xx.has_8bpp_ubwc = True
+ 
++        # Can't use default value for argument using another argument..
++        if ccu_offset_bypass > 0:
++            self.a6xx.ccu_offset_bypass = ccu_offset_bypass
++        else:
++            self.a6xx.ccu_offset_bypass = num_ccu * A6XX_CCU_DEPTH_SIZE
++        self.a6xx.ccu_offset_gmem = ccu_offset_gmem
++
+         for name, val in template.items():
+             if name == "magic": # handled above
+                 continue
+@@ -266,6 +275,33 @@ a6xx_gen4 = dict(
+         has_lrz_dir_tracking = True,
+     )
+ 
++add_gpus([
++        GPUId(610),
++    ], A6xxGPUInfo(
++        a6xx_gen1,
++        num_sp_cores = 1,
++        num_ccu = 1,
++        magic_regs = dict(
++            PC_POWER_CNTL = 0,
++            TPL1_DBG_ECO_CNTL = 0,
++            GRAS_DBG_ECO_CNTL = 0,
++            SP_CHICKEN_BITS = 0x400,
++            UCHE_CLIENT_PF = 0x00000004,
++            PC_MODE_CNTL = 0xf,
++            SP_DBG_ECO_CNTL = 0x0,
++            RB_DBG_ECO_CNTL = 0x04100000,
++            RB_DBG_ECO_CNTL_blit = 0x04100000,
++            HLSQ_DBG_ECO_CNTL = 0,
++            RB_UNKNOWN_8E01 = 0x00000001,
++            VPC_DBG_ECO_CNTL = 0x0,
++            UCHE_UNKNOWN_0E12 = 0x13200000,
++            HLSQ_CONTROL_1_REG_MODE = 0x3,
++        ),
++        num_vsc_pipes = 16,
++        ccu_offset_bypass = 0x2000,
++        ccu_offset_gmem = 0x20000,
++    ))
++
+ add_gpus([
+         GPUId(615),
+         GPUId(616),
+@@ -288,7 +324,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x00080000,
+             RB_UNKNOWN_8E01 = 0x00000001,
+             VPC_DBG_ECO_CNTL = 0x0,
+-            UCHE_UNKNOWN_0E12 = 0x00000001
++            UCHE_UNKNOWN_0E12 = 0x00000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+@@ -311,7 +348,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x0,
+             RB_UNKNOWN_8E01 = 0x0,
+             VPC_DBG_ECO_CNTL = 0x02000000,
+-            UCHE_UNKNOWN_0E12 = 0x00000001
++            UCHE_UNKNOWN_0E12 = 0x00000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+@@ -334,7 +372,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x00080000,
+             RB_UNKNOWN_8E01 = 0x00000001,
+             VPC_DBG_ECO_CNTL = 0x0,
+-            UCHE_UNKNOWN_0E12 = 0x10000001
++            UCHE_UNKNOWN_0E12 = 0x10000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+@@ -357,7 +396,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x0,
+             RB_UNKNOWN_8E01 = 0x00000001,
+             VPC_DBG_ECO_CNTL = 0x02000000,
+-            UCHE_UNKNOWN_0E12 = 0x00000001
++            UCHE_UNKNOWN_0E12 = 0x00000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+@@ -380,7 +420,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x0,
+             RB_UNKNOWN_8E01 = 0x00000001,
+             VPC_DBG_ECO_CNTL = 0x02000000,
+-            UCHE_UNKNOWN_0E12 = 0x00000001
++            UCHE_UNKNOWN_0E12 = 0x00000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+@@ -404,7 +445,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x0,
+             RB_UNKNOWN_8E01 = 0x0,
+             VPC_DBG_ECO_CNTL = 0x02000000,
+-            UCHE_UNKNOWN_0E12 = 0x00000001
++            UCHE_UNKNOWN_0E12 = 0x00000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+@@ -431,7 +473,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x0,
+             RB_UNKNOWN_8E01 = 0x0,
+             VPC_DBG_ECO_CNTL = 0x02000000,
+-            UCHE_UNKNOWN_0E12 = 0x00000001
++            UCHE_UNKNOWN_0E12 = 0x00000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+@@ -454,7 +497,8 @@ add_gpus([
+             HLSQ_DBG_ECO_CNTL = 0x0,
+             RB_UNKNOWN_8E01 = 0x0,
+             VPC_DBG_ECO_CNTL = 0x02000000,
+-            UCHE_UNKNOWN_0E12 = 0x00000001
++            UCHE_UNKNOWN_0E12 = 0x00000001,
++            HLSQ_CONTROL_1_REG_MODE = 0x7,
+         )
+     ))
+ 
+diff --git a/src/freedreno/registers/adreno/a6xx.xml b/src/freedreno/registers/adreno/a6xx.xml
+index 8bae0f5b1ebe11e4483324bff29ae7fcb26ca263..e601e677660123883636fff0e6f49c33e36d530a 100644
+--- a/src/freedreno/registers/adreno/a6xx.xml
++++ b/src/freedreno/registers/adreno/a6xx.xml
+@@ -2376,9 +2376,11 @@ to upconvert to 32b float internally?
+ 		<!-- GMEM offset of CCU depth cache -->
+ 		<bitfield name="DEPTH_OFFSET" low="12" high="20" shr="12" type="hex"/>
+ 		<bitfield name="GMEM" pos="22" type="boolean"/> <!-- set for GMEM path -->
++		<bitfield name="UNK21" pos="21" type="boolean"/>
+ 		<!-- concurrent resolves are apparently a 2-bit enum on a650+ -->
+ 		<bitfield name="CONCURRENT_RESOLVE" pos="2" type="boolean"/>
+ 		<!--TODO: valid mask 0xfffffc1f -->
++		<bitfield name="UNK0" pos="0" type="boolean"/>
+ 	</reg32>
+ 	<reg32 offset="0x8e08" name="RB_NC_MODE_CNTL">
+ 		<bitfield name="MODE" pos="0" type="boolean"/>
+diff --git a/src/freedreno/vulkan/tu_cmd_buffer.c b/src/freedreno/vulkan/tu_cmd_buffer.c
+index 0151b40a5e572347bd339c693b8bb471488bbc91..0e9f36f9eb269a8c2864814fdb660e75b2cb52df 100644
+--- a/src/freedreno/vulkan/tu_cmd_buffer.c
++++ b/src/freedreno/vulkan/tu_cmd_buffer.c
+@@ -209,6 +209,8 @@ tu_emit_cache_flush_ccu(struct tu_cmd_buffer *cmd_buffer,
+                         struct tu_cs *cs,
+                         enum tu_cmd_ccu_state ccu_state)
+ {
++   uint32_t gpu_id = cmd_buffer->device->physical_device->dev_id.gpu_id;
++   bool set_gmem_bit = ccu_state == TU_CMD_CCU_GMEM && gpu_id != 610;
+    assert(ccu_state != TU_CMD_CCU_UNKNOWN);
+    /* It's unsafe to flush inside condition because we clear flush_bits */
+    assert(!cs->cond_stack_depth);
+@@ -246,7 +248,9 @@ tu_emit_cache_flush_ccu(struct tu_cmd_buffer *cmd_buffer,
+                                           ccu_state == TU_CMD_CCU_GMEM ?
+                                           phys_dev->ccu_offset_gmem :
+                                           phys_dev->ccu_offset_bypass,
+-                                       .gmem = ccu_state == TU_CMD_CCU_GMEM));
++                                       .gmem = set_gmem_bit,
++                                       .unk21 = !set_gmem_bit,
++                                       .unk0 = gpu_id == 610));
+       cmd_buffer->state.ccu_state = ccu_state;
+    }
+ }
+@@ -1002,11 +1006,11 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    tu_cs_emit_write_reg(cs, REG_A6XX_SP_TP_MODE_CNTL,
+                         0x000000a0 |
+                         A6XX_SP_TP_MODE_CNTL_ISAMMODE(ISAMMODE_GL));
+-   tu_cs_emit_write_reg(cs, REG_A6XX_HLSQ_CONTROL_5_REG, 0xfc);
++   tu_cs_emit_write_reg(cs, REG_A6XX_HLSQ_CONTROL_5_REG, 0xfcfc);
+ 
+    tu_cs_emit_write_reg(cs, REG_A6XX_VFD_MODE_CNTL, 0x00000000);
+ 
+-   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, 0x0000001f);
++   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, phys_dev->info->a6xx.magic.PC_MODE_CNTL);
+ 
+    tu_cs_emit_regs(cs, A6XX_RB_ALPHA_CONTROL()); /* always disable alpha test */
+    tu_cs_emit_regs(cs, A6XX_RB_DITHER_CNTL()); /* always disable dithering */
+@@ -1024,7 +1028,7 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+ }
+ 
+ static void
+-update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
++update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs, uint32_t num_vsc_pipes)
+ {
+    const struct tu_tiling_config *tiling = cmd->state.tiling;
+ 
+@@ -1036,8 +1040,8 @@ update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+                    A6XX_VSC_BIN_COUNT(.nx = tiling->tile_count.width,
+                                       .ny = tiling->tile_count.height));
+ 
+-   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), 32);
+-   tu_cs_emit_array(cs, tiling->pipe_config, 32);
++   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), num_vsc_pipes);
++   tu_cs_emit_array(cs, tiling->pipe_config, num_vsc_pipes);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_VSC_PRIM_STRM_PITCH(cmd->vsc_prim_strm_pitch),
+@@ -1102,7 +1106,7 @@ tu6_emit_binning_pass(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    tu_cs_emit_regs(cs,
+                    A6XX_VFD_MODE_CNTL(.render_mode = BINNING_PASS));
+ 
+-   update_vsc_pipe(cmd, cs);
++   update_vsc_pipe(cmd, cs, phys_dev->info->num_vsc_pipes);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_PC_POWER_CNTL(phys_dev->info->a6xx.magic.PC_POWER_CNTL));
+diff --git a/src/freedreno/vulkan/tu_device.c b/src/freedreno/vulkan/tu_device.c
+index 9627e41b69d38a6794324ae00a4019129444c3ef..1fcdc4286388ed358bc97d7faefb9a7ea72bd5de 100644
+--- a/src/freedreno/vulkan/tu_device.c
++++ b/src/freedreno/vulkan/tu_device.c
+@@ -294,9 +294,12 @@ tu_physical_device_init(struct tu_physical_device *device,
+    switch (fd_dev_gen(&device->dev_id)) {
+    case 6:
+       device->info = info;
+-      device->ccu_offset_bypass = device->info->num_ccu * A6XX_CCU_DEPTH_SIZE;
+-      device->ccu_offset_gmem = (device->gmem_size -
+-         device->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
++      device->ccu_offset_bypass = device->info->a6xx.ccu_offset_bypass;
++      if (device->info->a6xx.ccu_offset_gmem)
++         device->ccu_offset_gmem = device->info->a6xx.ccu_offset_gmem;
++      else
++         device->ccu_offset_gmem = (device->gmem_size -
++            device->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
+       break;
+    default:
+       result = vk_startup_errorf(instance, VK_ERROR_INITIALIZATION_FAILED,
+diff --git a/src/freedreno/vulkan/tu_pipeline.c b/src/freedreno/vulkan/tu_pipeline.c
+index bb4114466cdfd709fb91168493c420854392f88e..087f0b8e6855a378eed68e0e59eb69feefe66d3b 100644
+--- a/src/freedreno/vulkan/tu_pipeline.c
++++ b/src/freedreno/vulkan/tu_pipeline.c
+@@ -1531,7 +1531,7 @@ tu6_emit_fs_inputs(struct tu_cs *cs, const struct ir3_shader_variant *fs)
+    }
+ 
+    tu_cs_emit_pkt4(cs, REG_A6XX_HLSQ_CONTROL_1_REG, 5);
+-   tu_cs_emit(cs, 0x7);
++   tu_cs_emit(cs, cs->device->physical_device->info->a6xx.magic.HLSQ_CONTROL_1_REG_MODE);
+    tu_cs_emit(cs, A6XX_HLSQ_CONTROL_2_REG_FACEREGID(face_regid) |
+                   A6XX_HLSQ_CONTROL_2_REG_SAMPLEID(samp_id_regid) |
+                   A6XX_HLSQ_CONTROL_2_REG_SAMPLEMASK(smask_in_regid) |
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_emit.c b/src/gallium/drivers/freedreno/a6xx/fd6_emit.c
+index c576b58c8cdc0f22f56c1586ba90fc3ae2a32b24..3c62412a701e25b5547fb9fc3d20f592ddbab36c 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_emit.c
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_emit.c
+@@ -730,28 +730,28 @@ fd6_emit_restore(struct fd_batch *batch, struct fd_ringbuffer *ring)
+ 
+    WRITE(REG_A6XX_RB_DBG_ECO_CNTL, screen->info->a6xx.magic.RB_DBG_ECO_CNTL);
+    WRITE(REG_A6XX_SP_FLOAT_CNTL, A6XX_SP_FLOAT_CNTL_F16_NO_INF);
+-   WRITE(REG_A6XX_SP_DBG_ECO_CNTL, 0);
++   WRITE(REG_A6XX_SP_DBG_ECO_CNTL, screen->info->a6xx.magic.SP_DBG_ECO_CNTL);
+    WRITE(REG_A6XX_SP_PERFCTR_ENABLE, 0x3f);
+    WRITE(REG_A6XX_TPL1_UNKNOWN_B605, 0x44);
+    WRITE(REG_A6XX_TPL1_DBG_ECO_CNTL, screen->info->a6xx.magic.TPL1_DBG_ECO_CNTL);
+    WRITE(REG_A6XX_HLSQ_UNKNOWN_BE00, 0x80);
+    WRITE(REG_A6XX_HLSQ_UNKNOWN_BE01, 0);
+ 
+-   WRITE(REG_A6XX_VPC_DBG_ECO_CNTL, 0);
+-   WRITE(REG_A6XX_GRAS_DBG_ECO_CNTL, 0x880);
+-   WRITE(REG_A6XX_HLSQ_DBG_ECO_CNTL, 0x80000);
+-   WRITE(REG_A6XX_SP_CHICKEN_BITS, 0x1430);
++   WRITE(REG_A6XX_VPC_DBG_ECO_CNTL, screen->info->a6xx.magic.VPC_DBG_ECO_CNTL);
++   WRITE(REG_A6XX_GRAS_DBG_ECO_CNTL, screen->info->a6xx.magic.GRAS_DBG_ECO_CNTL);
++   WRITE(REG_A6XX_HLSQ_DBG_ECO_CNTL, screen->info->a6xx.magic.HLSQ_DBG_ECO_CNTL);
++   WRITE(REG_A6XX_SP_CHICKEN_BITS, screen->info->a6xx.magic.SP_CHICKEN_BITS);
+    WRITE(REG_A6XX_SP_IBO_COUNT, 0);
+    WRITE(REG_A6XX_SP_UNKNOWN_B182, 0);
+    WRITE(REG_A6XX_HLSQ_SHARED_CONSTS, 0);
+-   WRITE(REG_A6XX_UCHE_UNKNOWN_0E12, 0x3200000);
+-   WRITE(REG_A6XX_UCHE_CLIENT_PF, 4);
+-   WRITE(REG_A6XX_RB_UNKNOWN_8E01, 0x1);
++   WRITE(REG_A6XX_UCHE_UNKNOWN_0E12, screen->info->a6xx.magic.UCHE_UNKNOWN_0E12);
++   WRITE(REG_A6XX_UCHE_CLIENT_PF, screen->info->a6xx.magic.UCHE_CLIENT_PF);
++   WRITE(REG_A6XX_RB_UNKNOWN_8E01, screen->info->a6xx.magic.RB_UNKNOWN_8E01);
+    WRITE(REG_A6XX_SP_MODE_CONTROL,
+          A6XX_SP_MODE_CONTROL_CONSTANT_DEMOTION_ENABLE | 4);
+    WRITE(REG_A6XX_VFD_ADD_OFFSET, A6XX_VFD_ADD_OFFSET_VERTEX);
+    WRITE(REG_A6XX_RB_UNKNOWN_8811, 0x00000010);
+-   WRITE(REG_A6XX_PC_MODE_CNTL, 0x1f);
++   WRITE(REG_A6XX_PC_MODE_CNTL, screen->info->a6xx.magic.PC_MODE_CNTL);
+ 
+    WRITE(REG_A6XX_GRAS_LRZ_PS_INPUT_CNTL, 0);
+    WRITE(REG_A6XX_GRAS_SAMPLE_CNTL, 0);
+@@ -795,7 +795,7 @@ fd6_emit_restore(struct fd_batch *batch, struct fd_ringbuffer *ring)
+    WRITE(REG_A6XX_GRAS_SAMPLE_CONFIG, 0);
+    WRITE(REG_A6XX_RB_Z_BOUNDS_MIN, 0);
+    WRITE(REG_A6XX_RB_Z_BOUNDS_MAX, 0);
+-   WRITE(REG_A6XX_HLSQ_CONTROL_5_REG, 0xfc);
++   WRITE(REG_A6XX_HLSQ_CONTROL_5_REG, 0xfcfc);
+ 
+    emit_marker6(ring, 7);
+ 
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_gmem.c b/src/gallium/drivers/freedreno/a6xx/fd6_gmem.c
+index 5542ff82f97ce7449743b355fd932ee7577d09ad..c735d4d9fdc651bb2a67fb64930c50241c2b4474 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_gmem.c
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_gmem.c
+@@ -452,8 +452,8 @@ update_vsc_pipe(struct fd_batch *batch)
+ 
+    OUT_REG(ring, A6XX_VSC_BIN_COUNT(.nx = gmem->nbins_x, .ny = gmem->nbins_y));
+ 
+-   OUT_PKT4(ring, REG_A6XX_VSC_PIPE_CONFIG_REG(0), 32);
+-   for (i = 0; i < 32; i++) {
++   OUT_PKT4(ring, REG_A6XX_VSC_PIPE_CONFIG_REG(0), gmem->num_vsc_pipes);
++   for (i = 0; i < gmem->num_vsc_pipes; i++) {
+       const struct fd_vsc_pipe *pipe = &gmem->vsc_pipe[i];
+       OUT_RING(ring, A6XX_VSC_PIPE_CONFIG_REG_X(pipe->x) |
+                         A6XX_VSC_PIPE_CONFIG_REG_Y(pipe->y) |
+@@ -767,8 +767,9 @@ emit_binning_pass(struct fd_batch *batch) assert_dt
+ 
+    OUT_REG(ring,
+            A6XX_RB_CCU_CNTL(.color_offset = screen->ccu_offset_gmem,
+-                            .gmem = true,
+-                            .concurrent_resolve = screen->info->a6xx.concurrent_resolve));
++                            .gmem = screen->gpu_id != 610,
++                            .concurrent_resolve = screen->info->a6xx.concurrent_resolve,
++                            .unk21 = screen->gpu_id == 610, .unk0 = screen->gpu_id == 610));
+ }
+ 
+ static void
+@@ -835,8 +836,9 @@ fd6_emit_tile_init(struct fd_batch *batch) assert_dt
+    fd_wfi(batch, ring);
+    OUT_REG(ring,
+            A6XX_RB_CCU_CNTL(.color_offset = screen->ccu_offset_gmem,
+-                            .gmem = true,
+-                            .concurrent_resolve = screen->info->a6xx.concurrent_resolve));
++                            .gmem = screen->gpu_id != 610,
++                            .concurrent_resolve = screen->info->a6xx.concurrent_resolve,
++                            .unk21 = screen->gpu_id == 610, .unk0 = screen->gpu_id == 610));
+ 
+    emit_zs(ring, pfb->zsbuf, batch->gmem_state);
+    emit_mrt(ring, pfb, batch->gmem_state);
+@@ -1616,7 +1618,9 @@ fd6_emit_sysmem_prep(struct fd_batch *batch) assert_dt
+    fd6_cache_inv(batch, ring);
+ 
+    fd_wfi(batch, ring);
+-   OUT_REG(ring, A6XX_RB_CCU_CNTL(.color_offset = screen->ccu_offset_bypass));
++   // TODO: BIT21 causes garbage, BIT0 doesn't, figure out if it's necessary though
++   OUT_REG(ring, A6XX_RB_CCU_CNTL(.color_offset = screen->ccu_offset_bypass,
++           .unk0 = screen->gpu_id == 610));
+ 
+    /* enable stream-out, with sysmem there is only one pass: */
+    OUT_REG(ring, A6XX_VPC_SO_DISABLE(false));
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_program.c b/src/gallium/drivers/freedreno/a6xx/fd6_program.c
+index 1b1eee0c570f4655e57760f21cb0e00ed82cfe57..7d5424683b5635bdfed0705dea961d497f5530e1 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_program.c
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_program.c
+@@ -398,8 +398,8 @@ tex_opc_to_prefetch_cmd(opc_t tex_opc)
+ }
+ 
+ static void
+-setup_stateobj(struct fd_ringbuffer *ring, struct fd_context *ctx,
+-               struct fd6_program_state *state,
++setup_stateobj(struct fd_screen *screen, struct fd_ringbuffer *ring,
++               struct fd_context *ctx, struct fd6_program_state *state,
+                const struct ir3_cache_key *cache_key,
+                bool binning_pass) assert_dt
+ {
+@@ -865,7 +865,7 @@ setup_stateobj(struct fd_ringbuffer *ring, struct fd_context *ctx,
+                      A6XX_PC_VS_OUT_CNTL_CLIP_MASK(clip_cull_mask));
+ 
+    OUT_PKT4(ring, REG_A6XX_HLSQ_CONTROL_1_REG, 5);
+-   OUT_RING(ring, 0x7); /* XXX */
++   OUT_RING(ring, screen->info->a6xx.magic.HLSQ_CONTROL_1_REG_MODE); /* XXX */
+    OUT_RING(ring, A6XX_HLSQ_CONTROL_2_REG_FACEREGID(face_regid) |
+                      A6XX_HLSQ_CONTROL_2_REG_SAMPLEID(samp_id_regid) |
+                      A6XX_HLSQ_CONTROL_2_REG_SAMPLEMASK(smask_in_regid) |
+@@ -1337,8 +1337,8 @@ fd6_program_create(void *data, struct ir3_shader_variant *bs,
+    }
+ 
+    setup_config_stateobj(ctx, state);
+-   setup_stateobj(state->binning_stateobj, ctx, state, key, true);
+-   setup_stateobj(state->stateobj, ctx, state, key, false);
++   setup_stateobj(screen, state->binning_stateobj, ctx, state, key, true);
++   setup_stateobj(screen, state->stateobj, ctx, state, key, false);
+    state->interp_stateobj = create_interp_stateobj(ctx, state);
+ 
+    const struct ir3_stream_output_info *stream_output =
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_screen.c b/src/gallium/drivers/freedreno/a6xx/fd6_screen.c
+index 94b3a5eb57048af1223a1296c5fa671732e45a92..b83846df370ad1143da722ec1d77308479bf3daf 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_screen.c
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_screen.c
+@@ -154,8 +154,11 @@ fd6_screen_init(struct pipe_screen *pscreen)
+ 
+    screen->max_rts = A6XX_MAX_RENDER_TARGETS;
+ 
+-   screen->ccu_offset_bypass = screen->info->num_ccu * A6XX_CCU_DEPTH_SIZE;
+-   screen->ccu_offset_gmem = (screen->gmemsize_bytes -
++   screen->ccu_offset_bypass = screen->info->a6xx.ccu_offset_bypass;
++   if (screen->info->a6xx.ccu_offset_gmem)
++      screen->ccu_offset_gmem = screen->info->a6xx.ccu_offset_gmem;
++   else
++      screen->ccu_offset_gmem = (screen->gmemsize_bytes -
+          screen->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
+ 
+    /* Currently only FB_READ forces GMEM path, mostly because we'd have to

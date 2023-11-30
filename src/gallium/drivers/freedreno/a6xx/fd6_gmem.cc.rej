@@ -1,0 +1,12 @@
+diff a/src/gallium/drivers/freedreno/a6xx/fd6_gmem.cc b/src/gallium/drivers/freedreno/a6xx/fd6_gmem.cc	(rejected hunks)
+@@ -494,10 +494,6 @@ update_render_cntl(struct fd_batch *batch, struct pipe_framebuffer_state *pfb,
+    }
+ }
+ 
+-/* extra size to store VSC_DRAW_STRM_SIZE: */
+-#define VSC_DRAW_STRM_SIZE(pitch) ((pitch)*32 + 0x100)
+-#define VSC_PRIM_STRM_SIZE(pitch) ((pitch)*32)
+-
+ static void
+ update_vsc_pipe(struct fd_batch *batch)
+ {

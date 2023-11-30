@@ -131,6 +131,13 @@ class A6xxGPUInfo(GPUInfo):
         self.a6xx.has_cp_reg_write = True
         self.a6xx.has_8bpp_ubwc = True
 
+        # Can't use default value for argument using another argument..
+        if ccu_offset_bypass > 0:
+            self.a6xx.ccu_offset_bypass = ccu_offset_bypass
+        else:
+            self.a6xx.ccu_offset_bypass = num_ccu * A6XX_CCU_DEPTH_SIZE
+        self.a6xx.ccu_offset_gmem = ccu_offset_gmem
+
         for name, val in template.items():
             if name == "magic": # handled above
                 continue
@@ -265,6 +272,33 @@ a6xx_gen4 = dict(
     )
 
 add_gpus([
+        GPUId(610),
+    ], A6xxGPUInfo(
+        a6xx_gen1,
+        num_sp_cores = 1,
+        num_ccu = 1,
+        magic_regs = dict(
+            PC_POWER_CNTL = 0,
+            TPL1_DBG_ECO_CNTL = 0,
+            GRAS_DBG_ECO_CNTL = 0,
+            SP_CHICKEN_BITS = 0x400,
+            UCHE_CLIENT_PF = 0x00000004,
+            PC_MODE_CNTL = 0xf,
+            SP_DBG_ECO_CNTL = 0x0,
+            RB_DBG_ECO_CNTL = 0x04100000,
+            RB_DBG_ECO_CNTL_blit = 0x04100000,
+            HLSQ_DBG_ECO_CNTL = 0,
+            RB_UNKNOWN_8E01 = 0x00000001,
+            VPC_DBG_ECO_CNTL = 0x0,
+            UCHE_UNKNOWN_0E12 = 0x13200000,
+            HLSQ_CONTROL_1_REG_MODE = 0x3,
+        ),
+        num_vsc_pipes = 16,
+        ccu_offset_bypass = 0x2000,
+        ccu_offset_gmem = 0x20000,
+    ))
+
+add_gpus([
         GPUId(615),
         GPUId(616),
         GPUId(618),
@@ -287,7 +321,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x00080000,
             RB_UNKNOWN_8E01 = 0x00000001,
             VPC_DBG_ECO_CNTL = 0x0,
-            UCHE_UNKNOWN_0E12 = 0x00000001
+            UCHE_UNKNOWN_0E12 = 0x00000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 
@@ -311,7 +346,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x0,
             RB_UNKNOWN_8E01 = 0x0,
             VPC_DBG_ECO_CNTL = 0x02000000,
-            UCHE_UNKNOWN_0E12 = 0x00000001
+            UCHE_UNKNOWN_0E12 = 0x00000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 
@@ -335,7 +371,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x00080000,
             RB_UNKNOWN_8E01 = 0x00000001,
             VPC_DBG_ECO_CNTL = 0x0,
-            UCHE_UNKNOWN_0E12 = 0x10000001
+            UCHE_UNKNOWN_0E12 = 0x10000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 
@@ -359,7 +396,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x0,
             RB_UNKNOWN_8E01 = 0x00000001,
             VPC_DBG_ECO_CNTL = 0x02000000,
-            UCHE_UNKNOWN_0E12 = 0x00000001
+            UCHE_UNKNOWN_0E12 = 0x00000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 
@@ -383,7 +421,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x0,
             RB_UNKNOWN_8E01 = 0x00000001,
             VPC_DBG_ECO_CNTL = 0x02000000,
-            UCHE_UNKNOWN_0E12 = 0x00000001
+            UCHE_UNKNOWN_0E12 = 0x00000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 
@@ -408,7 +447,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x0,
             RB_UNKNOWN_8E01 = 0x0,
             VPC_DBG_ECO_CNTL = 0x02000000,
-            UCHE_UNKNOWN_0E12 = 0x00000001
+            UCHE_UNKNOWN_0E12 = 0x00000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 
@@ -436,7 +476,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x0,
             RB_UNKNOWN_8E01 = 0x0,
             VPC_DBG_ECO_CNTL = 0x02000000,
-            UCHE_UNKNOWN_0E12 = 0x00000001
+            UCHE_UNKNOWN_0E12 = 0x00000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 
@@ -460,7 +501,8 @@ add_gpus([
             HLSQ_DBG_ECO_CNTL = 0x0,
             RB_UNKNOWN_8E01 = 0x0,
             VPC_DBG_ECO_CNTL = 0x02000000,
-            UCHE_UNKNOWN_0E12 = 0x00000001
+            UCHE_UNKNOWN_0E12 = 0x00000001,
+            HLSQ_CONTROL_1_REG_MODE = 0x7,
         )
     ))
 

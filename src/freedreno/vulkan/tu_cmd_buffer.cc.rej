@@ -1,0 +1,132 @@
+diff a/src/freedreno/vulkan/tu_cmd_buffer.cc b/src/freedreno/vulkan/tu_cmd_buffer.cc	(rejected hunks)
+@@ -87,6 +87,7 @@ static void
+ tu6_lazy_emit_vsc(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+ {
+    struct tu_device *dev = cmd->device;
++   uint32_t num_vsc_pipes = dev->physical_device->info->num_vsc_pipes;
+ 
+    /* VSC buffers:
+     * use vsc pitches from the largest values used so far with this device
+@@ -114,18 +115,19 @@ tu6_lazy_emit_vsc(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    mtx_unlock(&dev->mutex);
+ 
+    struct tu_bo *vsc_bo;
+-   uint32_t size0 = cmd->vsc_prim_strm_pitch * MAX_VSC_PIPES +
+-                    cmd->vsc_draw_strm_pitch * MAX_VSC_PIPES;
++   uint32_t size0 = cmd->vsc_prim_strm_pitch * num_vsc_pipes +
++                    cmd->vsc_draw_strm_pitch * num_vsc_pipes;
+ 
+-   tu_get_scratch_bo(dev, size0 + MAX_VSC_PIPES * 4, &vsc_bo);
++   tu_get_scratch_bo(dev, size0 + num_vsc_pipes * 4, &vsc_bo);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_VSC_DRAW_STRM_SIZE_ADDRESS(.bo = vsc_bo, .bo_offset = size0));
+    tu_cs_emit_regs(cs,
+                    A6XX_VSC_PRIM_STRM_ADDRESS(.bo = vsc_bo));
+-   tu_cs_emit_regs(cs,
+-                   A6XX_VSC_DRAW_STRM_ADDRESS(.bo = vsc_bo,
+-                                              .bo_offset = cmd->vsc_prim_strm_pitch * MAX_VSC_PIPES));
++   tu_cs_emit_regs(
++      cs, A6XX_VSC_DRAW_STRM_ADDRESS(.bo = vsc_bo,
++                                     .bo_offset = cmd->vsc_prim_strm_pitch *
++                                                  num_vsc_pipes));
+ 
+    cmd->vsc_initialized = true;
+ }
+@@ -200,15 +202,22 @@ tu_emit_cache_flush_renderpass(struct tu_cmd_buffer *cmd_buffer)
+ }
+ 
+ static struct fd_reg_pair
+-rb_ccu_cntl(uint32_t color_offset, bool gmem)
++rb_ccu_cntl(struct tu_device *dev, uint32_t color_offset)
+ {
+    uint32_t color_offset_hi = color_offset >> 21;
+    color_offset &= 0x1fffff;
+-   return A6XX_RB_CCU_CNTL(
+-         .color_offset_hi = color_offset_hi,
+-         .gmem = gmem,
+-         .color_offset = color_offset,
+-   );
++   enum a6xx_ccu_color_cache_size cache_size =
++      (a6xx_ccu_color_cache_size)(dev->physical_device->info->a6xx.gmem_ccu_color_cache_fraction);
++   bool concurrent_resolve = dev->physical_device->info->a6xx.concurrent_resolve;
++   return  A6XX_RB_CCU_CNTL(.gmem_fast_clear_disable =
++         !dev->physical_device->info->a6xx.has_gmem_fast_clear,
++      .concurrent_resolve = concurrent_resolve,
++      .depth_offset_hi = 0,
++      .color_offset_hi = color_offset_hi,
++      .depth_cache_size = 0,
++      .depth_offset = 0,
++      .color_cache_size = cache_size,
++      .color_offset = color_offset);
+ }
+ 
+ /* Cache flushes for things that use the color/depth read/write path (i.e.
+@@ -252,12 +261,13 @@ tu_emit_cache_flush_ccu(struct tu_cmd_buffer *cmd_buffer,
+    tu6_emit_flushes(cmd_buffer, cs, &cmd_buffer->state.cache);
+ 
+    if (ccu_state != cmd_buffer->state.ccu_state) {
+-      struct tu_physical_device *phys_dev = cmd_buffer->device->physical_device;
++      struct tu_physical_device *phys_dev =
++         cmd_buffer->device->physical_device;
+       tu_cs_emit_regs(cs,
+-                      rb_ccu_cntl(ccu_state == TU_CMD_CCU_GMEM ?
+-                                  phys_dev->ccu_offset_gmem :
+-                                  phys_dev->ccu_offset_bypass,
+-                                  ccu_state == TU_CMD_CCU_GMEM));
++         rb_ccu_cntl(cmd_buffer->device,
++         ccu_state == TU_CMD_CCU_GMEM ?
++            phys_dev->ccu_offset_gmem :
++            phys_dev->ccu_offset_bypass));
+       cmd_buffer->state.ccu_state = ccu_state;
+    }
+ }
+@@ -1045,7 +1055,7 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    cmd->state.cache.pending_flush_bits &=
+       ~(TU_CMD_FLAG_WAIT_FOR_IDLE | TU_CMD_FLAG_CACHE_INVALIDATE);
+ 
+-   tu_cs_emit_regs(cs, rb_ccu_cntl(phys_dev->ccu_offset_bypass, false));
++   tu_cs_emit_regs(cs, rb_ccu_cntl(dev, phys_dev->ccu_offset_bypass));
+    cmd->state.ccu_state = TU_CMD_CCU_SYSMEM;
+    tu_cs_emit_write_reg(cs, REG_A6XX_RB_DBG_ECO_CNTL,
+                         phys_dev->info->a6xx.magic.RB_DBG_ECO_CNTL);
+@@ -1118,7 +1128,7 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+ 
+    tu_cs_emit_write_reg(cs, REG_A6XX_VFD_MODE_CNTL, 0x00000000);
+ 
+-   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, 0x0000001f);
++   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, phys_dev->info->a6xx.magic.PC_MODE_CNTL);
+ 
+    tu_cs_emit_regs(cs, A6XX_RB_ALPHA_CONTROL()); /* always disable alpha test */
+    tu_cs_emit_regs(cs, A6XX_RB_DITHER_CNTL()); /* always disable dithering */
+@@ -1136,7 +1146,9 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+ }
+ 
+ static void
+-update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
++update_vsc_pipe(struct tu_cmd_buffer *cmd,
++                struct tu_cs *cs,
++                uint32_t num_vsc_pipes)
+ {
+    const struct tu_tiling_config *tiling = cmd->state.tiling;
+ 
+@@ -1148,8 +1160,8 @@ update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+                    A6XX_VSC_BIN_COUNT(.nx = tiling->tile_count.width,
+                                       .ny = tiling->tile_count.height));
+ 
+-   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), 32);
+-   tu_cs_emit_array(cs, tiling->pipe_config, 32);
++   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), num_vsc_pipes);
++   tu_cs_emit_array(cs, tiling->pipe_config, num_vsc_pipes);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_VSC_PRIM_STRM_PITCH(cmd->vsc_prim_strm_pitch),
+@@ -1236,7 +1248,7 @@ tu6_emit_binning_pass(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    tu_cs_emit_regs(cs,
+                    A6XX_VFD_MODE_CNTL(.render_mode = BINNING_PASS));
+ 
+-   update_vsc_pipe(cmd, cs);
++   update_vsc_pipe(cmd, cs, phys_dev->info->num_vsc_pipes);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_PC_POWER_CNTL(phys_dev->info->a6xx.magic.PC_POWER_CNTL));

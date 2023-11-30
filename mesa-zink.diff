@@ -1,0 +1,244 @@
+diff --git a/meson.build b/meson.build
+index 24e42dd..ff251c8 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1882,9 +1882,9 @@ if dep_unwind.found()
+ endif
+ 
+ if with_osmesa
+-  if not with_gallium_softpipe
+-    error('OSMesa gallium requires gallium softpipe or llvmpipe.')
+-  endif
++#  if not with_gallium_softpipe
++#    error('OSMesa gallium requires gallium softpipe or llvmpipe.')
++#  endif
+   if host_machine.system() == 'windows'
+     osmesa_lib_name = 'osmesa'
+   else
+diff --git a/src/android_stub/meson.build b/src/android_stub/meson.build
+index 6097ae8..0e3f27b 100644
+--- a/src/android_stub/meson.build
++++ b/src/android_stub/meson.build
+@@ -1,6 +1,6 @@
+ if with_android_stub
+   stub_libs = []
+-  lib_names = ['cutils', 'hardware', 'log', 'nativewindow', 'sync']
++  lib_names = ['hardware', 'log', 'nativewindow', 'sync']
+ 
+   if with_libbacktrace
+     lib_names += ['backtrace']
+diff --git a/src/gallium/auxiliary/target-helpers/inline_sw_helper.h b/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
+index d821008..28f36dd 100644
+--- a/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
++++ b/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
+@@ -33,6 +33,10 @@
+ #include "asahi/agx_public.h"
+ #endif
+ 
++#ifdef GALLIUM_ZINK
++#include "zink/zink_public.h"
++#endif
++
+ static inline struct pipe_screen *
+ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
+ {
+@@ -61,6 +65,11 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
+       screen = zink_create_screen(winsys, NULL);
+ #endif
+ 
++#if defined(GALLIUM_ZINK)
++   if (screen == NULL && strcmp(driver, "zink") == 0)
++      screen = zink_create_screen(winsys, NULL);
++#endif
++
+ #if defined(GALLIUM_D3D12)
+    if (screen == NULL && strcmp(driver, "d3d12") == 0)
+       screen = d3d12_create_dxcore_screen(winsys, NULL);
+diff --git a/src/gallium/drivers/zink/zink_bo.c b/src/gallium/drivers/zink/zink_bo.c
+index a69a050..15dfab6 100644
+--- a/src/gallium/drivers/zink/zink_bo.c
++++ b/src/gallium/drivers/zink/zink_bo.c
+@@ -35,7 +35,7 @@
+ #include "zink_screen.h"
+ #include "util/u_hash_table.h"
+ 
+-#if !defined(__APPLE__) && !defined(_WIN32)
++#if !defined(__APPLE__) && !defined(_WIN32) && !defined(__ANDROID__)
+ #define ZINK_USE_DMABUF
+ #include <xf86drm.h>
+ #endif
+diff --git a/src/gallium/drivers/zink/zink_screen.c b/src/gallium/drivers/zink/zink_screen.c
+index 4df6fc8..d279f2a 100644
+--- a/src/gallium/drivers/zink/zink_screen.c
++++ b/src/gallium/drivers/zink/zink_screen.c
+@@ -253,9 +253,11 @@ disk_cache_init(struct zink_screen *screen)
+    /* Hash in the zink driver build. */
+    const struct build_id_note *note =
+        build_id_find_nhdr_for_addr(disk_cache_init);
+-   unsigned build_id_len = build_id_length(note);
+-   assert(note && build_id_len == 20); /* sha1 */
+-   _mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
++   if(note != NULL) {
++   	unsigned build_id_len = build_id_length(note);
++   	assert(note && build_id_len == 20); /* sha1 */
++   	_mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
++   }
+ #endif
+ 
+    /* Hash in the Vulkan pipeline cache UUID to identify the combination of
+@@ -2545,7 +2547,12 @@ init_driver_workarounds(struct zink_screen *screen)
+       mesa_loge("Cannot specify ZINK_DEBUG=rp and ZINK_DEBUG=norp");
+       abort();
+    }
++   
++   // Comment in Mesa 23.0.4:
++   /* once more testing has been done, use the #if 0 block */
++   // Seems like there was not enough testing, reverting to legacy behaviour
+ 
++#if 0
+    /* these drivers benefit from renderpass optimization */
+    switch (screen->info.driver_props.driverID) {
+    case VK_DRIVER_ID_MESA_LLVMPIPE:
+@@ -2562,6 +2569,7 @@ init_driver_workarounds(struct zink_screen *screen)
+    default:
+       break;
+    }
++#endif
+    if (zink_debug & ZINK_DEBUG_RP)
+       screen->driver_workarounds.track_renderpasses = true;
+    else if (zink_debug & ZINK_DEBUG_NORP)
+@@ -2704,7 +2712,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config)
+ 
+    u_trace_state_init();
+ 
+-   screen->loader_lib = util_dl_open(VK_LIBNAME);
++   screen->loader_lib = (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);
+    if (!screen->loader_lib)
+       goto fail;
+ 
+@@ -2715,7 +2723,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config)
+       goto fail;
+ 
+    screen->instance_info.loader_version = zink_get_loader_version(screen);
+-   if (config) {
++   /*if (config) {
+       driParseConfigFiles(config->options, config->options_info, 0, "zink",
+                           NULL, NULL, NULL, 0, NULL, 0);
+       screen->driconf.dual_color_blend_by_location = driQueryOptionb(config->options, "dual_color_blend_by_location");
+@@ -2723,7 +2731,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config)
+       //screen->driconf.inline_uniforms = driQueryOptionb(config->options, "radeonsi_inline_uniforms");
+       screen->driconf.emulate_point_smooth = driQueryOptionb(config->options, "zink_emulate_point_smooth");
+       screen->instance_info.disable_xcb_surface = driQueryOptionb(config->options, "disable_xcb_surface");
+-   }
++   }*/
+ 
+    if (!zink_create_instance(screen))
+       goto fail;
+diff --git a/src/gallium/targets/osmesa/meson.build b/src/gallium/targets/osmesa/meson.build
+index d16e785..0652936 100644
+--- a/src/gallium/targets/osmesa/meson.build
++++ b/src/gallium/targets/osmesa/meson.build
+@@ -55,10 +55,10 @@ libosmesa = shared_library(
+     libmesa, libgallium, libws_null, osmesa_link_with,
+   ],
+   dependencies : [
+-    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_swrast
++    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_zink
+   ],
+   name_prefix : host_machine.system() == 'windows' ? '' : [],  # otherwise mingw will create libosmesa.dll
+-  soversion : host_machine.system() == 'windows' ? '' : '8',
++  soversion : '',
+   version : '8.0.0',
+   darwin_versions : '9.0.0',
+   install : true,
+diff --git a/src/util/os_misc.c b/src/util/os_misc.c
+index 6ae97b9..6898db0 100644
+--- a/src/util/os_misc.c
++++ b/src/util/os_misc.c
+@@ -128,62 +128,10 @@ os_log_message(const char *message)
+ #endif
+ }
+ 
+-#if DETECT_OS_ANDROID
+-#  include <ctype.h>
+-#  include "c11/threads.h"
+-
+-/**
+- * Get an option value from android's property system, as a fallback to
+- * getenv() (which is generally less useful on android due to processes
+- * typically being forked from the zygote.
+- *
+- * The option name used for getenv is translated into a property name
+- * by:
+- *
+- *  1) convert to lowercase
+- *  2) replace '_' with '.'
+- *  3) if necessary, prepend "mesa."
+- *
+- * For example:
+- *  - MESA_EXTENSION_OVERRIDE -> mesa.extension.override
+- *  - GALLIUM_HUD -> mesa.gallium.hud
+- *
+- */
+-static char *
+-os_get_android_option(const char *name)
+-{
+-   static thread_local char os_android_option_value[PROPERTY_VALUE_MAX];
+-   char key[PROPERTY_KEY_MAX];
+-   char *p = key, *end = key + PROPERTY_KEY_MAX;
+-   /* add "mesa." prefix if necessary: */
+-   if (strstr(name, "MESA_") != name)
+-      p += strlcpy(p, "mesa.", end - p);
+-   p += strlcpy(p, name, end - p);
+-   for (int i = 0; key[i]; i++) {
+-      if (key[i] == '_') {
+-         key[i] = '.';
+-      } else {
+-         key[i] = tolower(key[i]);
+-      }
+-   }
+-
+-   int len = property_get(key, os_android_option_value, NULL);
+-   if (len > 1) {
+-      return os_android_option_value;
+-   }
+-   return NULL;
+-}
+-#endif
+-
+ const char *
+ os_get_option(const char *name)
+ {
+    const char *opt = getenv(name);
+-#if DETECT_OS_ANDROID
+-   if (!opt) {
+-      opt = os_get_android_option(name);
+-   }
+-#endif
+    return opt;
+ }
+ 
+diff --git a/src/util/perf/cpu_trace.h b/src/util/perf/cpu_trace.h
+index a4ba4d7..4dbc30c 100644
+--- a/src/util/perf/cpu_trace.h
++++ b/src/util/perf/cpu_trace.h
+@@ -27,19 +27,6 @@
+          util_perfetto_trace_end(category);                                  \
+    } while (0)
+ 
+-/* NOTE: for now disable atrace for C++ to workaround a ndk bug with ordering
+- * between stdatomic.h and atomic.h.  See:
+- *
+- *   https://github.com/android/ndk/issues/1178
+- */
+-#elif defined(ANDROID) && !defined(__cplusplus)
+-
+-#include <cutils/trace.h>
+-
+-#define _MESA_TRACE_BEGIN(category, name)                                    \
+-   atrace_begin(ATRACE_TAG_GRAPHICS, name)
+-#define _MESA_TRACE_END(category) atrace_end(ATRACE_TAG_GRAPHICS)
+-
+ #else
+ 
+ #define _MESA_TRACE_BEGIN(category, name)

@@ -1,0 +1,1495 @@
+diff --git a/src/freedreno/.gitlab-ci/reference/crash.log b/src/freedreno/.gitlab-ci/reference/crash.log
+index bc3f72fec722f5b3873913d80954ff263b91685d..0e49ee36951b3007b968f8cf1b09a52c1350535e 100644
+--- a/src/freedreno/.gitlab-ci/reference/crash.log
++++ b/src/freedreno/.gitlab-ci/reference/crash.log
+@@ -1529,7 +1529,7 @@ registers:
+ 	00000000	0xa630: 00000000
+ 	00100000	RB_DBG_ECO_CNTL: 0x100000
+ 	00000001	RB_ADDR_MODE_CNTL: ADDR_64B
+-	00000000	RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0 }
++	00000000	RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0 }
+ 	00000004	RB_NC_MODE_CNTL: { LOWER_BIT = 2 | UPPER_BIT = 0 }
+ 	00000000	RB_PERFCTR_RB_SEL[0]+0: 00000000
+ 	00000000	RB_PERFCTR_RB_SEL[0x1]+0: 00000000
+@@ -7079,7 +7079,7 @@ WARNING: 64b discontinuity (no _LO dword for 890d)
+   - cluster-name: CLUSTER_SP_PS
+     - context: 0
+ 	00000001	HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+-	00000007	HLSQ_CONTROL_1_REG: 0x7
++	00000007	HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 	fcfcfcfc	HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+@@ -7106,7 +7106,7 @@ WARNING: 64b discontinuity (no _LO dword for 890d)
+ 	00000000	HLSQ_CS_BINDLESS_BASE[0x4].DESCRIPTOR: { DESC_SIZE = 0 | ADDR = 0 }
+     - context: 1
+ 	00000001	HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+-	00000007	HLSQ_CONTROL_1_REG: 0x7
++	00000007	HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 	fcfcfcfc	HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+diff --git a/src/freedreno/.gitlab-ci/reference/crash_prefetch.log b/src/freedreno/.gitlab-ci/reference/crash_prefetch.log
+index ddc5e36ccbbfc1fa22569501e83b3e06c4ed6b28..250218f81b78c3748da84b968fc153b31e8a1f12 100644
+--- a/src/freedreno/.gitlab-ci/reference/crash_prefetch.log
++++ b/src/freedreno/.gitlab-ci/reference/crash_prefetch.log
+@@ -1744,7 +1744,7 @@ registers:
+ 	00000000	0xa630: 00000000
+ 	00100000	RB_DBG_ECO_CNTL: 0x100000
+ 	00000001	RB_ADDR_MODE_CNTL: ADDR_64B
+-	08000000	RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x10000 }
++	08000000	RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x10000 }
+ 	00000002	RB_NC_MODE_CNTL: { LOWER_BIT = 1 | UPPER_BIT = 0 }
+ 	00000000	RB_PERFCTR_RB_SEL[0]+0: 00000000
+ 	00000000	RB_PERFCTR_RB_SEL[0x1]+0: 00000000
+@@ -2022,7 +2022,7 @@ got cmdszdw=83
+  +	00000000			RB_2D_SRC_SOLID_C3: 0
+ !+	00000001			RB_UNKNOWN_8E01: 0x1
+ !+	00100000			RB_DBG_ECO_CNTL: 0x100000
+-!+	08000000			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x10000 }
++!+	08000000			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x10000 }
+  +	00000000			VPC_UNKNOWN_9210: 0
+  +	00000000			VPC_UNKNOWN_9211: 0
+  +	00000000			VPC_POINT_COORD_INVERT: { 0 }
+@@ -2332,7 +2332,7 @@ got cmdszdw=83
+  +	00000000				RB_UNKNOWN_88F0: 0
+  +	00000001				RB_UNKNOWN_8E01: 0x1
+  +	00100000				RB_DBG_ECO_CNTL: 0x100000
+- +	08000000				RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x10000 }
++ +	08000000				RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x10000 }
+  +	00000000				VPC_UNKNOWN_9210: 0
+  +	00000000				VPC_UNKNOWN_9211: 0
+  +	00000000				VPC_POINT_COORD_INVERT: { 0 }
+@@ -3000,7 +3000,7 @@ got cmdszdw=83
+  +	00000000				HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000				HLSQ_GS_CNTL: { CONSTLEN = 0 }
+ !+	00000001				HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+-!+	00000007				HLSQ_CONTROL_1_REG: 0x7
++!+	00000007				HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ !+	fcfcfcfc				HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ !+	fcfcfcfc				HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ !+	0200fcfc				HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r0.x | ZWCOORDREGID = r0.z }
+@@ -3714,7 +3714,7 @@ got cmdszdw=83
+  +	00000000				HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000				HLSQ_GS_CNTL: { CONSTLEN = 0 }
+  +	00000001				HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+- +	00000007				HLSQ_CONTROL_1_REG: 0x7
++ +	00000007				HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+  +	fcfcfcfc				HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+  +	fcfcfcfc				HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+  +	0200fcfc				HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r0.x | ZWCOORDREGID = r0.z }
+@@ -4439,7 +4439,7 @@ got cmdszdw=83
+  +	00000000				HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000				HLSQ_GS_CNTL: { CONSTLEN = 0 }
+  +	00000001				HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+- +	00000007				HLSQ_CONTROL_1_REG: 0x7
++ +	00000007				HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+  +	fcfcfcfc				HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+  +	fcfcfcfc				HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+  +	0200fcfc				HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r0.x | ZWCOORDREGID = r0.z }
+@@ -5090,7 +5090,7 @@ ESTIMATED CRASH LOCATION!
+  +	00000000				HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000				HLSQ_GS_CNTL: { CONSTLEN = 0 }
+  +	00000001				HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+- +	00000007				HLSQ_CONTROL_1_REG: 0x7
++ +	00000007				HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+  +	fcfcfcfc				HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+  +	fcfcfcfc				HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+  +	0200fcfc				HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r0.x | ZWCOORDREGID = r0.z }
+@@ -5212,7 +5212,7 @@ ESTIMATED CRASH LOCATION!
+ !+	00000000			RB_2D_DST_PITCH: 0
+  +	00000001			RB_UNKNOWN_8E01: 0x1
+  +	00100000			RB_DBG_ECO_CNTL: 0x100000
+- +	08000000			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x10000 }
++ +	08000000			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x10000 }
+  +	00000000			VPC_UNKNOWN_9210: 0
+  +	00000000			VPC_UNKNOWN_9211: 0
+  +	00000000			VPC_POINT_COORD_INVERT: { 0 }
+@@ -18907,7 +18907,7 @@ WARNING: 64b discontinuity (no _LO dword for 890d)
+   - cluster-name: CLUSTER_SP_PS
+     - context: 0
+ 	00000001	HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+-	00000007	HLSQ_CONTROL_1_REG: 0x7
++	00000007	HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 	fcfcfcfc	HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 	0200fcfc	HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r0.x | ZWCOORDREGID = r0.z }
+@@ -18934,7 +18934,7 @@ WARNING: 64b discontinuity (no _LO dword for 890d)
+ 	00000000	HLSQ_CS_BINDLESS_BASE[0x4].DESCRIPTOR: { DESC_SIZE = 0 | ADDR = 0 }
+     - context: 1
+ 	00000001	HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+-	00000007	HLSQ_CONTROL_1_REG: 0x7
++	00000007	HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 	fcfcfcfc	HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 	0200fcfc	HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r0.x | ZWCOORDREGID = r0.z }
+diff --git a/src/freedreno/.gitlab-ci/reference/dEQP-VK.draw.indirect_draw.indexed.indirect_draw_count.triangle_list.log b/src/freedreno/.gitlab-ci/reference/dEQP-VK.draw.indirect_draw.indexed.indirect_draw_count.triangle_list.log
+index f01df22a01af2f1477f826c6539457e644ddf7ac..d573efcf3f95c1ce1184ba052a3f6b5ca39a24e6 100644
+--- a/src/freedreno/.gitlab-ci/reference/dEQP-VK.draw.indirect_draw.indexed.indirect_draw_count.triangle_list.log
++++ b/src/freedreno/.gitlab-ci/reference/dEQP-VK.draw.indirect_draw.indexed.indirect_draw_count.triangle_list.log
+@@ -12,7 +12,7 @@ cmdstream[0]: 265 dwords
+ 		opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
+ 0000000001058010:		0000: 70268000
+ 		write RB_CCU_CNTL (8e07)
+-			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x20000 }
++			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x20000 }
+ 0000000001058014:		0000: 408e0701 10000000
+ 		write RB_DBG_ECO_CNTL (8e04)
+ 			RB_DBG_ECO_CNTL: 0x100000
+@@ -310,7 +310,7 @@ cmdstream[0]: 265 dwords
+ !+	000000ff		RB_2D_SRC_SOLID_C3: 0xff
+  +	00000000		RB_UNKNOWN_8E01: 0
+ !+	00100000		RB_DBG_ECO_CNTL: 0x100000
+-!+	10000000		RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x20000 }
++!+	10000000		RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x20000 }
+  +	00000000		VPC_UNKNOWN_9107: { 0 }
+  +	00000000		VPC_UNKNOWN_9210: 0
+  +	00000000		VPC_UNKNOWN_9211: 0
+@@ -384,7 +384,7 @@ cmdstream[0]: 265 dwords
+ 		opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
+ 000000000105832c:		0000: 70268000
+ 		write RB_CCU_CNTL (8e07)
+-			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | GMEM | COLOR_OFFSET = 0xf8000 }
++			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_QUARTER | COLOR_OFFSET = 0xf8000 }
+ 0000000001058330:		0000: 408e0701 7c400000
+ 		write VPC_SO_DISABLE (9306)
+ 			VPC_SO_DISABLE: { 0 }
+@@ -485,7 +485,7 @@ cmdstream[0]: 265 dwords
+ !+	01012000			RB_BLIT_FLAG_DST: 0x1012000
+ !+	00004001			RB_BLIT_FLAG_DST_PITCH: { PITCH = 64 | ARRAY_PITCH = 1024 }
+ !+	00000003			RB_BLIT_INFO: { UNK0 | GMEM | CLEAR_MASK = 0 | LAST = 0 | BUFFER_ID = 0 }
+-!+	7c400000			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | GMEM | COLOR_OFFSET = 0xf8000 }
++!+	7c400000			RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_QUARTER | COLOR_OFFSET = 0xf8000 }
+ !+	00000000			VPC_SO_DISABLE: { 0 }
+  +	00000000			SP_TP_WINDOW_OFFSET: { X = 0 | Y = 0 }
+  +	00000000			SP_WINDOW_OFFSET: { X = 0 | Y = 0 }
+@@ -976,7 +976,7 @@ cmdstream[0]: 265 dwords
+ 						SP_FS_PREFETCH_CNTL: { COUNT = 0 | UNK6 = 0x1ff }
+ 0000000001054344:					0000: 40a99e01 00007fc0
+ 					write HLSQ_CONTROL_1_REG (b982)
+-						HLSQ_CONTROL_1_REG: 0x7
++						HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 						HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 						HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r0.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 						HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+@@ -1495,7 +1495,7 @@ cmdstream[0]: 265 dwords
+  +	00000000			HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000			HLSQ_GS_CNTL: { CONSTLEN = 0 }
+ !+	00000003			HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 | VARYINGS }
+-!+	00000007			HLSQ_CONTROL_1_REG: 0x7
++!+	00000007			HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ !+	fcfcfcfc			HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ !+	fcfcfc00			HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r0.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ !+	fcfcfcfc			HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+diff --git a/src/freedreno/.gitlab-ci/reference/fd-clouds.log b/src/freedreno/.gitlab-ci/reference/fd-clouds.log
+index cfd009a066e23769141d691c73874fb785b72596..c4c7ff0ef38f387626a41c782f1affe577de94e2 100644
+--- a/src/freedreno/.gitlab-ci/reference/fd-clouds.log
++++ b/src/freedreno/.gitlab-ci/reference/fd-clouds.log
+@@ -245,7 +245,7 @@ cmdstream[0]: 1023 dwords
+ 		opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
+ 0000000001d91278:		0000: 70268000
+ 		write RB_CCU_CNTL (8e07)
+-			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | GMEM | COLOR_OFFSET = 0xf8000 }
++			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_QUARTER | COLOR_OFFSET = 0xf8000 }
+ 0000000001d9127c:		0000: 408e0701 7c400004
+ 		write RB_DEPTH_BUFFER_INFO (8872)
+ 			RB_DEPTH_BUFFER_INFO: { DEPTH_FORMAT = DEPTH6_NONE }
+@@ -675,7 +675,7 @@ cmdstream[0]: 1023 dwords
+ 						PC_HS_OUT_CNTL: { STRIDE_IN_VPC = 0 | CLIP_MASK = 0 }
+ 0000000001121098:					0000: 409b0301 00000000
+ 					write HLSQ_CONTROL_1_REG (b982)
+-						HLSQ_CONTROL_1_REG: 0x7
++						HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 						HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 						HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 						HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+@@ -1007,7 +1007,7 @@ cmdstream[0]: 1023 dwords
+  +	00000000			RB_MRT_FLAG_BUFFER[0].PITCH: { PITCH = 0 | ARRAY_PITCH = 0 }
+ !+	00000001			RB_UNKNOWN_8E01: 0x1
+  +	00000000			RB_DBG_ECO_CNTL: 0
+-!+	7c400004			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | GMEM | COLOR_OFFSET = 0xf8000 }
++!+	7c400004			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_QUARTER | COLOR_OFFSET = 0xf8000 }
+ !+	00ffff00			VPC_VS_CLIP_CNTL: { CLIP_MASK = 0 | CLIP_DIST_03_LOC = 255 | CLIP_DIST_47_LOC = 255 }
+ !+	0000ffff			VPC_VS_LAYER_CNTL: { LAYERLOC = 255 | VIEWLOC = 255 }
+  +	00000000			VPC_UNKNOWN_9107: { 0 }
+@@ -1121,7 +1121,7 @@ cmdstream[0]: 1023 dwords
+  +	00000000			HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000			HLSQ_GS_CNTL: { CONSTLEN = 0 }
+ !+	00000001			HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+-!+	00000007			HLSQ_CONTROL_1_REG: 0x7
++!+	00000007			HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ !+	fcfcfcfc			HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ !+	fcfcfcfc			HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ !+	fcfcfcfc			HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+@@ -1498,7 +1498,7 @@ cmdstream[0]: 1023 dwords
+ 		opcode: CP_WAIT_FOR_IDLE (26) (1 dwords)
+ 0000000001d91938:		0000: 70268000
+ 		write RB_CCU_CNTL (8e07)
+-			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | GMEM | COLOR_OFFSET = 0xf8000 }
++			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_QUARTER | COLOR_OFFSET = 0xf8000 }
+ 0000000001d9193c:		0000: 408e0701 7c400004
+ 		write VPC_SO_DISABLE (9306)
+ 			VPC_SO_DISABLE: { DISABLE }
+@@ -1678,7 +1678,7 @@ cmdstream[0]: 1023 dwords
+  +	00000000			RB_BLIT_CLEAR_COLOR_DW2: 0
+  +	00000000			RB_BLIT_CLEAR_COLOR_DW3: 0
+ !+	000000f2			RB_BLIT_INFO: { GMEM | CLEAR_MASK = 0xf | LAST = 0 | BUFFER_ID = 0 }
+- +	7c400004			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | GMEM | COLOR_OFFSET = 0xf8000 }
++ +	7c400004			RB_CCU_CNTL: { CONCURRENT_RESOLVE | DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_QUARTER | COLOR_OFFSET = 0xf8000 }
+ !+	00000001			VPC_SO_DISABLE: { DISABLE }
+  +	00000001			PC_POWER_CNTL: 0x1
+ !+	00000000			VFD_MODE_CNTL: { RENDER_MODE = RENDERING_PASS }
+@@ -1959,7 +1959,7 @@ cmdstream[0]: 1023 dwords
+ 						PC_HS_OUT_CNTL: { STRIDE_IN_VPC = 0 | CLIP_MASK = 0 }
+ 0000000001120098:					0000: 409b0301 00000000
+ 					write HLSQ_CONTROL_1_REG (b982)
+-						HLSQ_CONTROL_1_REG: 0x7
++						HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 						HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 						HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 						HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r4.w | ZWCOORDREGID = r5.y }
+@@ -6727,7 +6727,7 @@ cmdstream[0]: 1023 dwords
+  +	00000000			HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000			HLSQ_GS_CNTL: { CONSTLEN = 0 }
+  +	00000001			HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 }
+- +	00000007			HLSQ_CONTROL_1_REG: 0x7
++ +	00000007			HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+  +	fcfcfcfc			HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+  +	fcfcfcfc			HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r63.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ !+	1513fcfc			HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r4.w | ZWCOORDREGID = r5.y }
+diff --git a/src/freedreno/.gitlab-ci/reference/prefetch-test.log b/src/freedreno/.gitlab-ci/reference/prefetch-test.log
+index 33e142de99951a6c81bf87687b70df730fea9e97..28e10b23bb1a0ba8f4b1bd5f21da363fbf1696ae 100644
+--- a/src/freedreno/.gitlab-ci/reference/prefetch-test.log
++++ b/src/freedreno/.gitlab-ci/reference/prefetch-test.log
+@@ -2323,7 +2323,7 @@ registers:
+ 	00000000	0xa630: 00000000
+ 	00000000	RB_DBG_ECO_CNTL: 0
+ 	00000001	RB_ADDR_MODE_CNTL: ADDR_64B
+-	08000000	RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x10000 }
++	08000000	RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x10000 }
+ 	00000002	RB_NC_MODE_CNTL: { LOWER_BIT = 1 | UPPER_BIT = 0 }
+ 	00000000	RB_PERFCTR_RB_SEL[0]+0: 00000000
+ 	00000000	RB_PERFCTR_RB_SEL[0x1]+0: 00000000
+@@ -3108,7 +3108,7 @@ got cmdszdw=438
+ !+	00004001				RB_MRT_FLAG_BUFFER[0].PITCH: { PITCH = 64 | ARRAY_PITCH = 1024 }
+ !+	10000ad30				RB_SAMPLE_COUNT_ADDR: 0x10000ad30
+ !+	00000000				RB_DBG_ECO_CNTL: 0
+-!+	08000000				RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_OFFSET = 0 | COLOR_OFFSET = 0x10000 }
++!+	08000000				RB_CCU_CNTL: { DEPTH_OFFSET_HI = 0 | COLOR_OFFSET_HI = 0 | DEPTH_CACHE_SIZE = 0 | DEPTH_OFFSET = 0 | COLOR_CACHE_SIZE = CCU_COLOR_CACHE_SIZE_FULL | COLOR_OFFSET = 0x10000 }
+ !+	00ffff00				VPC_VS_CLIP_CNTL: { CLIP_MASK = 0 | CLIP_DIST_03_LOC = 255 | CLIP_DIST_47_LOC = 255 }
+ !+	0000ffff				VPC_VS_LAYER_CNTL: { LAYERLOC = 255 | VIEWLOC = 255 }
+  +	00000000				VPC_UNKNOWN_9107: { 0 }
+@@ -3319,7 +3319,7 @@ got cmdszdw=438
+  +	00000000				HLSQ_DS_CNTL: { CONSTLEN = 0 }
+  +	00000000				HLSQ_GS_CNTL: { CONSTLEN = 0 }
+ !+	00000003				HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 | VARYINGS }
+-!+	00000007				HLSQ_CONTROL_1_REG: 0x7
++!+	00000007				HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ !+	fcfcfcfc				HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ !+	fcfcfc00				HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r0.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ !+	fcfcfcfc				HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+@@ -152886,7 +152886,7 @@ WARNING: 64b discontinuity (no _LO dword for 890d)
+   - cluster-name: CLUSTER_SP_PS
+     - context: 0
+ 	00000003	HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 | VARYINGS }
+-	00000007	HLSQ_CONTROL_1_REG: 0x7
++	00000007	HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 	fcfcfcfc	HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 	fcfcfc00	HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r0.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+@@ -152913,7 +152913,7 @@ WARNING: 64b discontinuity (no _LO dword for 890d)
+ 	00000000	HLSQ_CS_BINDLESS_BASE[0x4].DESCRIPTOR: { DESC_SIZE = 0 | ADDR = 0 }
+     - context: 1
+ 	00000003	HLSQ_FS_CNTL_0: { THREADSIZE = THREAD128 | VARYINGS }
+-	00000007	HLSQ_CONTROL_1_REG: 0x7
++	00000007	HLSQ_CONTROL_1_REG: { PRIMALLOCTHRESHOLD = 7 }
+ 	fcfcfcfc	HLSQ_CONTROL_2_REG: { FACEREGID = r63.x | SAMPLEID = r63.x | SAMPLEMASK = r63.x | CENTERRHW = r63.x }
+ 	fcfcfc00	HLSQ_CONTROL_3_REG: { IJ_PERSP_PIXEL = r0.x | IJ_LINEAR_PIXEL = r63.x | IJ_PERSP_CENTROID = r63.x | IJ_LINEAR_CENTROID = r63.x }
+ 	fcfcfcfc	HLSQ_CONTROL_4_REG: { IJ_PERSP_SAMPLE = r63.x | IJ_LINEAR_SAMPLE = r63.x | XYCOORDREGID = r63.x | ZWCOORDREGID = r63.x }
+diff --git a/src/freedreno/common/freedreno_dev_info.h b/src/freedreno/common/freedreno_dev_info.h
+index fae7ed4662e64160d4c7f1215acb491892725f4f..9debe894ea9c5af6db7f32052a803b04cb7aeaf8 100644
+--- a/src/freedreno/common/freedreno_dev_info.h
++++ b/src/freedreno/common/freedreno_dev_info.h
+@@ -49,6 +49,10 @@ struct fd_dev_info {
+ 
+    uint32_t num_vsc_pipes;
+ 
++   uint32_t cs_shared_mem_size;
++
++   int wave_granularity;
++
+    /* number of CCU is always equal to the number of SP */
+    union {
+       uint32_t num_sp_cores;
+@@ -68,6 +72,10 @@ struct fd_dev_info {
+           */
+          uint32_t instr_cache_size;
+ 
++         bool has_hw_multiview;
++
++         bool has_fs_tex_prefetch;
++
+          /* Whether the PC_MULTIVIEW_MASK register exists. */
+          bool supports_multiview_mask;
+ 
+@@ -153,7 +161,29 @@ struct fd_dev_info {
+           * different views.
+           */
+          bool has_per_view_viewport;
++         bool has_gmem_fast_clear;
++
++         /* Per CCU GMEM amount reserved for each of DEPTH and COLOR caches
++          * in sysmem rendering. */
++         uint32_t sysmem_per_ccu_cache_size;
++         /* Per CCU GMEM amount reserved for color cache used by GMEM resolves
++          * which require color cache (non-BLIT event case).
++          * The size is expressed as a fraction of ccu cache used by sysmem
++          * rendering. If a GMEM resolve requires color cache, the driver needs
++          * to make sure it will not overwrite pixel data in GMEM that is still
++          * needed.
++          */
++         /* see enum a6xx_ccu_color_cache_size */
++         uint32_t gmem_ccu_color_cache_fraction;
++
++         /* Corresponds to HLSQ_CONTROL_1_REG::PRIMALLOCTHRESHOLD */
++         uint32_t prim_alloc_threshold;
++
++         uint32_t vs_max_inputs_count;
++
++         bool supports_double_threadsize;
+ 
++         bool has_sampler_minmax;
+          struct {
+             uint32_t PC_POWER_CNTL;
+             uint32_t TPL1_DBG_ECO_CNTL;
+diff --git a/src/freedreno/common/freedreno_devices.py b/src/freedreno/common/freedreno_devices.py
+index 11a3fba35029466b991ed88aea60deeea2368bcb..c059125e74bbba762097a9bc992de2257e391898 100644
+--- a/src/freedreno/common/freedreno_devices.py
++++ b/src/freedreno/common/freedreno_devices.py
+@@ -36,6 +36,12 @@ class CHIP(Enum):
+     A6XX = 6
+     A7XX = 7
+ 
++class CCUColorCacheFraction(Enum):
++    FULL = 0
++    HALF = 1
++    QUARTER = 2
++    EIGHTH = 3
++
+ 
+ class State(object):
+     def __init__(self):
+@@ -102,7 +108,8 @@ class GPUInfo(Struct):
+     """
+     def __init__(self, chip, gmem_align_w, gmem_align_h,
+                  tile_align_w, tile_align_h,
+-                 tile_max_w, tile_max_h, num_vsc_pipes):
++                 tile_max_w, tile_max_h, num_vsc_pipes,
++                 cs_shared_mem_size, wave_granularity):
+         self.chip          = chip.value
+         self.gmem_align_w  = gmem_align_w
+         self.gmem_align_h  = gmem_align_h
+@@ -111,6 +118,8 @@ class GPUInfo(Struct):
+         self.tile_max_w    = tile_max_w
+         self.tile_max_h    = tile_max_h
+         self.num_vsc_pipes = num_vsc_pipes
++        self.cs_shared_mem_size = cs_shared_mem_size
++        self.wave_granularity = wave_granularity
+ 
+         s.gpu_infos.append(self)
+ 
+@@ -120,14 +129,15 @@ class A6xxGPUInfo(GPUInfo):
+        into distinct sub-generations.  The template parameter avoids
+        duplication of parameters that are unique to the sub-generation.
+     """
+-    def __init__(self, chip, template, num_ccu, tile_align_w, tile_align_h, magic_regs):
++    def __init__(self, chip, template, num_ccu, tile_align_w, tile_align_h, num_vsc_pipes, cs_shared_mem_size, wave_granularity, magic_regs):
+         super().__init__(chip, gmem_align_w = 16, gmem_align_h = 4,
+                          tile_align_w = tile_align_w,
+                          tile_align_h = tile_align_h,
+                          tile_max_w   = 1024, # max_bitfield_val(5, 0, 5)
+                          tile_max_h   = max_bitfield_val(14, 8, 4),
+-                         num_vsc_pipes = 32)
+-
++                         num_vsc_pipes = num_vsc_pipes,
++                         cs_shared_mem_size = cs_shared_mem_size,
++                         wave_granularity   = wave_granularity)
+         # The # of SP cores seems to always match # of CCU
+         self.num_sp_cores = num_ccu
+         self.num_ccu = num_ccu
+@@ -143,6 +153,18 @@ class A6xxGPUInfo(GPUInfo):
+         self.a6xx.has_cp_reg_write = True
+         self.a6xx.has_8bpp_ubwc = True
+ 
++        self.a6xx.has_gmem_fast_clear = True
++        self.a6xx.has_hw_multiview = True
++        self.a6xx.has_fs_tex_prefetch = True
++        self.a6xx.has_sampler_minmax = True
++
++        self.a6xx.sysmem_per_ccu_cache_size = 64 * 1024
++        self.a6xx.gmem_ccu_color_cache_fraction = CCUColorCacheFraction.QUARTER.value
++
++        self.a6xx.prim_alloc_threshold = 0x7
++
++        self.a6xx.vs_max_inputs_count = 32
++
+         for name, val in template.items():
+             if name == "magic": # handled above
+                 continue
+@@ -162,6 +184,8 @@ add_gpus([
+         tile_max_w   = 512,
+         tile_max_h   = ~0, # TODO
+         num_vsc_pipes = 8,
++        cs_shared_mem_size = 0,
++        wave_granularity = 2
+     ))
+ 
+ add_gpus([
+@@ -176,6 +200,8 @@ add_gpus([
+         tile_max_w   = 992, # max_bitfield_val(4, 0, 5)
+         tile_max_h   = max_bitfield_val(9, 5, 5),
+         num_vsc_pipes = 8,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2
+     ))
+ 
+ add_gpus([
+@@ -189,6 +215,8 @@ add_gpus([
+         tile_max_w   = 1024, # max_bitfield_val(4, 0, 5)
+         tile_max_h   = max_bitfield_val(9, 5, 5),
+         num_vsc_pipes = 8,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2
+     ))
+ 
+ add_gpus([
+@@ -206,6 +234,8 @@ add_gpus([
+         tile_max_w   = 1024, # max_bitfield_val(7, 0, 5)
+         tile_max_h   = max_bitfield_val(16, 9, 5),
+         num_vsc_pipes = 16,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2
+     ))
+ 
+ # a6xx can be divided into distinct sub-generations, where certain device-
+@@ -217,11 +247,25 @@ a6xx_gen1 = dict(
+         fibers_per_sp = 128 * 16,
+         reg_size_vec4 = 96,
+         instr_cache_size = 64,
+-        concurrent_resolve = True,
++        concurrent_resolve = False,
+         indirect_draw_wfm_quirk = True,
+         depth_bounds_require_depth_test_quirk = True,
++        supports_double_threadsize = True,
+     )
+ 
++# a605, a608, a610, 612
++a6xx_gen1_low = {**a6xx_gen1, **dict(
++        has_gmem_fast_clear = False,
++        reg_size_vec4 = 48,
++        has_hw_multiview = False,
++        has_sampler_minmax = False,
++        has_fs_tex_prefetch = False,
++        sysmem_per_ccu_cache_size = 8 * 1024,
++        gmem_ccu_color_cache_fraction = CCUColorCacheFraction.HALF.value,
++        vs_max_inputs_count = 16,
++        supports_double_threadsize = False,
++)}
++
+ # a640, a680:
+ a6xx_gen2 = dict(
+         fibers_per_sp = 128 * 4 * 16,
+@@ -233,6 +277,7 @@ a6xx_gen2 = dict(
+         depth_bounds_require_depth_test_quirk = True, # TODO: check if true
+         has_dp2acc = False, # TODO: check if true
+         has_8bpp_ubwc = False,
++        supports_double_threadsize = True,
+     )
+ 
+ # a650:
+@@ -255,6 +300,7 @@ a6xx_gen3 = dict(
+         enable_lrz_fast_clear = True,
+         lrz_track_quirk = True,
+         has_per_view_viewport = True,
++        supports_double_threadsize = True,
+     )
+ 
+ # a635, a660:
+@@ -281,8 +327,40 @@ a6xx_gen4 = dict(
+         enable_lrz_fast_clear = True,
+         has_lrz_dir_tracking = True,
+         has_per_view_viewport = True,
++        supports_double_threadsize = True,
+     )
+ 
++add_gpus([
++        GPUId(605), # TODO: Test it, based only on libwrapfake dumps
++        GPUId(608), # TODO: Test it, based only on libwrapfake dumps
++        GPUId(610),
++        GPUId(612), # TODO: Test it, based only on libwrapfake dumps
++    ], A6xxGPUInfo(
++        CHIP.A6XX,
++        a6xx_gen1_low,
++        num_ccu = 1,
++        tile_align_w = 32,
++        tile_align_h = 16,
++        num_vsc_pipes = 16,
++        cs_shared_mem_size = 16 * 1024,
++        wave_granularity = 1,
++        magic_regs = dict(
++            PC_POWER_CNTL = 0,
++            TPL1_DBG_ECO_CNTL = 0,
++            GRAS_DBG_ECO_CNTL = 0,
++            SP_CHICKEN_BITS = 0,
++            UCHE_CLIENT_PF = 0x00000004,
++            PC_MODE_CNTL = 0xf,
++            SP_DBG_ECO_CNTL = 0x0,
++            RB_DBG_ECO_CNTL = 0x04100000,
++            RB_DBG_ECO_CNTL_blit = 0x04100000,
++            HLSQ_DBG_ECO_CNTL = 0,
++            RB_UNKNOWN_8E01 = 0x00000001,
++            VPC_DBG_ECO_CNTL = 0x0,
++            UCHE_UNKNOWN_0E12 = 0x10000000,
++        ),
++    ))
++
+ add_gpus([
+         GPUId(615),
+         GPUId(616),
+@@ -294,6 +372,9 @@ add_gpus([
+         num_ccu = 1,
+         tile_align_w = 32,
+         tile_align_h = 32,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 0,
+             TPL1_DBG_ECO_CNTL = 0x00108000,
+@@ -319,6 +400,9 @@ add_gpus([
+         num_ccu = 1,
+         tile_align_w = 32,
+         tile_align_h = 16,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 0,
+             TPL1_DBG_ECO_CNTL = 0x01008000,
+@@ -344,6 +428,9 @@ add_gpus([
+         num_ccu = 2,
+         tile_align_w = 32,
+         tile_align_h = 16,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 1,
+             TPL1_DBG_ECO_CNTL = 0x00108000,
+@@ -369,6 +456,9 @@ add_gpus([
+         num_ccu = 2,
+         tile_align_w = 32,
+         tile_align_h = 16,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 1,
+             TPL1_DBG_ECO_CNTL = 0x00008000,
+@@ -394,6 +484,9 @@ add_gpus([
+         num_ccu = 4,
+         tile_align_w = 64,
+         tile_align_h = 32,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 3,
+             TPL1_DBG_ECO_CNTL = 0x00108000,
+@@ -419,6 +512,9 @@ add_gpus([
+         num_ccu = 3,
+         tile_align_w = 96,
+         tile_align_h = 16,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 2,
+             # this seems to be a chicken bit that fixes cubic filtering:
+@@ -449,6 +545,9 @@ add_gpus([
+         num_ccu = 2,
+         tile_align_w = 32,
+         tile_align_h = 16,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 1,
+             TPL1_DBG_ECO_CNTL = 0x05008000,
+@@ -474,6 +573,9 @@ add_gpus([
+         num_ccu = 3,
+         tile_align_w = 96,
+         tile_align_h = 16,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 2,
+             TPL1_DBG_ECO_CNTL = 0x05008000,
+@@ -499,6 +601,9 @@ add_gpus([
+         num_ccu = 8,
+         tile_align_w = 64,
+         tile_align_h = 32,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict(
+             PC_POWER_CNTL = 7,
+             TPL1_DBG_ECO_CNTL = 0x01008000,
+@@ -526,6 +631,9 @@ add_gpus([
+         num_ccu = 4,
+         tile_align_w = 64,
+         tile_align_h = 32,
++        num_vsc_pipes = 32,
++        cs_shared_mem_size = 32 * 1024,
++        wave_granularity = 2,
+         magic_regs = dict()
+     ))
+ 
+diff --git a/src/freedreno/ir3/ir3_a6xx.c b/src/freedreno/ir3/ir3_a6xx.c
+index c45f6108a32a345da4781d446c786b89c339afed..c5c3654ed225366cc1a027265ce0a01c51365a49 100644
+--- a/src/freedreno/ir3/ir3_a6xx.c
++++ b/src/freedreno/ir3/ir3_a6xx.c
+@@ -189,6 +189,7 @@ emit_intrinsic_atomic_ssbo(struct ir3_context *ctx, nir_intrinsic_instr *intr)
+ 
+    atomic->dsts[0]->wrmask = src1->dsts[0]->wrmask;
+    ir3_reg_tie(atomic->dsts[0], atomic->srcs[2]);
++   ir3_handle_nonuniform(atomic, intr);
+    struct ir3_instruction *split;
+    ir3_split_dest(b, &split, atomic, 0, 1);
+    return split;
+@@ -297,6 +298,7 @@ emit_intrinsic_atomic_image(struct ir3_context *ctx, nir_intrinsic_instr *intr)
+ 
+    atomic->dsts[0]->wrmask = src1->dsts[0]->wrmask;
+    ir3_reg_tie(atomic->dsts[0], atomic->srcs[2]);
++   ir3_handle_nonuniform(atomic, intr);
+    struct ir3_instruction *split;
+    ir3_split_dest(b, &split, atomic, 0, 1);
+    return split;
+diff --git a/src/freedreno/ir3/ir3_compiler.c b/src/freedreno/ir3/ir3_compiler.c
+index ffeb56452695cab6b6bdfd04db015d66ffc483a6..9bab3e24618009b4e60b4f8397f77262bd1666a8 100644
+--- a/src/freedreno/ir3/ir3_compiler.c
++++ b/src/freedreno/ir3/ir3_compiler.c
+@@ -145,16 +145,15 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+    compiler->is_64bit = fd_dev_64b(dev_id);
+    compiler->options = *options;
+ 
+-   /* All known GPU's have 32k local memory (aka shared) */
+-   compiler->local_mem_size = 32 * 1024;
+    /* TODO see if older GPU's were different here */
++   const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
+    compiler->branchstack_size = 64;
+-   compiler->wave_granularity = 2;
++   compiler->wave_granularity = dev_info->wave_granularity;
+    compiler->max_waves = 16;
+ 
+    compiler->max_variable_workgroup_size = 1024;
+ 
+-   const struct fd_dev_info *dev_info = fd_dev_info(compiler->dev_id);
++   compiler->local_mem_size = dev_info->cs_shared_mem_size;
+ 
+    if (compiler->gen >= 6) {
+       compiler->samgq_workaround = true;
+@@ -204,6 +203,8 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+       compiler->shared_consts_base_offset = 504;
+       compiler->shared_consts_size = 8;
+       compiler->geom_shared_consts_size_quirk = 16;
++
++      compiler->has_fs_tex_prefetch = dev_info->a6xx.has_fs_tex_prefetch;
+    } else {
+       compiler->max_const_pipeline = 512;
+       compiler->max_const_geom = 512;
+diff --git a/src/freedreno/ir3/ir3_compiler.h b/src/freedreno/ir3/ir3_compiler.h
+index 77360a8435b86bc2b9feb84dcc8848b4ba2efeeb..1730fa408094c1616f4958e71f5699d1acbd006b 100644
+--- a/src/freedreno/ir3/ir3_compiler.h
++++ b/src/freedreno/ir3/ir3_compiler.h
+@@ -237,6 +237,8 @@ struct ir3_compiler {
+     * TODO: Keep an eye on this for next gens.
+     */
+    uint64_t geom_shared_consts_size_quirk;
++
++   bool has_fs_tex_prefetch;
+ };
+ 
+ void ir3_compiler_destroy(struct ir3_compiler *compiler);
+diff --git a/src/freedreno/ir3/ir3_context.c b/src/freedreno/ir3/ir3_context.c
+index e58bedde966cf7c02ecce9baba8ca37408071d69..6f8f738448428afa23bbaacf62551a78a11aac8b 100644
+--- a/src/freedreno/ir3/ir3_context.c
++++ b/src/freedreno/ir3/ir3_context.c
+@@ -123,7 +123,7 @@ ir3_context_init(struct ir3_compiler *compiler, struct ir3_shader *shader,
+    /* Enable the texture pre-fetch feature only a4xx onwards.  But
+     * only enable it on generations that have been tested:
+     */
+-   if ((so->type == MESA_SHADER_FRAGMENT) && (compiler->gen >= 6))
++   if ((so->type == MESA_SHADER_FRAGMENT) && compiler->has_fs_tex_prefetch)
+       NIR_PASS_V(ctx->s, ir3_nir_lower_tex_prefetch);
+ 
+    NIR_PASS(progress, ctx->s, nir_lower_phis_to_scalar, true);
+diff --git a/src/freedreno/registers/adreno/a6xx.xml b/src/freedreno/registers/adreno/a6xx.xml
+index 22b734263c4725624e4d65cb40a3c8b8aa42c5d7..e65528da4bd445651aab61b0776c8c42ec190e44 100644
+--- a/src/freedreno/registers/adreno/a6xx.xml
++++ b/src/freedreno/registers/adreno/a6xx.xml
+@@ -2638,18 +2638,25 @@ to upconvert to 32b float internally?
+ 	<!-- 0x8e00-0x8e03 invalid -->
+ 	<reg32 offset="0x8e04" name="RB_DBG_ECO_CNTL" usage="cmd"/> <!-- TODO: valid mask 0xfffffeff -->
+ 	<reg32 offset="0x8e05" name="RB_ADDR_MODE_CNTL" pos="0" type="a5xx_address_mode"/>
+-
+ 	<!-- 0x02080000 in GMEM, zero otherwise?  -->
+ 	<reg32 offset="0x8e06" name="RB_UNKNOWN_8E06" variants="A7XX-" usage="cmd"/>
++	<enum name="a6xx_ccu_color_cache_size">
++		<value value="0x0" name="CCU_COLOR_CACHE_SIZE_FULL"/>
++		<value value="0x1" name="CCU_COLOR_CACHE_SIZE_HALF"/>
++		<value value="0x2" name="CCU_COLOR_CACHE_SIZE_QUARTER"/>
++		<value value="0x3" name="CCU_COLOR_CACHE_SIZE_EIGHTH"/>
++	</enum>
+ 
+ 	<reg32 offset="0x8e07" name="RB_CCU_CNTL" usage="cmd">
++		<bitfield name="GMEM_FAST_CLEAR_DISABLE" pos="0" type="boolean"/>
+ 		<!-- concurrent resolves are apparently a 2-bit enum on a650+ -->
+ 		<bitfield name="CONCURRENT_RESOLVE" pos="2" type="boolean"/>
+ 		<bitfield name="DEPTH_OFFSET_HI" pos="7" type="hex"/>
+ 		<bitfield name="COLOR_OFFSET_HI" pos="9" type="hex"/>
++		<bitfield name="DEPTH_CACHE_SIZE" low="10" high="11" type="uint"/>
+ 		<!-- GMEM offset of CCU depth cache -->
+ 		<bitfield name="DEPTH_OFFSET" low="12" high="20" shr="12" type="hex"/>
+-		<bitfield name="GMEM" pos="22" type="boolean"/> <!-- set for GMEM path -->
++		<bitfield name="COLOR_CACHE_SIZE" low="21" high="22" type="a6xx_ccu_color_cache_size"/>
+ 		<!-- GMEM offset of CCU color cache
+ 			for GMEM rendering, we set it to GMEM size minus the minimum
+ 			CCU color cache size. CCU color cache will be needed in some
+@@ -4018,7 +4025,10 @@ to upconvert to 32b float internally?
+ 	<reg32 offset="0xb980" type="a6xx_hlsq_fs_cntl_0" name="HLSQ_FS_CNTL_0" variants="A6XX" usage="rp_blit"/>
+ 	<reg32 offset="0xb981" name="HLSQ_UNKNOWN_B981" pos="0" type="boolean" variants="A6XX"/> <!-- never used by blob -->
+ 	<reg32 offset="0xb982" name="HLSQ_CONTROL_1_REG" low="0" high="2" variants="A6XX" usage="rp_blit">
+-		<!-- TODO: have test cases with either 0x3 or 0x7 -->
++		<!-- Sets the maximum number of primitives allowed in one FS wave minus one, similarly to the
++				 A3xx field, except that it's not necessary to set it to anything but the maximum, since
++				 the hardware will simply emit smaller waves when it runs out of space.	-->
++		<bitfield name="PRIMALLOCTHRESHOLD" low="0" high="2" type="uint"/>
+ 	</reg32>
+ 	<reg32 offset="0xb983" name="HLSQ_CONTROL_2_REG" variants="A6XX" usage="rp_blit">
+ 		<bitfield name="FACEREGID" low="0" high="7" type="a3xx_regid"/>
+@@ -4031,13 +4041,11 @@ to upconvert to 32b float internally?
+ 	<reg32 offset="0xb985" type="a6xx_hlsq_control_4_reg" name="HLSQ_CONTROL_4_REG" variants="A6XX" usage="rp_blit"/>
+ 	<reg32 offset="0xb986" type="a6xx_hlsq_control_5_reg" name="HLSQ_CONTROL_5_REG" variants="A6XX" usage="rp_blit"/>
+ 	<reg32 offset="0xb987" name="HLSQ_CS_CNTL" type="a6xx_hlsq_xs_cntl" variants="A6XX" usage="cmd"/>
+-
+ 	<!-- Either 0 or 0x401, the non-zero value is only in a few of dEQP-VK.ssbo.phys.layout.3_level_*.*8vec4 -->
+ 	<reg32 offset="0xa9c5" name="HLSQ_UNKNOWN_A9C5" variants="A7XX-" usage="cmd"/>
+-
+ 	<reg32 offset="0xa9c6" type="a6xx_hlsq_fs_cntl_0" name="HLSQ_FS_CNTL_0" variants="A7XX-" usage="rp_blit"/>
+ 	<reg32 offset="0xa9c7" name="HLSQ_CONTROL_1_REG" low="0" high="2" variants="A7XX-" usage="rp_blit">
+-		<!-- TODO: have test cases with either 0x3 or 0x7 -->
++			<bitfield name="PRIMALLOCTHRESHOLD" low="0" high="2" type="uint"/>
+ 	</reg32>
+ 	<reg32 offset="0xa9c8" name="HLSQ_CONTROL_2_REG" variants="A7XX-" usage="rp_blit">
+ 		<bitfield name="FACEREGID" low="0" high="7" type="a3xx_regid"/>
+diff --git a/src/freedreno/vulkan/tu_cmd_buffer.cc b/src/freedreno/vulkan/tu_cmd_buffer.cc
+index 015ee38bbe038776a04663d30747ca46b7b69a39..6324a1d9999a04e9d6ef5a721ea1b7b7c66c2a15 100644
+--- a/src/freedreno/vulkan/tu_cmd_buffer.cc
++++ b/src/freedreno/vulkan/tu_cmd_buffer.cc
+@@ -87,6 +87,7 @@ static void
+ tu6_lazy_emit_vsc(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+ {
+    struct tu_device *dev = cmd->device;
++   uint32_t num_vsc_pipes = dev->physical_device->info->num_vsc_pipes;
+ 
+    /* VSC buffers:
+     * use vsc pitches from the largest values used so far with this device
+@@ -114,18 +115,19 @@ tu6_lazy_emit_vsc(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    mtx_unlock(&dev->mutex);
+ 
+    struct tu_bo *vsc_bo;
+-   uint32_t size0 = cmd->vsc_prim_strm_pitch * MAX_VSC_PIPES +
+-                    cmd->vsc_draw_strm_pitch * MAX_VSC_PIPES;
++   uint32_t size0 = cmd->vsc_prim_strm_pitch * num_vsc_pipes +
++                    cmd->vsc_draw_strm_pitch * num_vsc_pipes;
+ 
+-   tu_get_scratch_bo(dev, size0 + MAX_VSC_PIPES * 4, &vsc_bo);
++   tu_get_scratch_bo(dev, size0 + num_vsc_pipes * 4, &vsc_bo);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_VSC_DRAW_STRM_SIZE_ADDRESS(.bo = vsc_bo, .bo_offset = size0));
+    tu_cs_emit_regs(cs,
+                    A6XX_VSC_PRIM_STRM_ADDRESS(.bo = vsc_bo));
+-   tu_cs_emit_regs(cs,
+-                   A6XX_VSC_DRAW_STRM_ADDRESS(.bo = vsc_bo,
+-                                              .bo_offset = cmd->vsc_prim_strm_pitch * MAX_VSC_PIPES));
++   tu_cs_emit_regs(
++      cs, A6XX_VSC_DRAW_STRM_ADDRESS(.bo = vsc_bo,
++                                     .bo_offset = cmd->vsc_prim_strm_pitch *
++                                                  num_vsc_pipes));
+ 
+    cmd->vsc_initialized = true;
+ }
+@@ -200,15 +202,22 @@ tu_emit_cache_flush_renderpass(struct tu_cmd_buffer *cmd_buffer)
+ }
+ 
+ static struct fd_reg_pair
+-rb_ccu_cntl(uint32_t color_offset, bool gmem)
++rb_ccu_cntl(struct tu_device *dev, uint32_t color_offset)
+ {
+    uint32_t color_offset_hi = color_offset >> 21;
+    color_offset &= 0x1fffff;
+-   return A6XX_RB_CCU_CNTL(
+-         .color_offset_hi = color_offset_hi,
+-         .gmem = gmem,
+-         .color_offset = color_offset,
+-   );
++   enum a6xx_ccu_color_cache_size cache_size =
++      (a6xx_ccu_color_cache_size)(dev->physical_device->info->a6xx.gmem_ccu_color_cache_fraction);
++   bool concurrent_resolve = dev->physical_device->info->a6xx.concurrent_resolve;
++   return  A6XX_RB_CCU_CNTL(.gmem_fast_clear_disable =
++         !dev->physical_device->info->a6xx.has_gmem_fast_clear,
++      .concurrent_resolve = concurrent_resolve,
++      .depth_offset_hi = 0,
++      .color_offset_hi = color_offset_hi,
++      .depth_cache_size = 0,
++      .depth_offset = 0,
++      .color_cache_size = cache_size,
++      .color_offset = color_offset);
+ }
+ 
+ /* Cache flushes for things that use the color/depth read/write path (i.e.
+@@ -252,12 +261,13 @@ tu_emit_cache_flush_ccu(struct tu_cmd_buffer *cmd_buffer,
+    tu6_emit_flushes(cmd_buffer, cs, &cmd_buffer->state.cache);
+ 
+    if (ccu_state != cmd_buffer->state.ccu_state) {
+-      struct tu_physical_device *phys_dev = cmd_buffer->device->physical_device;
++      struct tu_physical_device *phys_dev =
++         cmd_buffer->device->physical_device;
+       tu_cs_emit_regs(cs,
+-                      rb_ccu_cntl(ccu_state == TU_CMD_CCU_GMEM ?
+-                                  phys_dev->ccu_offset_gmem :
+-                                  phys_dev->ccu_offset_bypass,
+-                                  ccu_state == TU_CMD_CCU_GMEM));
++         rb_ccu_cntl(cmd_buffer->device,
++         ccu_state == TU_CMD_CCU_GMEM ?
++            phys_dev->ccu_offset_gmem :
++            phys_dev->ccu_offset_bypass));
+       cmd_buffer->state.ccu_state = ccu_state;
+    }
+ }
+@@ -1045,7 +1055,7 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    cmd->state.cache.pending_flush_bits &=
+       ~(TU_CMD_FLAG_WAIT_FOR_IDLE | TU_CMD_FLAG_CACHE_INVALIDATE);
+ 
+-   tu_cs_emit_regs(cs, rb_ccu_cntl(phys_dev->ccu_offset_bypass, false));
++   tu_cs_emit_regs(cs, rb_ccu_cntl(dev, phys_dev->ccu_offset_bypass));
+    cmd->state.ccu_state = TU_CMD_CCU_SYSMEM;
+    tu_cs_emit_write_reg(cs, REG_A6XX_RB_DBG_ECO_CNTL,
+                         phys_dev->info->a6xx.magic.RB_DBG_ECO_CNTL);
+@@ -1118,7 +1128,7 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+ 
+    tu_cs_emit_write_reg(cs, REG_A6XX_VFD_MODE_CNTL, 0x00000000);
+ 
+-   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, 0x0000001f);
++   tu_cs_emit_write_reg(cs, REG_A6XX_PC_MODE_CNTL, phys_dev->info->a6xx.magic.PC_MODE_CNTL);
+ 
+    tu_cs_emit_regs(cs, A6XX_RB_ALPHA_CONTROL()); /* always disable alpha test */
+    tu_cs_emit_regs(cs, A6XX_RB_DITHER_CNTL()); /* always disable dithering */
+@@ -1136,7 +1146,9 @@ tu6_init_hw(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+ }
+ 
+ static void
+-update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
++update_vsc_pipe(struct tu_cmd_buffer *cmd,
++                struct tu_cs *cs,
++                uint32_t num_vsc_pipes)
+ {
+    const struct tu_tiling_config *tiling = cmd->state.tiling;
+ 
+@@ -1148,8 +1160,8 @@ update_vsc_pipe(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+                    A6XX_VSC_BIN_COUNT(.nx = tiling->tile_count.width,
+                                       .ny = tiling->tile_count.height));
+ 
+-   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), 32);
+-   tu_cs_emit_array(cs, tiling->pipe_config, 32);
++   tu_cs_emit_pkt4(cs, REG_A6XX_VSC_PIPE_CONFIG_REG(0), num_vsc_pipes);
++   tu_cs_emit_array(cs, tiling->pipe_config, num_vsc_pipes);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_VSC_PRIM_STRM_PITCH(cmd->vsc_prim_strm_pitch),
+@@ -1236,7 +1248,7 @@ tu6_emit_binning_pass(struct tu_cmd_buffer *cmd, struct tu_cs *cs)
+    tu_cs_emit_regs(cs,
+                    A6XX_VFD_MODE_CNTL(.render_mode = BINNING_PASS));
+ 
+-   update_vsc_pipe(cmd, cs);
++   update_vsc_pipe(cmd, cs, phys_dev->info->num_vsc_pipes);
+ 
+    tu_cs_emit_regs(cs,
+                    A6XX_PC_POWER_CNTL(phys_dev->info->a6xx.magic.PC_POWER_CNTL));
+diff --git a/src/freedreno/vulkan/tu_device.cc b/src/freedreno/vulkan/tu_device.cc
+index 96f434baf84a0e0a935cb6f863e7bb0295a98bdc..f8f4465efff30ffd0b607a84c208b22f352cce32 100644
+--- a/src/freedreno/vulkan/tu_device.cc
++++ b/src/freedreno/vulkan/tu_device.cc
+@@ -161,7 +161,7 @@ get_device_extensions(const struct tu_physical_device *device,
+       .KHR_maintenance2 = true,
+       .KHR_maintenance3 = true,
+       .KHR_maintenance4 = true,
+-      .KHR_multiview = true,
++      .KHR_multiview = TU_DEBUG(NOCONFORM) ? true : device->info->a6xx.has_hw_multiview,
+       .KHR_performance_query = TU_DEBUG(PERFC),
+       .KHR_pipeline_executable_properties = true,
+       .KHR_pipeline_library = true,
+@@ -252,13 +252,13 @@ get_device_extensions(const struct tu_physical_device *device,
+       .EXT_rasterization_order_attachment_access = true,
+       .EXT_robustness2 = true,
+       .EXT_sample_locations = device->info->a6xx.has_sample_locations,
+-      .EXT_sampler_filter_minmax = true,
++      .EXT_sampler_filter_minmax = device->info->a6xx.has_sampler_minmax,
+       .EXT_scalar_block_layout = true,
+       .EXT_separate_stencil_usage = true,
+       .EXT_shader_demote_to_helper_invocation = true,
+       .EXT_shader_module_identifier = true,
+       .EXT_shader_stencil_export = true,
+-      .EXT_shader_viewport_index_layer = true,
++      .EXT_shader_viewport_index_layer = TU_DEBUG(NOCONFORM) ? true : device->info->a6xx.has_hw_multiview,
+       .EXT_subgroup_size_control = true,
+       .EXT_texel_buffer_alignment = true,
+       .EXT_tooling_info = true,
+@@ -377,7 +377,8 @@ tu_get_features(struct tu_physical_device *pdevice,
+    features->descriptorBindingVariableDescriptorCount           = true;
+    features->runtimeDescriptorArray                             = true;
+ 
+-   features->samplerFilterMinmax                 = true;
++   features->samplerFilterMinmax                 =
++      pdevice->info->a6xx.has_sampler_minmax;
+    features->scalarBlockLayout                   = true;
+    features->imagelessFramebuffer                = true;
+    features->uniformBufferStandardLayout         = true;
+@@ -612,12 +613,19 @@ tu_physical_device_init(struct tu_physical_device *device,
+       goto fail_free_name;
+    }
+    switch (fd_dev_gen(&device->dev_id)) {
+-   case 6:
++   case 6: {
+       device->info = info;
+-      device->ccu_offset_bypass = device->info->num_ccu * A6XX_CCU_DEPTH_SIZE;
+-      device->ccu_offset_gmem = (device->gmem_size -
+-         device->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
++      uint32_t depth_cache_size =
++         device->info->num_ccu * device->info->a6xx.sysmem_per_ccu_cache_size;
++      uint32_t color_cache_size =
++         (device->info->num_ccu *
++          device->info->a6xx.sysmem_per_ccu_cache_size) /
++         (1 << device->info->a6xx.gmem_ccu_color_cache_fraction);
++
++      device->ccu_offset_bypass = depth_cache_size;
++      device->ccu_offset_gmem = device->gmem_size - color_cache_size;
+       break;
++   }
+    default:
+       result = vk_startup_errorf(instance, VK_ERROR_INITIALIZATION_FAILED,
+                                  "device %s is unsupported", device->name);
+@@ -846,7 +854,7 @@ tu_get_physical_device_properties_1_1(struct tu_physical_device *pdevice,
+    p->deviceNodeMask = 0;
+    p->deviceLUIDValid = false;
+ 
+-   p->subgroupSize = 128;
++   p->subgroupSize = pdevice->info->a6xx.supports_double_threadsize ? 128 : 64;
+    p->subgroupSupportedStages = VK_SHADER_STAGE_COMPUTE_BIT;
+    p->subgroupSupportedOperations = VK_SUBGROUP_FEATURE_BASIC_BIT |
+                                     VK_SUBGROUP_FEATURE_VOTE_BIT |
+@@ -862,7 +870,8 @@ tu_get_physical_device_properties_1_1(struct tu_physical_device *pdevice,
+    p->subgroupQuadOperationsInAllStages = false;
+ 
+    p->pointClippingBehavior = VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES;
+-   p->maxMultiviewViewCount = MAX_VIEWS;
++   p->maxMultiviewViewCount =
++      (pdevice->info->a6xx.has_hw_multiview || TU_DEBUG(NOCONFORM)) ? MAX_VIEWPORTS : 1;
+    p->maxMultiviewInstanceIndex = INT_MAX;
+    p->protectedNoFault = false;
+    /* Our largest descriptors are 2 texture descriptors, or a texture and
+@@ -966,7 +975,8 @@ tu_get_physical_device_properties_1_3(struct tu_physical_device *pdevice,
+ {
+    /* TODO move threadsize_base and max_waves to fd_dev_info and use them here */
+    p->minSubgroupSize = 64; /* threadsize_base */
+-   p->maxSubgroupSize = 128; /* threadsize_base * 2 */
++   p->maxSubgroupSize =
++      pdevice->info->a6xx.supports_double_threadsize ? 128 : 64;
+    p->maxComputeWorkgroupSubgroups = 16; /* max_waves */
+    p->requiredSubgroupSizeStages = VK_SHADER_STAGE_ALL;
+ 
+@@ -1063,8 +1073,8 @@ tu_GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
+       .maxDescriptorSetSampledImages = max_descriptor_set_size,
+       .maxDescriptorSetStorageImages = max_descriptor_set_size,
+       .maxDescriptorSetInputAttachments = MAX_RTS,
+-      .maxVertexInputAttributes = 32,
+-      .maxVertexInputBindings = 32,
++      .maxVertexInputAttributes = pdevice->info->a6xx.vs_max_inputs_count,
++      .maxVertexInputBindings = pdevice->info->a6xx.vs_max_inputs_count,
+       .maxVertexInputAttributeOffset = 4095,
+       .maxVertexInputBindingStride = 2048,
+       .maxVertexOutputComponents = 128,
+@@ -1085,9 +1095,9 @@ tu_GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
+       .maxFragmentOutputAttachments = 8,
+       .maxFragmentDualSrcAttachments = 1,
+       .maxFragmentCombinedOutputResources = MAX_RTS + max_descriptor_set_size * 2,
+-      .maxComputeSharedMemorySize = 32768,
++      .maxComputeSharedMemorySize = pdevice->info->cs_shared_mem_size,
+       .maxComputeWorkGroupCount = { 65535, 65535, 65535 },
+-      .maxComputeWorkGroupInvocations = 2048,
++      .maxComputeWorkGroupInvocations = pdevice->info->a6xx.supports_double_threadsize ? 2048 : 1024,
+       .maxComputeWorkGroupSize = { 1024, 1024, 1024 },
+       .subPixelPrecisionBits = 8,
+       .subTexelPrecisionBits = 8,
+@@ -1096,7 +1106,8 @@ tu_GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
+       .maxDrawIndirectCount = UINT32_MAX,
+       .maxSamplerLodBias = 4095.0 / 256.0, /* [-16, 15.99609375] */
+       .maxSamplerAnisotropy = 16,
+-      .maxViewports = MAX_VIEWPORTS,
++      .maxViewports =
++         (pdevice->info->a6xx.has_hw_multiview || TU_DEBUG(NOCONFORM)) ? MAX_VIEWPORTS : 1,
+       .maxViewportDimensions = { MAX_VIEWPORT_SIZE, MAX_VIEWPORT_SIZE },
+       .viewportBoundsRange = { INT16_MIN, INT16_MAX },
+       .viewportSubPixelBits = 8,
+@@ -1143,7 +1154,9 @@ tu_GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
+    };
+ 
+    pProperties->properties = (VkPhysicalDeviceProperties) {
+-      .apiVersion = TU_API_VERSION,
++      .apiVersion =
++         (pdevice->info->a6xx.has_hw_multiview || TU_DEBUG(NOCONFORM)) ?
++            TU_API_VERSION : VK_MAKE_VERSION(1, 0, VK_HEADER_VERSION),
+       .driverVersion = vk_get_driver_version(),
+       .vendorID = 0x5143,
+       .deviceID = pdevice->dev_id.chip_id,
+diff --git a/src/freedreno/vulkan/tu_pipeline.cc b/src/freedreno/vulkan/tu_pipeline.cc
+index 3612f7a9fd63afcb35fe04e751a4b8b9fc0a8090..1b24997e151a5911e51c6fbcda3bb4edd9cdcbf6 100644
+--- a/src/freedreno/vulkan/tu_pipeline.cc
++++ b/src/freedreno/vulkan/tu_pipeline.cc
+@@ -504,6 +504,8 @@ tu6_emit_xs(struct tu_cs *cs,
+       ));
+       break;
+    case MESA_SHADER_COMPUTE:
++      thrsz = cs->device->physical_device->info->a6xx
++            .supports_double_threadsize ? thrsz : THREAD128;
+       tu_cs_emit_regs(cs, A6XX_SP_CS_CTRL_REG0(
+                .halfregfootprint = xs->info.max_half_reg + 1,
+                .fullregfootprint = xs->info.max_reg + 1,
+@@ -702,7 +704,14 @@ tu6_emit_cs_config(struct tu_cs *cs,
+    uint32_t work_group_id =
+       ir3_find_sysval_regid(v, SYSTEM_VALUE_WORKGROUP_ID);
+ 
++   /*
++    * Devices that do not support double threadsize take the threadsize from
++    * A6XX_HLSQ_FS_CNTL_0_THREADSIZE instead of A6XX_HLSQ_CS_CNTL_1_THREADSIZE
++    * which is always set to THREAD128.
++    */
+    enum a6xx_threadsize thrsz = v->info.double_threadsize ? THREAD128 : THREAD64;
++   enum a6xx_threadsize thrsz_cs = cs->device->physical_device->info->a6xx
++      .supports_double_threadsize ? thrsz : THREAD128;
+    tu_cs_emit_pkt4(cs, REG_A6XX_HLSQ_CS_CNTL_0, 2);
+    tu_cs_emit(cs,
+               A6XX_HLSQ_CS_CNTL_0_WGIDCONSTID(work_group_id) |
+@@ -710,7 +719,11 @@ tu6_emit_cs_config(struct tu_cs *cs,
+               A6XX_HLSQ_CS_CNTL_0_WGOFFSETCONSTID(regid(63, 0)) |
+               A6XX_HLSQ_CS_CNTL_0_LOCALIDREGID(local_invocation_id));
+    tu_cs_emit(cs, A6XX_HLSQ_CS_CNTL_1_LINEARLOCALIDREGID(regid(63, 0)) |
+-                  A6XX_HLSQ_CS_CNTL_1_THREADSIZE(thrsz));
++                  A6XX_HLSQ_CS_CNTL_1_THREADSIZE(thrsz_cs));
++   if (!cs->device->physical_device->info->a6xx.supports_double_threadsize) {
++      tu_cs_emit_pkt4(cs, REG_A6XX_HLSQ_FS_CNTL_0, 1);
++      tu_cs_emit(cs, A6XX_HLSQ_FS_CNTL_0_THREADSIZE(thrsz));
++   }
+ 
+    if (cs->device->physical_device->info->a6xx.has_lpac) {
+       tu_cs_emit_pkt4(cs, REG_A6XX_SP_CS_CNTL_0, 2);
+@@ -1489,7 +1502,8 @@ tu6_emit_fs_inputs(struct tu_cs *cs, const struct ir3_shader_variant *fs)
+    }
+ 
+    tu_cs_emit_pkt4(cs, REG_A6XX_HLSQ_CONTROL_1_REG, 5);
+-   tu_cs_emit(cs, 0x7);
++   tu_cs_emit(cs, A6XX_HLSQ_CONTROL_1_REG_PRIMALLOCTHRESHOLD(
++      cs->device->physical_device->info->a6xx.prim_alloc_threshold));
+    tu_cs_emit(cs, A6XX_HLSQ_CONTROL_2_REG_FACEREGID(face_regid) |
+                   A6XX_HLSQ_CONTROL_2_REG_SAMPLEID(samp_id_regid) |
+                   A6XX_HLSQ_CONTROL_2_REG_SAMPLEMASK(smask_in_regid) |
+@@ -2293,8 +2307,10 @@ tu_shader_key_init(struct tu_shader_key *key,
+                    struct tu_device *dev)
+ {
+    enum ir3_wavesize_option api_wavesize, real_wavesize;
+-
+-   if (stage_info) {
++   if (!dev->physical_device->info->a6xx.supports_double_threadsize) {
++      api_wavesize = IR3_SINGLE_ONLY;
++      real_wavesize = IR3_SINGLE_ONLY;
++   } else if (stage_info) {
+       if (stage_info->flags &
+           VK_PIPELINE_SHADER_STAGE_CREATE_ALLOW_VARYING_SUBGROUP_SIZE_BIT) {
+          api_wavesize = real_wavesize = IR3_SINGLE_OR_DOUBLE;
+diff --git a/src/freedreno/vulkan/tu_util.cc b/src/freedreno/vulkan/tu_util.cc
+index 1f24f4f2d9ef179dbc6a37626b7be7e75687256b..c7d7f118e4f516c3429ec87f86bd4a342e084b63 100644
+--- a/src/freedreno/vulkan/tu_util.cc
++++ b/src/freedreno/vulkan/tu_util.cc
+@@ -38,6 +38,7 @@ static const struct debug_control tu_debug_options[] = {
+    { "bos", TU_DEBUG_BOS },
+    { "3d_load", TU_DEBUG_3D_LOAD },
+    { "fdm", TU_DEBUG_FDM },
++   { "noconform", TU_DEBUG_NOCONFORM },
+    { NULL, 0 }
+ };
+ 
+@@ -222,7 +223,8 @@ static void
+ tu_tiling_config_update_pipe_layout(struct tu_tiling_config *tiling,
+                                     const struct tu_device *dev)
+ {
+-   const uint32_t max_pipe_count = 32; /* A6xx */
++   const uint32_t max_pipe_count =
++      dev->physical_device->info->num_vsc_pipes;
+ 
+    /* start from 1 tile per pipe */
+    tiling->pipe0 = (VkExtent2D) {
+@@ -248,7 +250,8 @@ static void
+ tu_tiling_config_update_pipes(struct tu_tiling_config *tiling,
+                               const struct tu_device *dev)
+ {
+-   const uint32_t max_pipe_count = 32; /* A6xx */
++   const uint32_t max_pipe_count =
++      dev->physical_device->info->num_vsc_pipes;
+    const uint32_t used_pipe_count =
+       tiling->pipe_count.width * tiling->pipe_count.height;
+    const VkExtent2D last_pipe = {
+diff --git a/src/freedreno/vulkan/tu_util.h b/src/freedreno/vulkan/tu_util.h
+index 7e0969d692b732bef08c96e82286ab16e4f1efc6..589fe52bbc79b52c2a8ece210b1f6e5e19a71469 100644
+--- a/src/freedreno/vulkan/tu_util.h
++++ b/src/freedreno/vulkan/tu_util.h
+@@ -45,6 +45,7 @@ enum tu_debug_flags
+    TU_DEBUG_BOS = 1 << 21,
+    TU_DEBUG_3D_LOAD = 1 << 22,
+    TU_DEBUG_FDM = 1 << 23,
++   TU_DEBUG_NOCONFORM = 1 << 24,
+ };
+ 
+ struct tu_env {
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_compute.cc b/src/gallium/drivers/freedreno/a6xx/fd6_compute.cc
+index 9802964045b16905df977fc32b0e69755176bf6b..195be864fdbfea5c5008b830efddcaf809673bb5 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_compute.cc
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_compute.cc
+@@ -24,6 +24,7 @@
+  *    Rob Clark <robclark@freedesktop.org>
+  */
+ 
++#include "drm/freedreno_ringbuffer.h"
+ #define FD_BO_NO_HARDPIN 1
+ 
+ #include "pipe/p_state.h"
+@@ -48,7 +49,7 @@ cs_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+    assert_dt
+ {
+    const struct ir3_info *i = &v->info;
+-   enum a6xx_threadsize thrsz = i->double_threadsize ? THREAD128 : THREAD64;
++   enum a6xx_threadsize thrsz_cs = i->double_threadsize ? THREAD128 : THREAD64;
+ 
+    OUT_REG(ring, HLSQ_INVALIDATE_CMD(CHIP, .vs_state = true, .hs_state = true,
+                                           .ds_state = true, .gs_state = true,
+@@ -73,7 +74,7 @@ cs_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+ 
+    OUT_PKT4(ring, REG_A6XX_SP_CS_CTRL_REG0, 1);
+    OUT_RING(ring,
+-            A6XX_SP_CS_CTRL_REG0_THREADSIZE(thrsz) |
++            A6XX_SP_CS_CTRL_REG0_THREADSIZE(thrsz_cs) |
+                A6XX_SP_CS_CTRL_REG0_FULLREGFOOTPRINT(i->max_reg + 1) |
+                A6XX_SP_CS_CTRL_REG0_HALFREGFOOTPRINT(i->max_half_reg + 1) |
+                COND(v->mergedregs, A6XX_SP_CS_CTRL_REG0_MERGEDREGS) |
+@@ -84,6 +85,7 @@ cs_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+       ir3_find_sysval_regid(v, SYSTEM_VALUE_LOCAL_INVOCATION_ID);
+    work_group_id = ir3_find_sysval_regid(v, SYSTEM_VALUE_WORKGROUP_ID);
+ 
++   enum a6xx_threadsize thrsz = ctx->screen->info->a6xx.supports_double_threadsize ? thrsz_cs : THREAD128;
+    OUT_PKT4(ring, REG_A6XX_HLSQ_CS_CNTL_0, 2);
+    OUT_RING(ring, A6XX_HLSQ_CS_CNTL_0_WGIDCONSTID(work_group_id) |
+                      A6XX_HLSQ_CS_CNTL_0_WGSIZECONSTID(regid(63, 0)) |
+@@ -91,6 +93,10 @@ cs_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+                      A6XX_HLSQ_CS_CNTL_0_LOCALIDREGID(local_invocation_id));
+    OUT_RING(ring, A6XX_HLSQ_CS_CNTL_1_LINEARLOCALIDREGID(regid(63, 0)) |
+                      A6XX_HLSQ_CS_CNTL_1_THREADSIZE(thrsz));
++   if (!ctx->screen->info->a6xx.supports_double_threadsize) {
++      OUT_PKT4(ring, REG_A6XX_HLSQ_FS_CNTL_0, 1);
++      OUT_RING(ring, A6XX_HLSQ_FS_CNTL_0_THREADSIZE(thrsz_cs));
++   }
+ 
+    if (ctx->screen->info->a6xx.has_lpac) {
+       OUT_PKT4(ring, REG_A6XX_SP_CS_CNTL_0, 2);
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_emit.cc b/src/gallium/drivers/freedreno/a6xx/fd6_emit.cc
+index c91e4137e7353f3e1ea457a7202e295c98898456..0fff1bdf6780575fac72b089fe72e415eace71a3 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_emit.cc
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_emit.cc
+@@ -746,16 +746,23 @@ fd6_emit_cs_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
+ void
+ fd6_emit_ccu_cntl(struct fd_ringbuffer *ring, struct fd_screen *screen, bool gmem)
+ {
++   enum a6xx_ccu_color_cache_size cache_size = (a6xx_ccu_color_cache_size)(screen->info->a6xx.gmem_ccu_color_cache_fraction);
+    uint32_t offset = gmem ? screen->ccu_offset_gmem : screen->ccu_offset_bypass;
+    uint32_t offset_hi = offset >> 21;
+    offset &= 0x1fffff;
+ 
+-   OUT_REG(ring, A6XX_RB_CCU_CNTL(
+-         .concurrent_resolve = gmem && screen->info->a6xx.concurrent_resolve,
+-         .color_offset_hi = offset_hi,
+-         .gmem = gmem,
+-         .color_offset = offset,
+-   ));
++   OUT_REG(ring,
++           A6XX_RB_CCU_CNTL(.gmem_fast_clear_disable =
++                               !screen->info->a6xx.has_gmem_fast_clear,
++                            .concurrent_resolve =
++                               screen->info->a6xx.concurrent_resolve,
++                            .depth_offset_hi = 0,
++                            .color_offset_hi = offset_hi,
++                            .depth_cache_size = 0,
++                            .depth_offset = 0,
++                            .color_cache_size = cache_size,
++                            .color_offset = offset,
++                            ));
+ }
+ 
+ template void fd6_emit_cs_state<A6XX>(struct fd_context *ctx, struct fd_ringbuffer *ring, struct fd6_compute_state *cs);
+@@ -792,28 +799,28 @@ fd6_emit_restore(struct fd_batch *batch, struct fd_ringbuffer *ring)
+ 
+    WRITE(REG_A6XX_RB_DBG_ECO_CNTL, screen->info->a6xx.magic.RB_DBG_ECO_CNTL);
+    WRITE(REG_A6XX_SP_FLOAT_CNTL, A6XX_SP_FLOAT_CNTL_F16_NO_INF);
+-   WRITE(REG_A6XX_SP_DBG_ECO_CNTL, 0);
++   WRITE(REG_A6XX_SP_DBG_ECO_CNTL, screen->info->a6xx.magic.SP_DBG_ECO_CNTL);
+    WRITE(REG_A6XX_SP_PERFCTR_ENABLE, 0x3f);
+    WRITE(REG_A6XX_TPL1_UNKNOWN_B605, 0x44);
+    WRITE(REG_A6XX_TPL1_DBG_ECO_CNTL, screen->info->a6xx.magic.TPL1_DBG_ECO_CNTL);
+    WRITE(REG_A6XX_HLSQ_UNKNOWN_BE00, 0x80);
+    WRITE(REG_A6XX_HLSQ_UNKNOWN_BE01, 0);
+ 
+-   WRITE(REG_A6XX_VPC_DBG_ECO_CNTL, 0);
+-   WRITE(REG_A6XX_GRAS_DBG_ECO_CNTL, 0x880);
+-   WRITE(REG_A6XX_HLSQ_DBG_ECO_CNTL, 0x80000);
+-   WRITE(REG_A6XX_SP_CHICKEN_BITS, 0x1430);
++   WRITE(REG_A6XX_VPC_DBG_ECO_CNTL, screen->info->a6xx.magic.VPC_DBG_ECO_CNTL);
++   WRITE(REG_A6XX_GRAS_DBG_ECO_CNTL, screen->info->a6xx.magic.GRAS_DBG_ECO_CNTL);
++   WRITE(REG_A6XX_HLSQ_DBG_ECO_CNTL, screen->info->a6xx.magic.HLSQ_DBG_ECO_CNTL);
++   WRITE(REG_A6XX_SP_CHICKEN_BITS, screen->info->a6xx.magic.SP_CHICKEN_BITS);
+    WRITE(REG_A6XX_SP_IBO_COUNT, 0);
+    WRITE(REG_A6XX_SP_UNKNOWN_B182, 0);
+    WRITE(REG_A6XX_HLSQ_SHARED_CONSTS, 0);
+-   WRITE(REG_A6XX_UCHE_UNKNOWN_0E12, 0x3200000);
+-   WRITE(REG_A6XX_UCHE_CLIENT_PF, 4);
+-   WRITE(REG_A6XX_RB_UNKNOWN_8E01, 0x1);
++   WRITE(REG_A6XX_UCHE_UNKNOWN_0E12, screen->info->a6xx.magic.UCHE_UNKNOWN_0E12);
++   WRITE(REG_A6XX_UCHE_CLIENT_PF, screen->info->a6xx.magic.UCHE_CLIENT_PF);
++   WRITE(REG_A6XX_RB_UNKNOWN_8E01, screen->info->a6xx.magic.RB_UNKNOWN_8E01);
+    WRITE(REG_A6XX_SP_MODE_CONTROL,
+          A6XX_SP_MODE_CONTROL_CONSTANT_DEMOTION_ENABLE | 4);
+    WRITE(REG_A6XX_VFD_ADD_OFFSET, A6XX_VFD_ADD_OFFSET_VERTEX);
+    WRITE(REG_A6XX_RB_UNKNOWN_8811, 0x00000010);
+-   WRITE(REG_A6XX_PC_MODE_CNTL, 0x1f);
++   WRITE(REG_A6XX_PC_MODE_CNTL, screen->info->a6xx.magic.PC_MODE_CNTL);
+ 
+    WRITE(REG_A6XX_GRAS_LRZ_PS_INPUT_CNTL, 0);
+    WRITE(REG_A6XX_GRAS_SAMPLE_CNTL, 0);
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_gmem.cc b/src/gallium/drivers/freedreno/a6xx/fd6_gmem.cc
+index e60958f5edae3bfb90a6c3531baa3b71d7ecd67a..55b5d64c8988b4bcb9f0bfe45aafa74db0013633 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_gmem.cc
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_gmem.cc
+@@ -494,10 +494,6 @@ update_render_cntl(struct fd_batch *batch, struct pipe_framebuffer_state *pfb,
+    }
+ }
+ 
+-/* extra size to store VSC_DRAW_STRM_SIZE: */
+-#define VSC_DRAW_STRM_SIZE(pitch) ((pitch)*32 + 0x100)
+-#define VSC_PRIM_STRM_SIZE(pitch) ((pitch)*32)
+-
+ static void
+ update_vsc_pipe(struct fd_batch *batch)
+ {
+@@ -505,6 +501,7 @@ update_vsc_pipe(struct fd_batch *batch)
+    struct fd6_context *fd6_ctx = fd6_context(ctx);
+    const struct fd_gmem_stateobj *gmem = batch->gmem_state;
+    struct fd_ringbuffer *ring = batch->gmem;
++   unsigned max_vsc_pipes = batch->ctx->screen->info->num_vsc_pipes;
+    int i;
+ 
+    if (batch->draw_strm_bits / 8 > fd6_ctx->vsc_draw_strm_pitch) {
+@@ -530,27 +527,31 @@ update_vsc_pipe(struct fd_batch *batch)
+    }
+ 
+    if (!fd6_ctx->vsc_draw_strm) {
+-      fd6_ctx->vsc_draw_strm = fd_bo_new(
+-         ctx->screen->dev, VSC_DRAW_STRM_SIZE(fd6_ctx->vsc_draw_strm_pitch),
+-         FD_BO_NOMAP, "vsc_draw_strm");
++      /* We also use four bytes per vsc pipe at the end of the draw
++       * stream buffer for VSC_DRAW_STRM_SIZE written back by hw
++       * (see VSC_DRAW_STRM_SIZE_ADDRESS)
++       */
++      unsigned sz = (max_vsc_pipes * fd6_ctx->vsc_draw_strm_pitch) +
++                    (max_vsc_pipes * 4);
++      fd6_ctx->vsc_draw_strm =
++         fd_bo_new(ctx->screen->dev, sz, FD_BO_NOMAP, "vsc_draw_strm");
+    }
+ 
+    if (!fd6_ctx->vsc_prim_strm) {
+-      fd6_ctx->vsc_prim_strm = fd_bo_new(
+-         ctx->screen->dev, VSC_PRIM_STRM_SIZE(fd6_ctx->vsc_prim_strm_pitch),
+-         FD_BO_NOMAP, "vsc_prim_strm");
++      unsigned sz = max_vsc_pipes * fd6_ctx->vsc_prim_strm_pitch;
++      fd6_ctx->vsc_prim_strm =
++         fd_bo_new(ctx->screen->dev, sz, FD_BO_NOMAP, "vsc_prim_strm");
+    }
+ 
+-   OUT_REG(
+-      ring, A6XX_VSC_BIN_SIZE(.width = gmem->bin_w, .height = gmem->bin_h),
+-      A6XX_VSC_DRAW_STRM_SIZE_ADDRESS(.bo = fd6_ctx->vsc_draw_strm,
+-                                      .bo_offset =
+-                                         32 * fd6_ctx->vsc_draw_strm_pitch));
++   OUT_REG(ring, A6XX_VSC_BIN_SIZE(.width = gmem->bin_w, .height = gmem->bin_h),
++           A6XX_VSC_DRAW_STRM_SIZE_ADDRESS(.bo = fd6_ctx->vsc_draw_strm,
++                                           .bo_offset = max_vsc_pipes *
++                                              fd6_ctx->vsc_draw_strm_pitch));
+ 
+    OUT_REG(ring, A6XX_VSC_BIN_COUNT(.nx = gmem->nbins_x, .ny = gmem->nbins_y));
+ 
+-   OUT_PKT4(ring, REG_A6XX_VSC_PIPE_CONFIG_REG(0), 32);
+-   for (i = 0; i < 32; i++) {
++   OUT_PKT4(ring, REG_A6XX_VSC_PIPE_CONFIG_REG(0), max_vsc_pipes);
++   for (i = 0; i < max_vsc_pipes; i++) {
+       const struct fd_vsc_pipe *pipe = &gmem->vsc_pipe[i];
+       OUT_RING(ring, A6XX_VSC_PIPE_CONFIG_REG_X(pipe->x) |
+                         A6XX_VSC_PIPE_CONFIG_REG_Y(pipe->y) |
+@@ -1088,6 +1089,7 @@ fd6_emit_tile_prep(struct fd_batch *batch, const struct fd_tile *tile)
+ 
+    if (use_hw_binning(batch)) {
+       const struct fd_vsc_pipe *pipe = &gmem->vsc_pipe[tile->p];
++      unsigned num_vsc_pipes = ctx->screen->info->num_vsc_pipes;
+ 
+       OUT_PKT7(ring, CP_WAIT_FOR_ME, 0);
+ 
+@@ -1099,9 +1101,10 @@ fd6_emit_tile_prep(struct fd_batch *batch, const struct fd_tile *tile)
+                         CP_SET_BIN_DATA5_0_VSC_N(tile->n));
+       OUT_RELOC(ring, fd6_ctx->vsc_draw_strm, /* per-pipe draw-stream address */
+                 (tile->p * fd6_ctx->vsc_draw_strm_pitch), 0, 0);
+-      OUT_RELOC(ring,
+-                fd6_ctx->vsc_draw_strm, /* VSC_DRAW_STRM_ADDRESS + (p * 4) */
+-                (tile->p * 4) + (32 * fd6_ctx->vsc_draw_strm_pitch), 0, 0);
++      OUT_RELOC(
++         ring, fd6_ctx->vsc_draw_strm, /* VSC_DRAW_STRM_ADDRESS + (p * 4) */
++         (tile->p * 4) + (num_vsc_pipes * fd6_ctx->vsc_draw_strm_pitch),
++         0, 0);
+       OUT_RELOC(ring, fd6_ctx->vsc_prim_strm,
+                 (tile->p * fd6_ctx->vsc_prim_strm_pitch), 0, 0);
+ 
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_program.cc b/src/gallium/drivers/freedreno/a6xx/fd6_program.cc
+index 7ba49ac9d78688c9baae800a213fd5332fc55a0b..818e4593331a553d81d75e53cb3ad250eb4efebe 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_program.cc
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_program.cc
+@@ -421,8 +421,8 @@ tex_opc_to_prefetch_cmd(opc_t tex_opc)
+ 
+ template <chip CHIP>
+ static void
+-setup_stateobj(struct fd_ringbuffer *ring, struct fd_context *ctx,
+-               struct fd6_program_state *state,
++setup_stateobj(struct fd_screen *screen, struct fd_ringbuffer *ring,
++               struct fd_context *ctx, struct fd6_program_state *state,
+                const struct ir3_cache_key *cache_key,
+                bool binning_pass) assert_dt
+ {
+@@ -890,7 +890,8 @@ setup_stateobj(struct fd_ringbuffer *ring, struct fd_context *ctx,
+                      A6XX_PC_VS_OUT_CNTL_CLIP_MASK(clip_cull_mask));
+ 
+    OUT_REG(ring,
+-           HLSQ_CONTROL_1_REG(CHIP, 0x7), /* XXX */
++           HLSQ_CONTROL_1_REG(CHIP,
++            screen->info->a6xx.prim_alloc_threshold),
+            HLSQ_CONTROL_2_REG(
+                  CHIP,
+                  .faceregid = face_regid,
+@@ -1375,8 +1376,8 @@ fd6_program_create(void *data, struct ir3_shader_variant *bs,
+    }
+ 
+    setup_config_stateobj<CHIP>(ctx, state);
+-   setup_stateobj<CHIP>(state->binning_stateobj, ctx, state, key, true);
+-   setup_stateobj<CHIP>(state->stateobj, ctx, state, key, false);
++   setup_stateobj<CHIP>(screen, state->binning_stateobj, ctx, state, key, true);
++   setup_stateobj<CHIP>(screen, state->stateobj, ctx, state, key, false);
+    state->interp_stateobj = create_interp_stateobj(ctx, state);
+ 
+    const struct ir3_stream_output_info *stream_output =
+diff --git a/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc b/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc
+index 881aba30a7433b59ab08644d764b630e2e6a1801..8eb143ce8179b00c1ea2f81d7cf0dd9118afb900 100644
+--- a/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc
++++ b/src/gallium/drivers/freedreno/a6xx/fd6_screen.cc
+@@ -157,9 +157,14 @@ fd6_screen_init(struct pipe_screen *pscreen)
+ 
+    screen->max_rts = A6XX_MAX_RENDER_TARGETS;
+ 
+-   screen->ccu_offset_bypass = screen->info->num_ccu * A6XX_CCU_DEPTH_SIZE;
+-   screen->ccu_offset_gmem = (screen->gmemsize_bytes -
+-         screen->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
++   uint32_t depth_cache_size =
++      screen->info->num_ccu * screen->info->a6xx.sysmem_per_ccu_cache_size;
++   uint32_t color_cache_size =
++      (screen->info->num_ccu * screen->info->a6xx.sysmem_per_ccu_cache_size) /
++      (1 << screen->info->a6xx.gmem_ccu_color_cache_fraction);
++
++   screen->ccu_offset_bypass = depth_cache_size;
++   screen->ccu_offset_gmem = screen->gmemsize_bytes - color_cache_size;
+ 
+    /* Currently only FB_READ forces GMEM path, mostly because we'd have to
+     * deal with cmdstream patching otherwise..
+diff --git a/src/gallium/drivers/freedreno/freedreno_screen.c b/src/gallium/drivers/freedreno/freedreno_screen.c
+index eb488685c1a8603a1614ea8309105ed099960ead..e2cec9073107639fe9f7762f4ef7330ac987f657 100644
+--- a/src/gallium/drivers/freedreno/freedreno_screen.c
++++ b/src/gallium/drivers/freedreno/freedreno_screen.c
+@@ -671,7 +671,8 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen,
+    case PIPE_SHADER_CAP_MAX_INPUTS:
+       if (shader == PIPE_SHADER_GEOMETRY && is_a6xx(screen))
+          return 16;
+-      return is_a6xx(screen) ? 32 : 16;
++      return is_a6xx(screen) ?
++         (screen->info->a6xx.vs_max_inputs_count) : 16;
+    case PIPE_SHADER_CAP_MAX_OUTPUTS:
+       return is_a6xx(screen) ? 32 : 16;
+    case PIPE_SHADER_CAP_MAX_TEMPS:
+@@ -823,7 +824,7 @@ fd_get_compute_param(struct pipe_screen *pscreen, enum pipe_shader_ir ir_type,
+       RET((uint64_t[]){screen->ram_size});
+ 
+    case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
+-      RET((uint64_t[]){32768});
++      RET((uint64_t[]){screen->info->cs_shared_mem_size});
+ 
+    case PIPE_COMPUTE_CAP_MAX_PRIVATE_SIZE:
+    case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:
+diff --git a/src/gallium/drivers/freedreno/ir3/ir3_gallium.c b/src/gallium/drivers/freedreno/ir3/ir3_gallium.c
+index 6a6b061c8a30db3b4ccde1f95f197c9e72a8c717..35eccc6fdcebf9e6ac63ed699eaba27b13d6a9b7 100644
+--- a/src/gallium/drivers/freedreno/ir3/ir3_gallium.c
++++ b/src/gallium/drivers/freedreno/ir3/ir3_gallium.c
+@@ -319,13 +319,21 @@ ir3_shader_compute_state_create(struct pipe_context *pctx,
+    if (ctx->screen->gen >= 6)
+       ir3_nir_lower_io_to_bindless(nir);
+ 
++   enum ir3_wavesize_option api_wavesize = IR3_SINGLE_OR_DOUBLE;
++   enum ir3_wavesize_option real_wavesize = IR3_SINGLE_OR_DOUBLE;
++
++   if (ctx->screen->gen >= 6 && !ctx->screen->info->a6xx.supports_double_threadsize) {
++      api_wavesize = IR3_SINGLE_ONLY;
++      real_wavesize = IR3_SINGLE_ONLY;
++   }
++
+    struct ir3_shader *shader =
+       ir3_shader_from_nir(compiler, nir, &(struct ir3_shader_options){
+                               /* TODO: force to single on a6xx with legacy
+                                * ballot extension that uses 64-bit masks
+                                */
+-                              .api_wavesize = IR3_SINGLE_OR_DOUBLE,
+-                              .real_wavesize = IR3_SINGLE_OR_DOUBLE,
++                              .api_wavesize = api_wavesize,
++                              .real_wavesize = real_wavesize,
+                           }, NULL);
+    shader->cs.req_input_mem = align(cso->req_input_mem, 4) / 4;     /* byte->dword */
+    shader->cs.req_local_mem = cso->static_shared_mem;

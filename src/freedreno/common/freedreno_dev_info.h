@@ -160,7 +160,11 @@ struct fd_dev_info {
             uint32_t RB_UNKNOWN_8E01;
             uint32_t VPC_DBG_ECO_CNTL;
             uint32_t UCHE_UNKNOWN_0E12;
+            uint32_t HLSQ_CONTROL_1_REG_MODE;
          } magic;
+
+         uint32_t ccu_offset_bypass;
+         uint32_t ccu_offset_gmem;
       } a6xx;
    };
 };

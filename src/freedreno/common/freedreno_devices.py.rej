@@ -1,0 +1,25 @@
+diff a/src/freedreno/common/freedreno_devices.py b/src/freedreno/common/freedreno_devices.py	(rejected hunks)
+@@ -102,18 +102,20 @@ class GPUInfo(Struct):
+ 
+         s.gpu_infos.append(self)
+ 
+-
++# From freedreno_dev_info.h
++A6XX_CCU_DEPTH_SIZE = 64 * 1024
+ class A6xxGPUInfo(GPUInfo):
+     """The a6xx generation has a lot more parameters, and is broken down
+        into distinct sub-generations.  The template parameter avoids
+        duplication of parameters that are unique to the sub-generation.
+     """
+-    def __init__(self, template, num_sp_cores, num_ccu, magic_regs):
++    def __init__(self, template, num_sp_cores, num_ccu, magic_regs, num_vsc_pipes = 32,
++                 ccu_offset_bypass = 0, ccu_offset_gmem = 0):
+         super().__init__(gmem_align_w = 16, gmem_align_h = 4,
+                          tile_align_w = 32, tile_align_h = 32,
+                          tile_max_w   = 1024, # max_bitfield_val(5, 0, 5)
+                          tile_max_h   = max_bitfield_val(14, 8, 4),
+-                         num_vsc_pipes = 32)
++                         num_vsc_pipes = num_vsc_pipes)
+         assert(num_sp_cores == num_ccu)
+ 
+         self.num_sp_cores = num_sp_cores

@@ -1,0 +1,10 @@
+diff a/src/gallium/drivers/freedreno/a6xx/fd6_compute.cc b/src/gallium/drivers/freedreno/a6xx/fd6_compute.cc	(rejected hunks)
+@@ -48,7 +49,7 @@ cs_program_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+    assert_dt
+ {
+    const struct ir3_info *i = &v->info;
+-   enum a6xx_threadsize thrsz = i->double_threadsize ? THREAD128 : THREAD64;
++   enum a6xx_threadsize thrsz_cs = i->double_threadsize ? THREAD128 : THREAD64;
+ 
+    OUT_REG(ring, HLSQ_INVALIDATE_CMD(CHIP, .vs_state = true, .hs_state = true,
+                                           .ds_state = true, .gs_state = true,
