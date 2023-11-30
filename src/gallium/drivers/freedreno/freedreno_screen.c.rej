@@ -1,0 +1,94 @@
+diff a/src/gallium/drivers/freedreno/freedreno_screen.c b/src/gallium/drivers/freedreno/freedreno_screen.c	(rejected hunks)
+@@ -1174,58 +1163,76 @@ fd_screen_create(int fd,
+       if (screen->primtypes[i])
+          screen->primtypes_mask |= (1 << i);
+ 
+-   if (FD_DBG(PERFC)) {
+-      screen->perfcntr_groups =
+-         fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
+-   }
++   // printf("FD_DBG: Perfc\n");
++   // if (FD_DBG(PERFC)) {
++   //    screen->perfcntr_groups =
++   //       fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
++   // }
+ 
+    /* NOTE: don't enable if we have too old of a kernel to support
+     * growable cmdstream buffers, since memory requirement for cmdstream
+     * buffers would be too much otherwise.
+     */
++   printf("FD6: get dev version\n");
+    if (fd_device_version(dev) >= FD_VERSION_UNLIMITED_CMDS)
+       screen->reorder = !FD_DBG(INORDER);
+-
++   printf("fd_bc_init\n");
+    fd_bc_init(&screen->batch_cache);
+-
++   printf("list_inithead\n");
+    list_inithead(&screen->context_list);
+-
++   printf("util_idalloc_mt_init_tc\n");
+    util_idalloc_mt_init_tc(&screen->buffer_ids);
+-
++   printf("mtx init\n");
+    (void)simple_mtx_init(&screen->lock, mtx_plain);
+-
++   printf("   pscreen->destroy = fd_screen_destroy; \n");
+    pscreen->destroy = fd_screen_destroy;
++   printf("   pscreen->get_screen_fd = fd_screen_get_fd; \n");
+    pscreen->get_screen_fd = fd_screen_get_fd;
++   printf("   pscreen->get_param = fd_screen_get_param; \n");
+    pscreen->get_param = fd_screen_get_param;
++   printf("   pscreen->get_paramf = fd_screen_get_paramf; \n");
+    pscreen->get_paramf = fd_screen_get_paramf;
++   printf("   pscreen->get_shader_param = fd_screen_get_shader_param; \n");
+    pscreen->get_shader_param = fd_screen_get_shader_param;
++   printf("   pscreen->get_compute_param = fd_get_compute_param; \n");
+    pscreen->get_compute_param = fd_get_compute_param;
++   printf("   pscreen->get_compiler_options = fd_get_compiler_options; \n");
+    pscreen->get_compiler_options = fd_get_compiler_options;
++   printf("   pscreen->get_disk_shader_cache = fd_get_disk_shader_cache; \n");
+    pscreen->get_disk_shader_cache = fd_get_disk_shader_cache;
+-
++   printf("resource screen init\n");
+    fd_resource_screen_init(pscreen);
++   printf("query screen init\n");
+    fd_query_screen_init(pscreen);
++   printf("gmem screen init\n");
+    fd_gmem_screen_init(pscreen);
+-
++   printf("get name\n");
+    pscreen->get_name = fd_screen_get_name;
++   printf("get vendor\n");
+    pscreen->get_vendor = fd_screen_get_vendor;
++   printf("get device vendor\n");
+    pscreen->get_device_vendor = fd_screen_get_device_vendor;
+-
++   printf("get timestamp\n");
+    pscreen->get_timestamp = fd_screen_get_timestamp;
+-
++   printf("fence fence_reference\n");
+    pscreen->fence_reference = _fd_fence_ref;
++   printf("fence fence_finish\n");
+    pscreen->fence_finish = fd_pipe_fence_finish;
++   printf("fence get fd\n");
+    pscreen->fence_get_fd = fd_pipe_fence_get_fd;
+-
++   printf("query dmabuf modifiers\n");
+    pscreen->query_dmabuf_modifiers = fd_screen_query_dmabuf_modifiers;
++   printf("is dmabuf modifier supported\n");
+    pscreen->is_dmabuf_modifier_supported =
+       fd_screen_is_dmabuf_modifier_supported;
+-
++   printf("get device uuid\n");
+    pscreen->get_device_uuid = fd_screen_get_device_uuid;
++   printf("get driver uuid\n");
+    pscreen->get_driver_uuid = fd_screen_get_driver_uuid;
+ 
++   printf("slab create parent\n");
+    slab_create_parent(&screen->transfer_pool, sizeof(struct fd_transfer), 16);
+-
++   printf("DONE!\n");
+    return pscreen;
+ 
+ fail:

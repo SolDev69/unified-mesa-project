@@ -106,10 +106,14 @@ slab_create_parent(struct slab_parent_pool *parent,
                    unsigned item_size,
                    unsigned num_items)
 {
+   printf("1\n");
    simple_mtx_init(&parent->mutex, mtx_plain);
+   printf("2\n");
    parent->element_size = ALIGN_POT(sizeof(struct slab_element_header) + item_size,
                                     sizeof(intptr_t));
+   printf("3\n");
    parent->num_elements = num_items;
+   printf("4\n");
    parent->item_size = item_size;
 }
 

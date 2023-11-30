@@ -207,7 +207,6 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
    case PIPE_CAP_TEXTURE_BARRIER:
    case PIPE_CAP_INVALIDATE_BUFFER:
-   case PIPE_CAP_RGB_OVERRIDE_DST_ALPHA_BLEND:
    case PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS:
    case PIPE_CAP_NIR_COMPACT_ARRAYS:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP_TO_EDGE:
@@ -216,7 +215,9 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
 
    case PIPE_CAP_COPY_BETWEEN_COMPRESSED_AND_PLAIN_FORMATS:
-   case PIPE_CAP_CLEAR_TEXTURE:
+   case PIPE_CAP_MULTI_DRAW_INDIRECT:
+   case PIPE_CAP_DRAW_PARAMETERS:
+   case PIPE_CAP_MULTI_DRAW_INDIRECT_PARAMS:
       return is_a6xx(screen);
 
    case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
@@ -339,7 +340,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
    case PIPE_CAP_GLSL_FEATURE_LEVEL_COMPATIBILITY:
       if (is_a6xx(screen))
-         return 450;
+         return 460;
       else if (is_ir3(screen))
          return 140;
       else
@@ -471,6 +472,10 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return !is_a5xx(screen);
 
    /* Stream output. */
+   case PIPE_CAP_MAX_VERTEX_STREAMS:
+      if (is_a6xx(screen))  /* has SO + GS */
+         return PIPE_MAX_SO_BUFFERS;
+      return 0;
    case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
       if (is_ir3(screen))
          return PIPE_MAX_SO_BUFFERS;
@@ -537,6 +542,8 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return (screen->max_freq > 0) &&
              (is_a4xx(screen) || is_a5xx(screen) || is_a6xx(screen));
    case PIPE_CAP_QUERY_BUFFER_OBJECT:
+   case PIPE_CAP_QUERY_SO_OVERFLOW:
+   case PIPE_CAP_QUERY_PIPELINE_STATISTICS_SINGLE:
       return is_a6xx(screen);
 
    case PIPE_CAP_VENDOR_ID:
@@ -579,11 +586,6 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_THROTTLE:
       return screen->driconf.enable_throttling;
-   case PIPE_CAP_DMABUF:
-      if (fd_get_features(screen->dev) & FD_FEATURE_IMPORT_DMABUF)
-         return DRM_PRIME_CAP_IMPORT;
-      /* Fallthough to default case */
-      FALLTHROUGH;
    default:
       return u_pipe_screen_get_param_defaults(pscreen, param);
    }
@@ -649,6 +651,9 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen,
    case PIPE_SHADER_COMPUTE:
       if (has_compute(screen))
          break;
+      return 0;
+   case PIPE_SHADER_TASK:
+   case PIPE_SHADER_MESH:
       return 0;
    default:
       mesa_loge("unknown shader type %d", shader);
@@ -716,8 +721,6 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen,
    case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
    case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
       return 16;
-   case PIPE_SHADER_CAP_PREFERRED_IR:
-      return PIPE_SHADER_IR_NIR;
    case PIPE_SHADER_CAP_SUPPORTED_IRS:
       return (1 << PIPE_SHADER_IR_NIR) |
              COND(has_compute(screen) && (shader == PIPE_SHADER_COMPUTE),
@@ -839,8 +842,11 @@ fd_get_compute_param(struct pipe_screen *pscreen, enum pipe_shader_ir ir_type,
    case PIPE_COMPUTE_CAP_IMAGES_SUPPORTED:
       RET((uint32_t[]){1});
 
-   case PIPE_COMPUTE_CAP_SUBGROUP_SIZE:
+   case PIPE_COMPUTE_CAP_SUBGROUP_SIZES:
       RET((uint32_t[]){32}); // TODO
+
+   case PIPE_COMPUTE_CAP_MAX_SUBGROUPS:
+      RET((uint32_t[]){0}); // TODO
 
    case PIPE_COMPUTE_CAP_MAX_VARIABLE_THREADS_PER_BLOCK:
       RET((uint64_t[]){ compiler->max_variable_workgroup_size });
@@ -971,12 +977,12 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
    } else if (whandle->type == WINSYS_HANDLE_TYPE_FD) {
       bo = fd_bo_from_dmabuf(screen->dev, whandle->handle);
    } else {
-      mesa_loge("Attempt to import unsupported handle type %d", whandle->type);
+      printf("Attempt to import unsupported handle type %d\n", whandle->type);
       return NULL;
    }
 
    if (!bo) {
-      DBG("ref name 0x%08x failed", whandle->handle);
+      printf("ref name 0x%08x failed\n", whandle->handle);
       return NULL;
    }
 
@@ -1024,7 +1030,6 @@ fd_screen_create(int fd,
    struct fd_screen *screen = CALLOC_STRUCT(fd_screen);
    struct pipe_screen *pscreen;
    uint64_t val;
-
    fd_mesa_debug = debug_get_option_fd_mesa_debug();
 
    if (FD_DBG(NOBIN))
@@ -1043,14 +1048,15 @@ fd_screen_create(int fd,
    screen->ro = ro;
 
    // maybe this should be in context?
+   printf("Initializing pipe\n");
    screen->pipe = fd_pipe_new(screen->dev, FD_PIPE_3D);
    if (!screen->pipe) {
-      DBG("could not create 3d pipe");
+      printf("could not create 3d pipe\n");
       goto fail;
    }
 
    if (fd_pipe_get_param(screen->pipe, FD_GMEM_SIZE, &val)) {
-      DBG("could not get GMEM size");
+      printf("could not get GMEM size\n");
       goto fail;
    }
    screen->gmemsize_bytes = debug_get_num_option("FD_MESA_GMEM", val);
@@ -1059,18 +1065,22 @@ fd_screen_create(int fd,
       fd_pipe_get_param(screen->pipe, FD_GMEM_BASE, &screen->gmem_base);
    }
 
+   printf("setting max freq\n");
    screen->max_freq = 0;
 
+   printf("piping dev id\n");
    screen->dev_id = fd_pipe_dev_id(screen->pipe);
-
+   printf("dev id pipe done\n");
+   printf("get gpu id\n");
    if (fd_pipe_get_param(screen->pipe, FD_GPU_ID, &val)) {
-      DBG("could not get gpu-id");
+      printf("could not get gpu-id\n");
       goto fail;
    }
    screen->gpu_id = val;
+   printf("get chip id\n");
 
    if (fd_pipe_get_param(screen->pipe, FD_CHIP_ID, &val)) {
-      DBG("could not get chip-id");
+      printf("could not get chip-id\n");
       /* older kernels may not have this property: */
       unsigned core = screen->gpu_id / 100;
       unsigned major = (screen->gpu_id % 100) / 10;
@@ -1079,11 +1089,13 @@ fd_screen_create(int fd,
       val = (patch & 0xff) | ((minor & 0xff) << 8) | ((major & 0xff) << 16) |
             ((core & 0xff) << 24);
    }
+   printf("got chip id\n");
    screen->chip_id = val;
+   printf("piping gen\n");
    screen->gen = fd_dev_gen(screen->dev_id);
-
+   printf("get rings\n");
    if (fd_pipe_get_param(screen->pipe, FD_NR_PRIORITIES, &val)) {
-      DBG("could not get # of rings");
+      printf("could not get # of rings\n");
       screen->priority_mask = 0;
    } else {
       /* # of rings equates to number of unique priority values: */
@@ -1104,21 +1116,24 @@ fd_screen_create(int fd,
        */
       screen->prio_norm = val / 2;
    }
-
+   printf("get device version\n");
    if (fd_device_version(dev) >= FD_VERSION_ROBUSTNESS)
       screen->has_robustness = true;
 
+   printf("has_syncobj\n");
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
+   printf("sysinfo\n");
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;
-   
+   printf("dev info\n");
    const struct fd_dev_info *info = fd_dev_info(screen->dev_id);
    if (!info) {
-      mesa_loge("unsupported GPU: a%03d", screen->gpu_id);
-      goto fail;
+      DBG("unsupported GPU: a%03d", screen->gpu_id);
+      //goto fail;
    }
+   printf("screen info\n");
 
    screen->info = info;
 
@@ -1133,6 +1148,7 @@ fd_screen_create(int fd,
     * of the cases below and see what happens.  And if it works, please
     * send a patch ;-)
     */
+   printf("start screen\n");
    switch (screen->gen) {
    case 2:
       fd2_screen_init(pscreen);
@@ -1147,18 +1163,25 @@ fd_screen_create(int fd,
       fd5_screen_init(pscreen);
       break;
    case 6:
+      printf("p6\n");
       fd6_screen_init(pscreen);
       break;
    default:
-      mesa_loge("unsupported GPU generation: a%uxx", screen->gen);
-      goto fail;
+      printf("unsupported GPU generation: a%uxx\n", screen->gen);
+      //goto fail;
    }
+   printf("prim types\n");
    /* fdN_screen_init() should set this: */
    assert(screen->primtypes);
    screen->primtypes_mask = 0;
-   for (unsigned i = 0; i <= PIPE_PRIM_MAX; i++)
+   for (unsigned i = 0; i <= MESA_PRIM_COUNT; i++)
       if (screen->primtypes[i])
          screen->primtypes_mask |= (1 << i);
+
+   if (FD_DBG(PERFC)) {
+      screen->perfcntr_groups =
+         fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
+   }
 
    /* NOTE: don't enable if we have too old of a kernel to support
     * growable cmdstream buffers, since memory requirement for cmdstream

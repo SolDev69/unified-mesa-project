@@ -49,10 +49,8 @@
    .lower_insert_word = true,                                                 \
    .vertex_id_zero_based = true,                                              \
    .lower_base_vertex = true,                                                 \
-   .use_scoped_barrier = true,                                                \
    .support_16bit_alu = true,                                                 \
-   .lower_uniforms_to_ubo = true,                                             \
-   .has_txs = true
+   .lower_uniforms_to_ubo = true
 
 #define COMMON_SCALAR_OPTIONS                                                 \
    .lower_to_scalar = true,                                                   \
@@ -217,6 +215,11 @@ brw_compiler_create(void *mem_ctx, const struct intel_device_info *devinfo)
 
       compiler->nir_options[i] = nir_options;
    }
+
+   compiler->mesh.mue_header_packing =
+         (unsigned)debug_get_num_option("INTEL_MESH_HEADER_PACKING", 3);
+   compiler->mesh.mue_compaction =
+         debug_get_bool_option("INTEL_MESH_COMPACTION", true);
 
    return compiler;
 }

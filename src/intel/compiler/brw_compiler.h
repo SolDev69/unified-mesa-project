@@ -39,7 +39,6 @@ extern "C" {
 
 struct ra_regs;
 struct nir_shader;
-struct brw_program;
 struct shader_info;
 
 struct nir_shader_compiler_options;
@@ -114,7 +113,27 @@ struct brw_compiler {
     */
    bool indirect_ubos_use_sampler;
 
+   /**
+    * Gfx12.5+ has a bit in the SEND instruction extending the bindless
+    * surface offset range from 20 to 26 bits, effectively giving us 4Gb of
+    * bindless surface descriptors instead of 64Mb previously.
+    */
+   bool extended_bindless_surface_offset;
+
+   /**
+    * Gfx11+ has a bit in the dword 3 of the sampler message header that
+    * indicates whether the sampler handle is relative to the dynamic state
+    * base address (0) or the bindless sampler base address (1). The driver
+    * can select this.
+    */
+   bool use_bindless_sampler_offset;
+
    struct nir_shader *clc_shader;
+
+   struct {
+      unsigned mue_header_packing;
+      bool mue_compaction;
+   } mesh;
 };
 
 #define brw_shader_debug_log(compiler, data, fmt, ... ) do {    \
@@ -322,6 +341,7 @@ struct brw_tcs_prog_key
 
    enum tess_primitive_mode _tes_primitive_mode;
 
+   /** Number of input vertices, 0 means dynamic */
    unsigned input_vertices;
 
    /** A bitfield of per-patch outputs written. */
@@ -330,6 +350,15 @@ struct brw_tcs_prog_key
    bool quads_workaround;
    uint32_t padding:24;
 };
+
+#define BRW_MAX_TCS_INPUT_VERTICES (32)
+
+static inline uint32_t
+brw_tcs_prog_key_input_vertices(const struct brw_tcs_prog_key *key)
+{
+   return key->input_vertices != 0 ?
+          key->input_vertices : BRW_MAX_TCS_INPUT_VERTICES;
+}
 
 /** The program key for Tessellation Evaluation Shaders. */
 struct brw_tes_prog_key
@@ -379,6 +408,9 @@ struct brw_task_prog_key
 struct brw_mesh_prog_key
 {
    struct brw_base_prog_key base;
+
+   bool compact_mue:1;
+   unsigned padding:31;
 };
 
 enum brw_sf_primitive {
@@ -507,11 +539,14 @@ struct brw_wm_prog_key {
 
    enum brw_sometimes line_aa:2;
 
+   /* Whether the preceding shader stage is mesh */
+   enum brw_sometimes mesh_input:2;
+
    bool coherent_fb_fetch:1;
    bool ignore_sample_mask_out:1;
    bool coarse_pixel:1;
 
-   uint64_t padding:55;
+   uint64_t padding:53;
 };
 
 struct brw_cs_prog_key {
@@ -712,6 +747,7 @@ enum brw_shader_reloc_id {
    BRW_SHADER_RELOC_SHADER_START_OFFSET,
    BRW_SHADER_RELOC_RESUME_SBT_ADDR_LOW,
    BRW_SHADER_RELOC_RESUME_SBT_ADDR_HIGH,
+   BRW_SHADER_RELOC_DESCRIPTORS_ADDR_HIGH,
 };
 
 enum brw_shader_reloc_type {
@@ -923,8 +959,7 @@ struct brw_wm_prog_data {
    bool dispatch_16;
    bool dispatch_32;
    bool dual_src_blend;
-   enum brw_sometimes uses_pos_offset;
-   bool read_pos_offset_input;
+   bool uses_pos_offset;
    bool uses_omask;
    bool uses_kill;
    bool uses_src_depth;
@@ -998,6 +1033,7 @@ struct brw_wm_prog_data {
     * For varying slots that are not used by the FS, the value is -1.
     */
    int urb_setup[VARYING_SLOT_MAX];
+   int urb_setup_channel[VARYING_SLOT_MAX];
 
    /**
     * Cache structure into the urb_setup array above that contains the
@@ -1201,25 +1237,6 @@ brw_wm_prog_data_is_coarse(const struct brw_wm_prog_data *prog_data,
           prog_data->coarse_pixel_dispatch == BRW_NEVER);
 
    return prog_data->coarse_pixel_dispatch;
-}
-
-static inline bool
-brw_wm_prog_data_uses_position_xy_offset(const struct brw_wm_prog_data *prog_data,
-                                         enum brw_wm_msaa_flags pushed_msaa_flags)
-{
-   bool per_sample;
-   if (pushed_msaa_flags & BRW_WM_MSAA_FLAG_ENABLE_DYNAMIC) {
-      per_sample = (pushed_msaa_flags & BRW_WM_MSAA_FLAG_PERSAMPLE_INTERP) != 0;
-   } else {
-      assert(prog_data->persample_dispatch == BRW_ALWAYS ||
-             prog_data->persample_dispatch == BRW_NEVER);
-      per_sample = prog_data->persample_dispatch == BRW_ALWAYS;
-   }
-
-   if (!per_sample)
-      return false;
-
-   return prog_data->read_pos_offset_input;
 }
 
 struct brw_push_const_block {
@@ -1636,6 +1653,7 @@ struct brw_tue_map {
 
 struct brw_mue_map {
    int32_t start_dw[VARYING_SLOT_MAX];
+   uint32_t len_dw[VARYING_SLOT_MAX];
    uint32_t per_primitive_indices_dw;
 
    uint32_t size_dw;
@@ -1645,12 +1663,14 @@ struct brw_mue_map {
    uint32_t per_primitive_header_size_dw;
    uint32_t per_primitive_data_size_dw;
    uint32_t per_primitive_pitch_dw;
+   bool user_data_in_primitive_header;
 
    uint32_t max_vertices;
    uint32_t per_vertex_start_dw;
    uint32_t per_vertex_header_size_dw;
    uint32_t per_vertex_data_size_dw;
    uint32_t per_vertex_pitch_dw;
+   bool user_data_in_vertex_header;
 };
 
 struct brw_task_prog_data {
@@ -1764,9 +1784,6 @@ brw_prog_data_size(gl_shader_stage stage);
 
 unsigned
 brw_prog_key_size(gl_shader_stage stage);
-
-void
-brw_prog_key_set_id(union brw_any_prog_key *key, gl_shader_stage, unsigned id);
 
 /**
  * Parameters for compiling a vertex shader.

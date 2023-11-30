@@ -1,0 +1,10 @@
+diff a/src/freedreno/common/freedreno_dev_info.h b/src/freedreno/common/freedreno_dev_info.h	(rejected hunks)
+@@ -192,7 +192,7 @@ fd_dev_gpu_id(const struct fd_dev_id *id)
+ static uint8_t
+ fd_dev_gen(const struct fd_dev_id *id)
+ {
+-   return fd_dev_gpu_id(id) / 100;
++   return 6; // test
+ }
+ 
+ static inline bool

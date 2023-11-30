@@ -941,11 +941,11 @@ kgsl_queue_submit(struct tu_queue *queue, struct vk_queue_submit *vk_submit)
       }
 
       struct kgsl_syncobj last_submit_sync;
-      if (queue->last_submit_timestamp >= 0)
+      if (queue->fence >= 0)
          last_submit_sync = (struct kgsl_syncobj) {
             .state = KGSL_SYNCOBJ_STATE_TS,
             .queue = queue,
-            .timestamp = queue->last_submit_timestamp,
+            .timestamp = queue->fence,
          };
       else
          last_submit_sync = (struct kgsl_syncobj) {
@@ -1120,10 +1120,11 @@ kgsl_queue_submit(struct tu_queue *queue, struct vk_queue_submit *vk_submit)
    if (ret) {
       result = vk_device_set_lost(&queue->device->vk, "submit failed: %s\n",
                                   strerror(errno));
-      goto fail_submit;
+      pthread_mutex_unlock(&queue->device->submit_mutex);
+      return result;
    }
 
-   queue->last_submit_timestamp = req.timestamp;
+   p_atomic_set(&queue->fence, req.timestamp);
 
    for (uint32_t i = 0; i < vk_submit->signal_count; i++) {
       struct kgsl_syncobj *signal_sync =
@@ -1139,21 +1140,6 @@ kgsl_queue_submit(struct tu_queue *queue, struct vk_queue_submit *vk_submit)
    pthread_mutex_unlock(&queue->device->submit_mutex);
    pthread_cond_broadcast(&queue->device->timeline_cond);
 
-   if (cmd_buffers != (struct tu_cmd_buffer **) vk_submit->command_buffers)
-      vk_free(&queue->device->vk.alloc, cmd_buffers);
-
-   vk_free(&queue->device->vk.alloc, cmds);
-
-   return VK_SUCCESS;
-
-fail_submit:
-   pthread_mutex_unlock(&queue->device->submit_mutex);
-
-   if (cmd_buffers != (struct tu_cmd_buffer **) vk_submit->command_buffers)
-      vk_free(&queue->device->vk.alloc, cmd_buffers);
-
-   vk_free(&queue->device->vk.alloc, cmds);
-
    return result;
 }
 
@@ -1162,6 +1148,19 @@ kgsl_device_wait_u_trace(struct tu_device *dev, struct tu_u_trace_syncobj *synco
 {
    tu_finishme("tu_device_wait_u_trace");
    return VK_SUCCESS;
+}
+
+static VkResult
+kgsl_device_init(struct tu_device *dev)
+{
+   dev->fd = dev->physical_device->local_fd;
+   return VK_SUCCESS;
+}
+
+static void
+kgsl_device_finish(struct tu_device *dev)
+{
+   /* No-op */
 }
 
 static int
@@ -1207,6 +1206,8 @@ kgsl_device_check_status(struct tu_device *device)
 static const struct tu_knl kgsl_knl_funcs = {
       .name = "kgsl",
 
+      .device_init = kgsl_device_init,
+      .device_finish = kgsl_device_finish,
       .device_get_gpu_timestamp = kgsl_device_get_gpu_timestamp,
       .device_get_suspend_count = kgsl_device_get_suspend_count,
       .device_check_status = kgsl_device_check_status,

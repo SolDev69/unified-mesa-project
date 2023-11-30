@@ -116,7 +116,6 @@ static const nir_shader_compiler_options ir3_base_options = {
    .has_isub = true,
    .force_indirect_unrolling_sampler = true,
    .lower_uniforms_to_ubo = true,
-   .use_scoped_barrier = true,
    .max_unroll_iterations = 32,
 
    .lower_cs_local_index_to_id = true,
@@ -143,6 +142,7 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
    compiler->dev = dev;
    compiler->dev_id = dev_id;
    compiler->gen = fd_dev_gen(dev_id);
+   compiler->is_64bit = fd_dev_64b(dev_id);
    compiler->options = *options;
 
    /* All known GPU's have 32k local memory (aka shared) */
@@ -174,9 +174,13 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        *
        * TODO: The shared limit seems to be different on different models.
        */
+      printf("ir3: pipeline\n");
       compiler->max_const_pipeline = 512;
+      printf("ir3: frag\n");
       compiler->max_const_frag = 512;
+      printf("ir3: geom\n");
       compiler->max_const_geom = 512;
+      printf("ir3: safe\n");
       compiler->max_const_safe = 100;
 
       /* Compute shaders don't share a const file with the FS. Instead they
@@ -184,25 +188,29 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        *
        * TODO: is this true on earlier gen's?
        */
+      printf("ir3: compute\n");
       compiler->max_const_compute = 256;
-
+      printf("ir3: has clip cull\n");
       /* TODO: implement clip+cull distances on earlier gen's */
       compiler->has_clip_cull = true;
-
+      printf("ir3: pvtmem\n");
       /* TODO: implement private memory on earlier gen's */
       compiler->has_pvtmem = true;
-
+      printf("ir3: preamble\n");
       compiler->has_preamble = true;
-
-      compiler->tess_use_shared = dev_info->a6xx.tess_use_shared;
-
-      compiler->has_getfiberid = dev_info->a6xx.has_getfiberid;
-
-      compiler->has_dp2acc = dev_info->a6xx.has_dp2acc;
-      compiler->has_dp4acc = dev_info->a6xx.has_dp4acc;
-
+      printf("tess\n");
+      compiler->tess_use_shared = false;
+      printf("ir3: has getfibreid\n");
+      compiler->has_getfiberid = false;
+      printf("ir3: dp2\n");
+      compiler->has_dp2acc = false;
+      printf("ir3: dp4\n");
+      compiler->has_dp4acc = false;
+      printf("ir3: shared consts offset\n");
       compiler->shared_consts_base_offset = 504;
+      printf("ir3: shared consts size\n");
       compiler->shared_consts_size = 8;
+      printf("ir3: geometry shared consts size quirk\n");
       compiler->geom_shared_consts_size_quirk = 16;
    } else {
       compiler->max_const_pipeline = 512;
@@ -215,8 +223,6 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
        */
       compiler->max_const_safe = 256;
    }
-
-   compiler->has_isam_ssbo = compiler->gen >= 6;
 
    if (compiler->gen >= 6) {
       compiler->reg_size_vec4 = dev_info->a6xx.reg_size_vec4;
@@ -287,11 +293,18 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
       compiler->nir_options.force_indirect_unrolling = nir_var_all;
    }
 
+   if (options->lower_base_vertex) {
+      compiler->nir_options.lower_base_vertex = true;
+   }
+
    /* 16-bit ALU op generation is mostly controlled by frontend compiler options, but
     * this core NIR option enables some optimizations of 16-bit operations.
     */
    if (compiler->gen >= 5 && !(ir3_shader_debug & IR3_DBG_NOFP16))
       compiler->nir_options.support_16bit_alu = true;
+
+   if (!options->disable_cache)
+      ir3_disk_cache_init(compiler);
 
    return compiler;
 }

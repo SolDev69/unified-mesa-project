@@ -912,10 +912,20 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
          FALLTHROUGH;
       case BRW_OPCODE_BFI1:
       case BRW_OPCODE_ASR:
-      case BRW_OPCODE_SHL:
       case BRW_OPCODE_SHR:
       case BRW_OPCODE_SUBB:
          if (i == 1) {
+            inst->src[i] = val;
+            progress = true;
+         }
+         break;
+
+      case BRW_OPCODE_SHL:
+         /* Only constant propagate into src0 if src1 is also constant. In that
+          * specific case, constant folding will eliminate the instruction.
+          */
+         if ((i == 0 && inst->src[1].file == IMM) ||
+             i == 1) {
             inst->src[i] = val;
             progress = true;
          }
@@ -925,8 +935,6 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
       case BRW_OPCODE_MUL:
       case SHADER_OPCODE_MULH:
       case BRW_OPCODE_ADD:
-      case BRW_OPCODE_OR:
-      case BRW_OPCODE_AND:
       case BRW_OPCODE_XOR:
       case BRW_OPCODE_ADDC:
          if (i == 1) {
@@ -981,6 +989,30 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
             inst->src[1] = val;
             progress = true;
          }
+         break;
+
+      case BRW_OPCODE_ADD3:
+         /* add3 can have a single imm16 source. Proceed if the source type is
+          * already W or UW or the value can be coerced to one of those types.
+          */
+         if (val.type == BRW_REGISTER_TYPE_W || val.type == BRW_REGISTER_TYPE_UW)
+            ; /* Nothing to do. */
+         else if (val.ud <= 0xffff)
+            val = brw_imm_uw(val.ud);
+         else if (val.d >= -0x8000 && val.d <= 0x7fff)
+            val = brw_imm_w(val.d);
+         else
+            break;
+
+         if (i == 2) {
+            inst->src[i] = val;
+            progress = true;
+         } else if (inst->src[2].file != IMM) {
+            inst->src[i] = inst->src[2];
+            inst->src[2] = val;
+            progress = true;
+         }
+
          break;
 
       case BRW_OPCODE_CMP:
@@ -1038,6 +1070,8 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
          }
          break;
 
+      case BRW_OPCODE_AND:
+      case BRW_OPCODE_OR:
       case SHADER_OPCODE_TEX_LOGICAL:
       case SHADER_OPCODE_TXD_LOGICAL:
       case SHADER_OPCODE_TXF_LOGICAL:
@@ -1062,23 +1096,12 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
       case SHADER_OPCODE_TYPED_SURFACE_WRITE_LOGICAL:
       case SHADER_OPCODE_BYTE_SCATTERED_WRITE_LOGICAL:
       case SHADER_OPCODE_BYTE_SCATTERED_READ_LOGICAL:
-         inst->src[i] = val;
-         progress = true;
-         break;
-
       case FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD:
       case SHADER_OPCODE_BROADCAST:
-         inst->src[i] = val;
-         progress = true;
-         break;
-
       case BRW_OPCODE_MAD:
       case BRW_OPCODE_LRP:
-         inst->src[i] = val;
-         progress = true;
-         break;
-
       case FS_OPCODE_PACK_HALF_2x16_SPLIT:
+      case SHADER_OPCODE_SHUFFLE:
          inst->src[i] = val;
          progress = true;
          break;
@@ -1086,6 +1109,26 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
       default:
          break;
       }
+   }
+
+   /* ADD3 can only have the immediate as src0. */
+   if (progress && inst->opcode == BRW_OPCODE_ADD3) {
+      if (inst->src[2].file == IMM) {
+         const auto src0 = inst->src[0];
+         inst->src[0] = inst->src[2];
+         inst->src[2] = src0;
+      }
+   }
+
+   /* If only one of the sources of a 2-source, commutative instruction (e.g.,
+    * AND) is immediate, it must be src1. If both are immediate, opt_algebraic
+    * should fold it away.
+    */
+   if (progress && inst->sources == 2 && inst->is_commutative() &&
+       inst->src[0].file == IMM && inst->src[1].file != IMM) {
+      const auto src1 = inst->src[1];
+      inst->src[1] = inst->src[0];
+      inst->src[0] = src1;
    }
 
    return progress;

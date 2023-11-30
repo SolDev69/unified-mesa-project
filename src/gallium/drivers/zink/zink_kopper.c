@@ -246,8 +246,10 @@ kopper_CreateSwapchain(struct zink_screen *screen, struct kopper_displaytarget *
 {
    VkResult error = VK_SUCCESS;
    struct kopper_swapchain *cswap = CALLOC_STRUCT(kopper_swapchain);
-   if (!cswap)
+   if (!cswap) {
+      *result = VK_ERROR_OUT_OF_HOST_MEMORY;
       return NULL;
+   }
    cswap->last_present_prune = 1;
    util_queue_fence_init(&cswap->present_fence);
 
@@ -341,6 +343,10 @@ kopper_GetSwapchainImages(struct zink_screen *screen, struct kopper_swapchain *c
    if (error != VK_SUCCESS)
       return error;
    cswap->images = calloc(cswap->num_images, sizeof(struct kopper_swapchain_image));
+   if (!cswap->images) {
+      mesa_loge("ZINK: failed to allocate cswap->images!");
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
+   }
    cswap->presents = _mesa_hash_table_create_u32_keys(NULL);
    VkImage images[32];
    error = VKSCR(GetSwapchainImagesKHR)(screen->dev, cswap->swapchain, &cswap->num_images, images);
@@ -484,6 +490,7 @@ zink_kopper_displaytarget_create(struct zink_screen *screen, unsigned tex_usage,
 
 //moar cleanup
 out:
+   FREE(cdt);
    return NULL;
 }
 
@@ -722,8 +729,9 @@ kopper_present(void *data, void *gdata, int thread_idx)
                                                       (void*)(uintptr_t)swapchain->last_present_prune);
       if (he) {
          arr = he->data;
-         while (util_dynarray_contains(arr, VkSemaphore))
-            VKSCR(DestroySemaphore)(screen->dev, util_dynarray_pop(arr, VkSemaphore), NULL);
+         simple_mtx_lock(&screen->semaphores_lock);
+         util_dynarray_append_dynarray(&screen->semaphores, arr);
+         simple_mtx_unlock(&screen->semaphores_lock);
          util_dynarray_fini(arr);
          free(arr);
          _mesa_hash_table_remove(swapchain->presents, he);
@@ -739,6 +747,11 @@ kopper_present(void *data, void *gdata, int thread_idx)
       arr = he->data;
    else {
       arr = malloc(sizeof(struct util_dynarray));
+      if (!arr) {
+         mesa_loge("ZINK: failed to allocate arr!");
+         return;
+      }
+
       util_dynarray_init(arr, NULL);
       _mesa_hash_table_insert(swapchain->presents, (void*)(uintptr_t)next, arr);
    }
@@ -765,6 +778,11 @@ zink_kopper_present_queue(struct zink_screen *screen, struct zink_resource *res)
       prune_old_swapchains(screen, cdt, false);
 
    struct kopper_present_info *cpi = malloc(sizeof(struct kopper_present_info));
+   if (!cpi) {
+      mesa_loge("ZINK: failed to allocate cpi!");
+      return;
+   }
+      
    cpi->sem = res->obj->present;
    cpi->res = res;
    cpi->swapchain = cdt->swapchain;
