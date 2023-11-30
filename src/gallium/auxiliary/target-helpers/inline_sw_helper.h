@@ -29,6 +29,10 @@
 #include "virgl/vtest/virgl_vtest_public.h"
 #endif
 
+#ifdef GALLIUM_ZINK
+#include "zink/zink_public.h"
+#endif
+
 #ifdef GALLIUM_D3D12
 #include "d3d12/d3d12_public.h"
 #endif
