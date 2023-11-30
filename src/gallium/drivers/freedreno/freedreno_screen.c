@@ -667,7 +667,8 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen,
    case PIPE_SHADER_CAP_MAX_INPUTS:
       if (shader == PIPE_SHADER_GEOMETRY && is_a6xx(screen))
          return 16;
-      return is_a6xx(screen) ? 32 : 16;
+      return is_a6xx(screen) ?
+         (screen->info->a6xx.vs_max_inputs_count) : 16;
    case PIPE_SHADER_CAP_MAX_OUTPUTS:
       return is_a6xx(screen) ? 32 : 16;
    case PIPE_SHADER_CAP_MAX_TEMPS:
@@ -821,7 +822,7 @@ fd_get_compute_param(struct pipe_screen *pscreen, enum pipe_shader_ir ir_type,
       RET((uint64_t[]){screen->ram_size});
 
    case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
-      RET((uint64_t[]){32768});
+      RET((uint64_t[]){screen->info->cs_shared_mem_size});
 
    case PIPE_COMPUTE_CAP_MAX_PRIVATE_SIZE:
    case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:

@@ -47,6 +47,10 @@ struct fd_dev_info {
 
    uint32_t num_vsc_pipes;
 
+   uint32_t cs_shared_mem_size;
+
+   int wave_granularity;
+
    /* number of CCU is always equal to the number of SP */
    union {
       uint32_t num_sp_cores;
@@ -65,6 +69,10 @@ struct fd_dev_info {
           * on gen3 and later.
           */
          uint32_t instr_cache_size;
+
+         bool has_hw_multiview;
+
+         bool has_fs_tex_prefetch;
 
          /* Whether the PC_MULTIVIEW_MASK register exists. */
          bool supports_multiview_mask;
