@@ -57,7 +57,7 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers= \
+            -Dvulkan-drivers=freedreno \
             -Dgallium-drivers=freedreno,zink \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
