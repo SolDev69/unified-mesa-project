@@ -24,7 +24,7 @@ jobs:
           sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
           sudo apt update
           sudo apt build-dep -y mesa
-          sudo apt install -y libdrm-dev
+          sudo apt install -y zlib1g-dev libexpat1-dev libdrm-dev libx11-dev libx11-xcb-dev libxext-dev libxdamage-dev libxcb-glx0-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-shm0-dev libxcb-present-dev libxshmfence-dev libxxf86vm-dev libxrandr-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev 
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           envsubst <android-${{matrix.arch}} >build-crossfile
