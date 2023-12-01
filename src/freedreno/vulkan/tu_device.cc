@@ -295,7 +295,6 @@ tu_physical_device_init(struct tu_physical_device *device,
    } else {
       device->name = vk_strdup(&instance->vk.alloc, fd_name,
                                VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
-
    }
    if (!device->name) {
       return vk_startup_errorf(instance, VK_ERROR_OUT_OF_HOST_MEMORY,
@@ -308,22 +307,13 @@ tu_physical_device_init(struct tu_physical_device *device,
                                  "device %s is unsupported", device->name);
       goto fail_free_name;
    }
+   device->info = info; // Ignore turnip death
    switch (fd_dev_gen(&device->dev_id)) {
    case 6:
-      device->info = info;
       device->ccu_offset_bypass = device->info->num_ccu * A6XX_CCU_DEPTH_SIZE;
       device->ccu_offset_gmem = (device->gmem_size -
          device->info->num_ccu * A6XX_CCU_GMEM_COLOR_SIZE);
       break;
-   default:
-      result = vk_startup_errorf(instance, VK_ERROR_INITIALIZATION_FAILED,
-                                 "device %s is unsupported", device->name);
-      goto fail_free_name;
-   }
-   if (tu_device_get_cache_uuid(device, device->cache_uuid)) {
-      result = vk_startup_errorf(instance, VK_ERROR_INITIALIZATION_FAILED,
-                                 "cannot generate UUID");
-      goto fail_free_name;
    }
 
    device->memory.type_count = 1;
