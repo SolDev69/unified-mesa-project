@@ -26,24 +26,6 @@ jobs:
           sudo apt build-dep -y mesa
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
-          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
-          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
-          cd drm
-          meson setup "build-android" \
-            --prefix=/tmp/drm-static \
-            --cross-file "../build-crossfile-drm" \
-            -Ddefault_library=static \
-            -Dintel=disabled \
-            -Dradeon=disabled \
-            -Damdgpu=disabled \
-            -Dnouveau=disabled \
-            -Dvmwgfx=disabled \
-            -Dfreedreno=enabled \
-            -Dvc4=disabled \
-            -Detnaviv=disabled \
-            -Dfreedreno-kgsl=true
-          ninja -C "build-android" install
-          cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
           meson setup "build-android" \
             --prefix=/tmp/fd \
