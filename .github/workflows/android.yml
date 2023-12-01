@@ -44,7 +44,7 @@ jobs:
           ninja -C "build-android" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
-          meson setup "build-android" \
+          meson setup "build-android-vulkan" \
             --prefix=/tmp/fd \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
@@ -62,6 +62,25 @@ jobs:
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
             -Dbuildtype=release
+          meson setup "build-android" \
+            --prefix=/tmp/fd \
+            --cross-file "build-crossfile" \
+            -Dplatforms=android \
+            -Dplatform-sdk-version=26 \
+            -Dandroid-stub=true \
+            -Dllvm=disabled \
+            -Dxlib-lease=disabled \
+            -Degl=disabled \
+            -Dgbm=disabled \
+            -Dglx=disabled \
+            -Dopengl=true \
+            -Dosmesa=true \
+            -Dvulkan-drivers= \
+            -Dgallium-drivers=freedreno,zink \
+            -Dfreedreno-kmds=kgsl \
+            -Dshared-glapi=false \
+            -Dbuildtype=release
+          ninja -C "build-android-vulkan" install
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v2
