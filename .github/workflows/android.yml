@@ -21,12 +21,28 @@ jobs:
 
       - name: Build
         run: |
-          sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
           sudo apt update
-          sudo apt build-dep -y mesa
-          sudo apt install -y zlib1g-dev libexpat1-dev libdrm-dev libx11-dev libx11-xcb-dev libxext-dev libxdamage-dev libxcb-glx0-dev libxcb-dri2-0-dev libxcb-dri3-dev libxcb-shm0-dev libxcb-present-dev libxshmfence-dev libxxf86vm-dev libxrandr-dev libwayland-dev wayland-protocols libwayland-egl-backend-dev 
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
+          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
+          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
+          cd drm
+          meson setup "build-android" \
+            --prefix=/tmp/drm-static \
+            --cross-file "../build-crossfile-drm" \
+            -Ddefault_library=static \
+            -Dintel=disabled \
+            -Dradeon=disabled \
+            -Damdgpu=disabled \
+            -Dnouveau=disabled \
+            -Dvmwgfx=disabled \
+            -Dfreedreno=enabled \
+            -Dvc4=disabled \
+            -Detnaviv=disabled \
+            -Dfreedreno-kgsl=true
+          ninja -C "build-android" install
+          cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
           meson setup "build-android" \
             --prefix=/tmp/fd \
@@ -39,10 +55,10 @@ jobs:
             -Degl=disabled \
             -Dgbm=disabled \
             -Dglx=disabled \
-            -Dopengl=true \
-            -Dosmesa=true \
+            -Dopengl=false \
+            -Dosmesa=false \
             -Dvulkan-drivers=freedreno \
-            -Dgallium-drivers=freedreno,zink \
+            -Dgallium-drivers= \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
             -Dbuildtype=release
