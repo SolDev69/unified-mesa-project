@@ -12,7 +12,7 @@ strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
 # Also, include the plain DRM lib we found earlier. Panfrost relies on it rather heavily, especially when
 # interacting with the panfrost DRM module and not kbase
 
-pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
+pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
 
 [host_machine]
 system = 'linux'
