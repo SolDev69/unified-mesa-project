@@ -189,7 +189,7 @@ foreach gallium_driver : gallium_drivers
   pre_args += '-DHAVE_@0@'.format(gallium_driver.to_upper())
 endforeach
 
-if freedreno_kmds.contains('kgsl')
+if get_option('freedreno-kmds').contains('kgsl')
   pre_args += '-DHAVE_FREEDRENO_KGSL'
 endif
 
