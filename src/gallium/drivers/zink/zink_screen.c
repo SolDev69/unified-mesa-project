@@ -269,9 +269,11 @@ disk_cache_init(struct zink_screen *screen)
    /* Hash in the zink driver build. */
    const struct build_id_note *note =
        build_id_find_nhdr_for_addr(disk_cache_init);
-   unsigned build_id_len = build_id_length(note);
-   assert(note && build_id_len == 20); /* sha1 */
-   _mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
+   if (note != NULL) {
+      unsigned build_id_len = build_id_length(note);
+      assert(note && build_id_len == 20); /* sha1 */
+      _mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
+   }
 #endif
 
    /* Hash in the Vulkan pipeline cache UUID to identify the combination of
@@ -3141,7 +3143,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
 
    u_trace_state_init();
 
-   screen->loader_lib = util_dl_open(VK_LIBNAME);
+   screen->loader_lib = (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);   screen->loader_lib = util_dl_open(VK_LIBNAME);
    if (!screen->loader_lib) {
       mesa_loge("ZINK: failed to load "VK_LIBNAME);
       goto fail;
@@ -3156,15 +3158,6 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
    }
 
    screen->instance_info.loader_version = zink_get_loader_version(screen);
-   if (config) {
-      driParseConfigFiles(config->options, config->options_info, 0, "zink",
-                          NULL, NULL, NULL, 0, NULL, 0);
-      screen->driconf.dual_color_blend_by_location = driQueryOptionb(config->options, "dual_color_blend_by_location");
-      screen->driconf.glsl_correct_derivatives_after_discard = driQueryOptionb(config->options, "glsl_correct_derivatives_after_discard");
-      //screen->driconf.inline_uniforms = driQueryOptionb(config->options, "radeonsi_inline_uniforms");
-      screen->driconf.emulate_point_smooth = driQueryOptionb(config->options, "zink_emulate_point_smooth");
-      screen->driconf.zink_shader_object_enable = driQueryOptionb(config->options, "zink_shader_object_enable");
-   }
 
    if (!zink_create_instance(screen, dev_major > 0 && dev_major < 255))
       goto fail;
