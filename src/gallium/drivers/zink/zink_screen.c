@@ -2853,7 +2853,6 @@ init_driver_workarounds(struct zink_screen *screen)
       mesa_loge("Cannot specify ZINK_DEBUG=rp and ZINK_DEBUG=norp");
       abort();
    }
-#if 0
    /* these drivers benefit from renderpass optimization */
    switch (screen->info.driver_props.driverID) {
    case VK_DRIVER_ID_MESA_LLVMPIPE:
@@ -2869,7 +2868,6 @@ init_driver_workarounds(struct zink_screen *screen)
    default:
       break;
    }
-#endif
    if (zink_debug & ZINK_DEBUG_RP)
       screen->driver_workarounds.track_renderpasses = true;
    else if (zink_debug & ZINK_DEBUG_NORP)
