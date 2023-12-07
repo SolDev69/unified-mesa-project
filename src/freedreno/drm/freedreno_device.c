@@ -80,7 +80,8 @@ fd_device_new(int fd)
       if (dev)
          goto out;
 #endif
-
+   }
+   
    if (!dev) {
       INFO_MSG("unsupported device: %s", version->name);
       goto out;
