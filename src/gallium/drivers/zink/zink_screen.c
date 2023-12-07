@@ -2853,7 +2853,7 @@ init_driver_workarounds(struct zink_screen *screen)
       mesa_loge("Cannot specify ZINK_DEBUG=rp and ZINK_DEBUG=norp");
       abort();
    }
-
+#if 0
    /* these drivers benefit from renderpass optimization */
    switch (screen->info.driver_props.driverID) {
    case VK_DRIVER_ID_MESA_LLVMPIPE:
@@ -2869,6 +2869,7 @@ init_driver_workarounds(struct zink_screen *screen)
    default:
       break;
    }
+#endif
    if (zink_debug & ZINK_DEBUG_RP)
       screen->driver_workarounds.track_renderpasses = true;
    else if (zink_debug & ZINK_DEBUG_NORP)
@@ -3143,7 +3144,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
 
    u_trace_state_init();
 
-   screen->loader_lib = (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);   screen->loader_lib = util_dl_open(VK_LIBNAME);
+   screen->loader_lib = (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);
    if (!screen->loader_lib) {
       mesa_loge("ZINK: failed to load "VK_LIBNAME);
       goto fail;
