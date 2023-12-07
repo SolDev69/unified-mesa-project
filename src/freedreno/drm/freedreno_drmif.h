@@ -300,6 +300,8 @@ struct fd_bo *fd_bo_from_handle(struct fd_device *dev, uint32_t handle,
                                 uint32_t size);
 struct fd_bo *fd_bo_from_name(struct fd_device *dev, uint32_t name);
 struct fd_bo *fd_bo_from_dmabuf(struct fd_device *dev, int fd);
+struct fd_bo *fd_bo_from_dmabuf_drm(struct fd_device *dev, int fd);
+
 void fd_bo_mark_for_dump(struct fd_bo *bo);
 
 static inline uint64_t

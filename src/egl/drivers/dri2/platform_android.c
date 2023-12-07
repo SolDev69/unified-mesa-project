@@ -1458,9 +1458,46 @@ droid_probe_device(_EGLDisplay *disp, bool swrast)
    return EGL_TRUE;
 }
 
+static EGLBoolean droid_open_device_kgsl(_EGLDisplay *disp, bool swrast)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   static const char path[] = "/dev/kgsl-3d0";
+   static const char driver_name[] = "kgsl";
+
+   dri2_dpy->fd_render_gpu = loader_open_device(path);
+   if (dri2_dpy->fd_render_gpu < 0) {
+      _eglLog(_EGL_WARNING, "Failed to open kgsl");
+      return EGL_FALSE;
+   }
+
+   dri2_dpy->driver_name = strdup(driver_name);
+   dri2_dpy->loader_extensions = droid_image_loader_extensions;
+   if (!dri2_load_driver_dri3(disp)) {
+      free(dri2_dpy->driver_name);
+      dri2_dpy->driver_name = NULL;
+      goto error;
+   }
+
+   if (!dri2_create_screen(disp)) {
+      _eglLog(_EGL_WARNING, "DRI2: Failed to create screen");
+      droid_unload_driver(disp);
+      goto error;
+   }
+
+   return EGL_TRUE;
+error:
+   close(dri2_dpy->fd_render_gpu);
+   dri2_dpy->fd_render_gpu = -1;
+   return EGL_FALSE;
+}
+
 static EGLBoolean
 droid_open_device(_EGLDisplay *disp, bool swrast)
 {
+   #ifdef HAVE_FREEDRENO_KGSL
+   if (droid_open_device_kgsl(disp, swrast))
+      goto done;
+   #endif
 #define MAX_DRM_DEVICES 64
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    _EGLDevice *dev_list = _eglGlobal.DeviceList;
@@ -1565,6 +1602,15 @@ dri2_initialize_android(_EGLDisplay *disp)
    }
 
    dri2_dpy->fd_display_gpu = dri2_dpy->fd_render_gpu;
+
+   /* Only add a egl device if this is not the kgsl driver */
+   if (strcmp(dri2_dpy->driver_name, "kgsl") != 0) {
+      dev = _eglAddDevice(dri2_dpy->fd_render_gpu, false);
+      if (!dev) {
+         err = "DRI2: failed to find EGLDevice";
+         goto cleanup;
+      }
+   }
 
    if (!dri2_setup_extensions(disp)) {
       err = "DRI2: failed to setup extensions";

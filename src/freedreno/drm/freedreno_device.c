@@ -37,6 +37,9 @@ struct fd_device *msm_device_new(int fd, drmVersionPtr version);
 #ifdef HAVE_FREEDRENO_VIRTIO
 struct fd_device *virtio_device_new(int fd, drmVersionPtr version);
 #endif
+#ifdef HAVE_FREEDRENO_KGSL
+struct fd_device *kgsl_device_new(int fd);
+#endif
 
 struct fd_device *
 fd_device_new(int fd)
@@ -45,12 +48,12 @@ fd_device_new(int fd)
    drmVersionPtr version = NULL;
    bool use_heap = false;
    bool support_use_heap = true;
-
+#ifdef HAVE_LIBDRM
    /* figure out if we are kgsl or msm drm driver: */
    version = drmGetVersion(fd);
    if (!version)
       ERROR_MSG("cannot get version: %s", strerror(errno));
-
+#endif
    if (version && !strcmp(version->name, "msm")) {
       DEBUG_MSG("msm DRM device");
       if (version->version_major != 1) {
@@ -69,17 +72,14 @@ fd_device_new(int fd)
        */
       use_heap = true;
 #endif
-#if HAVE_FREEDRENO_KGSL
-   } else if (version && !strcmp(version->name, "kgsl")) {
-      DEBUG_MSG("kgsl DRM device");
-      dev = kgsl_device_new(fd);
-#endif
 #ifdef HAVE_FREEDRENO_KGSL
    } else {
+      DEBUG_MSG("kgsl DRM device");
       dev = kgsl_device_new(fd);
       support_use_heap = false;
+      if (dev)
+         goto out;
 #endif
-   }
 
    if (!dev) {
       INFO_MSG("unsupported device: %s", version->name);

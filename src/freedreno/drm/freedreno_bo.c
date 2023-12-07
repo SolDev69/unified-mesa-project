@@ -118,7 +118,10 @@ import_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle)
 
    bo = dev->funcs->bo_from_handle(dev, size, handle);
    if (!bo) {
-      dev->funcs->bo_close_handle(dev, handle);
+      struct drm_gem_close req = {
+         .handle = handle,
+      };
+      drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
       return NULL;
    }
 

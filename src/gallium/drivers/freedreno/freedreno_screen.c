@@ -1172,15 +1172,6 @@ fd_screen_create(int fd,
 
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
-   /* parse driconf configuration now for device specific overrides: */
-   driParseConfigFiles(config->options, config->options_info, 0, "msm",
-                       NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
-
-   screen->driconf.conservative_lrz =
-         !driQueryOptionb(config->options, "disable_conservative_lrz");
-   screen->driconf.enable_throttling =
-         !driQueryOptionb(config->options, "disable_throttling");
-
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;
