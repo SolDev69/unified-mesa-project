@@ -449,7 +449,9 @@ fd_bo_fini_fences(struct fd_bo *bo)
 void
 fd_bo_close_handle_drm(struct fd_bo *bo)
 {
-   bo->dev->funcs->bo_close_handle(dev, handle);
+   struct drm_gem_close req = {
+      .handle = bo->handle,
+   };
    drmIoctl(bo->dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
 }
 
