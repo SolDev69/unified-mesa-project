@@ -112,7 +112,7 @@ fd_bo_close_handle_drm(struct fd_device *dev, uint32_t handle)
 static struct fd_bo *
 import_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle)
 {
-   struct fd_bo *bo;req
+   struct fd_bo *bo;
 
    simple_mtx_assert_locked(&table_lock);
 
