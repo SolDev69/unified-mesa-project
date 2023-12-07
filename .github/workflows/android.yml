@@ -21,13 +21,8 @@ jobs:
 
       - name: Build
         run: |
-          sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
-          sudo sed -i 's/jammy/mantic/g' /etc/apt/sources.list
           sudo apt update
-          sudo apt upgrade
-          sudo apt build-dep -y mesa
-          sudo apt install -y meson libarchive-dev libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
-          sudo apt install -y libarchive13
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
