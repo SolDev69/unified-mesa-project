@@ -571,7 +571,7 @@ fd_bo_is_cached(struct fd_bo *bo)
    return !!(bo->alloc_flags & FD_BO_CACHED_COHERENT);
 }
 
-static void *
+void *
 fd_bo_map_os_mmap(struct fd_bo *bo)
 {
    if (!bo->map) {
