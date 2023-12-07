@@ -99,6 +99,7 @@ fd_bo_init_common(struct fd_bo *bo, struct fd_device *dev)
    VG_BO_ALLOC(bo);
 }
 
+
 /* allocate a new buffer object, call w/ table_lock held */
 static struct fd_bo *
 import_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle)
@@ -447,12 +448,10 @@ fd_bo_fini_fences(struct fd_bo *bo)
 }
 
 void
-fd_bo_close_handle_drm(struct fd_device *dev, uint32_t handle)
+fd_bo_close_handle_drm(struct fd_bo *bo)
 {
-   struct drm_gem_close req = {
-      .handle = handle,
-   };
-   drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
+   bo->dev->funcs->bo_close_handle(dev, handle);
+   drmIoctl(bo->dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
 }
 
 /**
@@ -478,7 +477,7 @@ fd_bo_fini_common(struct fd_bo *bo)
 
    if (handle) {
       simple_mtx_lock(&table_lock);
-      dev->funcs->bo_close_handle(dev, handle);
+      dev->funcs->bo_close_handle(bo);
       _mesa_hash_table_remove_key(dev->handle_table, &handle);
       if (bo->name)
          _mesa_hash_table_remove_key(dev->name_table, &bo->name);
