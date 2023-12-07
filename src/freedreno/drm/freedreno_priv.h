@@ -476,6 +476,7 @@ struct fd_bo *fd_bo_new_ring(struct fd_device *dev, uint32_t size);
 
 uint32_t fd_handle_from_dmabuf_drm(struct fd_device *dev, int fd);
 struct fd_bo *fd_bo_from_dmabuf_drm(struct fd_device *dev, int fd);
+void fd_bo_close_handle_drm(struct fd_bo *bo);
 
 #define enable_debug 0 /* TODO make dynamic */
 
