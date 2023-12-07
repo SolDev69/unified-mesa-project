@@ -99,15 +99,6 @@ fd_bo_init_common(struct fd_bo *bo, struct fd_device *dev)
    VG_BO_ALLOC(bo);
 }
 
-void
-fd_bo_close_handle_drm(struct fd_device *dev, uint32_t handle)
-{
-   struct drm_gem_close req = {
-      .handle = handle,
-   };
-   drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
-}
-
 /* allocate a new buffer object, call w/ table_lock held */
 static struct fd_bo *
 import_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle)
