@@ -447,12 +447,12 @@ fd_bo_fini_fences(struct fd_bo *bo)
 }
 
 void
-fd_bo_close_handle_drm(struct fd_bo *bo)
+fd_bo_close_handle_drm(struct fd_device *ifdev, uint32_t handle)
 {
    struct drm_gem_close req = {
-      .handle = bo->handle,
+      .handle = handle,
    };
-   drmIoctl(bo->dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
+   drmIoctl(dev->fd, DRM_IOCTL_GEM_CLOSE, &req);
 }
 
 /**
@@ -478,7 +478,7 @@ fd_bo_fini_common(struct fd_bo *bo)
 
    if (handle) {
       simple_mtx_lock(&table_lock);
-      dev->funcs->bo_close_handle(bo);
+      dev->funcs->bo_close_handle(dev, handle);
       _mesa_hash_table_remove_key(dev->handle_table, &handle);
       if (bo->name)
          _mesa_hash_table_remove_key(dev->name_table, &bo->name);
