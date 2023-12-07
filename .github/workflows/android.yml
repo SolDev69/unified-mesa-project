@@ -45,7 +45,7 @@ jobs:
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
           meson setup "build-android" \
-            --prefix=/tmp/fd \
+            --prefix=/tmp/mesa \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
             -Dplatform-sdk-version=26 \
@@ -58,12 +58,13 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=swrast,freedreno \
+            -Dgallium-drivers=freedreno,zink \
             -Dfreedreno-kmds=kgsl \
-            -Dshared-glapi=false
+            -Dshared-glapi=false \
+            -Dbuildtype=release
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
-          name: freedreno_${{matrix.arch}}
-          path: /tmp/fd
+          name: libOSMesa_${{matrix.arch}}
+          path: /tmp/mesa
