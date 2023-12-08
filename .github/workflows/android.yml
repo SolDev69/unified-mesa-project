@@ -33,14 +33,14 @@ jobs:
             --prefix=/tmp/drm-static \
             --cross-file "../build-crossfile-drm" \
             -Ddefault_library=static \
-            -Dintel=disabled \
-            -Dradeon=disabled \
-            -Damdgpu=disabled \
-            -Dnouveau=disabled \
-            -Dvmwgfx=disabled \
-            -Dfreedreno=enabled \
-            -Dvc4=disabled \
-            -Detnaviv=disabled \
+            -Dintel=false \
+            -Dradeon=false \
+            -Damdgpu=false \
+            -Dnouveau=false \
+            -Dvmwgfx=false \
+            -Dfreedreno=true \
+            -Dvc4=false \
+            -Detnaviv=false \
             -Dfreedreno-kgsl=true
           ninja -C "build-android" install
           cd ..
