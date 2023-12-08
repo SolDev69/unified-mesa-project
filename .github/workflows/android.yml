@@ -28,6 +28,7 @@ jobs:
           envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           cd drm
+          git reset --hard bf08984682a2bc7c4a1e01dd2af8d4c1d75cea46
           meson setup "build-android" \
             --prefix=/tmp/drm-static \
             --cross-file "../build-crossfile-drm" \
