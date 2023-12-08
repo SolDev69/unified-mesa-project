@@ -274,6 +274,7 @@ virtio_bo_finalize(struct fd_bo *bo)
 static const struct fd_bo_funcs funcs = {
    .offset = virtio_bo_offset,
    .cpu_prep = virtio_bo_cpu_prep,
+   .map = fd_bo_map_os_mmap,
    .madvise = virtio_bo_madvise,
    .iova = virtio_bo_iova,
    .set_name = virtio_bo_set_name,

@@ -28,19 +28,6 @@
          util_perfetto_trace_end();                                          \
    } while (0)
 
-/* NOTE: for now disable atrace for C++ to workaround a ndk bug with ordering
- * between stdatomic.h and atomic.h.  See:
- *
- *   https://github.com/android/ndk/issues/1178
- */
-#elif defined(ANDROID) && !defined(__cplusplus)
-
-#include <cutils/trace.h>
-
-#define _MESA_TRACE_BEGIN(name)                                              \
-   atrace_begin(ATRACE_TAG_GRAPHICS, name)
-#define _MESA_TRACE_END() atrace_end(ATRACE_TAG_GRAPHICS)
-
 #else
 
 #define _MESA_TRACE_BEGIN(name)
