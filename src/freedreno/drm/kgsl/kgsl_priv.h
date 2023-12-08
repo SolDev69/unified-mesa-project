@@ -1,6 +1,6 @@
 #ifndef KGSL_PRIV_H
 #define KGSL_PRIV_H
-#include "../freedreno_priv.h"
+#include "freedreno_priv.h"
 
 /* TODO the KGSL kernel interface should probably be moved */
 /* into someplace common that both turnip and freedreno can use */
@@ -49,6 +49,6 @@ FD_DEFINE_CAST(fd_bo, kgsl_bo);
 struct fd_bo *kgsl_bo_new(struct fd_device *dev, uint32_t size, uint32_t flags);
 struct fd_bo *kgsl_bo_from_dmabuf(struct fd_device *dev, int fd);
 struct fd_bo *kgsl_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle);
-void kgsl_bo_close_handle(struct fd_bo *bo);
+void kgsl_bo_close_handle(struct fd_device *dev, uint32_t handle);
 
 #endif
