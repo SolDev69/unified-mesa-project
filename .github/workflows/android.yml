@@ -48,7 +48,7 @@ jobs:
             --prefix=/tmp/mesa \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
-            -Dplatform-sdk-version=21 \
+            -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
             -Dllvm=disabled \
             -Dxlib-lease=disabled \
