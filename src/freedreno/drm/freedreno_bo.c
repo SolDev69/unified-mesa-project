@@ -629,7 +629,7 @@ fd_bo_map(struct fd_bo *bo)
    if (bo->alloc_flags & FD_BO_NOMAP)
       return NULL;
 
-   return bo->funcs->map(bo);
+   return __fd_bo_map(bo);
 }
 
 void
@@ -640,7 +640,7 @@ fd_bo_upload(struct fd_bo *bo, void *src, unsigned off, unsigned len)
       return;
    }
 
-   memcpy((uint8_t *)bo->funcs->map(bo) + off, src, len);
+   memcpy((uint8_t *)__fd_bo_map(bo) + off, src, len);
 }
 
 bool
