@@ -2174,7 +2174,7 @@
         "description": "anv: update protection fault property",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "794b0496e9467d27211d11fe7f783db3ce6a349a",
         "notes": null
