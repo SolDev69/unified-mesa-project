@@ -2214,7 +2214,7 @@
         "description": "anv: fix protected memory allocations",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5f2c77a10a89de2ea53e7ab2e3de72b704f8c393",
         "notes": null
