@@ -8,6 +8,11 @@
 #include "frontend/sw_winsys.h"
 #include "target-helpers/inline_debug_helper.h"
 
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+
+
 /* Helper function to choose and instantiate one of the software rasterizers:
  * llvmpipe, softpipe.
  */
