@@ -16,6 +16,21 @@ jobs:
           ln -s vulkan_ios.pc vulkan.pc
           brew install meson pkg-config
           pip3 install mako
+          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
+          cd drm
+          meson setup "build-ios-drm" \
+            --prefix=/tmp/drm-static \
+            --cross-file "../ios-drm-aarch64" \
+            -Ddefault_library=static \
+            -Dintel=disabled \
+            -Dradeon=disabled \
+            -Damdgpu=disabled \
+            -Dnouveau=disabled \
+            -Dvmwgfx=disabled \
+            -Dfreedreno=enabled \
+            -Dvc4=disabled \
+            -Detnaviv=disabled
+          ninja -C "build-ios-drm" install
           meson setup "build-ios-aarch64" \
             --prefix=/tmp/asahi \
             --cross-file "ios-aarch64" \

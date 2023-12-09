@@ -1,0 +1,19 @@
+[binaries]
+
+ar = 'ar'
+c = ['ccache', 'clang', '-O3', '-DVK_USE_PLATFORM_IOS_MVK', '-DVK_USE_PLATFORM_METAL_EXT', '-DVK_ENABLE_BETA_EXTENSIONS', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk', '-miphoneos-version-min=12.0', '-fPIC']
+cpp = ['ccache', 'clang++', '-O3', '-DVK_USE_PLATFORM_IOS_MVK', '-DVK_USE_PLATFORM_METAL_EXT', '-DVK_ENABLE_BETA_EXTENSIONS', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk', '-miphoneos-version-min=12.0', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
+c_ld = 'ld'
+cpp_ld = 'ld'
+strip = 'strip'
+# Android doesn't come with a pkg-config, but we need one for meson to be happy not
+# finding all the optional deps it looks for.  Use system pkg-config pointing at a
+# directory we get to populate with any .pc files we want to add for Android
+pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
+
+[host_machine]
+# or linux?
+system = 'darwin'
+cpu_family = 'arm'
+cpu = 'armv8'
+endian = 'little'
