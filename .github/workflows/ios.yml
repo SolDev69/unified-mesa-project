@@ -40,15 +40,14 @@ jobs:
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
-            -Dglx=dri \
+            -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=swrast,asahi \
+            -Dgallium-drivers=asahi \
             -Dbuildtype=release \
             -Dtools=asahi \
-            -Dmicrosoft-clc=disabled \
-            -Dxmlconfig=disabled
+            -Dshared-glapi=false
           ninja -C "build-ios-aarch64" install
           cp -r build-ios-aarch64/src/gallium/drivers/asahi /tmp/
       - name: Upload libraries
