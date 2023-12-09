@@ -47,7 +47,7 @@ jobs:
             -Dshared-glapi=false \
             -Dbuildtype=release \
             -Dtools=asahi
-          ninja -C "build-android" install
+          ninja -C "build-ios-aarch64" install
           cp -r build-ios-aarch64/src/gallium/drivers/asahi /tmp/
       - name: Upload libraries
         uses: actions/upload-artifact@v2
