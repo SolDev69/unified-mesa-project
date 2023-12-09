@@ -45,7 +45,6 @@ jobs:
             -Dosmesa=true \
             -Dvulkan-drivers= \
             -Dgallium-drivers=swrast,asahi \
-            -Dshared-glapi=false \
             -Dbuildtype=release \
             -Dtools=asahi \
             -Dmicrosoft-clc=disabled \
