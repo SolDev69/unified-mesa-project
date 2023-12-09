@@ -45,7 +45,8 @@ jobs:
             -Dvulkan-drivers= \
             -Dgallium-drivers=asahi \
             -Dshared-glapi=false \
-            -Dbuildtype=release
+            -Dbuildtype=release \
+            -Dtools=asahi
           ninja -C "build-android" install
           cp -r build-ios-aarch64/src/gallium/drivers/asahi /tmp/
       - name: Upload libraries
