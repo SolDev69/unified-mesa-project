@@ -14,7 +14,7 @@ jobs:
       - name: Build iOS
         run: |
           ln -s vulkan_ios.pc vulkan.pc
-          brew install meson pkg-config libclc
+          brew install meson pkg-config libclc llvm
           pip3 install mako
           # git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           # cd drm
