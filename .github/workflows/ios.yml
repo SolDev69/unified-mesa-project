@@ -1,0 +1,45 @@
+
+name: Build iOS
+
+on:
+  [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build iOS
+        run: |
+          ln -s vulkan_ios.pc vulkan.pc
+          brew install meson pkg-config
+          # sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxshmfence-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          # cp -R /usr/include/X11 include/
+          # cp -R /usr/include/xcb include/
+          # cp -R /usr/include/GL/* include/GL/
+          pip3 install mako
+          # -Dglx=gallium-xlib \
+          # -Dglx=dri
+          meson build-ios-aarch64 \
+            --prefix="/tmp/zink" \
+            --cross-file ios-aarch64 \
+            -Db_lundef=false \
+            -Dllvm=disabled \
+            -Dxlib-lease=disabled \
+            -Degl=disabled \
+            -Dgbm=disabled \
+            -Dglx=dri \
+            -Dglx-direct=true \
+            -Dopengl=true \
+            -Dosmesa=true \
+            -Dvulkan-drivers= \
+            -Dgallium-drivers=zink
+          ninja -C build-ios-aarch64 install
+          cp build-ios-aarch64/src/gallium/drivers/zink/libzink.a /tmp/zink/lib/
+      - name: Upload libraries
+        uses: actions/upload-artifact@v2
+        with:
+          name: libzink
+          path: /tmp/zink
