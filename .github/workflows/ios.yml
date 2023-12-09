@@ -14,7 +14,8 @@ jobs:
       - name: Build iOS
         run: |
           ln -s vulkan_ios.pc vulkan.pc
-          brew install meson pkg-config libclc
+          brew install meson pkg-config libclc bison expat
+
           pip3 install mako
           # git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           # cd drm
@@ -39,15 +40,16 @@ jobs:
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
-            -Dglx=disabled \
+            -Dglx=dri \
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=asahi \
+            -Dgallium-drivers=swrast,asahi \
             -Dshared-glapi=false \
             -Dbuildtype=release \
             -Dtools=asahi \
-            -Dmicrosoft-clc=disabled
+            -Dmicrosoft-clc=disabled \
+            -Dxmlconfig=disabled
           ninja -C "build-ios-aarch64" install
           cp -r build-ios-aarch64/src/gallium/drivers/asahi /tmp/
       - name: Upload libraries
