@@ -2163,13 +2163,6 @@ agx_screen_create(int fd, struct renderonly *ro,
    agx_screen->dev.debug =
       debug_get_flags_option("ASAHI_MESA_DEBUG", agx_debug_options, 0);
 
-   /* parse driconf configuration now for device specific overrides */
-   driParseConfigFiles(config->options, config->options_info, 0, "asahi", NULL,
-                       NULL, NULL, 0, NULL, 0);
-
-   /* Forward no16 flag from driconf */
-   if (driQueryOptionb(config->options, "no_fp16"))
-      agx_screen->dev.debug |= AGX_DBG_NO16;
 
    agx_screen->dev.fd = fd;
    agx_screen->dev.ro = ro;
@@ -2223,8 +2216,6 @@ agx_screen_create(int fd, struct renderonly *ro,
       &transfer_vtbl,
       U_TRANSFER_HELPER_SEPARATE_Z32S8 | U_TRANSFER_HELPER_SEPARATE_STENCIL |
          U_TRANSFER_HELPER_MSAA_MAP | U_TRANSFER_HELPER_Z24_IN_Z32F);
-
-   agx_disk_cache_init(agx_screen);
 
    return screen;
 }
