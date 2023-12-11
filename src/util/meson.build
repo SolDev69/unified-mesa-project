@@ -30,9 +30,6 @@ endif
 subdir('blake3')
 
 files_mesa_util = files(
-  'stdioext.h',
-  'fmemopen.c',
-  'fopencookie.c',
   'open_memstream.c',
   'anon_file.h',
   'anon_file.c',
