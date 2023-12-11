@@ -57,7 +57,7 @@ Supporting OS subroutines required: <<sbrk>>.
 #include <errno.h>
 #include <string.h>
 #include <malloc.h>
-#include "stdioext.h"
+#include "extrastdio.h"
 
 /* Describe details of an open memstream.  */
 typedef struct memstream {

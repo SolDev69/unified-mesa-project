@@ -1,9 +1,7 @@
-#ifndef  _STDIOEXT_H
-#define  _STDIOEXT_H
+#ifndef  LEPTONICA__STDIO_H
+#define  LEPTONICA__STDIO_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef  BUILD_HOST
 
 #include <stdio.h>
 #include <stdint.h>
@@ -21,8 +19,6 @@ FILE *fmemopen(void *buf, size_t size, const char *mode);
 
 FILE *open_memstream(char **buf, size_t *size);
 
-#ifdef __cplusplus
-} // extern "C"
 #endif
 
-#endif  /* _STDIOEXT_H */
+#endif  /* LEPTONICA__STDIO_H */
