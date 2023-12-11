@@ -49,7 +49,7 @@ u_memstream_open(struct u_memstream *mem, char **bufp, size_t *sizep)
       char *temp = mem->temp;
       UINT uResult = GetTempFileName(path, "MEMSTREAM", 0, temp);
       if (uResult != 0) {
-         FILE *f = fopen(temp, "w+b");
+         FILE *f = fmemopen(NULL, "w+b", temp);
          success = f != NULL;
          if (success)
          {
@@ -62,7 +62,7 @@ u_memstream_open(struct u_memstream *mem, char **bufp, size_t *sizep)
 
    return success;
 #else
-   FILE *const f = open_memstream(bufp, sizep);
+   FILE *const f = f(bufp, sizep);
    mem->f = f;
    return f != NULL;
 #endif
