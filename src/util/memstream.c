@@ -62,7 +62,7 @@ u_memstream_open(struct u_memstream *mem, char **bufp, size_t *sizep)
 
    return success;
 #else
-   FILE *const f = f(bufp, sizep);
+   FILE *const f = fmemopen(NULL, sizep, bufp);
    mem->f = f;
    return f != NULL;
 #endif
