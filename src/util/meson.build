@@ -31,6 +31,7 @@ subdir('blake3')
 
 files_mesa_util = files(
   'open_memstream.c',
+  'open_memstream.h',
   'anon_file.h',
   'anon_file.c',
   'bigmath.h',
