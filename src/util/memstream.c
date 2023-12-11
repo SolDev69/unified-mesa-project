@@ -24,6 +24,7 @@
  */
 
 #include "memstream.h"
+#include "open_memstream.h"
 
 #include <stdlib.h>
 
