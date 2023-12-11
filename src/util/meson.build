@@ -30,6 +30,7 @@ endif
 subdir('blake3')
 
 files_mesa_util = files(
+  'stdioext.h',
   'anon_file.h',
   'anon_file.c',
   'bigmath.h',
