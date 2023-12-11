@@ -26,9 +26,8 @@ jobs:
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
-          git clone https://gitlab.freedesktop.org/mesa/drm.git
+          git clone https://github.com/SolDev69/freedreno-gallium-libdrm drm
           cd drm
-          git reset --hard bf08984682a2bc7c4a1e01dd2af8d4c1d75cea46
           meson setup "build-android" \
             --prefix=/tmp/drm-static \
             --cross-file "../build-crossfile-drm" \
@@ -49,7 +48,7 @@ jobs:
             --prefix=/tmp/mesa \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
-            -Dplatform-sdk-version=26 \
+            -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
             -Dllvm=disabled \
             -Dxlib-lease=disabled \
