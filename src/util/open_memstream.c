@@ -42,7 +42,7 @@
  * I don't think Windows has any of the above, but we don't need to use
  * them there, so we just supply a stub.
  */
-#include <openmemstream.h>
+#include <open_memstream.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
