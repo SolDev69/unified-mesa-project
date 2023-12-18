@@ -196,6 +196,10 @@ foreach gallium_driver : gallium_drivers
   pre_args += '-DHAVE_@0@'.format(gallium_driver.to_upper())
 endforeach
 
+if get_option('freedreno-kmds').contains('kgsl')
+  pre_args += '-DHAVE_FREEDRENO_KGSL'
+endif
+
 with_gallium = gallium_drivers.length() != 0
 with_gallium_kmsro = system_has_kms_drm and [
   with_gallium_asahi,
@@ -1959,9 +1963,6 @@ if dep_unwind.found()
 endif
 
 if with_osmesa
-  if not with_gallium_softpipe
-    error('OSMesa gallium requires gallium softpipe or llvmpipe.')
-  endif
   if host_machine.system() == 'windows'
     osmesa_lib_name = 'osmesa'
   else
