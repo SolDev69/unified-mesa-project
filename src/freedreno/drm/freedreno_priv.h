@@ -108,8 +108,6 @@ struct fd_device_funcs {
     */
    struct fd_bo *(*bo_from_handle)(struct fd_device *dev, uint32_t size,
                                    uint32_t handle);
-   struct fd_bo *(*bo_from_dmabuf)(struct fd_device *dev, int fd);
-   void (*bo_close_handle)(struct fd_device *dev, uint32_t handle);
    uint32_t (*handle_from_dmabuf)(struct fd_device *dev, int fd);
    struct fd_bo *(*bo_from_dmabuf)(struct fd_device *dev, int fd);
    void (*bo_close_handle)(struct fd_bo *bo);
