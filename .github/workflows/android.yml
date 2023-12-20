@@ -62,7 +62,10 @@ jobs:
             -Dshared-glapi=false \
             -Dandroid-libbacktrace=disabled \
             -Dbuildtype=release
-          if [ ${{matrix.arch}} == 'x86_64' ]; then meson configure "build-android" -Dgallium-drivers=zink; fi
+          if [ ${{matrix.arch}} == 'x86_64' ]
+          then 
+            meson configure "build-android" -Dgallium-drivers=zink
+          fi
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v2
