@@ -27,6 +27,7 @@ jobs:
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson build-android-${{matrix.arch}} --cross-file "build-crossfile-turnip" \
             -Dbuildtype=release \
+            --prefix=/tmp/mesa \
             -Dplatforms=android \
             -Dplatform-sdk-version=33 \
             -Dandroid-stub=true \
@@ -34,8 +35,7 @@ jobs:
             -Dvulkan-drivers=freedreno \
             -Dfreedreno-kmds=kgsl \
             -Db_lto=true
-          ninja -C build-android-${{matrix.arch}}
-          cp src/freedreno/vulkan/libvulkan_freedreno.so /tmp/mesa
+          ninja -C build-android-${{matrix.arch}} install
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
