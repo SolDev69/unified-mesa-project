@@ -134,8 +134,6 @@ os_get_option(const char *name)
    return opt;
 }
 
-#endif
-
 static struct hash_table *options_tbl;
 static bool options_tbl_exited = false;
 static simple_mtx_t options_tbl_mtx = SIMPLE_MTX_INITIALIZER;
