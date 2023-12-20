@@ -43,11 +43,6 @@ jobs:
           ninja -C "build-android" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
-          git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
-          cd mesa
-          wget https://gitlab.freedesktop.org/mesa/mesa/-/commit/bed69133cda5bb6e29beacd61a665ef653d4d1f9.diff
-          git apply -v --whitespace=fix --reverse bed69133cda5bb6e29beacd61a665ef653d4d1f9.diff || echo "git apply failed"
-          git apply -v --whitespace=fix ../mesa-zink.diff || echo "git apply failed"
           meson setup "build-android" \
             --prefix=/tmp/mesa \
             --cross-file "../build-crossfile" \
