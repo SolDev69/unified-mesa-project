@@ -543,7 +543,8 @@ nak_nir_lower_varyings(nir_shader *nir, nir_variable_mode modes)
    nir_foreach_variable_with_modes(var, nir, modes)
       var->data.driver_location = nak_varying_attr_addr(var->data.location);
 
-   OPT(nir, nir_lower_io, modes, type_size_vec4_bytes, 0);
+   OPT(nir, nir_lower_io, modes, type_size_vec4_bytes,
+       nir_lower_io_lower_64bit_to_32);
 
    return progress;
 }
@@ -1202,6 +1203,7 @@ nak_postprocess_nir(nir_shader *nir,
       unreachable("Unsupported shader stage");
    }
 
+   OPT(nir, nir_lower_doubles, NULL, nak->nir_options.lower_doubles_options);
    OPT(nir, nir_lower_int64);
 
    nak_optimize_nir(nir, nak);
@@ -1210,6 +1212,14 @@ nak_postprocess_nir(nir_shader *nir,
       progress = false;
       OPT(nir, nir_opt_algebraic_late);
       OPT(nir, nak_nir_lower_algebraic_late, nak);
+
+      /* If we're lowering fp64 sat but not min/max, the sat lowering may have
+       * been undone by nir_opt_algebraic.  Lower sat again just to be sure.
+       */
+      if ((nak->nir_options.lower_doubles_options & nir_lower_dsat) &&
+          !(nak->nir_options.lower_doubles_options & nir_lower_dminmax))
+         OPT(nir, nir_lower_doubles, NULL, nir_lower_dsat);
+
       if (progress) {
          OPT(nir, nir_opt_constant_folding);
          OPT(nir, nir_copy_prop);

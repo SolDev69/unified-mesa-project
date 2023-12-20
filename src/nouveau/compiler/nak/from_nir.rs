@@ -519,6 +519,11 @@ impl<'a> ShaderFromNir<'a> {
             nir_op_b2f32 => {
                 b.sel(srcs[0].bnot(), 0.0_f32.into(), 1.0_f32.into())
             }
+            nir_op_b2f64 => {
+                let lo = b.copy(0.into());
+                let hi = b.sel(srcs[0].bnot(), 0.into(), 0x3ff00000.into());
+                [lo[0], hi[0]].into()
+            }
             nir_op_bcsel => b.sel(srcs[0], srcs[1], srcs[2]),
             nir_op_bit_count => {
                 let dst = b.alloc_ssa(RegFile::GPR, 1);
@@ -577,7 +582,7 @@ impl<'a> ShaderFromNir<'a> {
                 let src_type = FloatType::from_bits(src_bits.into());
                 let dst_type = FloatType::from_bits(dst_bits.into());
 
-                let dst = b.alloc_ssa(RegFile::GPR, 1);
+                let dst = b.alloc_ssa(RegFile::GPR, dst_bits.div_ceil(32));
                 b.push_op(OpF2F {
                     dst: dst.into(),
                     src: srcs[0],
@@ -640,20 +645,31 @@ impl<'a> ShaderFromNir<'a> {
                     _ => panic!("Unhandled case"),
                 };
                 let ftype = FloatType::from_bits(alu.def.bit_size().into());
-                assert!(alu.def.bit_size() == 32);
-                let dst = b.alloc_ssa(RegFile::GPR, 1);
-                let saturate = self.try_saturate_alu_dst(&alu.def);
-                b.push_op(OpFAdd {
-                    dst: dst.into(),
-                    srcs: [x, y],
-                    saturate: saturate,
-                    rnd_mode: self.float_ctl[ftype].rnd_mode,
-                    ftz: self.float_ctl[ftype].ftz,
-                });
+                let dst;
+                if alu.def.bit_size() == 64 {
+                    dst = b.alloc_ssa(RegFile::GPR, 2);
+                    b.push_op(OpDAdd {
+                        dst: dst.into(),
+                        srcs: [x, y],
+                        rnd_mode: self.float_ctl[ftype].rnd_mode,
+                    });
+                } else if alu.def.bit_size() == 32 {
+                    dst = b.alloc_ssa(RegFile::GPR, 1);
+                    b.push_op(OpFAdd {
+                        dst: dst.into(),
+                        srcs: [x, y],
+                        saturate: self.try_saturate_alu_dst(&alu.def),
+                        rnd_mode: self.float_ctl[ftype].rnd_mode,
+                        ftz: self.float_ctl[ftype].ftz,
+                    });
+                } else {
+                    panic!("Unsupported float type: f{}", alu.def.bit_size());
+                }
                 dst
             }
             nir_op_fceil | nir_op_ffloor | nir_op_fround_even
             | nir_op_ftrunc => {
+                assert!(alu.def.bit_size() == 32);
                 let dst = b.alloc_ssa(RegFile::GPR, 1);
                 let ty = FloatType::from_bits(alu.def.bit_size().into());
                 let rnd_mode = match alu.op {
@@ -690,30 +706,74 @@ impl<'a> ShaderFromNir<'a> {
                 };
 
                 let dst = b.alloc_ssa(RegFile::Pred, 1);
-                b.push_op(OpFSetP {
-                    dst: dst.into(),
-                    set_op: PredSetOp::And,
-                    cmp_op: cmp_op,
-                    srcs: [srcs[0], srcs[1]],
-                    accum: SrcRef::True.into(),
-                    ftz: self.float_ctl[src_type].ftz,
-                });
+                if alu.get_src(0).bit_size() == 64 {
+                    b.push_op(OpDSetP {
+                        dst: dst.into(),
+                        set_op: PredSetOp::And,
+                        cmp_op: cmp_op,
+                        srcs: [srcs[0], srcs[1]],
+                        accum: SrcRef::True.into(),
+                    });
+                } else if alu.get_src(0).bit_size() == 32 {
+                    b.push_op(OpFSetP {
+                        dst: dst.into(),
+                        set_op: PredSetOp::And,
+                        cmp_op: cmp_op,
+                        srcs: [srcs[0], srcs[1]],
+                        accum: SrcRef::True.into(),
+                        ftz: self.float_ctl[src_type].ftz,
+                    });
+                } else {
+                    panic!(
+                        "Unsupported float type: f{}",
+                        alu.get_src(0).bit_size()
+                    );
+                }
                 dst
             }
             nir_op_fexp2 => b.mufu(MuFuOp::Exp2, srcs[0]),
-            nir_op_ffma | nir_op_ffmaz => {
+            nir_op_ffma => {
                 let ftype = FloatType::from_bits(alu.def.bit_size().into());
+                let dst;
+                if alu.def.bit_size() == 64 {
+                    debug_assert!(!self.float_ctl[ftype].ftz);
+                    dst = b.alloc_ssa(RegFile::GPR, 2);
+                    b.push_op(OpDFma {
+                        dst: dst.into(),
+                        srcs: [srcs[0], srcs[1], srcs[2]],
+                        rnd_mode: self.float_ctl[ftype].rnd_mode,
+                    });
+                } else if alu.def.bit_size() == 32 {
+                    dst = b.alloc_ssa(RegFile::GPR, 1);
+                    b.push_op(OpFFma {
+                        dst: dst.into(),
+                        srcs: [srcs[0], srcs[1], srcs[2]],
+                        saturate: self.try_saturate_alu_dst(&alu.def),
+                        rnd_mode: self.float_ctl[ftype].rnd_mode,
+                        // The hardware doesn't like FTZ+DNZ and DNZ implies FTZ
+                        // anyway so only set one of the two bits.
+                        ftz: self.float_ctl[ftype].ftz,
+                        dnz: false,
+                    });
+                } else {
+                    panic!("Unsupported float type: f{}", alu.def.bit_size());
+                }
+                dst
+            }
+            nir_op_ffmaz => {
                 assert!(alu.def.bit_size() == 32);
+                // DNZ implies FTZ so we need FTZ set or this is invalid
+                assert!(self.float_ctl.fp32.ftz);
                 let dst = b.alloc_ssa(RegFile::GPR, 1);
                 b.push_op(OpFFma {
                     dst: dst.into(),
                     srcs: [srcs[0], srcs[1], srcs[2]],
                     saturate: self.try_saturate_alu_dst(&alu.def),
-                    rnd_mode: self.float_ctl[ftype].rnd_mode,
+                    rnd_mode: self.float_ctl.fp32.rnd_mode,
                     // The hardware doesn't like FTZ+DNZ and DNZ implies FTZ
                     // anyway so only set one of the two bits.
-                    ftz: alu.op != nir_op_ffmaz && self.float_ctl[ftype].ftz,
-                    dnz: alu.op == nir_op_ffmaz,
+                    ftz: false,
+                    dnz: true,
                 });
                 dst
             }
@@ -722,29 +782,67 @@ impl<'a> ShaderFromNir<'a> {
                 b.mufu(MuFuOp::Log2, srcs[0])
             }
             nir_op_fmax | nir_op_fmin => {
-                assert!(alu.def.bit_size() == 32);
-                let dst = b.alloc_ssa(RegFile::GPR, 1);
-                b.push_op(OpFMnMx {
-                    dst: dst.into(),
-                    srcs: [srcs[0], srcs[1]],
-                    min: (alu.op == nir_op_fmin).into(),
-                    ftz: self.float_ctl.fp32.ftz,
-                });
+                let dst;
+                if alu.def.bit_size() == 64 {
+                    dst = b.alloc_ssa(RegFile::GPR, 2);
+                    b.push_op(OpDMnMx {
+                        dst: dst.into(),
+                        srcs: [srcs[0], srcs[1]],
+                        min: (alu.op == nir_op_fmin).into(),
+                    });
+                } else if alu.def.bit_size() == 32 {
+                    dst = b.alloc_ssa(RegFile::GPR, 1);
+                    b.push_op(OpFMnMx {
+                        dst: dst.into(),
+                        srcs: [srcs[0], srcs[1]],
+                        min: (alu.op == nir_op_fmin).into(),
+                        ftz: self.float_ctl.fp32.ftz,
+                    });
+                } else {
+                    panic!("Unsupported float type: f{}", alu.def.bit_size());
+                }
                 dst
             }
-            nir_op_fmul | nir_op_fmulz => {
+            nir_op_fmul => {
                 let ftype = FloatType::from_bits(alu.def.bit_size().into());
+                let dst;
+                if alu.def.bit_size() == 64 {
+                    debug_assert!(!self.float_ctl[ftype].ftz);
+                    dst = b.alloc_ssa(RegFile::GPR, 2);
+                    b.push_op(OpDMul {
+                        dst: dst.into(),
+                        srcs: [srcs[0], srcs[1]],
+                        rnd_mode: self.float_ctl[ftype].rnd_mode,
+                    });
+                } else if alu.def.bit_size() == 32 {
+                    dst = b.alloc_ssa(RegFile::GPR, 1);
+                    b.push_op(OpFMul {
+                        dst: dst.into(),
+                        srcs: [srcs[0], srcs[1]],
+                        saturate: self.try_saturate_alu_dst(&alu.def),
+                        rnd_mode: self.float_ctl[ftype].rnd_mode,
+                        ftz: self.float_ctl[ftype].ftz,
+                        dnz: false,
+                    });
+                } else {
+                    panic!("Unsupported float type: f{}", alu.def.bit_size());
+                }
+                dst
+            }
+            nir_op_fmulz => {
                 assert!(alu.def.bit_size() == 32);
+                // DNZ implies FTZ so we need FTZ set or this is invalid
+                assert!(self.float_ctl.fp32.ftz);
                 let dst = b.alloc_ssa(RegFile::GPR, 1);
                 b.push_op(OpFMul {
                     dst: dst.into(),
                     srcs: [srcs[0], srcs[1]],
                     saturate: self.try_saturate_alu_dst(&alu.def),
-                    rnd_mode: self.float_ctl[ftype].rnd_mode,
+                    rnd_mode: self.float_ctl.fp32.rnd_mode,
                     // The hardware doesn't like FTZ+DNZ and DNZ implies FTZ
                     // anyway so only set one of the two bits.
-                    ftz: alu.op != nir_op_fmulz && self.float_ctl[ftype].ftz,
-                    dnz: alu.op == nir_op_fmulz,
+                    ftz: false,
+                    dnz: true,
                 });
                 dst
             }
@@ -798,10 +896,20 @@ impl<'a> ShaderFromNir<'a> {
                 }
             }
             nir_op_fsign => {
-                assert!(alu.def.bit_size() == 32);
-                let lz = b.fset(FloatCmpOp::OrdLt, srcs[0], 0.into());
-                let gz = b.fset(FloatCmpOp::OrdGt, srcs[0], 0.into());
-                b.fadd(gz.into(), Src::from(lz).fneg())
+                if alu.def.bit_size() == 64 {
+                    let lz = b.dsetp(FloatCmpOp::OrdLt, srcs[0], 0.into());
+                    let gz = b.dsetp(FloatCmpOp::OrdGt, srcs[0], 0.into());
+                    let hi = b.sel(lz.into(), 0xbff00000.into(), 0.into());
+                    let hi = b.sel(gz.into(), 0x3ff00000.into(), hi.into());
+                    let lo = b.copy(0.into());
+                    [lo[0], hi[0]].into()
+                } else if alu.def.bit_size() == 32 {
+                    let lz = b.fset(FloatCmpOp::OrdLt, srcs[0], 0.into());
+                    let gz = b.fset(FloatCmpOp::OrdGt, srcs[0], 0.into());
+                    b.fadd(gz.into(), Src::from(lz).fneg())
+                } else {
+                    panic!("Unsupported float type: f{}", alu.def.bit_size());
+                }
             }
             nir_op_fsin => {
                 let frac_1_2pi = 1.0 / (2.0 * std::f32::consts::PI);

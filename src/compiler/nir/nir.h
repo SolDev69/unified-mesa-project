@@ -3523,7 +3523,9 @@ typedef enum {
    nir_lower_dsub = (1 << 9),
    nir_lower_ddiv = (1 << 10),
    nir_lower_dsign = (1 << 11),
-   nir_lower_fp64_full_software = (1 << 12),
+   nir_lower_dminmax = (1 << 12),
+   nir_lower_dsat = (1 << 13),
+   nir_lower_fp64_full_software = (1 << 14),
 } nir_lower_doubles_options;
 
 typedef enum {
@@ -5543,6 +5545,9 @@ bool nir_lower_variable_initializers(nir_shader *shader,
 bool nir_zero_initialize_shared_memory(nir_shader *shader,
                                        const unsigned shared_size,
                                        const unsigned chunk_size);
+bool nir_clear_shared_memory(nir_shader *shader,
+                             const unsigned shared_size,
+                             const unsigned chunk_size);
 
 bool nir_move_vec_src_uses_to_dest(nir_shader *shader, bool skip_const_srcs);
 bool nir_lower_vec_to_regs(nir_shader *shader, nir_instr_writemask_filter_cb cb,
@@ -6513,6 +6518,9 @@ nir_remove_tex_shadow(nir_shader *shader, unsigned textures_bitmask);
 void
 nir_trivialize_registers(nir_shader *s);
 
+unsigned
+nir_static_workgroup_size(const nir_shader *s);
+
 static inline nir_intrinsic_instr *
 nir_reg_get_decl(nir_def *reg)
 {
@@ -6554,6 +6562,18 @@ nir_next_decl_reg(nir_intrinsic_instr *prev, nir_function_impl *impl)
    for (nir_intrinsic_instr *reg = nir_next_decl_reg(NULL, impl),  \
                             *next_ = nir_next_decl_reg(reg, NULL); \
         reg; reg = next_, next_ = nir_next_decl_reg(next_, NULL))
+
+static inline nir_cursor
+nir_after_reg_decls(nir_function_impl *impl)
+{
+   nir_intrinsic_instr *last_reg_decl = NULL;
+   nir_foreach_reg_decl(reg_decl, impl)
+      last_reg_decl = reg_decl;
+
+   if (last_reg_decl != NULL)
+      return nir_after_instr(&last_reg_decl->instr);
+   return nir_before_impl(impl);
+}
 
 static inline bool
 nir_is_load_reg(nir_intrinsic_instr *intr)

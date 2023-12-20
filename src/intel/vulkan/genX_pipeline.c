@@ -1183,8 +1183,10 @@ emit_3dstate_vs(struct anv_graphics_pipeline *pipeline)
       vs.Enable               = true;
       vs.StatisticsEnable     = true;
       vs.KernelStartPointer   = vs_bin->kernel.offset;
+#if GFX_VER < 20
       vs.SIMD8DispatchEnable  =
          vs_prog_data->base.dispatch_mode == DISPATCH_MODE_SIMD8;
+#endif
 
       assert(!vs_prog_data->base.base.use_alt_mode);
 #if GFX_VER < 11
@@ -1312,7 +1314,9 @@ emit_3dstate_hs_ds(struct anv_graphics_pipeline *pipeline,
       hs.PatchCountThreshold = tcs_prog_data->patch_count_threshold;
 #endif
 
+#if GFX_VER < 20
       hs.DispatchMode = tcs_prog_data->base.dispatch_mode;
+#endif
       hs.IncludePrimitiveID = tcs_prog_data->include_primitive_id;
    };
 
@@ -1443,7 +1447,9 @@ emit_3dstate_gs(struct anv_graphics_pipeline *pipeline)
       gs.Enable                  = true;
       gs.StatisticsEnable        = true;
       gs.KernelStartPointer      = gs_bin->kernel.offset;
+#if GFX_VER < 20
       gs.DispatchMode            = gs_prog_data->base.dispatch_mode;
+#endif
 
       gs.SingleProgramFlow       = false;
       gs.VectorMaskEnable        = false;
@@ -1575,16 +1581,20 @@ emit_3dstate_ps(struct anv_graphics_pipeline *pipeline,
                                brw_wm_prog_data_prog_offset(wm_prog_data, ps, 0);
       ps.KernelStartPointer1 = fs_bin->kernel.offset +
                                brw_wm_prog_data_prog_offset(wm_prog_data, ps, 1);
+#if GFX_VER < 20
       ps.KernelStartPointer2 = fs_bin->kernel.offset +
                                brw_wm_prog_data_prog_offset(wm_prog_data, ps, 2);
+#endif
 
       ps.SingleProgramFlow          = false;
       ps.VectorMaskEnable           = wm_prog_data->uses_vmask;
       /* Wa_1606682166 */
       ps.SamplerCount               = GFX_VER == 11 ? 0 : get_sampler_count(fs_bin);
       ps.BindingTableEntryCount     = fs_bin->bind_map.surface_count;
+#if GFX_VER < 20
       ps.PushConstantEnable         = wm_prog_data->base.nr_params > 0 ||
                                       wm_prog_data->base.ubo_ranges[0].length;
+#endif
       ps.PositionXYOffsetSelect     =
            !wm_prog_data->uses_pos_offset ? POSOFFSET_NONE :
            persample ? POSOFFSET_SAMPLE : POSOFFSET_CENTROID;
@@ -1595,8 +1605,10 @@ emit_3dstate_ps(struct anv_graphics_pipeline *pipeline,
          brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, ps, 0);
       ps.DispatchGRFStartRegisterForConstantSetupData1 =
          brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, ps, 1);
+#if GFX_VER < 20
       ps.DispatchGRFStartRegisterForConstantSetupData2 =
          brw_wm_prog_data_dispatch_grf_start_reg(wm_prog_data, ps, 2);
+#endif
 
 #if GFX_VERx10 >= 125
       ps.ScratchSpaceBuffer =
@@ -1623,7 +1635,9 @@ emit_3dstate_ps_extra(struct anv_graphics_pipeline *pipeline,
 
    anv_pipeline_emit(pipeline, final.ps_extra, GENX(3DSTATE_PS_EXTRA), ps) {
       ps.PixelShaderValid              = true;
+#if GFX_VER < 20
       ps.AttributeEnable               = wm_prog_data->num_varying_inputs > 0;
+#endif
       ps.oMaskPresenttoRenderTarget    = wm_prog_data->uses_omask;
       ps.PixelShaderIsPerSample        =
          brw_wm_prog_data_is_persample(wm_prog_data, pipeline->fs_msaa_flags);
@@ -1641,7 +1655,11 @@ emit_3dstate_ps_extra(struct anv_graphics_pipeline *pipeline,
                                          wm_prog_data->uses_kill;
 
       ps.PixelShaderComputesStencil = wm_prog_data->computed_stencil;
+#if GFX_VER >= 20
+      assert(!wm_prog_data->pulls_bary);
+#else
       ps.PixelShaderPullsBary    = wm_prog_data->pulls_bary;
+#endif
 
       ps.InputCoverageMaskState = ICMS_NONE;
       assert(!wm_prog_data->inner_coverage); /* Not available in SPIR-V */

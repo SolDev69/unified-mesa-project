@@ -1110,109 +1110,6 @@ cross_validate_uniforms(const struct gl_constants *consts,
 }
 
 /**
- * Accumulates the array of buffer blocks and checks that all definitions of
- * blocks agree on their contents.
- */
-static bool
-interstage_cross_validate_uniform_blocks(struct gl_shader_program *prog,
-                                         bool validate_ssbo)
-{
-   int *ifc_blk_stage_idx[MESA_SHADER_STAGES];
-   struct gl_uniform_block *blks = NULL;
-   unsigned *num_blks = validate_ssbo ? &prog->data->NumShaderStorageBlocks :
-      &prog->data->NumUniformBlocks;
-
-   unsigned max_num_buffer_blocks = 0;
-   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (prog->_LinkedShaders[i]) {
-         if (validate_ssbo) {
-            max_num_buffer_blocks +=
-               prog->_LinkedShaders[i]->Program->info.num_ssbos;
-         } else {
-            max_num_buffer_blocks +=
-               prog->_LinkedShaders[i]->Program->info.num_ubos;
-         }
-      }
-   }
-
-   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      struct gl_linked_shader *sh = prog->_LinkedShaders[i];
-
-      ifc_blk_stage_idx[i] =
-         (int *) malloc(sizeof(int) * max_num_buffer_blocks);
-      for (unsigned int j = 0; j < max_num_buffer_blocks; j++)
-         ifc_blk_stage_idx[i][j] = -1;
-
-      if (sh == NULL)
-         continue;
-
-      unsigned sh_num_blocks;
-      struct gl_uniform_block **sh_blks;
-      if (validate_ssbo) {
-         sh_num_blocks = prog->_LinkedShaders[i]->Program->info.num_ssbos;
-         sh_blks = sh->Program->sh.ShaderStorageBlocks;
-      } else {
-         sh_num_blocks = prog->_LinkedShaders[i]->Program->info.num_ubos;
-         sh_blks = sh->Program->sh.UniformBlocks;
-      }
-
-      for (unsigned int j = 0; j < sh_num_blocks; j++) {
-         int index = link_cross_validate_uniform_block(prog->data, &blks,
-                                                       num_blks, sh_blks[j]);
-
-         if (index == -1) {
-            linker_error(prog, "buffer block `%s' has mismatching "
-                         "definitions\n", sh_blks[j]->name.string);
-
-            for (unsigned k = 0; k <= i; k++) {
-               free(ifc_blk_stage_idx[k]);
-            }
-
-            /* Reset the block count. This will help avoid various segfaults
-             * from api calls that assume the array exists due to the count
-             * being non-zero.
-             */
-            *num_blks = 0;
-            return false;
-         }
-
-         ifc_blk_stage_idx[i][index] = j;
-      }
-   }
-
-   /* Update per stage block pointers to point to the program list.
-    * FIXME: We should be able to free the per stage blocks here.
-    */
-   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      for (unsigned j = 0; j < *num_blks; j++) {
-         int stage_index = ifc_blk_stage_idx[i][j];
-
-         if (stage_index != -1) {
-            struct gl_linked_shader *sh = prog->_LinkedShaders[i];
-
-            struct gl_uniform_block **sh_blks = validate_ssbo ?
-               sh->Program->sh.ShaderStorageBlocks :
-               sh->Program->sh.UniformBlocks;
-
-            blks[j].stageref |= sh_blks[stage_index]->stageref;
-            sh_blks[stage_index] = &blks[j];
-         }
-      }
-   }
-
-   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      free(ifc_blk_stage_idx[i]);
-   }
-
-   if (validate_ssbo)
-      prog->data->ShaderStorageBlocks = blks;
-   else
-      prog->data->UniformBlocks = blks;
-
-   return true;
-}
-
-/**
  * Verifies the invariance of built-in special variables.
  */
 static bool
@@ -2836,6 +2733,81 @@ verify_subroutine_associated_funcs(struct gl_shader_program *prog)
    }
 }
 
+/* glsl_to_nir can only handle converting certain function paramaters
+ * to NIR. This visitor checks for parameters it can't currently handle.
+ */
+class ir_function_param_visitor : public ir_hierarchical_visitor
+{
+public:
+   ir_function_param_visitor()
+      : unsupported(false)
+   {
+   }
+
+   virtual ir_visitor_status visit_enter(ir_function_signature *ir)
+   {
+
+      if (ir->is_intrinsic())
+         return visit_continue;
+
+      foreach_in_list(ir_variable, param, &ir->parameters) {
+         if (!glsl_type_is_vector_or_scalar(param->type)) {
+            unsupported = true;
+            return visit_stop;
+         }
+
+         if (param->data.mode != ir_var_function_in &&
+             param->data.mode != ir_var_const_in)
+            continue;
+
+         /* SSBO and shared vars might be passed to a built-in such as an
+          * atomic memory function, where copying these to a temp before
+          * passing to the atomic function is not valid so we must replace
+          * these instead. Also, shader inputs for interpolateAt functions
+          * also need to be replaced.
+          *
+          * We have no way to handle this in NIR or the glsl to nir pass
+          * currently so let the GLSL IR lowering handle it.
+          */
+         if (ir->is_builtin()) {
+            unsupported = true;
+            return visit_stop;
+         }
+
+         /* For opaque types, we want the inlined variable references
+          * referencing the passed in variable, since that will have
+          * the location information, which an assignment of an opaque
+          * variable wouldn't.
+          *
+          * We have no way to handle this in NIR or the glsl to nir pass
+          * currently so let the GLSL IR lowering handle it.
+          */
+         if (param->type->contains_opaque()) {
+            unsupported = true;
+            return visit_stop;
+         }
+      }
+
+      if (!glsl_type_is_vector_or_scalar(ir->return_type) &&
+          !ir->return_type->is_void()) {
+         unsupported = true;
+         return visit_stop;
+      }
+
+      return visit_continue;
+   }
+
+   bool unsupported;
+};
+
+static bool
+has_unsupported_function_param(exec_list *ir)
+{
+   ir_function_param_visitor visitor;
+   visit_list_elements(&visitor, ir);
+   return visitor.unsupported;
+}
+
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
@@ -2868,6 +2840,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 #endif
 
    void *mem_ctx = ralloc_context(NULL); // temporary linker context
+   unsigned prev = MESA_SHADER_STAGES;
 
    /* Separate the shaders into groups based on their type.
     */
@@ -3032,17 +3005,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (!prog->data->LinkStatus)
       goto done;
 
-   unsigned first, prev;
-
-   first = MESA_SHADER_STAGES;
-   /* Determine first and last stage. */
-   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (!prog->_LinkedShaders[i])
-         continue;
-      if (first == MESA_SHADER_STAGES)
-         first = i;
-   }
-
    check_explicit_uniform_locations(&ctx->Extensions, prog);
    link_assign_subroutine_types(prog);
    verify_subroutine_associated_funcs(prog);
@@ -3055,10 +3017,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Validate the inputs of each stage with the output of the preceding
     * stage.
     */
-   prev = first;
-   for (unsigned i = prev + 1; i <= MESA_SHADER_FRAGMENT; i++) {
+   for (unsigned i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
       if (prog->_LinkedShaders[i] == NULL)
          continue;
+
+      if (prev == MESA_SHADER_STAGES) {
+         prev = i;
+         continue;
+      }
 
       validate_interstage_inout_blocks(prog, prog->_LinkedShaders[prev],
                                        prog->_LinkedShaders[i]);
@@ -3092,14 +3058,6 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
-   /* Process UBOs */
-   if (!interstage_cross_validate_uniform_blocks(prog, false))
-      goto done;
-
-   /* Process SSBOs */
-   if (!interstage_cross_validate_uniform_blocks(prog, true))
-      goto done;
-
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
          continue;
@@ -3121,6 +3079,25 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       lower_instructions(ir, ctx->Extensions.ARB_gpu_shader5);
 
       do_vec_index_to_cond_assign(ir);
+
+      const struct gl_shader_compiler_options *gl_options =
+         &consts->ShaderCompilerOptions[i];
+
+      /* NIR cannot handle instructions after a break so we use the GLSL IR do
+       * lower jumps pass to clean those up for now.
+       */
+      do_lower_jumps(ir, true, true, gl_options->EmitNoMainReturn,
+                     gl_options->EmitNoCont);
+
+      /* glsl_to_nir can only handle converting certain function paramaters
+       * to NIR. If we find something we can't handle then we get the GLSL IR
+       * opts to remove it before we continue on.
+       *
+       * TODO: add missing glsl ir to nir support and remove this loop.
+       */
+      while (has_unsupported_function_param(ir)) {
+         do_common_optimization(ir, true, gl_options, consts->NativeIntegers);
+      }
    }
 
    /* Check and validate stream emissions in geometry shaders */

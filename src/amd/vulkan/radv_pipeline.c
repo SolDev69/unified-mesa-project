@@ -225,6 +225,20 @@ radv_generate_pipeline_key(const struct radv_device *device, const VkPipelineSha
    return key;
 }
 
+#define RADV_HASH_SHADER_CS_WAVE32       (1 << 1)
+#define RADV_HASH_SHADER_PS_WAVE32       (1 << 2)
+#define RADV_HASH_SHADER_GE_WAVE32       (1 << 3)
+#define RADV_HASH_SHADER_LLVM            (1 << 4)
+#define RADV_HASH_SHADER_CLEAR_LDS       (1 << 5)
+#define RADV_HASH_SHADER_KEEP_STATISTICS (1 << 8)
+#define RADV_HASH_SHADER_USE_NGG_CULLING (1 << 13)
+#define RADV_HASH_SHADER_EMULATE_RT      (1 << 16)
+#define RADV_HASH_SHADER_SPLIT_FMA       (1 << 17)
+#define RADV_HASH_SHADER_RT_WAVE64       (1 << 18)
+#define RADV_HASH_SHADER_NO_FMASK        (1 << 19)
+#define RADV_HASH_SHADER_NO_RT           (1 << 20)
+#define RADV_HASH_SHADER_DUAL_BLEND_MRT1 (1 << 21)
+
 uint32_t
 radv_get_hash_flags(const struct radv_device *device, bool stats)
 {
@@ -254,6 +268,8 @@ radv_get_hash_flags(const struct radv_device *device, bool stats)
       hash_flags |= RADV_HASH_SHADER_NO_RT;
    if (device->instance->dual_color_blend_by_location)
       hash_flags |= RADV_HASH_SHADER_DUAL_BLEND_MRT1;
+   if (device->instance->clear_lds)
+      hash_flags |= RADV_HASH_SHADER_CLEAR_LDS;
    return hash_flags;
 }
 
@@ -688,6 +704,12 @@ radv_postprocess_nir(struct radv_device *device, const struct radv_pipeline_key 
       NIR_PASS_V(stage->nir, ac_nir_lower_ps, &options);
    }
 
+   if (radv_shader_should_clear_lds(device, stage->nir)) {
+      const unsigned chunk_size = 16; /* max single store size */
+      const unsigned shared_size = ALIGN(stage->nir->info.shared_size, chunk_size);
+      NIR_PASS(_, stage->nir, nir_clear_shared_memory, shared_size, chunk_size);
+   }
+
    NIR_PASS(_, stage->nir, nir_lower_int64);
 
    NIR_PASS(_, stage->nir, nir_opt_idiv_const, 8);
@@ -767,6 +789,14 @@ radv_postprocess_nir(struct radv_device *device, const struct radv_pipeline_key 
          nir_move_const_undef | nir_move_load_ubo | nir_move_load_input | nir_move_comparisons | nir_move_copies;
       NIR_PASS(_, stage->nir, nir_opt_move, move_opts);
    }
+}
+
+bool
+radv_shader_should_clear_lds(const struct radv_device *device, const nir_shader *shader)
+{
+   return (shader->info.stage == MESA_SHADER_COMPUTE || shader->info.stage == MESA_SHADER_MESH ||
+           shader->info.stage == MESA_SHADER_TASK) &&
+          shader->info.shared_size > 0 && device->instance->clear_lds;
 }
 
 static uint32_t
@@ -961,7 +991,6 @@ radv_GetPipelineExecutableStatisticsKHR(VkDevice _device, const VkPipelineExecut
    unsigned lds_increment = pdevice->rad_info.gfx_level >= GFX11 && stage == MESA_SHADER_FRAGMENT
                                ? 1024
                                : pdevice->rad_info.lds_encode_granularity;
-   unsigned max_waves = radv_get_max_waves(device, shader, stage);
 
    VkPipelineExecutableStatisticKHR *s = pStatistics;
    VkPipelineExecutableStatisticKHR *end = s + (pStatistics ? *pStatisticCount : 0);
@@ -1035,7 +1064,7 @@ radv_GetPipelineExecutableStatisticsKHR(VkDevice _device, const VkPipelineExecut
       desc_copy(s->name, "Subgroups per SIMD");
       desc_copy(s->description, "The maximum number of subgroups in flight on a SIMD unit");
       s->format = VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_UINT64_KHR;
-      s->value.u64 = max_waves;
+      s->value.u64 = shader->max_waves;
    }
    ++s;
 
