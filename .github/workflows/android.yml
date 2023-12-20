@@ -1,4 +1,4 @@
-name: Build Android
+name: Build OSMesa (Android)
 
 on:
   [push, pull_request, workflow_dispatch]
@@ -29,7 +29,7 @@ jobs:
           cd drm
           meson setup "build-android" \
             --prefix=/tmp/drm-static \
-            --cross-file "../build-crossfile-drm" \
+            --cross-file "build-crossfile-drm" \
             -Ddefault_library=static \
             -Dintel=disabled \
             -Dradeon=disabled \
@@ -45,7 +45,7 @@ jobs:
           envsubst <android-${{matrix.arch}} >build-crossfile
           meson setup "build-android" \
             --prefix=/tmp/mesa \
-            --cross-file "../build-crossfile" \
+            --cross-file "build-crossfile" \
             -Dplatforms=android \
             -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
@@ -62,10 +62,7 @@ jobs:
             -Dshared-glapi=false \
             -Dandroid-libbacktrace=disabled \
             -Dbuildtype=release
-          if [ ${{matrix.arch}} == 'x86_64' ]
-          then 
-            meson configure "build-android" -Dgallium-drivers=zink
-          fi
+          if [ ${{matrix.arch}} == 'x86_64' ]; then meson configure "build-android" -Dgallium-drivers=zink; fi
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v2

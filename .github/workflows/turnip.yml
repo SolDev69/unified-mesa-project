@@ -1,0 +1,43 @@
+name: Build Freedreno Turnip
+
+on:
+  [push, pull_request, workflow_dispatch]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: [ "arm32", "aarch64" ]
+      fail-fast: false
+
+    name: "Build for ${{matrix.arch}}"
+
+    runs-on: ubuntu-latest
+
+    steps:        
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          sudo apt update
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          pip3 install mako
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
+          envsubst <android-drm-${{matrix.arch}} >build-crossfile-turnip
+          meson build-android-${{matrix.arch}} --cross-file "build-crossfile-turnip" \
+            -Dbuildtype=release \
+            -Dplatforms=android \
+            -Dplatform-sdk-version=33 \
+            -Dandroid-stub=true \
+            -Dgallium-drivers= \
+            -Dvulkan-drivers=freedreno \
+            -Dfreedreno-kmds=kgsl \
+            -Db_lto=true
+          ninja -C build-android-${{matrix.arch}}
+          cp src/freedreno/vulkan/libvulkan_freedreno.so /tmp/mesa
+      - name: Upload libraries
+        uses: actions/upload-artifact@v2
+        with:
+          name: turnip_${{matrix.arch}}
+          path: /tmp/mesa
