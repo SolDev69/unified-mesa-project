@@ -1,4 +1,4 @@
-name: Build OSMesa and Lavapipe (Android)
+name: Build OSMesa (Android)
 
 on:
   [push, pull_request, workflow_dispatch]
