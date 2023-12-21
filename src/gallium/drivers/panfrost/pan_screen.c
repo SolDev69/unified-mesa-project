@@ -849,14 +849,6 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
    if (dev->debug & PAN_DBG_NO_AFBC)
       dev->has_afbc = false;
 
-   /* Bail early on unsupported hardware */
-   if (dev->model == NULL) {
-      debug_printf("panfrost: Unsupported model %X",
-                   panfrost_device_gpu_id(dev));
-      panfrost_destroy_screen(&(screen->base));
-      return NULL;
-   }
-
    dev->ro = ro;
 
    screen->base.destroy = panfrost_destroy_screen;
