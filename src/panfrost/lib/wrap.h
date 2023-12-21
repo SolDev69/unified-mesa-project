@@ -49,8 +49,6 @@ struct pandecode_context *pandecode_create_context(bool to_stderr);
 
 void pandecode_next_frame(struct pandecode_context *ctx);
 
-void pandecode_dump_file_close(void);
-
 void pandecode_destroy_context(struct pandecode_context *ctx);
 
 void pandecode_inject_mmap(struct pandecode_context *ctx, uint64_t gpu_va,
