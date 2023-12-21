@@ -50,13 +50,12 @@ jobs:
             -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
             -Dxlib-lease=disabled \
-            -Dllvm=enabled \
             -Degl=disabled \
             -Dgbm=disabled \
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers=swrast \
+            -Dvulkan-drivers= \
             -Dgallium-drivers=freedreno,zink,swrast \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
