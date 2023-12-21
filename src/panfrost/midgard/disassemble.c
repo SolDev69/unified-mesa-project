@@ -1254,8 +1254,9 @@ print_alu_word(disassemble_context *ctx, FILE *fp, uint32_t *words,
 UNUSED static void
 print_varying_parameters(FILE *fp, midgard_load_store_word *word)
 {
-   midgard_varying_params p = midgard_unpack_varying_params(*word);
-
+  unsigned params = word->signed_offset & 0x1FF;
+  midgard_varying_params p;
+  memcpy(&p, &params, sizeof(p));
    /* If a varying, there are qualifiers */
    if (p.flat_shading)
       fprintf(fp, ".flat");
