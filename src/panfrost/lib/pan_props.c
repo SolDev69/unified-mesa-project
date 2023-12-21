@@ -81,7 +81,7 @@ const struct panfrost_model panfrost_unknown_model = {
    .min_rev_anisotropic = ~0, 
    .tilebuffer_size = 8192, 
    .quirks = {}, 
-}
+};
 
 #undef NO_ANISO
 #undef HAS_ANISO
