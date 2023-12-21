@@ -1,4 +1,4 @@
-name: Build OSMesa (Android)
+name: Build OSMesa and Lavapipe (Android)
 
 on:
   [push, pull_request, workflow_dispatch]
@@ -55,7 +55,7 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers= \
+            -Dvulkan-drivers=swrast \
             -Dgallium-drivers=freedreno,zink,swrast \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
