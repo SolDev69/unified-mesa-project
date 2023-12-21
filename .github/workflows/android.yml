@@ -50,6 +50,7 @@ jobs:
             -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
             -Dxlib-lease=disabled \
+            -Dllvm=enabled \
             -Degl=disabled \
             -Dgbm=disabled \
             -Dglx=disabled \
