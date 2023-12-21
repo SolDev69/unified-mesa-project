@@ -935,6 +935,28 @@ panfrost_fence_server_sync(struct pipe_context *pctx,
    close(fd);
 }
 
+static struct panfrost_cs
+panfrost_cs_create(struct panfrost_context *ctx, unsigned size, unsigned mask)
+{
+        struct panfrost_screen *screen = pan_screen(ctx->base.screen);
+        struct panfrost_device *dev = pan_device(ctx->base.screen);
+        struct kbase_context *kctx = ctx->kbase_ctx;
+
+        struct panfrost_cs c = {0};
+
+        c.bo = panfrost_bo_create(dev, size, 0, "Command stream");
+
+        c.base = dev->mali.cs_bind(&dev->mali, kctx, c.bo->ptr.gpu, size);
+
+        c.event_ptr = dev->mali.event_mem.gpu + c.base.event_mem_offset * PAN_EVENT_SIZE;
+        c.kcpu_event_ptr = dev->mali.kcpu_event_mem.gpu + c.base.event_mem_offset * PAN_EVENT_SIZE;
+
+        c.hw_resources = mask;
+        screen->vtbl.init_cs(ctx, &c);
+
+        return c;
+}
+
 struct pipe_context *
 panfrost_create_context(struct pipe_screen *screen, void *priv, unsigned flags)
 {

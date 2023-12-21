@@ -50,6 +50,18 @@
 #include "compiler/shader_enums.h"
 #include "midgard/midgard_compile.h"
 
+struct panfrost_cs {
+        struct kbase_cs base;
+        struct panfrost_bo *bo;
+        pan_command_stream cs;
+        mali_ptr event_ptr;
+        uint64_t seqnum;
+        mali_ptr kcpu_event_ptr;
+        uint64_t kcpu_seqnum;
+        uint64_t offset;
+        unsigned hw_resources;
+};
+
 #define SET_BIT(lval, bit, cond)                                               \
    if (cond)                                                                   \
       lval |= (bit);                                                           \
