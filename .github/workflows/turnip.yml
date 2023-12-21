@@ -1,4 +1,4 @@
-name: Build Freedreno Turnip
+name: Build Vulkan Drivers
 
 on:
   [push, pull_request, workflow_dispatch]
@@ -31,8 +31,8 @@ jobs:
             -Dplatforms=android \
             -Dplatform-sdk-version=33 \
             -Dandroid-stub=true \
-            -Dgallium-drivers= \
-            -Dvulkan-drivers=freedreno \
+            -Dgallium-drivers=swrast \
+            -Dvulkan-drivers=freedreno,swrast \
             -Dfreedreno-kmds=kgsl \
             -Db_lto=true
           ninja -C build-android-${{matrix.arch}} install
