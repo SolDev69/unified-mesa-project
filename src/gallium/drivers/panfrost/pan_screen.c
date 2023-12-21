@@ -831,14 +831,20 @@ struct pipe_screen *
 panfrost_create_screen(int fd, const struct pipe_screen_config *config,
                        struct renderonly *ro)
 {
+   printf("PAN_OSMESA: init\n");
    /* Create the screen */
    struct panfrost_screen *screen = rzalloc(NULL, struct panfrost_screen);
 
    if (!screen)
+   {
+      printf("PAN_OSMESA: screen is null!\n");
       return NULL;
+   }
 
+   printf("PAN_OSMESA: pan device init\n");
    struct panfrost_device *dev = pan_device(&screen->base);
 
+   printf("PAN_OSMESA: pan flags\n");
    /* Debug must be set first for pandecode to work correctly */
    dev->debug =
       debug_get_flags_option("PAN_MESA_DEBUG", panfrost_debug_options, 0);
@@ -846,11 +852,14 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
       "PAN_MAX_AFBC_PACKING_RATIO", DEFAULT_MAX_AFBC_PACKING_RATIO);
    panfrost_open_device(screen, fd, dev);
 
+   printf("PAN_OSMESA: afbc\n");
    if (dev->debug & PAN_DBG_NO_AFBC)
       dev->has_afbc = false;
 
+   printf("PAN_OSMESA: ro\n");
    dev->ro = ro;
 
+   printf("PAN_OSMESA: panbase screen\n");
    screen->base.destroy = panfrost_destroy_screen;
 
    screen->base.get_screen_fd = panfrost_get_screen_fd;
@@ -874,16 +883,18 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
    screen->base.fence_finish = panfrost_fence_finish;
    screen->base.fence_get_fd = panfrost_fence_get_fd;
    screen->base.set_damage_region = panfrost_resource_set_damage_region;
-
+   
+   printf("PAN_OSMESA: resource screen init\n");
    panfrost_resource_screen_init(&screen->base);
+   printf("PAN_OSMESA: blend shaders\n");
    pan_blend_shaders_init(dev);
-
-   panfrost_disk_cache_init(screen);
-
+   printf("PAN_OSMESA: pool init\n");
    panfrost_pool_init(&screen->blitter.bin_pool, NULL, dev, PAN_BO_EXECUTE,
                       4096, "Blitter shaders", false, true);
    panfrost_pool_init(&screen->blitter.desc_pool, NULL, dev, 0, 65536,
                       "Blitter RSDs", false, true);
+   
+   printf("PAN_OSMESA: screen init\n");
    if (dev->arch == 4)
       panfrost_cmdstream_screen_init_v4(screen);
    else if (dev->arch == 5)
