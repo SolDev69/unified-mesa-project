@@ -49,7 +49,6 @@ jobs:
             -Dplatforms=android \
             -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
-            -Dllvm=disabled \
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
@@ -57,7 +56,7 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=freedreno,zink \
+            -Dgallium-drivers=freedreno,zink,swrast \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
             -Dandroid-libbacktrace=disabled \

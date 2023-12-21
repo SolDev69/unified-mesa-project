@@ -1074,14 +1074,15 @@ out:
 struct pipe_screen *
 llvmpipe_create_screen(struct sw_winsys *winsys)
 {
+   printf("LP: init\n");
    struct llvmpipe_screen *screen;
 
    glsl_type_singleton_init_or_ref();
-
+   printf("LP: get flags\n");
    LP_DEBUG = debug_get_flags_option("LP_DEBUG", lp_debug_flags, 0 );
 
    LP_PERF = debug_get_flags_option("LP_PERF", lp_perf_flags, 0 );
-
+   printf("LP: calloc\n");
    screen = CALLOC_STRUCT(llvmpipe_screen);
    if (!screen)
       return NULL;
@@ -1089,7 +1090,7 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen->winsys = winsys;
 
    screen->base.destroy = llvmpipe_destroy_screen;
-
+   printf("LP: init vars\n");
    screen->base.get_name = llvmpipe_get_name;
    screen->base.get_vendor = llvmpipe_get_vendor;
    screen->base.get_device_vendor = llvmpipe_get_vendor; // TODO should be the CPU vendor

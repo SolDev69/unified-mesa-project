@@ -579,6 +579,7 @@ softpipe_screen_get_fd(struct pipe_screen *screen)
 struct pipe_screen *
 softpipe_create_screen(struct sw_winsys *winsys)
 {
+   printf("SP: init\n");
    struct softpipe_screen *screen = CALLOC_STRUCT(softpipe_screen);
 
    if (!screen)
@@ -589,7 +590,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->winsys = winsys;
 
    screen->base.destroy = softpipe_destroy_screen;
-
+   printf("SP: init vars\n");
    screen->base.get_name = softpipe_get_name;
    screen->base.get_vendor = softpipe_get_vendor;
    screen->base.get_device_vendor = softpipe_get_vendor; // TODO should be the CPU vendor
@@ -605,7 +606,7 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.get_compute_param = softpipe_get_compute_param;
    screen->base.get_compiler_options = softpipe_get_compiler_options;
    screen->use_llvm = sp_debug & SP_DBG_USE_LLVM;
-
+   printf("SP: init screen funcs\n");
    softpipe_init_screen_texture_funcs(&screen->base);
    softpipe_init_screen_fence_funcs(&screen->base);
 
