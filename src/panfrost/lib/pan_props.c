@@ -74,10 +74,6 @@ const struct panfrost_model panfrost_model_list[] = {
 };
 /* clang-format on */
 
-#undef NO_ANISO
-#undef HAS_ANISO
-#undef MODEL
-
 const struct panfrost_model panfrost_unknown_model = {
    .gpu_id = 0,
    .name = "Unknowm Mali device (Panfrost)",
@@ -87,6 +83,9 @@ const struct panfrost_model panfrost_unknown_model = {
    .quirks = {}, 
 }
 
+#undef NO_ANISO
+#undef HAS_ANISO
+#undef MODEL
 /*
  * Look up a supported model by its GPU ID, or return NULL if the model is not
  * supported at this time.
