@@ -1063,14 +1063,13 @@ panfrost_create_context(struct pipe_screen *screen, void *priv, unsigned flags)
    /* Create a syncobj in a signaled state. Will be updated to point to the
     * last queued job out_sync every time we submit a new job.
     */
-   ret = drmSyncobjCreate(panfrost_device_fd(dev), DRM_SYNCOBJ_CREATE_SIGNALED,
-                          &ctx->syncobj);
-   assert(!ret && ctx->syncobj);
+   if (dev->kbase && dev->mali.context_create)
+            ctx->kbase_ctx = dev->mali.context_create(&dev->mali);
 
-   /* Sync object/FD used for NATIVE_FENCE_FD. */
-   ctx->in_sync_fd = -1;
-   ret = drmSyncobjCreate(panfrost_device_fd(dev), 0, &ctx->in_sync_obj);
-   assert(!ret);
+   if (dev->arch >= 10) {
+            ctx->kbase_cs_vertex = panfrost_cs_create(ctx, 65536, 13);
+            ctx->kbase_cs_fragment = panfrost_cs_create(ctx, 65536, 2);
+   }
 
    return gallium;
 }
