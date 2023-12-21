@@ -34,7 +34,6 @@
 
 #include "util/format/u_format.h"
 #include "util/half_float.h"
-#include "util/libsync.h"
 #include "util/macros.h"
 #include "util/u_debug_cb.h"
 #include "util/u_helpers.h"
@@ -550,6 +549,19 @@ panfrost_destroy(struct pipe_context *pipe)
    struct panfrost_context *panfrost = pan_context(pipe);
    struct panfrost_device *dev = pan_device(pipe->screen);
 
+   if (dev->kbase && dev->mali.context_create) {
+            dev->mali.cs_term(&dev->mali, &panfrost->kbase_cs_vertex.base);
+            dev->mali.cs_term(&dev->mali, &panfrost->kbase_cs_fragment.base);
+
+            dev->mali.context_destroy(&dev->mali, panfrost->kbase_ctx);
+
+            panfrost_bo_unreference(panfrost->kbase_cs_vertex.bo);
+            panfrost_bo_unreference(panfrost->kbase_cs_fragment.bo);
+   }
+
+   if (panfrost->tiler_heap_desc)
+            panfrost_bo_unreference(panfrost->tiler_heap_desc);
+
    _mesa_hash_table_destroy(panfrost->writers, NULL);
 
    if (panfrost->blitter)
@@ -562,11 +574,15 @@ panfrost_destroy(struct pipe_context *pipe)
    panfrost_pool_cleanup(&panfrost->shaders);
    panfrost_afbc_context_destroy(panfrost);
 
-   drmSyncobjDestroy(panfrost_device_fd(dev), panfrost->in_sync_obj);
-   if (panfrost->in_sync_fd != -1)
-      close(panfrost->in_sync_fd);
+   if (dev->kbase) {
+            dev->mali.syncobj_destroy(&dev->mali, panfrost->syncobj_kbase);
+   } else {
+            drmSyncobjDestroy(dev->fd, panfrost->in_sync_obj);
+            if (panfrost->in_sync_fd != -1)
+                  close(panfrost->in_sync_fd);
 
-   drmSyncobjDestroy(panfrost_device_fd(dev), panfrost->syncobj);
+            drmSyncobjDestroy(panfrost_device_fd(dev), panfrost->syncobj);
+   }
    ralloc_free(pipe);
 }
 
