@@ -75,6 +75,7 @@ if with_imgui
 endif
 if with_platform_wayland
   subdir('egl/wayland/wayland-drm')
+  subdir('egl/wayland/mali-buffer-sharing')
 endif
 if with_any_vk or with_gallium_zink
   subdir('vulkan')

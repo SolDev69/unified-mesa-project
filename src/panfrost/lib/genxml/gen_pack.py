@@ -46,6 +46,18 @@ pack_header = """
 
 #include "util/bitpack_helpers.h"
 
+/* Most functions assume the caller has done bounds checking */
+typedef struct pan_command_stream {
+   uint64_t *ptr;
+   uint64_t *begin;
+   uint64_t *end;
+   uint64_t gpu;
+} pan_command_stream;
+
+struct pan_command_stream_decoded {
+  uint32_t values[256];
+};
+
 #define __gen_unpack_float(x, y, z) uif(__gen_unpack_uint(x, y, z))
 
 static inline uint32_t
@@ -112,6 +124,20 @@ __gen_unpack_padded(const uint8_t *restrict cl, uint32_t start, uint32_t end)
    unsigned odd = val >> 5;
 
    return (2*odd + 1) << shift;
+}
+
+static inline void
+__gen_clear_value(uint8_t *restrict cl, uint32_t start, uint32_t end)
+{
+   for (uint32_t byte = start / 8; byte <= end / 8; byte++) {
+      uint8_t m = 0;
+      if (byte == start / 8)
+         m |= 0xff >> (8 - start % 8);
+      if (byte == end / 8)
+         m |= 0xff << (1 + end % 8);
+
+      cl[byte] &= m;
+   }
 }
 
 #define PREFIX1(A) MALI_ ## A
@@ -197,6 +223,96 @@ v7_format_printer = """
         mali_rgb_component_order_as_str((enum mali_rgb_component_order)(format & ((1 << 12) - 1))), \\
         (format & (1 << 21)) ? " XXX BAD BIT" : "");
 
+"""
+
+no_cs = "".join([f"""
+#define MALI_{y} MALI_{x}
+#define MALI_{y}_header MALI_{x}_header
+#define MALI_{y}_pack MALI_{x}_pack
+#define MALI_{y}_LENGTH MALI_{x}_LENGTH
+#define MALI_{y}_ALIGN MALI_{x}_ALIGN
+#define mali_{y.lower()}_packed mali_{x.lower()}_packed
+#define MALI_{y}_unpack MALI_{x}_unpack
+#define MALI_{y}_print MALI_{x}_print
+""" for x, y in (("DRAW", "DRAW_NO_CS"), )]) + """
+
+#define pan_pack_cs_v10(dst, _, T, name) pan_pack(dst, T, name)
+
+#define pan_section_pack_cs_v10(dst, _, A, S, name) pan_section_pack(dst, A, S, name)
+
+#define pan_unpack_cs_v10(dst, _, __, T, name) pan_unpack(dst, T, name)
+
+#define pan_section_unpack_cs_v10(src, _, __, A, S, name) pan_section_unpack(src, A, S, name)
+"""
+
+with_cs = """
+#define pan_pack_cs(dst, T, name)                       \\
+   for (struct PREFIX1(T) name = { PREFIX2(T, header) }, \\
+        *_loop_terminate = (void *) (dst);                  \\
+        __builtin_expect(_loop_terminate != NULL, 1);       \\
+        ({ PREFIX2(T, pack_cs)(dst, &name);  \\
+           _loop_terminate = NULL; }))
+
+#define pan_section_pack_cs(dst, A, S, name)                                                         \\
+   for (PREFIX4(A, SECTION, S, TYPE) name = { PREFIX4(A, SECTION, S, header) }, \\
+        *_loop_terminate = (void *) (dst);                                                        \\
+        __builtin_expect(_loop_terminate != NULL, 1);                                             \\
+        ({ PREFIX4(A, SECTION, S, pack_cs) (dst, &name);              \\
+           _loop_terminate = NULL; }))
+
+#define pan_section_pack_cs_v10(_, dst, A, S, name) pan_section_pack_cs(dst, A, S, name)
+
+// TODO: assert that the first argument is NULL
+#define pan_pack_cs_v10(_, dst, T, name) pan_pack_cs(dst, T, name)
+
+#define pan_pack_ins(dst, T, name)                       \\
+   for (struct PREFIX1(T) name = { PREFIX2(T, header) }, \\
+        *_loop_terminate = (void *) (dst);                  \\
+        __builtin_expect(_loop_terminate != NULL, 1);       \\
+        ({ PREFIX2(T, pack_ins)(dst, &name);  \\
+           _loop_terminate = NULL; }))
+
+#define pan_unpack_cs(buf, buf_unk, T, name) \\
+        struct PREFIX1(T) name; \\
+        PREFIX2(T, unpack)(buf, buf_unk, &name)
+
+#define pan_unpack_cs_v10(_, buf, buf_unk, T, name) pan_unpack_cs(buf, buf_unk, T, name)
+
+#define pan_section_unpack_cs_v10(_, buf, buf_unk, A, S, name) \\
+        PREFIX4(A, SECTION, S, TYPE) name;                             \\
+        PREFIX4(A, SECTION, S, unpack)(buf, buf_unk, &name)
+
+static inline void
+pan_emit_cs_ins(pan_command_stream *s, uint8_t op, uint64_t instr)
+{
+   assert(instr < (1ULL << 56));
+   instr |= ((uint64_t)op << 56);
+   *((s->ptr)++) = instr;
+}
+
+static inline void
+pan_emit_cs_32(pan_command_stream *s, uint8_t reg, uint32_t value)
+{
+   pan_emit_cs_ins(s, 2, ((uint64_t) reg << 48) | value);
+}
+
+static inline void
+pan_emit_cs_48(pan_command_stream *s, uint8_t reg, uint64_t value)
+{
+   assert(value < (1ULL << 48));
+   pan_emit_cs_ins(s, 1, ((uint64_t) reg << 48) | value);
+}
+
+static inline void
+pan_emit_cs_64(pan_command_stream *s, uint8_t reg, uint64_t value)
+{
+   if (value < (1ULL << 48)) {
+      pan_emit_cs_48(s, reg, value);
+   } else {
+      pan_emit_cs_32(s, reg, value);
+      pan_emit_cs_32(s, reg + 1, value >> 32);
+   }
+}
 """
 
 def to_alphanum(name):
@@ -313,7 +429,7 @@ class Field(object):
 
         if ":" in str(attrs["start"]):
             (word, bit) = attrs["start"].split(":")
-            self.start = (int(word) * 32) + int(bit)
+            self.start = (int(word, 0) * 32) + int(bit)
         else:
             self.start = int(attrs["start"])
 
@@ -347,7 +463,8 @@ class Field(object):
             type = 'uint64_t'
         elif self.type == 'int':
             type = 'int32_t'
-        elif self.type in ['uint', 'hex', 'uint/float', 'padded', 'Pixel Format']:
+            # TODO: Convert to tuple
+        elif self.type in ['uint', 'hex', 'register', 'uint/float', 'padded', 'Pixel Format']:
             type = 'uint32_t'
         elif self.type in self.parser.structs:
             type = 'struct ' + self.parser.gen_prefix(safe_name(self.type.upper()))
@@ -401,8 +518,8 @@ class Group(object):
                 field.emit_template_struct(dim)
 
     class Word:
-        def __init__(self):
-            self.size = 32
+        def __init__(self, size=32):
+            self.size = size
             self.contributors = []
 
     class FieldRef:
@@ -426,7 +543,7 @@ class Group(object):
             end = offset + field.end
             all_fields.append(self.FieldRef(field, field_path, start, end))
 
-    def collect_words(self, fields, offset, path, words):
+    def collect_words(self, fields, offset, path, words, ins=False):
         for field in fields:
             field_path = '{}{}'.format(path, field.name)
             start = offset + field.start
@@ -440,16 +557,27 @@ class Group(object):
             contributor = self.FieldRef(field, field_path, start, end)
             first_word = contributor.start // 32
             last_word = contributor.end // 32
+            if ins:
+                assert(last_word < 2)
+                first_word = last_word = 0
+
             for b in range(first_word, last_word + 1):
                 if not b in words:
-                    words[b] = self.Word()
+                    words[b] = self.Word(size=64 if ins else 32)
+
                 words[b].contributors.append(contributor)
 
-    def emit_pack_function(self):
-        self.get_length()
+        return
+
+    def emit_pack_function(self, csf=False, ins=False):
+        if csf:
+            self.length = 256 * 4
+        else:
+            self.get_length()
+            assert(not ins)
 
         words = {}
-        self.collect_words(self.fields, 0, '', words)
+        self.collect_words(self.fields, 0, '', words, ins=ins)
 
         # Validate the modifier is lossless
         for field in self.fields:
@@ -465,25 +593,52 @@ class Group(object):
             elif field.modifier[0] == "log2":
                 print("   assert(util_is_power_of_two_nonzero(values->{}));".format(field.name))
 
-        for index in range(self.length // 4):
+        if ins:
+            index_list = (0, )
+        elif csf:
+            index_list = sorted(words)
+        else:
+            index_list = range(self.length // 4)
+
+        for index in index_list:
             # Handle MBZ words
             if not index in words:
-                print("   cl[%2d] = 0;" % index)
+                if ins:
+                    print("   pan_emit_cs_ins(s, 0x%02x, 0);" % self.op)
+                elif not csf:
+                    print("   cl[%2d] = 0;" % index)
                 continue
 
             word = words[index]
 
             word_start = index * 32
 
+            size = 32
+            # Can we move all fields from the next index here?
+            if csf and index % 2 == 0 and index + 1 in words:
+                word_next = words[index + 1]
+                end = max(c.end for c in word_next.contributors)
+                if end - word_start < 48:
+                    size = 48
+                    word.contributors += [x for x in word_next.contributors if not x in word.contributors]
+                    del words[index + 1]
+
             v = None
-            prefix = "   cl[%2d] =" % index
+            if ins:
+                prefix = "   pan_emit_cs_ins(s, 0x%02x," % self.op
+            elif size == 48:
+                prefix = "   pan_emit_cs_48(s, 0x%02x," % index
+            elif csf:
+                prefix = "   pan_emit_cs_32(s, 0x%02x," % index
+            else:
+                prefix = "   cl[%2d] = (" % index
 
             for contributor in word.contributors:
                 field = contributor.field
                 name = field.name
                 start = contributor.start
                 end = contributor.end
-                contrib_word_start = (start // 32) * 32
+                contrib_word_start = (start // word.size) * word.size
                 start -= contrib_word_start
                 end -= contrib_word_start
 
@@ -498,7 +653,7 @@ class Group(object):
                     elif field.modifier[0] == "log2":
                         value = "util_logbase2({})".format(value)
 
-                if field.type in ["uint", "hex", "uint/float", "address", "Pixel Format"]:
+                if field.type in ["uint", "hex", "uint/float", "address", "register", "Pixel Format"]:
                     s = "util_bitpack_uint(%s, %d, %d)" % \
                         (value, start, end)
                 elif field.type == "padded":
@@ -529,11 +684,13 @@ class Group(object):
 
                 if not s == None:
                     shift = word_start - contrib_word_start
-                    if shift:
+                    if shift > 0:
                         s = "%s >> %d" % (s, shift)
+                    elif shift < 0:
+                        s = "%s << %d" % (s, -shift)
 
                     if contributor == word.contributors[-1]:
-                        print("%s %s;" % (prefix, s))
+                        print("%s %s);" % (prefix, s))
                     else:
                         print("%s %s |" % (prefix, s))
                     prefix = "           "
@@ -552,22 +709,23 @@ class Group(object):
         count = (end - start + 1)
         return (((1 << count) - 1) << start)
 
-    def emit_unpack_function(self):
+    def emit_unpack_function(self, csf=False):
         # First, verify there is no garbage in unused bits
         words = {}
         self.collect_words(self.fields, 0, '', words)
 
-        for index in range(self.length // 4):
-            base = index * 32
-            word = words.get(index, self.Word())
-            masks = [self.mask_for_word(index, c.start, c.end) for c in word.contributors]
-            mask = reduce(lambda x,y: x | y, masks, 0)
+        if not csf:
+            for index in range(self.length // 4):
+                base = index * 32
+                word = words.get(index, self.Word())
+                masks = [self.mask_for_word(index, c.start, c.end) for c in word.contributors]
+                mask = reduce(lambda x,y: x | y, masks, 0)
 
-            ALL_ONES = 0xffffffff
+                ALL_ONES = 0xffffffff
 
-            if mask != ALL_ONES:
-                TMPL = '   if (((const uint32_t *) cl)[{}] & {}) fprintf(stderr, "XXX: Invalid field of {} unpacked at word {}\\n");'
-                print(TMPL.format(index, hex(mask ^ ALL_ONES), self.label, index))
+                if mask != ALL_ONES:
+                    TMPL = '   if (((const uint32_t *) cl)[{}] & {}) fprintf(stderr, "XXX: Invalid field of {} unpacked at word {}\\n");'
+                    print(TMPL.format(index, hex(mask ^ ALL_ONES), self.label, index))
 
         fieldrefs = []
         self.collect_fields(self.fields, 0, '', fieldrefs)
@@ -580,7 +738,7 @@ class Group(object):
             args.append(str(fieldref.start))
             args.append(str(fieldref.end))
 
-            if field.type in set(["uint", "hex", "uint/float", "address", "Pixel Format"]):
+            if field.type in set(["uint", "hex", "uint/float", "address", "register", "Pixel Format"]):
                 convert = "__gen_unpack_uint"
             elif field.type in self.parser.enums:
                 convert = "(enum %s)__gen_unpack_uint" % enum_name(field.type)
@@ -616,6 +774,9 @@ class Group(object):
                 mask = hex(field.modifier[1] - 1)
                 print('   assert(!(values->{} & {}));'.format(fieldref.path, mask))
 
+            if csf:
+                print('   __gen_clear_value({});'.format(', '.join(['cl_unk'] + args[1:])))
+
     def emit_print_function(self):
         for field in self.fields:
             convert = None
@@ -638,7 +799,7 @@ class Group(object):
                 print('   fprintf(fp, "%*s{}: %f\\n", indent, "", {});'.format(name, val))
             elif field.type in ["uint", "hex"] and (field.end - field.start) >= 32:
                 print('   fprintf(fp, "%*s{}: 0x%" PRIx64 "\\n", indent, "", {});'.format(name, val))
-            elif field.type == "hex":
+            elif field.type in ("hex", "register"):
                 print('   fprintf(fp, "%*s{}: 0x%x\\n", indent, "", {});'.format(name, val))
             elif field.type == "uint/float":
                 print('   fprintf(fp, "%*s{}: 0x%X (%f)\\n", indent, "", {}, uif({}));'.format(name, val, val))
@@ -677,9 +838,13 @@ class Parser(object):
                     print(v6_format_printer)
                 else:
                     print(v7_format_printer)
+                if arch < 10:
+                    print(no_cs)
+                else:
+                    print(with_cs)
         elif name == "struct":
             name = attrs["name"]
-            self.no_direct_packing = attrs.get("no-direct-packing", False)
+            self.layout = attrs.get("layout", "struct")
             object_name = self.gen_prefix(safe_name(name.upper()))
             self.struct = object_name
 
@@ -687,10 +852,16 @@ class Parser(object):
             if "size" in attrs:
                 self.group.length = int(attrs["size"]) * 4
             self.group.align = int(attrs["align"]) if "align" in attrs else None
+            self.group.op = int(attrs["op"]) if "op" in attrs else None
             self.structs[attrs["name"]] = self.group
+            self.unpacked_alias = self.gen_prefix(safe_name(attrs["unpacked"].upper())) if "unpacked" in attrs else None
         elif name == "field":
-            self.group.fields.append(Field(self, attrs))
             self.values = []
+            self.skip_field = self.layout == "cs" and not attrs["start"].startswith("0x")
+            if self.skip_field:
+                #print(f"#warning Skipping non-CS field {attrs['name']}")
+                return
+            self.group.fields.append(Field(self, attrs))
         elif name == "enum":
             self.values = []
             self.enum = safe_name(attrs["name"])
@@ -703,6 +874,8 @@ class Parser(object):
             self.values.append(Value(attrs))
         elif name == "aggregate":
             aggregate_name = self.gen_prefix(safe_name(attrs["name"].upper()))
+            # TODO: Make .layout less "global"?
+            self.layout = attrs.get("layout", "struct")
             self.aggregate = Aggregate(self, aggregate_name, attrs)
             self.aggregates[attrs['name']] = self.aggregate
         elif name == "section":
@@ -715,7 +888,8 @@ class Parser(object):
             self.struct = None
             self.group = None
         elif name  == "field":
-            self.group.fields[-1].values = self.values
+            if not self.skip_field:
+                self.group.fields[-1].values = self.values
         elif name  == "enum":
             self.emit_enum()
             self.enum = None
@@ -745,22 +919,33 @@ class Parser(object):
         print('')
 
     def emit_template_struct(self, name, group):
-        print("struct %s {" % name)
-        group.emit_template_struct("")
-        print("};\n")
+        if self.unpacked_alias:
+            # TODO: Check the fields match
+            print("#define %s %s" % (name, self.unpacked_alias))
+        else:
+            print("struct %s {" % name)
+            group.emit_template_struct("")
+            print("};\n")
 
     def emit_aggregate(self):
         aggregate = self.aggregate
-        print("struct %s_packed {" % aggregate.name.lower())
-        print("   uint32_t opaque[{}];".format(aggregate.get_size() // 4))
-        print("};\n")
-        print('#define {}_LENGTH {}'.format(aggregate.name.upper(), aggregate.size))
+
+        if self.layout == "struct":
+            print("struct %s_packed {" % aggregate.name.lower())
+            print("   uint32_t opaque[{}];".format(aggregate.get_size() // 4))
+            print("};\n")
+            print('#define {}_LENGTH {}'.format(aggregate.name.upper(), aggregate.size))
+        else:
+            assert(self.layout == "cs")
+
         if aggregate.align != None:
             print('#define {}_ALIGN {}'.format(aggregate.name.upper(), aggregate.align))
         for section in aggregate.sections:
             print('#define {}_SECTION_{}_TYPE struct {}'.format(aggregate.name.upper(), section.name.upper(), section.type_name))
             print('#define {}_SECTION_{}_header {}_header'.format(aggregate.name.upper(), section.name.upper(), section.type_name))
             print('#define {}_SECTION_{}_pack {}_pack'.format(aggregate.name.upper(), section.name.upper(), section.type_name))
+            # TODO: Only when req'd
+            print('#define {}_SECTION_{}_pack_cs {}_pack_cs'.format(aggregate.name.upper(), section.name.upper(), section.type_name))
             print('#define {}_SECTION_{}_unpack {}_unpack'.format(aggregate.name.upper(), section.name.upper(), section.type_name))
             print('#define {}_SECTION_{}_print {}_print'.format(aggregate.name.upper(), section.name.upper(), section.type_name))
             print('#define {}_SECTION_{}_OFFSET {}'.format(aggregate.name.upper(), section.name.upper(), section.offset))
@@ -775,12 +960,32 @@ class Parser(object):
         print("}\n\n")
 
         # Should be a whole number of words
-        assert((self.group.length % 4) == 0)
+        assert((group.length % 4) == 0)
 
-        print('#define {} {}'.format (name + "_LENGTH", self.group.length))
-        if self.group.align != None:
-            print('#define {} {}'.format (name + "_ALIGN", self.group.align))
-        print('struct {}_packed {{ uint32_t opaque[{}]; }};'.format(name.lower(), self.group.length // 4))
+        print('#define {} {}'.format (name + "_LENGTH", group.length))
+        if group.align != None:
+            print('#define {} {}'.format (name + "_ALIGN", group.align))
+        print('struct {}_packed {{ uint32_t opaque[{}]; }};'.format(name.lower(), group.length // 4))
+
+    def emit_cs_pack_function(self, name, group):
+        print("static inline void\n%s_pack_cs(pan_command_stream * restrict s,\n%sconst struct %s * restrict values)\n{\n" %
+              (name, ' ' * (len(name) + 6), name))
+
+        group.emit_pack_function(csf=True)
+
+        print("}\n\n")
+
+        assert(group.length == 256 * 4)
+
+    def emit_ins_pack_function(self, name, group):
+        print("static inline void\n%s_pack_ins(pan_command_stream * restrict s,\n%sconst struct %s * restrict values)\n{" %
+              (name, ' ' * (len(name) + 6), name))
+
+        group.emit_pack_function(csf=True, ins=True)
+
+        print("}\n\n")
+
+        assert(group.length == 256 * 4)
 
     def emit_unpack_function(self, name, group):
         print("static inline void")
@@ -788,6 +993,18 @@ class Parser(object):
               (name.upper(), ' ' * (len(name) + 8), name))
 
         group.emit_unpack_function()
+
+        print("}\n")
+
+    def emit_cs_unpack_function(self, name, group):
+        print("static inline void")
+        print("%s_unpack(const uint32_t * restrict buffer, uint32_t * restrict buffer_unk,\n"
+              "%sstruct %s * restrict values)\n{"
+              "   const uint8_t *cl = (uint8_t *)buffer;\n"
+              "   uint8_t *cl_unk = (uint8_t *)buffer_unk;\n" %
+              (name.upper(), ' ' * (len(name) + 8), name))
+
+        group.emit_unpack_function(csf=True)
 
         print("}\n")
 
@@ -804,13 +1021,19 @@ class Parser(object):
 
         self.emit_template_struct(self.struct, self.group)
         self.emit_header(name)
-        if self.no_direct_packing == False:
+        if self.layout == "struct":
             self.emit_pack_function(self.struct, self.group)
             self.emit_unpack_function(self.struct, self.group)
+        elif self.layout == "cs":
+            self.emit_cs_pack_function(self.struct, self.group)
+            self.emit_cs_unpack_function(self.struct, self.group)
+        elif self.layout == "ins":
+            # TODO: I don't think that the current unpack emit functions would
+            # work
+            self.emit_ins_pack_function(self.struct, self.group)
+        else:
+            assert(self.layout == "none")
         self.emit_print_function(self.struct, self.group)
-
-    def enum_prefix(self, name):
-        return 
 
     def emit_enum(self):
         e_name = enum_name(self.enum)

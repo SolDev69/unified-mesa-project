@@ -1219,6 +1219,13 @@ drm_fourcc_canonicalize_nvidia_format_mod(__u64 modifier)
  */
 #define AFBC_FORMAT_MOD_USM	(1ULL << 12)
 
+/* AFBC native swizzle
+ *
+ * Indicates that the buffer is using RGBA component order regardless of the
+ * actual format.
+ */
+#define AFBC_FORMAT_MOD_NATIVE_SWIZZLE	(1ULL << 32)
+
 /*
  * Arm Fixed-Rate Compression (AFRC) modifiers
  *
