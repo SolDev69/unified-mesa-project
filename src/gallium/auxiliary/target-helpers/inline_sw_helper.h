@@ -41,6 +41,10 @@
 #include "freedreno/freedreno_public.h"
 #endif
 
+#ifdef GALLIUM_PANFROST
+#include "panfrost/pan_public.h"
+#endif
+
 static inline struct pipe_screen *
 sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
 {
@@ -84,6 +88,19 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
          screen = fd_screen_create(kbase_device_fd, &dummy_cfg, NULL);
       }
    }
+#endif
+
+#if defined(GALLIUM_PANFROST)
+   if(screen == NULL && strcmp(driver, "panfrost") == 0) {
+      int kbase_device_fd = open("/dev/mali0", O_RDWR | O_CLOEXEC | O_NONBLOCK);
+      if(kbase_device_fd == -1) { 
+         printf("PAN_OSMESA: Failed to open kbase device: %s", strerror(errno));
+      }else {
+         screen = panfrost_create_screen(kbase_device_fd, NULL);
+      }
+   }
+#else
+#error You forgot to include Panfrost
 #endif
 
    return screen ? debug_screen_wrap(screen) : NULL;
