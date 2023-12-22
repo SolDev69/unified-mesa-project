@@ -279,6 +279,9 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Const.Program[MESA_SHADER_COMPUTE].MaxUniformComponents = 1024;
    ctx->Const.Program[MESA_SHADER_COMPUTE].MaxInputComponents = 0; /* not used */
    ctx->Const.Program[MESA_SHADER_COMPUTE].MaxOutputComponents = 0; /* not used */
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicBuffers = 16;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicCounters = 16;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxShaderStorageBlocks = 16;
 
    /* Set up default shader compiler options. */
    struct gl_shader_compiler_options options;

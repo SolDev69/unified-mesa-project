@@ -1,0 +1,13 @@
+diff a/src/gallium/frontends/nine/nine_state.c b/src/gallium/frontends/nine/nine_state.c	(rejected hunks)
+@@ -1039,8 +1039,10 @@ update_textures_and_samplers(struct NineDevice9 *device)
+                             false, view);
+     context->enabled_sampler_count_ps = num_textures;
+ 
+-    if (commit_samplers)
++    if (commit_samplers) {
++        cso_set_max_sampler(context->cso, num_textures - 1);
+         cso_single_sampler_done(context->cso, PIPE_SHADER_FRAGMENT);
++    }
+ 
+     commit_samplers = FALSE;
+     sampler_mask = context->programmable_vs ? context->vs->sampler_mask : 0;

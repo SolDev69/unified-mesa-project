@@ -1,0 +1,25 @@
+diff a/src/panfrost/lib/pan_afbc.c b/src/panfrost/lib/pan_afbc.c	(rejected hunks)
+@@ -125,10 +125,6 @@ panfrost_afbc_format(unsigned arch, enum pipe_format format)
+          */
+         format = util_format_linear(format);
+ 
+-        /* Don't allow swizzled formats on v7+ */
+-        if (arch >= 7 && format != unswizzled_format(format))
+-                return PIPE_FORMAT_NONE;
+-
+         /* Otherwise swizzling doesn't affect AFBC */
+         format = unswizzled_format(format);
+ 
+@@ -189,3 +185,12 @@ panfrost_afbc_can_tile(const struct panfrost_device *dev)
+ {
+         return (dev->arch >= 7);
+ }
++
++/*
++ * Can this format only be used with AFBC_FORMAT_MOD_NATIVE_SWIZZLE?
++ */
++bool
++panfrost_afbc_only_native(unsigned arch, enum pipe_format format)
++{
++        return (arch >= 7 && format != unswizzled_format(format));
++}

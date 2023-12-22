@@ -1,0 +1,19 @@
+diff a/src/gallium/auxiliary/gallivm/lp_bld_nir_soa.c b/src/gallium/auxiliary/gallivm/lp_bld_nir_soa.c	(rejected hunks)
+@@ -1027,7 +1027,7 @@ static void emit_atomic_global(struct lp_build_nir_context *bld_base,
+       case nir_intrinsic_global_atomic_fadd:
+          op = LLVMAtomicRMWBinOpFAdd;
+          break;
+-#if LLVM_VERSION_MAJOR >= 15
++#if LLVM_VERSION_MAJOR >= 16
+       case nir_intrinsic_global_atomic_fmin:
+          op = LLVMAtomicRMWBinOpFMin;
+          break;
+@@ -1542,7 +1542,7 @@ static void emit_atomic_mem(struct lp_build_nir_context *bld_base,
+       case nir_intrinsic_ssbo_atomic_fadd:
+          op = LLVMAtomicRMWBinOpFAdd;
+          break;
+-#if LLVM_VERSION_MAJOR >= 15
++#if LLVM_VERSION_MAJOR >= 16
+       case nir_intrinsic_shared_atomic_fmin:
+       case nir_intrinsic_ssbo_atomic_fmin:
+          op = LLVMAtomicRMWBinOpFMin;

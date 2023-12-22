@@ -1,0 +1,87 @@
+diff a/src/gallium/drivers/panfrost/pan_screen.c b/src/gallium/drivers/panfrost/pan_screen.c	(rejected hunks)
+@@ -56,7 +56,7 @@
+ 
+ static const struct debug_named_value panfrost_debug_options[] = {
+         {"perf",      PAN_DBG_PERF,     "Enable performance warnings"},
+-        {"trace",     PAN_DBG_TRACE,    "Trace the command stream"},
++        {"trace",     PAN_DBG_TRACE | PAN_DBG_BO_CLEAR, "Trace the command stream"},
+         {"deqp",      PAN_DBG_DEQP,     "Hacks for dEQP"},
+         {"dirty",     PAN_DBG_DIRTY,    "Always re-emit all state"},
+         {"sync",      PAN_DBG_SYNC,     "Wait for each job's completion and abort on GPU faults"},
+@@ -72,6 +72,13 @@ static const struct debug_named_value panfrost_debug_options[] = {
+ #ifdef PAN_DBG_OVERFLOW
+         {"overflow",  PAN_DBG_OVERFLOW, "Check for buffer overflows in pool uploads"},
+ #endif
++        {"tiler",     PAN_DBG_TILER,    "Decode the tiler heap"},
++        {"bolog",     PAN_DBG_BO_LOG,   "Log BO allocations/deallocations"},
++        {"boclear",   PAN_DBG_BO_CLEAR, "Clear BOs on allocation"},
++        {"nogpuc",    PAN_DBG_UNCACHED_GPU, "Use uncached GPU memory for textures"},
++        {"nocpuc",    PAN_DBG_UNCACHED_CPU, "Use uncached CPU mappings for textures"},
++        {"log",       PAN_DBG_LOG,      "Log job submission etc."},
++        {"gofaster",  PAN_DBG_GOFASTER, "Experimental performance improvements"},
+         DEBUG_NAMED_VALUE_END
+ };
+ 
+@@ -122,6 +129,7 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
+         case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
+         case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
+         case PIPE_CAP_SHADER_PACK_HALF_FLOAT:
++        case PIPE_CAP_CLIP_HALFZ:
+                 return 1;
+ 
+         case PIPE_CAP_MAX_RENDER_TARGETS:
+@@ -300,7 +308,7 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
+          * still supported as it is core GLES3.0 functionality
+          */
+         case PIPE_CAP_PRIMITIVE_RESTART:
+-                return dev->arch <= 7;
++                return is_gl3 || dev->arch <= 7;
+ 
+         case PIPE_CAP_FLATSHADE:
+         case PIPE_CAP_TWO_SIDED_COLOR:
+@@ -606,6 +614,7 @@ panfrost_walk_dmabuf_modifiers(struct pipe_screen *screen,
+         bool afbc = dev->has_afbc && panfrost_format_supports_afbc(dev, format);
+         bool ytr = panfrost_afbc_can_ytr(format);
+         bool tiled_afbc = panfrost_afbc_can_tile(dev);
++        bool native = panfrost_afbc_only_native(dev->arch, format);
+ 
+         unsigned count = 0;
+ 
+@@ -619,6 +628,9 @@ panfrost_walk_dmabuf_modifiers(struct pipe_screen *screen,
+                 if ((pan_best_modifiers[i] & AFBC_FORMAT_MOD_TILED) && !tiled_afbc)
+                         continue;
+ 
++                if (drm_is_afbc(pan_best_modifiers[i]) && !(pan_best_modifiers[i] & AFBC_FORMAT_MOD_NATIVE_SWIZZLE) && native)
++                        continue;
++
+                 if (test_modifier != DRM_FORMAT_MOD_INVALID &&
+                     test_modifier != pan_best_modifiers[i])
+                         continue;
+@@ -822,13 +834,17 @@ panfrost_create_screen(int fd, struct renderonly *ro)
+ 
+         /* Bail early on unsupported hardware */
+         if (dev->model == NULL) {
+-                debug_printf("panfrost: Unsupported model %X", dev->gpu_id);
++                debug_printf("panfrost: Unsupported model %X\n", dev->gpu_id);
+                 panfrost_destroy_screen(&(screen->base));
+                 return NULL;
+         }
+ 
+         dev->ro = ro;
+ 
++        /* The functionality is only useful with kbase */
++        if (dev->kbase)
++                dev->has_dmabuf_fence = panfrost_check_dmabuf_fence(dev);
++
+         screen->base.destroy = panfrost_destroy_screen;
+ 
+         screen->base.get_name = panfrost_get_name;
+@@ -874,6 +890,8 @@ panfrost_create_screen(int fd, struct renderonly *ro)
+                 panfrost_cmdstream_screen_init_v7(screen);
+         else if (dev->arch == 9)
+                 panfrost_cmdstream_screen_init_v9(screen);
++        else if (dev->arch == 10)
++                panfrost_cmdstream_screen_init_v10(screen);
+         else
+                 unreachable("Unhandled architecture major");
+ 

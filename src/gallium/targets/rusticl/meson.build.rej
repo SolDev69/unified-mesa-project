@@ -1,0 +1,9 @@
+diff a/src/gallium/targets/rusticl/meson.build b/src/gallium/targets/rusticl/meson.build	(rejected hunks)
+@@ -43,6 +43,7 @@ librusticl = shared_library(
+   ],
+   dependencies : [
+     driver_iris,
++    driver_kmsro,
+     driver_nouveau,
+     driver_panfrost,
+     driver_swrast,

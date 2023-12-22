@@ -1,0 +1,365 @@
+diff a/src/panfrost/lib/pan_props.c b/src/panfrost/lib/pan_props.c	(rejected hunks)
+@@ -24,6 +24,7 @@
+  *   Alyssa Rosenzweig <alyssa.rosenzweig@collabora.com>
+  */
+ 
++#include <fcntl.h>
+ #include <xf86drm.h>
+ 
+ #include "util/u_math.h"
+@@ -31,12 +32,14 @@
+ #include "util/hash_table.h"
+ #include "util/u_thread.h"
+ #include "drm-uapi/panfrost_drm.h"
++#include "dma-uapi/dma-buf.h"
+ #include "pan_encoder.h"
+ #include "pan_device.h"
+ #include "pan_bo.h"
+ #include "pan_texture.h"
+ #include "wrap.h"
+ #include "pan_util.h"
++#include "pan_base.h"
+ 
+ /* Fixed "minimum revisions" */
+ #define NO_ANISO (~0)
+@@ -70,6 +73,18 @@ const struct panfrost_model panfrost_model_list[] = {
+         MODEL(0x7212, "G52", "TGOx", HAS_ANISO, 16384, {}),
+         MODEL(0x7402, "G52 r1", "TGOx", HAS_ANISO, 16384, {}),
+         MODEL(0x9093, "G57", "TNAx", HAS_ANISO, 16384, {}),
++        MODEL(0xa867, "G610", "LODx", HAS_ANISO, 65536, {}),
++        /* Matching the kbase dummy model, probably not real GPUs */
++        MODEL(0xa802, "G710", "TODx", HAS_ANISO, 65536, {}),
++};
++
++const struct panfrost_model panfrost_unknown_model = {
++   .gpu_id = 0,
++   .name = "Unknowm Mali device (Panfrost)",
++   .performance_counters = "AAAA",
++   .min_rev_anisotropic = NO_ANISO, 
++   .tilebuffer_size = 8192, 
++   .quirks = {}, 
+ };
+ 
+ #undef NO_ANISO
+@@ -83,12 +98,13 @@ const struct panfrost_model panfrost_model_list[] = {
+ const struct panfrost_model *
+ panfrost_get_model(uint32_t gpu_id)
+ {
++        
+         for (unsigned i = 0; i < ARRAY_SIZE(panfrost_model_list); ++i) {
+                 if (panfrost_model_list[i].gpu_id == gpu_id)
+                         return &panfrost_model_list[i];
+         }
+ 
+-        return NULL;
++        return &panfrost_unknown_model;
+ }
+ 
+ /* Abstraction over the raw drm_panfrost_get_param ioctl for fetching
+@@ -96,16 +112,27 @@ panfrost_get_model(uint32_t gpu_id)
+ 
+ static __u64
+ panfrost_query_raw(
+-                int fd,
++                struct panfrost_device *dev,
+                 enum drm_panfrost_param param,
+                 bool required,
+                 unsigned default_value)
+ {
++        if (dev->kbase) {
++                uint64_t value;
++                bool ret = dev->mali.get_pan_gpuprop(&dev->mali, param, &value);
++                if (ret) {
++                        return value;
++                } else {
++                        assert(!required);
++                        return default_value;
++                }
++        }
++
+         struct drm_panfrost_get_param get_param = {0,};
+         ASSERTED int ret;
+ 
+         get_param.param = param;
+-        ret = drmIoctl(fd, DRM_IOCTL_PANFROST_GET_PARAM, &get_param);
++        ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_GET_PARAM, &get_param);
+ 
+         if (ret) {
+                 assert(!required);
+@@ -116,23 +143,23 @@ panfrost_query_raw(
+ }
+ 
+ static unsigned
+-panfrost_query_gpu_version(int fd)
++panfrost_query_gpu_version(struct panfrost_device *dev)
+ {
+-        return panfrost_query_raw(fd, DRM_PANFROST_PARAM_GPU_PROD_ID, true, 0);
++        return panfrost_query_raw(dev, DRM_PANFROST_PARAM_GPU_PROD_ID, true, 0);
+ }
+ 
+ static unsigned
+-panfrost_query_gpu_revision(int fd)
++panfrost_query_gpu_revision(struct panfrost_device *dev)
+ {
+-        return panfrost_query_raw(fd, DRM_PANFROST_PARAM_GPU_REVISION, true, 0);
++        return panfrost_query_raw(dev, DRM_PANFROST_PARAM_GPU_REVISION, true, 0);
+ }
+ 
+ unsigned
+-panfrost_query_l2_slices(const struct panfrost_device *dev)
++panfrost_query_l2_slices(struct panfrost_device *dev)
+ {
+         /* Query MEM_FEATURES register */
+         uint32_t mem_features =
+-                panfrost_query_raw(dev->fd, DRM_PANFROST_PARAM_MEM_FEATURES,
++                panfrost_query_raw(dev, DRM_PANFROST_PARAM_MEM_FEATURES,
+                                    true, 0);
+ 
+         /* L2_SLICES is MEM_FEATURES[11:8] minus(1) */
+@@ -140,10 +167,10 @@ panfrost_query_l2_slices(const struct panfrost_device *dev)
+ }
+ 
+ static struct panfrost_tiler_features
+-panfrost_query_tiler_features(int fd)
++panfrost_query_tiler_features(struct panfrost_device *dev)
+ {
+         /* Default value (2^9 bytes and 8 levels) to match old behaviour */
+-        uint32_t raw = panfrost_query_raw(fd, DRM_PANFROST_PARAM_TILER_FEATURES,
++        uint32_t raw = panfrost_query_raw(dev, DRM_PANFROST_PARAM_TILER_FEATURES,
+                         false, 0x809);
+ 
+         /* Bin size is log2 in the first byte, max levels in the second byte */
+@@ -154,11 +181,11 @@ panfrost_query_tiler_features(int fd)
+ }
+ 
+ static unsigned
+-panfrost_query_core_count(int fd, unsigned *core_id_range)
++panfrost_query_core_count(struct panfrost_device *dev, unsigned *core_id_range)
+ {
+         /* On older kernels, worst-case to 16 cores */
+ 
+-        unsigned mask = panfrost_query_raw(fd,
++        unsigned mask = panfrost_query_raw(dev,
+                         DRM_PANFROST_PARAM_SHADER_PRESENT, false, 0xffff);
+ 
+         /* Some cores might be absent. In some cases, we care
+@@ -199,16 +226,16 @@ panfrost_max_thread_count(unsigned arch)
+ }
+ 
+ static unsigned
+-panfrost_query_thread_tls_alloc(int fd, unsigned major)
++panfrost_query_thread_tls_alloc(struct panfrost_device *dev, unsigned major)
+ {
+-        unsigned tls = panfrost_query_raw(fd,
++        unsigned tls = panfrost_query_raw(dev,
+                         DRM_PANFROST_PARAM_THREAD_TLS_ALLOC, false, 0);
+ 
+         return (tls > 0) ? tls : panfrost_max_thread_count(major);
+ }
+ 
+ static uint32_t
+-panfrost_query_compressed_formats(int fd)
++panfrost_query_compressed_formats(struct panfrost_device *dev)
+ {
+         /* If unspecified, assume ASTC/ETC only. Factory default for Juno, and
+          * should exist on any Mali configuration. All hardware should report
+@@ -227,7 +254,7 @@ panfrost_query_compressed_formats(int fd)
+                 (1 << MALI_ASTC_2D_LDR) |
+                 (1 << MALI_ASTC_2D_HDR);
+ 
+-        return panfrost_query_raw(fd, DRM_PANFROST_PARAM_TEXTURE_FEATURES0,
++        return panfrost_query_raw(dev, DRM_PANFROST_PARAM_TEXTURE_FEATURES0,
+                         false, default_set);
+ }
+ 
+@@ -250,9 +277,9 @@ panfrost_supports_compressed_format(struct panfrost_device *dev, unsigned fmt)
+  * may omit it, signaled as a nonzero value in the AFBC_FEATURES property. */
+ 
+ static bool
+-panfrost_query_afbc(int fd, unsigned arch)
++panfrost_query_afbc(struct panfrost_device *dev, unsigned arch)
+ {
+-        unsigned reg = panfrost_query_raw(fd,
++        unsigned reg = panfrost_query_raw(dev,
+                                           DRM_PANFROST_PARAM_AFBC_FEATURES,
+                                           false, 0);
+ 
+@@ -281,24 +308,40 @@ panfrost_query_optimal_tib_size(const struct panfrost_device *dev)
+ void
+ panfrost_open_device(void *memctx, int fd, struct panfrost_device *dev)
+ {
++        if (kbase_open(&dev->mali, fd, 4, (dev->debug & PAN_DBG_LOG))) {
++                dev->kbase = true;
++                fd = -1;
++        }
++
+         dev->fd = fd;
+         dev->memctx = memctx;
+-        dev->gpu_id = panfrost_query_gpu_version(fd);
++        dev->gpu_id = panfrost_query_gpu_version(dev);
+         dev->arch = pan_arch(dev->gpu_id);
+-        dev->kernel_version = drmGetVersion(fd);
+-        dev->revision = panfrost_query_gpu_revision(fd);
++        if (dev->kbase) {
++                dev->kernel_version = calloc(1, sizeof(drmVersion));
++                *dev->kernel_version = (drmVersion) {
++                        .version_major = 1,
++                        .version_minor = 999,
++                };
++        } else {
++                dev->kernel_version = drmGetVersion(fd);
++        }
++        dev->revision = panfrost_query_gpu_revision(dev);
+         dev->model = panfrost_get_model(dev->gpu_id);
+ 
+         /* If we don't recognize the model, bail early */
+         if (!dev->model)
+                 return;
+ 
+-        dev->core_count = panfrost_query_core_count(fd, &dev->core_id_range);
+-        dev->thread_tls_alloc = panfrost_query_thread_tls_alloc(fd, dev->arch);
++        if (dev->debug & PAN_DBG_BO_LOG)
++                dev->bo_log = fopen("/tmp/bo_log", "w");
++
++        dev->core_count = panfrost_query_core_count(dev, &dev->core_id_range);
++        dev->thread_tls_alloc = panfrost_query_thread_tls_alloc(dev, dev->arch);
+         dev->optimal_tib_size = panfrost_query_optimal_tib_size(dev);
+-        dev->compressed_formats = panfrost_query_compressed_formats(fd);
+-        dev->tiler_features = panfrost_query_tiler_features(fd);
+-        dev->has_afbc = panfrost_query_afbc(fd, dev->arch);
++        dev->compressed_formats = panfrost_query_compressed_formats(dev);
++        dev->tiler_features = panfrost_query_tiler_features(dev);
++        dev->has_afbc = panfrost_query_afbc(dev, dev->arch);
+ 
+         if (dev->arch <= 6)
+                 dev->formats = panfrost_pipe_format_v6;
+@@ -307,8 +350,10 @@ panfrost_open_device(void *memctx, int fd, struct panfrost_device *dev)
+         else
+                 dev->formats = panfrost_pipe_format_v9;
+ 
+-        util_sparse_array_init(&dev->bo_map, sizeof(struct panfrost_bo), 512);
++        stable_array_init(&dev->bo_map, struct panfrost_bo);
+ 
++        pthread_mutex_init(&dev->bo_usage_lock, NULL);
++        pthread_mutex_init(&dev->bo_map_lock, NULL);
+         pthread_mutex_init(&dev->bo_cache.lock, NULL);
+         list_inithead(&dev->bo_cache.lru);
+ 
+@@ -323,8 +368,9 @@ panfrost_open_device(void *memctx, int fd, struct panfrost_device *dev)
+          * active for a single job chain at once, so a single heap can be
+          * shared across batches/contextes */
+ 
+-        dev->tiler_heap = panfrost_bo_create(dev, 128 * 1024 * 1024,
+-                        PAN_BO_INVISIBLE | PAN_BO_GROWABLE, "Tiler heap");
++        if (dev->arch < 10)
++                dev->tiler_heap = panfrost_bo_create(dev, 128 * 1024 * 1024,
++                                             PAN_BO_INVISIBLE | PAN_BO_GROWABLE, "Tiler heap");
+ 
+         pthread_mutex_init(&dev->submit_lock, NULL);
+ 
+@@ -341,11 +387,102 @@ panfrost_close_device(struct panfrost_device *dev)
+         if (dev->model) {
+                 pthread_mutex_destroy(&dev->submit_lock);
+                 panfrost_bo_unreference(dev->tiler_heap);
++                panfrost_bo_unreference(dev->sample_positions);
+                 panfrost_bo_cache_evict_all(dev);
+                 pthread_mutex_destroy(&dev->bo_cache.lock);
+-                util_sparse_array_finish(&dev->bo_map);
++                pthread_mutex_destroy(&dev->bo_map_lock);
++                pthread_mutex_destroy(&dev->bo_usage_lock);
++                stable_array_fini(&dev->bo_map);
++        }
++
++        if (dev->kbase)
++                free(dev->kernel_version);
++        else
++                drmFreeVersion(dev->kernel_version);
++        if (dev->kbase)
++                dev->mali.close(&dev->mali);
++        else
++                close(dev->fd);
++}
++
++bool
++panfrost_check_dmabuf_fence(struct panfrost_device *dev)
++{
++        bool ret = false;
++        int err;
++
++        /* This function is only useful for kbase, where we can't create
++         * dma-bufs from the kbase FD. */
++        if (!dev->ro)
++                goto out;
++
++        struct drm_mode_create_dumb create_dumb = {
++                .width = 16,
++                .height = 16,
++                .bpp = 32,
++        };
++
++        err = drmIoctl(dev->ro->kms_fd, DRM_IOCTL_MODE_CREATE_DUMB, &create_dumb);
++        if (err < 0) {
++                fprintf(stderr, "DRM_IOCTL_MODE_CREATE_DUMB failed "
++                        "for fence check: %s\n",
++                        strerror(errno));
++                goto out;
++        }
++
++        int fd;
++        err = drmPrimeHandleToFD(dev->ro->kms_fd, create_dumb.handle, O_CLOEXEC,
++                                 &fd);
++        if (err < 0) {
++                fprintf(stderr, "failed to export buffer for fence check: %s\n",
++                        strerror(errno));
++                goto free_dumb;
+         }
+ 
+-        drmFreeVersion(dev->kernel_version);
+-        close(dev->fd);
++        struct dma_buf_export_sync_file export = {
++                .flags = DMA_BUF_SYNC_RW,
++        };
++
++        /* ENOTTY is returned if the ioctl is unsupported */
++
++        err = drmIoctl(fd, DMA_BUF_IOCTL_EXPORT_SYNC_FILE, &export);
++        if (err < 0) {
++                if (errno != ENOTTY)
++                        fprintf(stderr, "failed to export fence: %s\n",
++                                strerror(errno));
++                goto free_fd;
++        }
++
++        struct dma_buf_import_sync_file import = {
++                .flags = DMA_BUF_SYNC_RW,
++                .fd = export.fd,
++        };
++
++        err = drmIoctl(fd, DMA_BUF_IOCTL_IMPORT_SYNC_FILE, &import);
++        if (err < 0) {
++                if (errno != ENOTTY)
++                        fprintf(stderr, "failed to import fence: %s\n",
++                                strerror(errno));
++                goto free_sync;
++        }
++
++        /* We made it this far, the kernel must support the ioctls */
++        ret = true;
++
++free_sync:
++        close(export.fd);
++
++free_fd:
++        close(fd);
++
++        /* Some compilers don't like goto to a declaration */
++        struct drm_mode_destroy_dumb destroy_dumb;
++free_dumb:
++        destroy_dumb = (struct drm_mode_destroy_dumb) {
++                .handle = create_dumb.handle,
++        };
++        drmIoctl(dev->ro->kms_fd, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy_dumb);
++
++out:
++        return ret;
+ }

@@ -47,6 +47,7 @@ panfrost_includes = [
   inc_include,
   inc_src,
   inc_panfrost,
+  inc_panfrost_hw,
 ]
 
 compile_args_panfrost = [

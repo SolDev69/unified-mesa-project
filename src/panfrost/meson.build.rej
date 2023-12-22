@@ -1,0 +1,10 @@
+diff a/src/panfrost/meson.build b/src/panfrost/meson.build	(rejected hunks)
+@@ -36,6 +36,8 @@ subdir('util')
+ subdir('midgard')
+ subdir('bifrost')
+ 
++subdir('base')
++
+ if with_gallium_panfrost or with_panfrost_vk
+    subdir('lib')
+    subdir('perf')

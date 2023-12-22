@@ -296,6 +296,10 @@ drm_shim_ioctl(int fd, unsigned long request, void *arg)
    ASSERTED int type = _IOC_TYPE(request);
    int nr = _IOC_NR(request);
 
+   /* Used by kbase; do not claim to be a kbase FD */
+   if (type == 0x80)
+      return -EINVAL;
+
    assert(type == DRM_IOCTL_BASE);
 
    if (nr >= DRM_COMMAND_BASE && nr < DRM_COMMAND_END) {

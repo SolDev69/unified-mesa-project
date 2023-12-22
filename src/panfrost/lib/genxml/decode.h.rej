@@ -1,0 +1,28 @@
+diff a/src/panfrost/lib/genxml/decode.h b/src/panfrost/lib/genxml/decode.h	(rejected hunks)
+@@ -50,8 +50,6 @@ struct pandecode_mapped_memory *pandecode_find_mapped_gpu_mem_containing(uint64_
+ 
+ void pandecode_map_read_write(void);
+ 
+-void pandecode_dump_mappings(void);
+-
+ static inline void *
+ __pandecode_fetch_gpu_mem(uint64_t gpu_va, size_t size,
+                           int line, const char *filename)
+@@ -98,6 +96,8 @@ void pandecode_abort_on_fault_v6(mali_ptr jc_gpu_va);
+ void pandecode_abort_on_fault_v7(mali_ptr jc_gpu_va);
+ void pandecode_abort_on_fault_v9(mali_ptr jc_gpu_va);
+ 
++void pandecode_cs_v10(mali_ptr cs_gpu_va, unsigned cs_size, unsigned gpu_id);
++
+ static inline void
+ pan_hexdump(FILE *fp, const uint8_t *hex, size_t cnt, bool with_strings)
+ {
+@@ -130,7 +130,7 @@ pan_hexdump(FILE *fp, const uint8_t *hex, size_t cnt, bool with_strings)
+                         fprintf(fp, " | ");
+                         for (unsigned j = i & ~0xF; j <= i; ++j) {
+                                 uint8_t c = hex[j];
+-                                fputc((c < 32 || c > 128) ? '.' : c, fp);
++                                fputc((c < 32 || c > 126) ? '.' : c, fp);
+                         }
+                 }
+ 
