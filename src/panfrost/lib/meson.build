@@ -20,7 +20,6 @@
 # SOFTWARE.
 
 subdir('genxml')
-subdir('kmod')
 
 pixel_format_versions = ['6', '7', '9']
 libpanfrost_pixel_format = []
@@ -46,7 +45,7 @@ foreach ver : ['4', '5', '6', '7', '9', '10']
     [
       'pan_blend.c',
       'pan_blitter.c',
-      'pan_desc.c',
+      'pan_cs.c',
       'pan_shader.c',
       'pan_texture.c',
     ],
@@ -60,7 +59,10 @@ endforeach
 foreach ver : ['7']
   libpanfrost_per_arch += static_library(
     'pan-arch-indirect-v' + ver,
-    'pan_indirect_dispatch.c',
+    [
+      'pan_indirect_dispatch.c',
+      'pan_indirect_draw.c',
+    ],
     include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_panfrost_hw],
     c_args : ['-DPAN_ARCH=' + ver],
     gnu_symbol_visibility : 'hidden',
@@ -91,15 +93,15 @@ libpanfrost_lib = static_library(
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_panfrost_hw],
   c_args : [no_override_init_args],
   gnu_symbol_visibility : 'hidden',
-  dependencies: [dep_libdrm, idep_nir, idep_mesautil],
+  dependencies: [dep_libdrm, idep_nir, libpanfrost_base_dep],
   build_by_default : false,
-  link_with: [libpanfrost_pixel_format, libpanfrost_per_arch, libpankmod_lib],
+  link_with: [libpanfrost_pixel_format, libpanfrost_per_arch],
 )
 
 libpanfrost_dep = declare_dependency(
   link_with: [libpanfrost_lib, libpanfrost_decode, libpanfrost_midgard, libpanfrost_bifrost, libpanfrost_pixel_format, libpanfrost_per_arch],
   include_directories: [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_panfrost_hw, inc_panfrost],
-  dependencies: [dep_libdrm, libpankmod_dep, idep_nir, idep_pan_packers],
+  dependencies: [dep_libdrm, idep_nir, idep_pan_packers],
 )
 
 if with_tests
@@ -143,6 +145,6 @@ if with_tests
       dependencies: [idep_gtest, libpanfrost_dep],
     ),
     suite : ['panfrost'],
-    protocol : 'gtest',
+    protocol : gtest_test_protocol,
   )
 endif

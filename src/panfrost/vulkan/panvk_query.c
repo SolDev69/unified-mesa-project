@@ -34,16 +34,21 @@ panvk_CreateQueryPool(VkDevice _device,
 }
 
 void
-panvk_DestroyQueryPool(VkDevice _device, VkQueryPool _pool,
+panvk_DestroyQueryPool(VkDevice _device,
+                       VkQueryPool _pool,
                        const VkAllocationCallbacks *pAllocator)
 {
    panvk_stub();
 }
 
 VkResult
-panvk_GetQueryPoolResults(VkDevice _device, VkQueryPool queryPool,
-                          uint32_t firstQuery, uint32_t queryCount,
-                          size_t dataSize, void *pData, VkDeviceSize stride,
+panvk_GetQueryPoolResults(VkDevice _device,
+                          VkQueryPool queryPool,
+                          uint32_t firstQuery,
+                          uint32_t queryCount,
+                          size_t dataSize,
+                          void *pData,
+                          VkDeviceSize stride,
                           VkQueryResultFlags flags)
 {
    panvk_stub();
@@ -52,30 +57,38 @@ panvk_GetQueryPoolResults(VkDevice _device, VkQueryPool queryPool,
 
 void
 panvk_CmdCopyQueryPoolResults(VkCommandBuffer commandBuffer,
-                              VkQueryPool queryPool, uint32_t firstQuery,
-                              uint32_t queryCount, VkBuffer dstBuffer,
-                              VkDeviceSize dstOffset, VkDeviceSize stride,
+                              VkQueryPool queryPool,
+                              uint32_t firstQuery,
+                              uint32_t queryCount,
+                              VkBuffer dstBuffer,
+                              VkDeviceSize dstOffset,
+                              VkDeviceSize stride,
                               VkQueryResultFlags flags)
 {
    panvk_stub();
 }
 
 void
-panvk_CmdResetQueryPool(VkCommandBuffer commandBuffer, VkQueryPool queryPool,
-                        uint32_t firstQuery, uint32_t queryCount)
+panvk_CmdResetQueryPool(VkCommandBuffer commandBuffer,
+                        VkQueryPool queryPool,
+                        uint32_t firstQuery,
+                        uint32_t queryCount)
 {
    panvk_stub();
 }
 
 void
-panvk_CmdBeginQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool,
-                    uint32_t query, VkQueryControlFlags flags)
+panvk_CmdBeginQuery(VkCommandBuffer commandBuffer,
+                    VkQueryPool queryPool,
+                    uint32_t query,
+                    VkQueryControlFlags flags)
 {
    panvk_stub();
 }
 
 void
-panvk_CmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool,
+panvk_CmdEndQuery(VkCommandBuffer commandBuffer,
+                  VkQueryPool queryPool,
                   uint32_t query)
 {
    panvk_stub();
@@ -83,7 +96,8 @@ panvk_CmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool,
 
 void
 panvk_CmdWriteTimestamp2(VkCommandBuffer commandBuffer,
-                         VkPipelineStageFlags2 stage, VkQueryPool queryPool,
+                         VkPipelineStageFlags2 stage,
+                         VkQueryPool queryPool,
                          uint32_t query)
 {
    panvk_stub();

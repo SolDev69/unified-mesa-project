@@ -100,22 +100,6 @@ __gen_unpack_sint(const uint8_t *restrict cl, uint32_t start, uint32_t end)
    return util_sign_extend(val, size);
 }
 
-static inline float
-__gen_unpack_ulod(const uint8_t *restrict cl, uint32_t start, uint32_t end)
-{
-   uint32_t u = __gen_unpack_uint(cl, start, end);
-
-   return ((float)u) / 256.0;
-}
-
-static inline float
-__gen_unpack_slod(const uint8_t *restrict cl, uint32_t start, uint32_t end)
-{
-   int32_t u = __gen_unpack_sint(cl, start, end);
-
-   return ((float)u) / 256.0;
-}
-
 static inline uint64_t
 __gen_unpack_padded(const uint8_t *restrict cl, uint32_t start, uint32_t end)
 {
@@ -457,7 +441,7 @@ class Field(object):
             type = 'uint64_t'
         elif self.type == 'bool':
             type = 'bool'
-        elif self.type in ['float', 'ulod', 'slod']:
+        elif self.type == 'float':
             type = 'float'
         elif self.type in ['uint', 'hex'] and self.end - self.start > 32:
             type = 'uint64_t'
@@ -671,14 +655,6 @@ class Group(object):
                 elif field.type == "float":
                     assert(start == 0 and end == 31)
                     s = "util_bitpack_float({})".format(value)
-                elif field.type == "ulod":
-                    s = "util_bitpack_ufixed_clamp({}, {}, {}, 8)".format(value,
-                                                                          start,
-                                                                          end)
-                elif field.type == "slod":
-                    s = "util_bitpack_sfixed_clamp({}, {}, {}, 8)".format(value,
-                                                                          start,
-                                                                          end)
                 else:
                     s = "#error unhandled field {}, type {}".format(contributor.path, field.type)
 
@@ -750,10 +726,6 @@ class Group(object):
                 convert = "__gen_unpack_uint"
             elif field.type == "float":
                 convert = "__gen_unpack_float"
-            elif field.type == "ulod":
-                convert = "__gen_unpack_ulod"
-            elif field.type == "slod":
-                convert = "__gen_unpack_slod"
             else:
                 s = "/* unhandled field %s, type %s */\n" % (field.name, field.type)
 
@@ -795,7 +767,7 @@ class Group(object):
                 print('   fprintf(fp, "%*s{}: %d\\n", indent, "", {});'.format(name, val))
             elif field.type == "bool":
                 print('   fprintf(fp, "%*s{}: %s\\n", indent, "", {} ? "true" : "false");'.format(name, val))
-            elif field.type in ["float", "ulod", "slod"]:
+            elif field.type == "float":
                 print('   fprintf(fp, "%*s{}: %f\\n", indent, "", {});'.format(name, val))
             elif field.type in ["uint", "hex"] and (field.end - field.start) >= 32:
                 print('   fprintf(fp, "%*s{}: 0x%" PRIx64 "\\n", indent, "", {});'.format(name, val))
@@ -952,7 +924,7 @@ class Parser(object):
         print("")
 
     def emit_pack_function(self, name, group):
-        print("static ALWAYS_INLINE void\n%s_pack(uint32_t * restrict cl,\n%sconst struct %s * restrict values)\n{" %
+        print("static inline void\n%s_pack(uint32_t * restrict cl,\n%sconst struct %s * restrict values)\n{" %
               (name, ' ' * (len(name) + 6), name))
 
         group.emit_pack_function()
