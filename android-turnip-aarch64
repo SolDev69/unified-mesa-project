@@ -5,7 +5,7 @@ cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aa
 c_ld = 'lld'
 cpp_ld = 'lld'
 strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-strip'
-pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
+pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
 [host_machine]
 system = 'android'
 cpu_family = 'aarch64'
