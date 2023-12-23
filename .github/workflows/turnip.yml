@@ -42,6 +42,7 @@ jobs:
           ninja -C "build-android" install
           cd ..
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
+          export LLVM_CONFIG=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-config
           meson build-android-${{matrix.arch}} --cross-file "build-crossfile-turnip" \
             -Dbuildtype=release \
             --prefix=/tmp/mesa \
@@ -51,7 +52,6 @@ jobs:
             -Dgallium-drivers=swrast \
             -Dvulkan-drivers=swrast \
             -Dllvm=enabled \
-            -Dllvm_config=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-config \
             -Db_lto=true
           ninja -C build-android-${{matrix.arch}} install
       - name: Upload libraries
