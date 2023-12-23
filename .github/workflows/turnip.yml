@@ -49,8 +49,7 @@ jobs:
             -Dplatform-sdk-version=33 \
             -Dandroid-stub=true \
             -Dgallium-drivers=swrast \
-            -Dvulkan-drivers=freedreno,swrast \
-            -Dfreedreno-kmds=kgsl \
+            -Dvulkan-drivers=swrast \
             -Db_lto=true
           ninja -C build-android-${{matrix.arch}} install
       - name: Upload libraries
