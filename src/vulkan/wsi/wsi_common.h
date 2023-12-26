@@ -172,6 +172,7 @@ struct wsi_device {
    } win32;
 
    bool sw;
+   bool is_tu_kgsl;
 
    /* Set to true if the implementation is ok with linear WSI images. */
    bool wants_linear;
@@ -224,6 +225,11 @@ struct wsi_device {
     * buffer blits.
     */
    VkQueue (*get_blit_queue)(VkDevice device);
+
+   void (*kgsl_get_info)(VkPhysicalDevice _pdevice,
+                          VkDeviceMemory _memory,
+                          int *fd,
+                          uint32_t *offset);
 
 #define WSI_CB(cb) PFN_vk##cb cb
    WSI_CB(AllocateMemory);

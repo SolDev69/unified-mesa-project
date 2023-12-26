@@ -39,6 +39,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <xf86drm.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
 
 static VkResult
 wsi_dma_buf_export_sync_file(int dma_buf_fd, int *sync_file_fd)
@@ -102,6 +105,9 @@ prepare_signal_dma_buf_from_semaphore(struct wsi_swapchain *chain,
 
    if (!(chain->wsi->semaphore_export_handle_types &
          VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT))
+      return VK_ERROR_FEATURE_NOT_PRESENT;
+
+   if (chain->wsi->is_tu_kgsl)
       return VK_ERROR_FEATURE_NOT_PRESENT;
 
    int sync_file_fd = -1;
@@ -200,6 +206,9 @@ wsi_create_sync_for_dma_buf_wait(const struct wsi_swapchain *chain,
    const struct vk_sync_type *sync_type =
       get_sync_file_sync_type(device, req_features);
    if (sync_type == NULL)
+      return VK_ERROR_FEATURE_NOT_PRESENT;
+
+   if (chain->wsi->is_tu_kgsl)
       return VK_ERROR_FEATURE_NOT_PRESENT;
 
    int sync_file_fd = -1;
@@ -303,6 +312,11 @@ get_modifier_props(const struct wsi_image_info *info, uint64_t modifier)
 
 static VkResult
 wsi_create_native_image_mem(const struct wsi_swapchain *chain,
+                            const struct wsi_image_info *info,
+                            struct wsi_image *image);
+
+static VkResult
+wsi_create_kgsl_image_mem(const struct wsi_swapchain *chain,
                             const struct wsi_image_info *info,
                             struct wsi_image *image);
 
@@ -444,7 +458,10 @@ wsi_configure_native_image(const struct wsi_swapchain *chain,
       }
    }
 
-   info->create_mem = wsi_create_native_image_mem;
+   if (wsi->is_tu_kgsl)
+      info->create_mem = wsi_create_kgsl_image_mem;
+   else
+      info->create_mem = wsi_create_native_image_mem;
 
    return VK_SUCCESS;
 
@@ -559,6 +576,106 @@ wsi_create_native_image_mem(const struct wsi_swapchain *chain,
       image->row_pitches[0] = image_layout.rowPitch;
       image->offsets[0] = 0;
    }
+
+   return VK_SUCCESS;
+}
+
+static int ion_alloc(uint64_t size) {
+   int fd = -1, ion_dev = open("/dev/ion", O_RDONLY);
+   if (ion_dev < 0)
+      goto fail_open;
+   struct ion_allocation_data {
+      __u64 len;
+      __u32 heap_id_mask;
+      __u32 flags;
+      __u32 fd;
+      __u32 unused;
+   } alloc_data = {
+       .len = size,
+       /* ION_HEAP_SYSTEM | ION_SYSTEM_HEAP_ID */
+       .heap_id_mask = (1U << 0) | (1U << 25),
+       .flags = 0, /* uncached */
+   };
+   if (ioctl(ion_dev, _IOWR('I', 0, struct ion_allocation_data), &alloc_data) <
+       0)
+      goto fail_alloc;
+   fd = alloc_data.fd;
+fail_alloc:
+   close(ion_dev);
+fail_open:
+   return fd;
+};
+
+static VkResult
+wsi_create_kgsl_image_mem(const struct wsi_swapchain *chain,
+                            const struct wsi_image_info *info,
+                            struct wsi_image *image)
+{
+   const struct wsi_device *wsi = chain->wsi;
+   VkResult result;
+
+   VkMemoryRequirements reqs;
+   wsi->GetImageMemoryRequirements(chain->device, image->image, &reqs);
+
+   if (debug_get_bool_option("USE_HEAP", false)) {
+         image->dma_buf_fd = ion_alloc(reqs.size);
+   }
+
+   const struct wsi_memory_allocate_info memory_wsi_info = {
+      .sType = VK_STRUCTURE_TYPE_WSI_MEMORY_ALLOCATE_INFO_MESA,
+      .pNext = NULL,
+      .implicit_sync = true,
+   };
+   const VkImportMemoryFdInfoKHR memory_import_info = {
+      .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
+      .pNext = &memory_wsi_info,
+      .fd = os_dupfd_cloexec(image->dma_buf_fd),
+      .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT
+   };
+   const VkMemoryDedicatedAllocateInfo memory_dedicated_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
+      .pNext = (image->dma_buf_fd != -1) ? &memory_import_info : &memory_wsi_info,
+      .image = image->image,
+      .buffer = VK_NULL_HANDLE,
+   };
+   const VkMemoryAllocateInfo memory_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+      .pNext = &memory_dedicated_info,
+      .allocationSize = reqs.size,
+      .memoryTypeIndex =
+         wsi_select_device_memory_type(wsi, reqs.memoryTypeBits),
+   };
+   result = wsi->AllocateMemory(chain->device, &memory_info,
+                                &chain->alloc, &image->memory);
+   if (result != VK_SUCCESS)
+      return result;
+
+   uint32_t dma_buf_offset = 0;
+   if (image->dma_buf_fd == -1)
+      wsi->kgsl_get_info(wsi->pdevice, image->memory, &image->dma_buf_fd,
+                 &dma_buf_offset);
+
+   image->cpu_map = mmap(0, reqs.size, PROT_READ | PROT_WRITE, MAP_SHARED,
+                             image->dma_buf_fd, dma_buf_offset);
+
+   if (image->cpu_map == MAP_FAILED)
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
+   munmap(image->cpu_map, reqs.size);
+
+   const VkImageSubresource image_subresource = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .mipLevel = 0,
+      .arrayLayer = 0,
+   };
+   VkSubresourceLayout image_layout;
+   wsi->GetImageSubresourceLayout(chain->device, image->image,
+                                  &image_subresource, &image_layout);
+
+   image->drm_modifier = 1274; /* termux-x11's RAW_MMAPPABLE_FD */
+   image->num_planes = 1;
+   image->sizes[0] = reqs.size;
+   image->row_pitches[0] = image_layout.rowPitch;
+   image->offsets[0] = dma_buf_offset;
 
    return VK_SUCCESS;
 }

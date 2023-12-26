@@ -1466,7 +1466,7 @@ wsi_common_queue_present(const struct wsi_device *wsi,
       assert(!has_signal_dma_buf);
 #endif
 
-      if (wsi->sw)
+      if (wsi->sw || (wsi->is_tu_kgsl && !has_signal_dma_buf))
 	      wsi->WaitForFences(device, 1, &swapchain->fences[image_index],
 				 true, ~0ull);
 

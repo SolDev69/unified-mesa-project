@@ -14,6 +14,18 @@
 
 #include "tu_device.h"
 
+static void
+kgsl_get_info(VkPhysicalDevice _pdevice,
+                       VkDeviceMemory _memory,
+                       int *fd,
+                       uint32_t *offset)
+{
+   TU_FROM_HANDLE(tu_physical_device, pdevice, _pdevice);
+   TU_FROM_HANDLE(tu_device_memory, memory, _memory);
+   *fd = pdevice->local_fd;
+   *offset = memory->bo->gem_handle << 12;
+}
+
 static VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
 tu_wsi_proc_addr(VkPhysicalDevice physicalDevice, const char *pName)
 {
@@ -44,6 +56,11 @@ tu_wsi_init(struct tu_physical_device *physical_device)
                             &options);
    if (result != VK_SUCCESS)
       return result;
+
+   if (strcmp(physical_device->instance->knl->name, "kgsl") == 0) {
+      physical_device->wsi_device.kgsl_get_info = kgsl_get_info;
+      physical_device->wsi_device.is_tu_kgsl = true;
+   }
 
    physical_device->wsi_device.supports_modifiers = true;
    physical_device->wsi_device.can_present_on_device =
