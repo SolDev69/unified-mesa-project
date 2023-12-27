@@ -72,7 +72,7 @@ enum fd_reset_status {
    FD_RESET_GUILTY,
    FD_RESET_INNOCENT,
    FD_RESET_UNKNOWN,
-}
+};
 
 /**
  * Helper for fence/seqno comparisions which deals properly with rollover.
