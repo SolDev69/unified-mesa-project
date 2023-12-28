@@ -85,6 +85,9 @@ cso_single_sampler(struct cso_context *cso, enum pipe_shader_type shader_stage,
                    unsigned idx, const struct pipe_sampler_state *states);
 
 void
+cso_set_max_sampler(struct cso_context *ctx, int max_sampler_seen);
+
+void
 cso_single_sampler_done(struct cso_context *cso,
                         enum pipe_shader_type shader_stage);
 

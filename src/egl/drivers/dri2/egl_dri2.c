@@ -3323,6 +3323,8 @@ dri2_query_wayland_buffer_wl(_EGLDisplay *disp,
 
    buffer = wayland_drm_buffer_get(dri2_dpy->wl_server_drm, buffer_resource);
    if (!buffer)
+           buffer = wayland_drm_buffer_get(dri2_dpy->wl_server_mali, buffer_resource);
+   if (!buffer)
       return EGL_FALSE;
 
    format = buffer->driver_format;

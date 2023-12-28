@@ -47,6 +47,7 @@ panfrost_includes = [
   inc_include,
   inc_src,
   inc_panfrost,
+  inc_panfrost_hw,
 ]
 
 compile_args_panfrost = [
@@ -54,7 +55,7 @@ compile_args_panfrost = [
   '-Wno-pointer-arith'
 ]
 
-panfrost_versions = ['4', '5', '6', '7', '9']
+panfrost_versions = ['4', '5', '6', '7', '9', '10']
 libpanfrost_versions = []
 
 foreach ver : panfrost_versions

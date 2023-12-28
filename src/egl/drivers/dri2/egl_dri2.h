@@ -296,8 +296,11 @@ struct dri2_egl_display {
    struct wl_display *wl_dpy_wrapper;
    struct wl_registry *wl_registry;
    struct wl_drm *wl_server_drm;
+   struct wl_drm *wl_server_mali;
    struct wl_drm *wl_drm;
+   struct wl_drm *wl_mali;
    uint32_t wl_drm_version, wl_drm_name;
+   uint32_t wl_mali_version, wl_mali_name;
    struct wl_shm *wl_shm;
    struct wl_event_queue *wl_queue;
    struct zwp_linux_dmabuf_v1 *wl_dmabuf;
@@ -345,6 +348,7 @@ struct dri2_egl_surface {
    struct wl_surface *wl_surface_wrapper;
    struct wl_display *wl_dpy_wrapper;
    struct wl_drm *wl_drm_wrapper;
+   struct wl_drm *wl_mali_wrapper;
    struct wl_callback *throttle_callback;
    struct zwp_linux_dmabuf_feedback_v1 *wl_dmabuf_feedback;
    struct dmabuf_feedback dmabuf_feedback, pending_dmabuf_feedback;

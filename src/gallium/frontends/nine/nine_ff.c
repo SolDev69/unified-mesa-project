@@ -1442,7 +1442,7 @@ nine_ff_build_ps(struct NineDevice9 *device, struct nine_ff_ps_key *key)
             struct ureg_src texture_coord = ps.vT[s];
             struct ureg_dst delta;
             switch (key->ts[s].textarget) {
-            case 0: target = TGSI_TEXTURE_1D; break;
+            case 0: target = TGSI_TEXTURE_2D; break;
             case 1: target = TGSI_TEXTURE_2D; break;
             case 2: target = TGSI_TEXTURE_3D; break;
             case 3: target = TGSI_TEXTURE_CUBE; break;

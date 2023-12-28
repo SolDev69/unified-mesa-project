@@ -38,6 +38,7 @@
 
 #include "util/u_inlines.h"
 #include "util/u_math.h"
+#include "util/os_file.h"
 
 /* This file implements a userspace BO cache. Allocating and freeing
  * GPU-visible buffers is very expensive, and even the extra kernel roundtrips
