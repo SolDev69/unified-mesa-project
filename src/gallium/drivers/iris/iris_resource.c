@@ -1029,111 +1029,6 @@ iris_resource_init_aux_buf(struct iris_screen *screen,
    return true;
 }
 
-static void
-import_aux_info(struct iris_resource *res,
-                const struct iris_resource *aux_res)
-{
-   assert(aux_res->aux.surf.row_pitch_B && aux_res->aux.offset);
-   assert(res->bo == aux_res->aux.bo);
-   assert(res->aux.surf.row_pitch_B == aux_res->aux.surf.row_pitch_B);
-   assert(res->bo->size >= aux_res->aux.offset + res->aux.surf.size_B);
-
-   iris_bo_reference(aux_res->aux.bo);
-   res->aux.bo = aux_res->aux.bo;
-   res->aux.offset = aux_res->aux.offset;
-}
-
-static void
-iris_resource_finish_aux_import(struct pipe_screen *pscreen,
-                                struct iris_resource *res)
-{
-   struct iris_screen *screen = (struct iris_screen *)pscreen;
-
-   /* Create an array of resources. Combining main and aux planes is easier
-    * with indexing as opposed to scanning the linked list.
-    */
-   struct iris_resource *r[4] = { NULL, };
-   unsigned num_planes = 0;
-   unsigned num_main_planes = 0;
-   for (struct pipe_resource *p_res = &res->base.b; p_res; p_res = p_res->next) {
-      r[num_planes] = (struct iris_resource *)p_res;
-      num_main_planes += r[num_planes++]->bo != NULL;
-   }
-
-   /* Combine main and aux plane information. */
-   switch (res->mod_info->modifier) {
-   case I915_FORMAT_MOD_4_TILED_MTL_RC_CCS:
-   case I915_FORMAT_MOD_Y_TILED_CCS:
-   case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS:
-      assert(num_main_planes == 1 && num_planes == 2);
-      import_aux_info(r[0], r[1]);
-      map_aux_addresses(screen, r[0], res->external_format, 0);
-
-      /* Add on a clear color BO.
-       *
-       * Also add some padding to make sure the fast clear color state buffer
-       * starts at a 4K alignment to avoid some unknown issues.  See the
-       * matching comment in iris_resource_create_with_modifiers().
-       */
-      if (iris_get_aux_clear_color_state_size(screen, res) > 0) {
-         res->aux.clear_color_bo =
-            iris_bo_alloc(screen->bufmgr, "clear color_buffer",
-                          iris_get_aux_clear_color_state_size(screen, res),
-                          4096, IRIS_MEMZONE_OTHER, BO_ALLOC_ZEROED);
-      }
-      break;
-   case I915_FORMAT_MOD_4_TILED_DG2_RC_CCS:
-      assert(num_main_planes == 1);
-      assert(num_planes == 1);
-      res->aux.clear_color_bo =
-         iris_bo_alloc(screen->bufmgr, "clear color_buffer",
-                       iris_get_aux_clear_color_state_size(screen, res),
-                       4096, IRIS_MEMZONE_OTHER, BO_ALLOC_ZEROED);
-      break;
-   case I915_FORMAT_MOD_4_TILED_MTL_RC_CCS_CC:
-   case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC:
-      assert(num_main_planes == 1 && num_planes == 3);
-      import_aux_info(r[0], r[1]);
-      map_aux_addresses(screen, r[0], res->external_format, 0);
-
-      /* Import the clear color BO. */
-      iris_bo_reference(r[2]->aux.clear_color_bo);
-      r[0]->aux.clear_color_bo = r[2]->aux.clear_color_bo;
-      r[0]->aux.clear_color_offset = r[2]->aux.clear_color_offset;
-      r[0]->aux.clear_color_unknown = true;
-      break;
-   case I915_FORMAT_MOD_4_TILED_DG2_RC_CCS_CC:
-      assert(num_main_planes == 1);
-      assert(num_planes == 2);
-
-      /* Import the clear color BO. */
-      iris_bo_reference(r[1]->aux.clear_color_bo);
-      r[0]->aux.clear_color_bo = r[1]->aux.clear_color_bo;
-      r[0]->aux.clear_color_offset = r[1]->aux.clear_color_offset;
-      r[0]->aux.clear_color_unknown = true;
-      break;
-   case I915_FORMAT_MOD_4_TILED_MTL_MC_CCS:
-   case I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
-      if (num_main_planes == 1 && num_planes == 2) {
-         import_aux_info(r[0], r[1]);
-         map_aux_addresses(screen, r[0], res->external_format, 0);
-      } else {
-         assert(num_main_planes == 2 && num_planes == 4);
-         import_aux_info(r[0], r[2]);
-         import_aux_info(r[1], r[3]);
-         map_aux_addresses(screen, r[0], res->external_format, 0);
-         map_aux_addresses(screen, r[1], res->external_format, 1);
-      }
-      break;
-   case I915_FORMAT_MOD_4_TILED_DG2_MC_CCS:
-      assert(num_main_planes == num_planes);
-      break;
-   default:
-      assert(!isl_drm_modifier_has_aux(res->mod_info->modifier));
-      break;
-   }
-}
-
 static uint32_t
 iris_buffer_alignment(uint64_t size)
 {
@@ -1418,23 +1313,10 @@ get_num_planes(const struct pipe_resource *resource)
 
 static unsigned
 get_main_plane_for_plane(enum pipe_format format,
-                         const struct isl_drm_modifier_info *mod_info,
                          unsigned plane)
 {
    unsigned int n_planes = util_format_get_num_planes(format);
-
-   if (n_planes == 1)
-      return 0;
-
-   if (!mod_info)
-      return plane;
-
-   if (mod_info->supports_media_compression) {
-      return plane % n_planes;
-   } else {
-      assert(!mod_info->supports_render_compression);
-      return plane;
-   }
+   return plane % n_planes;
 }
 
 static struct pipe_resource *
@@ -1444,7 +1326,14 @@ iris_resource_from_handle(struct pipe_screen *pscreen,
                           unsigned usage)
 {
    struct iris_screen *screen = (struct iris_screen *)pscreen;
+   const struct intel_device_info *devinfo = screen->devinfo;
    struct iris_bufmgr *bufmgr = screen->bufmgr;
+
+   /* The gallium dri layer creates a pipe resource for each plane specified
+    * by the format and modifier. Once all planes are present, we will merge
+    * the separate parameters into the iris_resource(s) for the main plane(s).
+    * Save the modifier import information now to reconstruct later.
+    */
    struct iris_resource *res = iris_alloc_resource(pscreen, templ);
    if (!res)
       return NULL;
@@ -1464,58 +1353,92 @@ iris_resource_from_handle(struct pipe_screen *pscreen,
    if (!res->bo)
       goto fail;
 
-   uint64_t modifier;
-   if (whandle->modifier == DRM_FORMAT_MOD_INVALID) {
-      /* We don't have a modifier; match whatever GEM_GET_TILING says */
-      uint32_t tiling;
-      iris_gem_get_tiling(res->bo, &tiling);
-      modifier = tiling_to_modifier(tiling);
-   } else {
-      modifier = whandle->modifier;
-   }
-
    res->offset = whandle->offset;
-   res->external_format = whandle->format;
+   res->surf.row_pitch_B = whandle->stride;
 
-   if (templ->target == PIPE_BUFFER) {
-      res->surf.tiling = ISL_TILING_LINEAR;
-      return &res->base.b;
-   }
+   if (whandle->plane == 0) {
+      /* All planes are present. Fill out the main plane resource(s). */
+      for (unsigned plane = 0; plane < util_resource_num(templ); plane++) {
+         const unsigned main_plane =
+            get_main_plane_for_plane(whandle->format, plane);
+         struct iris_resource *main_res = (struct iris_resource *)
+            util_resource_at_index(&res->base.b, main_plane);
+         const struct iris_resource *plane_res = (struct iris_resource *)
+            util_resource_at_index(&res->base.b, plane);
 
-   /* Create a surface for each plane specified by the external format. */
-   if (whandle->plane < util_format_get_num_planes(whandle->format)) {
-      const bool isl_surf_created_successfully =
-         iris_resource_configure_main(screen, res, templ, modifier,
-                                      whandle->stride);
-      if (!isl_surf_created_successfully)
-         goto fail;
+         if (isl_drm_modifier_plane_is_clear_color(whandle->modifier,
+                                                   plane)) {
+            /* Fill out the clear color fields. */
+            assert(plane_res->bo->size >= plane_res->offset +
+                   screen->isl_dev.ss.clear_color_state_size);
 
-      if (!iris_resource_configure_aux(screen, res, true))
-         goto fail;
+            iris_bo_reference(plane_res->bo);
+            main_res->aux.clear_color_bo = plane_res->bo;
+            main_res->aux.clear_color_offset = plane_res->offset;
+            main_res->aux.clear_color_unknown = true;
+         } else if (plane > main_plane) {
+            /* Fill out some aux surface fields. */
+            assert(!devinfo->has_flat_ccs);
+            assert(plane_res->bo->size >= plane_res->offset +
+                   main_res->aux.surf.size_B);
+            assert(main_res->aux.surf.row_pitch_B ==
+                   plane_res->surf.row_pitch_B);
 
-      /* The gallium dri layer will create a separate plane resource for the
-       * aux image. iris_resource_finish_aux_import will merge the separate aux
-       * parameters back into a single iris_resource.
-       */
-   } else if (isl_drm_modifier_plane_is_clear_color(modifier,
-                                                    whandle->plane)) {
-      res->aux.clear_color_offset = whandle->offset;
-      res->aux.clear_color_bo = res->bo;
-      res->bo = NULL;
-   } else {
-      /* Save modifier import information to reconstruct later. After import,
-       * this will be available under a second image accessible from the main
-       * image with res->base.next. See iris_resource_finish_aux_import.
-       */
-      res->aux.surf.row_pitch_B = whandle->stride;
-      res->aux.offset = whandle->offset;
-      res->aux.bo = res->bo;
-      res->bo = NULL;
-   }
+            iris_bo_reference(plane_res->bo);
+            main_res->aux.bo = plane_res->bo;
+            main_res->aux.offset = plane_res->offset;
+            map_aux_addresses(screen, main_res, whandle->format, main_plane);
+         } else {
+            /* Fill out fields that are convenient to initialize now. */
+            assert(plane == main_plane);
 
-   if (get_num_planes(&res->base.b) ==
-       iris_get_dmabuf_modifier_planes(pscreen, modifier, whandle->format)) {
-      iris_resource_finish_aux_import(pscreen, res);
+            main_res->external_format = whandle->format;
+
+            if (templ->target == PIPE_BUFFER) {
+               main_res->surf.tiling = ISL_TILING_LINEAR;
+               return &main_res->base.b;
+            }
+
+            uint64_t modifier;
+            if (whandle->modifier == DRM_FORMAT_MOD_INVALID) {
+               /* We have no modifier; match whatever GEM_GET_TILING says */
+               uint32_t tiling;
+               iris_gem_get_tiling(main_res->bo, &tiling);
+               modifier = tiling_to_modifier(tiling);
+            } else {
+               modifier = whandle->modifier;
+            }
+
+            const bool isl_surf_created_successfully =
+               iris_resource_configure_main(screen, main_res,
+                                            &main_res->base.b, modifier,
+                                            main_res->surf.row_pitch_B);
+            if (!isl_surf_created_successfully)
+               goto fail;
+
+            assert(main_res->bo->size >= main_res->offset +
+                   main_res->surf.size_B);
+
+            if (!iris_resource_configure_aux(screen, main_res, true))
+               goto fail;
+
+            /* Add on a clear color BO if needed.
+             *
+             * Also add some padding to make sure the fast clear color state
+             * buffer starts at a 4K alignment to avoid some unknown issues.
+             * See the matching comment in iris_resource_create_for_image().
+             */
+            if (!main_res->mod_info->supports_clear_color &&
+                iris_get_aux_clear_color_state_size(screen, main_res) > 0) {
+               main_res->aux.clear_color_bo =
+                  iris_bo_alloc(screen->bufmgr, "clear color buffer",
+                                screen->isl_dev.ss.clear_color_state_size,
+                                4096, IRIS_MEMZONE_OTHER, BO_ALLOC_ZEROED);
+               if (!main_res->aux.clear_color_bo)
+                  goto fail;
+            }
+         }
+      }
    }
 
    return &res->base.b;
@@ -1794,7 +1717,7 @@ iris_resource_get_param(struct pipe_screen *pscreen,
    struct iris_screen *screen = (struct iris_screen *)pscreen;
    struct iris_resource *base_res = (struct iris_resource *)resource;
    unsigned main_plane = get_main_plane_for_plane(base_res->external_format,
-                                                  base_res->mod_info, plane);
+                                                  plane);
    struct iris_resource *res =
       (struct iris_resource *)util_resource_at_index(resource, main_plane);
    assert(res);
