@@ -1,0 +1,10 @@
+diff a/src/android_stub/meson.build b/src/android_stub/meson.build	(rejected hunks)
+@@ -1,7 +1,7 @@
+ if with_android_stub
+   stub_libs = []
+ 
+-  foreach lib : ['backtrace', 'cutils', 'hardware', 'log', 'nativewindow', 'sync']
++  foreach lib : ['hardware', 'log', 'nativewindow']
+     stub_libs += shared_library(
+       lib,
+       files(lib + '_stub.cpp'),

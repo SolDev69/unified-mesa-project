@@ -1,0 +1,584 @@
+diff a/src/panfrost/lib/pan_bo.c b/src/panfrost/lib/pan_bo.c	(rejected hunks)
+@@ -71,7 +72,38 @@ panfrost_bo_alloc(struct panfrost_device *dev, size_t size,
+                         create_bo.flags |= PANFROST_BO_NOEXEC;
+         }
+ 
+-        ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_CREATE_BO, &create_bo);
++        void *cpu = NULL;
++
++        bool cached = false;
++
++        if (dev->kbase) {
++                if (flags & PAN_BO_CACHEABLE) {
++                        if (!(dev->debug & PAN_DBG_UNCACHED_CPU)) {
++                                create_bo.flags |= MALI_BO_CACHED_CPU;
++                                /* TODO: What if kbase decides not to cache it? */
++                                cached = true;
++                        }
++                        if (dev->debug & PAN_DBG_UNCACHED_GPU)
++                                create_bo.flags |= MALI_BO_UNCACHED_GPU;
++                }
++
++                unsigned mali_flags = (flags & PAN_BO_EVENT) ? 0x8200f : 0;
++
++                struct base_ptr p = dev->mali.alloc(&dev->mali, size, create_bo.flags, mali_flags);
++
++                if (p.gpu) {
++                        cpu = p.cpu;
++                        create_bo.offset = p.gpu;
++                        create_bo.handle = kbase_alloc_gem_handle(&dev->mali, p.gpu, -1);
++                        if (!cpu)
++                                abort();
++                        ret = 0;
++                } else {
++                        ret = -1;
++                }
++        } else {
++                ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_CREATE_BO, &create_bo);
++        }
+         if (ret) {
+                 fprintf(stderr, "DRM_IOCTL_PANFROST_CREATE_BO failed: %m\n");
+                 return NULL;
+@@ -82,29 +114,99 @@ panfrost_bo_alloc(struct panfrost_device *dev, size_t size,
+ 
+         bo->size = create_bo.size;
+         bo->ptr.gpu = create_bo.offset;
++        bo->ptr.cpu = cpu;
++        if ((uintptr_t) bo->ptr.cpu != bo->ptr.gpu)
++                bo->free_ioctl = true;
+         bo->gem_handle = create_bo.handle;
+         bo->flags = flags;
+         bo->dev = dev;
+         bo->label = label;
++        bo->cached = cached;
++        bo->dmabuf_fd = -1;
+         return bo;
+ }
+ 
+ static void
+ panfrost_bo_free(struct panfrost_bo *bo)
+ {
++        struct panfrost_device *dev = bo->dev;
+         struct drm_gem_close gem_close = { .handle = bo->gem_handle };
+         int ret;
+ 
+-        ret = drmIoctl(bo->dev->fd, DRM_IOCTL_GEM_CLOSE, &gem_close);
++        if (dev->bo_log) {
++                int fd = kbase_gem_handle_get(&dev->mali, bo->gem_handle).fd;
++
++                struct timespec tp;
++                clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
++                fprintf(dev->bo_log, "%"PRIu64".%09li memfree %"PRIx64" to %"PRIx64" size %zu label %s obj (%p,%i,%i)\n",
++                        (uint64_t) tp.tv_sec, tp.tv_nsec, bo->ptr.gpu, bo->ptr.gpu + bo->size, bo->size, bo->label,
++                        bo, bo->gem_handle, fd);
++                fflush(NULL);
++        }
++
++        if (dev->kbase) {
++                os_munmap(bo->ptr.cpu, bo->size);
++                if (bo->munmap_ptr)
++                        os_munmap(bo->munmap_ptr, bo->size);
++                if (bo->free_ioctl)
++                        dev->mali.free(&dev->mali, bo->ptr.gpu);
++                kbase_free_gem_handle(&dev->mali, bo->gem_handle);
++                ret = 0;
++        } else {
++                ret = drmIoctl(bo->dev->fd, DRM_IOCTL_GEM_CLOSE, &gem_close);
++        }
+         if (ret) {
+                 fprintf(stderr, "DRM_IOCTL_GEM_CLOSE failed: %m\n");
+                 assert(0);
+         }
+ 
+-        /* BO will be freed with the sparse array, but zero to indicate free */
++        /* BO will be freed with the stable_array, but zero to indicate free */
+         memset(bo, 0, sizeof(*bo));
+ }
+ 
++static bool
++panfrost_bo_usage_finished(struct panfrost_bo *bo, bool readers)
++{
++        struct panfrost_device *dev = bo->dev;
++        kbase k = &dev->mali;
++
++        bool ret = true;
++
++        pthread_mutex_lock(&dev->bo_usage_lock);
++        pthread_mutex_lock(&dev->mali.queue_lock);
++
++        util_dynarray_foreach(&bo->usage, struct panfrost_usage, u) {
++                /* Skip if we are only waiting for writers */
++                if (!u->write && !readers)
++                        continue;
++
++                /* Usages are ordered, so everything else is also invalid */
++                if (u->queue >= k->event_slot_usage)
++                        break;
++
++                struct kbase_event_slot *slot = &k->event_slots[u->queue];
++                uint64_t seqnum = u->seqnum;
++
++                /* There is a race condition, where we can depend on an
++                 * unsubmitted batch. In that cade, decrease the seqnum.
++                 * Otherwise, skip invalid dependencies. TODO: do GC? */
++                if (slot->last_submit == seqnum)
++                        --seqnum;
++                else if (slot->last_submit < seqnum)
++                        continue;
++
++                if (slot->last <= seqnum) {
++                        ret = false;
++                        break;
++                }
++        }
++
++        pthread_mutex_unlock(&dev->mali.queue_lock);
++        pthread_mutex_unlock(&dev->bo_usage_lock);
++
++        return ret;
++}
++
+ /* Returns true if the BO is ready, false otherwise.
+  * access_type is encoding the type of access one wants to ensure is done.
+  * Waiting is always done for writers, but if wait_readers is set then readers
+@@ -113,12 +215,15 @@ panfrost_bo_free(struct panfrost_bo *bo)
+ bool
+ panfrost_bo_wait(struct panfrost_bo *bo, int64_t timeout_ns, bool wait_readers)
+ {
++        struct panfrost_device *dev = bo->dev;
+         struct drm_panfrost_wait_bo req = {
+                 .handle = bo->gem_handle,
+ 		.timeout_ns = timeout_ns,
+         };
+         int ret;
+ 
++        /* TODO: With driver-handled sync, is gpu_access even worth it? */
++
+         /* If the BO has been exported or imported we can't rely on the cached
+          * state, we need to call the WAIT_BO ioctl.
+          */
+@@ -134,10 +239,31 @@ panfrost_bo_wait(struct panfrost_bo *bo, int64_t timeout_ns, bool wait_readers)
+                         return true;
+         }
+ 
++        if (dev->kbase && (dev->arch >= 10)) {
++                struct kbase_wait_ctx wait = kbase_wait_init(&dev->mali, timeout_ns);
++                while (kbase_wait_for_event(&wait)) {
++                        if (panfrost_bo_usage_finished(bo, wait_readers))
++                                break;
++                }
++                kbase_wait_fini(wait);
++
++                bool ret = panfrost_bo_usage_finished(bo, wait_readers);
++                if (bo->flags & PAN_BO_SHARED)
++                        ret &= kbase_poll_fd_until(bo->dmabuf_fd, wait_readers, wait.until);
++
++                if (ret)
++                        bo->gpu_access &= (wait_readers ? 0 : PAN_BO_ACCESS_READ);
++                return ret;
++        }
++
+         /* The ioctl returns >= 0 value when the BO we are waiting for is ready
+          * -1 otherwise.
+          */
+-        ret = drmIoctl(bo->dev->fd, DRM_IOCTL_PANFROST_WAIT_BO, &req);
++        if (dev->kbase)
++                ret = kbase_wait_bo(&dev->mali, bo->gem_handle, timeout_ns,
++                                    wait_readers);
++        else
++                ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_WAIT_BO, &req);
+         if (ret != -1) {
+                 /* Set gpu_access to 0 so that the next call to bo_wait()
+                  * doesn't have to call the WAIT_BO ioctl.
+@@ -153,6 +279,32 @@ panfrost_bo_wait(struct panfrost_bo *bo, int64_t timeout_ns, bool wait_readers)
+         return false;
+ }
+ 
++static void
++panfrost_bo_mem_op(struct panfrost_bo *bo, size_t offset, size_t length, bool invalidate)
++{
++        struct panfrost_device *dev = bo->dev;
++
++        assert(offset + length <= bo->size);
++
++        if (!bo->cached)
++                return;
++
++        dev->mali.mem_sync(&dev->mali, bo->ptr.gpu, bo->ptr.cpu + offset, length,
++                           invalidate);
++}
++
++void
++panfrost_bo_mem_invalidate(struct panfrost_bo *bo, size_t offset, size_t length)
++{
++        panfrost_bo_mem_op(bo, offset, length, true);
++}
++
++void
++panfrost_bo_mem_clean(struct panfrost_bo *bo, size_t offset, size_t length)
++{
++        panfrost_bo_mem_op(bo, offset, length, false);
++}
++
+ /* Helper to calculate the bucket index of a BO */
+ 
+ static unsigned
+@@ -200,21 +352,31 @@ panfrost_bo_cache_fetch(struct panfrost_device *dev,
+ 
+                 /* If the oldest BO in the cache is busy, likely so is
+                  * everything newer, so bail. */
+-                if (!panfrost_bo_wait(entry, dontwait ? 0 : INT64_MAX,
+-                                      PAN_BO_ACCESS_RW))
+-                        break;
++
++                /* For kbase, BOs are not added to the cache until the GPU is
++                 * done with them, so there is no need to wait. */
++                if (!dev->kbase) {
++                        if (!panfrost_bo_wait(entry, dontwait ? 0 : INT64_MAX,
++                                              PAN_BO_ACCESS_RW))
++                                break;
++                }
+ 
+                 struct drm_panfrost_madvise madv = {
+                         .handle = entry->gem_handle,
+                         .madv = PANFROST_MADV_WILLNEED,
+                 };
+-                int ret;
++                int ret = 0;
+ 
+                 /* This one works, splice it out of the cache */
+                 list_del(&entry->bucket_link);
+                 list_del(&entry->lru_link);
+ 
+-                ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_MADVISE, &madv);
++                if (dev->kbase) {
++                        /* With kbase, BOs are never freed from the cache */
++                        madv.retained = true;
++                } else {
++                        ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_MADVISE, &madv);
++                }
+                 if (!ret && !madv.retained) {
+                         panfrost_bo_free(entry);
+                         continue;
+@@ -276,7 +438,10 @@ panfrost_bo_cache_put(struct panfrost_bo *bo)
+         madv.madv = PANFROST_MADV_DONTNEED;
+ 	madv.retained = 0;
+ 
+-        drmIoctl(dev->fd, DRM_IOCTL_PANFROST_MADVISE, &madv);
++        // TODO: Allow freeing madvise'd BOs with kbase... not that it really
++        // matters for boards with 16 GB RAM
++        if (!dev->kbase)
++                drmIoctl(dev->fd, DRM_IOCTL_PANFROST_MADVISE, &madv);
+ 
+         /* Add us to the bucket */
+         list_addtail(&bo->bucket_link, bucket);
+@@ -286,6 +451,10 @@ panfrost_bo_cache_put(struct panfrost_bo *bo)
+         clock_gettime(CLOCK_MONOTONIC, &time);
+         bo->last_used = time.tv_sec;
+ 
++        /* For kbase, the GPU can't be accessing this BO any more */
++        if (dev->kbase)
++                bo->gpu_access = 0;
++
+         /* Let's do some cleanup in the BO cache while we hold the
+          * lock.
+          */
+@@ -352,10 +521,15 @@ panfrost_bo_mmap(struct panfrost_bo *bo)
+ static void
+ panfrost_bo_munmap(struct panfrost_bo *bo)
+ {
++        /* We can't munmap BOs when using kbase, as that frees the storage and
++         * the GPU might still be using the BO. */
++        if (bo->dev->kbase)
++                return;
++
+         if (!bo->ptr.cpu)
+                 return;
+ 
+-        if (os_munmap((void *) (uintptr_t)bo->ptr.cpu, bo->size)) {
++        if (os_munmap(bo->ptr.cpu, bo->size)) {
+                 perror("munmap");
+                 abort();
+         }
+@@ -390,8 +564,15 @@ panfrost_bo_create(struct panfrost_device *dev, size_t size,
+         if (!bo)
+                 bo = panfrost_bo_cache_fetch(dev, size, flags, label, false);
+         if (!bo) {
+-                panfrost_bo_cache_evict_all(dev);
+-                bo = panfrost_bo_alloc(dev, size, flags, label);
++                for (unsigned i = 0; i < 5; ++i) {
++                        usleep(20 * 1000 * i * i);
++                        if (dev->kbase)
++                                kbase_ensure_handle_events(&dev->mali);
++                        panfrost_bo_cache_evict_all(dev);
++                        bo = panfrost_bo_alloc(dev, size, flags, label);
++                        if (bo)
++                                break;
++                }
+         }
+ 
+         if (!bo) {
+@@ -406,8 +587,15 @@ panfrost_bo_create(struct panfrost_device *dev, size_t size,
+         if (!(flags & (PAN_BO_INVISIBLE | PAN_BO_DELAY_MMAP)))
+                 panfrost_bo_mmap(bo);
+ 
++        if ((dev->debug & PAN_DBG_BO_CLEAR) && !(flags & PAN_BO_INVISIBLE)) {
++                memset(bo->ptr.cpu, 0, bo->size);
++                panfrost_bo_mem_clean(bo, 0, bo->size);
++        }
++
+         p_atomic_set(&bo->refcnt, 1);
+ 
++        util_dynarray_init(&bo->usage, NULL);
++
+         if (dev->debug & (PAN_DBG_TRACE | PAN_DBG_SYNC)) {
+                 if (flags & PAN_BO_INVISIBLE)
+                         pandecode_inject_mmap(bo->ptr.gpu, NULL, bo->size, NULL);
+@@ -415,6 +603,14 @@ panfrost_bo_create(struct panfrost_device *dev, size_t size,
+                         pandecode_inject_mmap(bo->ptr.gpu, bo->ptr.cpu, bo->size, NULL);
+         }
+ 
++        if (dev->bo_log) {
++                struct timespec tp;
++                clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
++                fprintf(dev->bo_log, "%"PRIu64".%09li alloc %"PRIx64" to %"PRIx64" size %zu label %s\n",
++                        (uint64_t) tp.tv_sec, tp.tv_nsec, bo->ptr.gpu, bo->ptr.gpu + bo->size, bo->size, bo->label);
++                fflush(NULL);
++        }
++
+         return bo;
+ }
+ 
+@@ -427,6 +623,60 @@ panfrost_bo_reference(struct panfrost_bo *bo)
+         }
+ }
+ 
++static void
++panfrost_bo_fini(struct panfrost_bo *bo)
++{
++        struct panfrost_device *dev = bo->dev;
++
++        /* When the reference count goes to zero, we need to cleanup */
++        panfrost_bo_munmap(bo);
++
++        if (dev->debug & (PAN_DBG_TRACE | PAN_DBG_SYNC))
++                pandecode_inject_free(bo->ptr.gpu, bo->size);
++
++        /* Rather than freeing the BO now, we'll cache the BO for later
++         * allocations if we're allowed to.
++         */
++        if (!panfrost_bo_cache_put(bo))
++                panfrost_bo_free(bo);
++}
++
++static void
++panfrost_bo_free_gpu(void *data)
++{
++        struct panfrost_bo *bo = data;
++        struct panfrost_device *dev = bo->dev;
++
++        /* Don't free if there are still references */
++        if (p_atomic_dec_return(&bo->gpu_refcnt))
++                return;
++
++        pthread_mutex_lock(&dev->bo_map_lock);
++
++        /* Someone might have imported this BO while we were waiting for the
++         * lock, let's make sure it's still not referenced before freeing it.
++         */
++        if (p_atomic_read(&bo->refcnt) != 0) {
++                pthread_mutex_unlock(&dev->bo_map_lock);
++                return;
++        }
++
++        if (dev->bo_log) {
++                int fd = kbase_gem_handle_get(&dev->mali, bo->gem_handle).fd;
++
++                struct timespec tp;
++                clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
++                fprintf(dev->bo_log, "%"PRIu64".%09li gpufree %"PRIx64" to %"PRIx64" size %zu label %s obj (%p,%i,%i)\n",
++                        (uint64_t) tp.tv_sec, tp.tv_nsec, bo->ptr.gpu, bo->ptr.gpu + bo->size, bo->size, bo->label,
++                        bo, bo->gem_handle, fd);
++                fflush(NULL);
++        }
++
++        panfrost_bo_fini(bo);
++
++        pthread_mutex_unlock(&dev->bo_map_lock);
++}
++
+ void
+ panfrost_bo_unreference(struct panfrost_bo *bo)
+ {
+@@ -439,25 +689,57 @@ panfrost_bo_unreference(struct panfrost_bo *bo)
+ 
+         struct panfrost_device *dev = bo->dev;
+ 
++        if (dev->bo_log) {
++                int fd = kbase_gem_handle_get(&dev->mali, bo->gem_handle).fd;
++
++                struct timespec tp;
++                clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
++                fprintf(dev->bo_log, "%"PRIu64".%09li free %"PRIx64" to %"PRIx64" size %zu label %s obj (%p,%i,%i)\n",
++                        (uint64_t) tp.tv_sec, tp.tv_nsec, bo->ptr.gpu, bo->ptr.gpu + bo->size, bo->size, bo->label,
++                        bo, bo->gem_handle, fd);
++                fflush(NULL);
++        }
++
+         pthread_mutex_lock(&dev->bo_map_lock);
+ 
+         /* Someone might have imported this BO while we were waiting for the
+          * lock, let's make sure it's still not referenced before freeing it.
+          */
+-        if (p_atomic_read(&bo->refcnt) == 0) {
+-                /* When the reference count goes to zero, we need to cleanup */
+-                panfrost_bo_munmap(bo);
++        if (p_atomic_read(&bo->refcnt) != 0) {
++                pthread_mutex_unlock(&dev->bo_map_lock);
++                return;
++        }
+ 
+-                if (dev->debug & (PAN_DBG_TRACE | PAN_DBG_SYNC))
+-                        pandecode_inject_free(bo->ptr.gpu, bo->size);
++        util_dynarray_fini(&bo->usage);
+ 
+-                /* Rather than freeing the BO now, we'll cache the BO for later
+-                 * allocations if we're allowed to.
++        if (dev->kbase) {
++                /* Assume that all queues are using this BO, and so free the
++                 * BO only after all currently-submitted jobs have finished.
++                 * This could eventually be optimised to only wait on a subset
++                 * of queues.
+                  */
+-                if (!panfrost_bo_cache_put(bo))
+-                        panfrost_bo_free(bo);
++                bool added = dev->mali.callback_all_queues(&dev->mali,
++                        &bo->gpu_refcnt, panfrost_bo_free_gpu, bo);
+ 
++                if (added) {
++                        pthread_mutex_unlock(&dev->bo_map_lock);
++                        return;
++                }
+         }
++
++        if (dev->bo_log) {
++                int fd = kbase_gem_handle_get(&dev->mali, bo->gem_handle).fd;
++
++                struct timespec tp;
++                clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
++                fprintf(dev->bo_log, "%"PRIu64".%09li immfree %"PRIx64" to %"PRIx64" size %zu label %s obj (%p,%i,%i)\n",
++                        (uint64_t) tp.tv_sec, tp.tv_nsec, bo->ptr.gpu, bo->ptr.gpu + bo->size, bo->size, bo->label,
++                        bo, bo->gem_handle, fd);
++                fflush(NULL);
++        }
++
++        panfrost_bo_fini(bo);
++
+         pthread_mutex_unlock(&dev->bo_map_lock);
+ }
+ 
+@@ -467,22 +749,42 @@ panfrost_bo_import(struct panfrost_device *dev, int fd)
+         struct panfrost_bo *bo;
+         struct drm_panfrost_get_bo_offset get_bo_offset = {0,};
+         ASSERTED int ret;
++        kbase_handle handle = { .fd = -1 };
+         unsigned gem_handle;
+ 
+-        ret = drmPrimeFDToHandle(dev->fd, fd, &gem_handle);
+-        assert(!ret);
++        if (dev->kbase) {
++                gem_handle = dev->mali.import_dmabuf(&dev->mali, fd);
++                if (gem_handle == -1)
++                        return NULL;
++        } else {
++                ret = drmPrimeFDToHandle(dev->fd, fd, &gem_handle);
++                assert(!ret);
++        }
+ 
+         pthread_mutex_lock(&dev->bo_map_lock);
+         bo = pan_lookup_bo(dev, gem_handle);
+ 
++        bool found = false;
++
+         if (!bo->dev) {
+                 get_bo_offset.handle = gem_handle;
+-                ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_GET_BO_OFFSET, &get_bo_offset);
+-                assert(!ret);
++                if (dev->kbase) {
++                        handle = kbase_gem_handle_get(&dev->mali, gem_handle);
++                        get_bo_offset.offset = handle.va;
++                } else {
++                        ret = drmIoctl(dev->fd, DRM_IOCTL_PANFROST_GET_BO_OFFSET, &get_bo_offset);
++                        assert(!ret);
++                }
+ 
+                 bo->dev = dev;
+-                bo->ptr.gpu = (mali_ptr) get_bo_offset.offset;
+                 bo->size = lseek(fd, 0, SEEK_END);
++                bo->ptr.gpu = (mali_ptr) get_bo_offset.offset;
++                if (dev->kbase && (sizeof(void *) > 4 || get_bo_offset.offset < (1LL << 32))) {
++                        bo->ptr.cpu = (void *)(uintptr_t) get_bo_offset.offset;
++                } else if (dev->kbase) {
++                        bo->ptr.cpu = dev->mali.mmap_import(&dev->mali, bo->ptr.gpu, bo->size);
++                        bo->free_ioctl = true;
++                }
+                 /* Sometimes this can fail and return -1. size of -1 is not
+                  * a nice thing for mmap to try mmap. Be more robust also
+                  * for zero sized maps and fail nicely too
+@@ -493,8 +795,21 @@ panfrost_bo_import(struct panfrost_device *dev, int fd)
+                 }
+                 bo->flags = PAN_BO_SHARED;
+                 bo->gem_handle = gem_handle;
++                util_dynarray_init(&bo->usage, NULL);
++                if (dev->kbase) {
++                        /* kbase always maps dma-bufs with caching */
++                        bo->cached = true;
++
++                        /* Importing duplicates the FD, so we cache the FD
++                         * from the handle */
++                        bo->dmabuf_fd = handle.fd;
++                } else {
++                        bo->dmabuf_fd = -1;
++                }
+                 p_atomic_set(&bo->refcnt, 1);
+         } else {
++                found = true;
++
+                 /* bo->refcnt == 0 can happen if the BO
+                  * was being released but panfrost_bo_import() acquired the
+                  * lock before panfrost_bo_unreference(). In that case, refcnt
+@@ -512,12 +827,34 @@ panfrost_bo_import(struct panfrost_device *dev, int fd)
+         }
+         pthread_mutex_unlock(&dev->bo_map_lock);
+ 
++        if (dev->bo_log) {
++                int new_fd = kbase_gem_handle_get(&dev->mali, bo->gem_handle).fd;
++
++                struct timespec tp;
++                clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
++                fprintf(dev->bo_log, "%"PRIu64".%09li import %"PRIx64" to %"PRIx64" size %zu fd %i new %i handle %i found %i\n",
++                        (uint64_t) tp.tv_sec, tp.tv_nsec, bo->ptr.gpu, bo->ptr.gpu + bo->size, bo->size,
++                        fd, new_fd, gem_handle, found);
++                fflush(NULL);
++        }
++
+         return bo;
+ }
+ 
+ int
+ panfrost_bo_export(struct panfrost_bo *bo)
+ {
++        struct panfrost_device *dev = bo->dev;
++
++        if (bo->dmabuf_fd != -1) {
++                assert(bo->flags & PAN_BO_SHARED);
++
++                return os_dupfd_cloexec(bo->dmabuf_fd);
++        }
++
++        if (dev->kbase)
++                return -1;
++
+         struct drm_prime_handle args = {
+                 .handle = bo->gem_handle,
+                 .flags = DRM_CLOEXEC,

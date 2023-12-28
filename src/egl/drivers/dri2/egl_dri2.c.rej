@@ -1,0 +1,60 @@
+diff a/src/egl/drivers/dri2/egl_dri2.c b/src/egl/drivers/dri2/egl_dri2.c	(rejected hunks)
+@@ -52,6 +52,8 @@
+ #include <wayland-client.h>
+ #include "wayland-drm.h"
+ #include "wayland-drm-client-protocol.h"
++#include "mali-buffer-sharing.h"
++#include "mali-buffer-sharing-client-protocol.h"
+ #include "linux-dmabuf-unstable-v1-client-protocol.h"
+ #endif
+ 
+@@ -2259,6 +2261,9 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
+ 
+    buffer = wayland_drm_buffer_get(dri2_dpy->wl_server_drm,
+                                    (struct wl_resource *) _buffer);
++   if (!buffer)
++           buffer = wayland_drm_buffer_get(dri2_dpy->wl_server_mali,
++                                   (struct wl_resource *) _buffer);
+    if (!buffer)
+        return NULL;
+ 
+@@ -3256,11 +3261,27 @@ dri2_bind_wayland_display_wl(_EGLDisplay *disp, struct wl_display *wl_dpy)
+            wayland_drm_init(wl_dpy, device_name,
+                             &wl_drm_callbacks, disp, flags);
+ 
++   drmSetVersion sv = {
++      .drm_di_major = 1,
++      .drm_di_minor = 4,
++      .drm_dd_major = -1,
++      .drm_dd_minor = -1,
++   };
++   drmSetInterfaceVersion(dri2_dpy->fd, &sv);
++
++   char *busid = drmGetBusid(dri2_dpy->fd);
++   dri2_dpy->wl_server_mali =
++           mali_buffer_sharing_init(wl_dpy, busid,
++                                    &wl_drm_callbacks,
++                                    disp);
++   drmFreeBusid(busid);
++
+    free(device_name);
+ 
+    if (!dri2_dpy->wl_server_drm)
+       goto fail;
+ 
++   // TODO: Do this for mali_buffer_sharing
+ #ifdef HAVE_DRM_PLATFORM
+    /* We have to share the wl_drm instance with gbm, so gbm can convert
+     * wl_buffers to gbm bos. */
+@@ -3281,6 +3302,11 @@ dri2_unbind_wayland_display_wl(_EGLDisplay *disp, struct wl_display *wl_dpy)
+ {
+    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+ 
++   if (dri2_dpy->wl_server_mali) {
++           wayland_drm_uninit(dri2_dpy->wl_server_mali);
++           dri2_dpy->wl_server_mali = NULL;
++   }
++
+    if (!dri2_dpy->wl_server_drm)
+            return EGL_FALSE;
+ 

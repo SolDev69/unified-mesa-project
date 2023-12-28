@@ -1,0 +1,19 @@
+diff a/src/egl/meson.build b/src/egl/meson.build	(rejected hunks)
+@@ -122,14 +122,16 @@ if with_dri2
+   endif
+   if with_platform_wayland
+     deps_for_egl += [dep_wayland_client, dep_wayland_server, dep_wayland_egl_headers]
+-    link_for_egl += libwayland_drm
++    link_for_egl += [libwayland_drm, libmali_buffer_sharing]
+     files_egl += files('drivers/dri2/platform_wayland.c')
+     files_egl += [
+       linux_dmabuf_unstable_v1_protocol_c,
+       linux_dmabuf_unstable_v1_client_protocol_h,
+       wayland_drm_client_protocol_h,
++      mali_buffer_sharing_client_protocol_h,
+     ]
+     incs_for_egl += include_directories('wayland/wayland-drm')
++    incs_for_egl += include_directories('wayland/mali-buffer-sharing')
+   endif
+   if with_platform_android
+     deps_for_egl += dep_android

@@ -1,0 +1,89 @@
+diff a/src/egl/drivers/dri2/platform_wayland.c b/src/egl/drivers/dri2/platform_wayland.c	(rejected hunks)
+@@ -51,6 +51,7 @@
+ #include <wayland-egl-backend.h>
+ #include <wayland-client.h>
+ #include "wayland-drm-client-protocol.h"
++#include "mali-buffer-sharing-client-protocol.h"
+ #include "linux-dmabuf-unstable-v1-client-protocol.h"
+ 
+ /*
+@@ -765,6 +776,8 @@ dri2_wl_create_window_surface(_EGLDisplay *disp, _EGLConfig *conf,
+  cleanup_drm:
+    if (dri2_surf->wl_drm_wrapper)
+       wl_proxy_wrapper_destroy(dri2_surf->wl_drm_wrapper);
++   if (dri2_surf->wl_mali_wrapper)
++      wl_proxy_wrapper_destroy(dri2_surf->wl_mali_wrapper);
+  cleanup_queue:
+    wl_event_queue_destroy(dri2_surf->wl_queue);
+  cleanup_surf:
+@@ -1768,6 +1859,10 @@ static const struct wl_drm_listener drm_listener = {
+    .capabilities = drm_handle_capabilities
+ };
+ 
++static const struct mali_buffer_sharing_listener mali_listener = {
++   .alloc_device = mali_handle_device,
++};
++
+ static void
+ dmabuf_ignore_format(void *data, struct zwp_linux_dmabuf_v1 *dmabuf,
+                      uint32_t format)
+@@ -1813,6 +1908,14 @@ wl_drm_bind(struct dri2_egl_display *dri2_dpy)
+    wl_drm_add_listener(dri2_dpy->wl_drm, &drm_listener, dri2_dpy);
+ }
+ 
++static void
++wl_mali_bind(struct dri2_egl_display *dri2_dpy)
++{
++   dri2_dpy->wl_mali = wl_registry_bind(dri2_dpy->wl_registry, dri2_dpy->wl_mali_name,
++                                        &mali_buffer_sharing_interface, dri2_dpy->wl_mali_version);
++   mali_buffer_sharing_add_listener((void *)dri2_dpy->wl_mali, &mali_listener, dri2_dpy);
++}
++
+ static void
+ default_dmabuf_feedback_format_table(void *data,
+                                      struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
+@@ -1943,6 +2046,9 @@ registry_handle_global_drm(void *data, struct wl_registry *registry,
+    if (strcmp(interface, wl_drm_interface.name) == 0) {
+       dri2_dpy->wl_drm_version = MIN2(version, 2);
+       dri2_dpy->wl_drm_name = name;
++   } else if (strcmp(interface, mali_buffer_sharing_interface.name) == 0) {
++      dri2_dpy->wl_mali_version = MIN2(version, 5);
++      dri2_dpy->wl_mali_name = name;
+    } else if (strcmp(interface, zwp_linux_dmabuf_v1_interface.name) == 0 && version >= 3) {
+       dri2_dpy->wl_dmabuf =
+          wl_registry_bind(registry, name, &zwp_linux_dmabuf_v1_interface,
+@@ -2145,10 +2251,7 @@ dri2_initialize_wayland_drm(_EGLDisplay *disp)
+ 
+    /* We couldn't retrieve a render node from the dma-buf feedback (or the
+     * feedback was not advertised at all), so we must fallback to wl_drm. */
+-   if (dri2_dpy->fd == -1) {
+-      /* wl_drm not advertised by compositor, so can't continue */
+-      if (dri2_dpy->wl_drm_name == 0)
+-         goto cleanup;
++   if (dri2_dpy->fd == -1 && dri2_dpy->wl_drm_name) {
+       wl_drm_bind(dri2_dpy);
+ 
+       if (dri2_dpy->wl_drm == NULL)
+@@ -2161,6 +2264,22 @@ dri2_initialize_wayland_drm(_EGLDisplay *disp)
+          goto cleanup;
+    }
+ 
++   if (dri2_dpy->fd == -1 && dri2_dpy->wl_mali_name) {
++      wl_mali_bind(dri2_dpy);
++
++      if (dri2_dpy->wl_mali == NULL)
++         goto cleanup;
++      if (roundtrip(dri2_dpy) < 0 || dri2_dpy->fd == -1)
++         goto cleanup;
++
++      if (!dri2_dpy->authenticated &&
++          (roundtrip(dri2_dpy) < 0 || !dri2_dpy->authenticated))
++         goto cleanup;
++   }
++
++   if (dri2_dpy->fd == -1)
++           goto cleanup;
++
+    dri2_dpy->fd = loader_get_user_preferred_fd(dri2_dpy->fd,
+                                                &dri2_dpy->is_different_gpu);
+    dev = _eglAddDevice(dri2_dpy->fd, false);

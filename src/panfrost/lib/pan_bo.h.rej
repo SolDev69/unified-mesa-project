@@ -1,0 +1,84 @@
+diff a/src/panfrost/lib/pan_bo.h b/src/panfrost/lib/pan_bo.h	(rejected hunks)
+@@ -27,6 +27,7 @@
+ #define __PAN_BO_H__
+ 
+ #include "util/list.h"
++#include "util/u_dynarray.h"
+ #include "panfrost-job.h"
+ #include <time.h>
+ 
+@@ -50,6 +51,12 @@
+  * cached locally */
+ #define PAN_BO_SHARED             (1 << 4)
+ 
++/* Use event memory, required for CSF events to be signaled to the kernel */
++#define PAN_BO_EVENT              (1 << 5)
++
++/* Use the caching policy for resource BOs */
++#define PAN_BO_CACHEABLE          (1 << 6)
++
+ /* GPU access flags */
+ 
+ /* BO is either shared (can be accessed by more than one GPU batch) or private
+@@ -80,6 +87,12 @@ struct panfrost_ptr {
+         mali_ptr gpu;
+ };
+ 
++struct panfrost_usage {
++        uint32_t queue;
++        bool write;
++        uint64_t seqnum;
++};
++
+ struct panfrost_bo {
+         /* Must be first for casting */
+         struct list_head bucket_link;
+@@ -95,11 +108,16 @@ struct panfrost_bo {
+         /* Atomic reference count */
+         int32_t refcnt;
+ 
++        /* Reference count for GPU jobs */
++        int32_t gpu_refcnt;
++
+         struct panfrost_device *dev;
+ 
+         /* Mapping for the entire object (all levels) */
+         struct panfrost_ptr ptr;
+ 
++        struct util_dynarray usage;
++
+         /* Size of all entire trees */
+         size_t size;
+ 
+@@ -115,11 +133,31 @@ struct panfrost_bo {
+ 
+         /* Human readable description of the BO for debugging. */
+         const char *label;
++
++        /* Sometimes we don't access the BO through kbase's mapping of the
++         * memory, in that case we need to save the pointer to pass to
++         * munmap to avoid leaking memory. */
++        void *munmap_ptr;
++
++        /* For 32-bit applications we may not even be able to that, because
++         * the VA may be too high for kbase to map to an equivalent CPU
++         * address, in which case we must use the memory free icotl. */
++        bool free_ioctl;
++
++        /* Is the BO cached CPU-side? */
++        bool cached;
++
++        /* File descriptor for the dma-buf */
++        int dmabuf_fd;
+ };
+ 
+ bool
+ panfrost_bo_wait(struct panfrost_bo *bo, int64_t timeout_ns, bool wait_readers);
+ void
++panfrost_bo_mem_invalidate(struct panfrost_bo *bo, size_t offset, size_t length);
++void
++panfrost_bo_mem_clean(struct panfrost_bo *bo, size_t offset, size_t length);
++void
+ panfrost_bo_reference(struct panfrost_bo *bo);
+ void
+ panfrost_bo_unreference(struct panfrost_bo *bo);

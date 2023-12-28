@@ -1,0 +1,9 @@
+diff a/src/mesa/main/shaderapi.c b/src/mesa/main/shaderapi.c	(rejected hunks)
+@@ -70,7 +70,6 @@
+ #include "state_tracker/st_context.h"
+ #include "state_tracker/st_program.h"
+ 
+-#ifdef ENABLE_SHADER_CACHE
+ #if CUSTOM_SHADER_REPLACEMENT
+ #include "shader_replacement.h"
+ /* shader_replacement.h must declare a variable like this:

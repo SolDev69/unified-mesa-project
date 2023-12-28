@@ -1,0 +1,14 @@
+diff a/src/gallium/targets/osmesa/meson.build b/src/gallium/targets/osmesa/meson.build	(rejected hunks)
+@@ -55,10 +55,10 @@ libosmesa = shared_library(
+     libmesa, libgallium, libws_null, osmesa_link_with,
+   ],
+   dependencies : [
+-    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_swrast
++    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_swrast, driver_panfrost, dep_libdrm
+   ],
+   name_prefix : host_machine.system() == 'windows' ? '' : 'lib',  # otherwise mingw will create libosmesa.dll
+-  soversion : host_machine.system() == 'windows' ? '' : '8',
++  soversion : '',
+   version : '8.0.0',
+   darwin_versions : '9.0.0',
+   install : true,
