@@ -1277,7 +1277,6 @@ panfrost_ptr_map(struct pipe_context *pctx, struct pipe_resource *resource,
          panfrost_bo_mem_invalidate(staging->image.data.bo, 0, staging->image.data.bo->size);
       }
 
-      panfrost_bo_mmap(staging->image.data.bo);
       return staging->image.data.bo->ptr.cpu;
    }
 
@@ -1313,7 +1312,7 @@ panfrost_ptr_map(struct pipe_context *pctx, struct pipe_resource *resource,
 
    if (!create_new_bo && !(usage & PIPE_MAP_UNSYNCHRONIZED) &&
        !(resource->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT) &&
-       (usage & PIPE_MAP_WRITE) && panfrost_any_batch_reads_rsrc(ctx, rsrc)) {
+       (usage & PIPE_MAP_WRITE) && panfrost_any_batch_reads_rsrc(ctx, rsrc)) { // First [breakpoint]
       /* When a resource to be modified is already being used by a
        * pending batch, it is often faster to copy the whole BO than
        * to flush and split the frame in two.
@@ -1333,6 +1332,8 @@ panfrost_ptr_map(struct pipe_context *pctx, struct pipe_resource *resource,
       create_new_bo = false;
       copy_resource = false;
    }
+
+   bool cache_inval = true;
 
    if (create_new_bo) {
       /* Make sure we re-emit any descriptors using this resource */
@@ -1360,8 +1361,8 @@ panfrost_ptr_map(struct pipe_context *pctx, struct pipe_resource *resource,
 
          if (newbo) {
             if (copy_resource) {
-               memcpy(newbo->ptr.cpu, rsrc->image.data.bo->ptr.cpu,
-                      panfrost_bo_size(bo));
+               panfrost_bo_mem_invalidate(bo, 0, bo->size);
+               memcpy(newbo->ptr.cpu, bo->ptr.cpu, bo->size);
             }
 
             /* Swap the pointers, dropping a reference to
@@ -1391,6 +1392,22 @@ panfrost_ptr_map(struct pipe_context *pctx, struct pipe_resource *resource,
       } else if (usage & PIPE_MAP_READ) {
          panfrost_flush_writer(ctx, rsrc, "Synchronized read");
          panfrost_bo_wait(bo, INT64_MAX, false);
+      } else {
+             /* No flush for writes to uninitialized */
+             cache_inval = false;
+      }
+
+      /* TODO: Only the accessed region for textures */
+      if (cache_inval) {
+             size_t offset = 0;
+             size_t size = bo->size;
+
+             if (resource->target == PIPE_BUFFER) {
+                     offset = box->x * (size_t) bytes_per_block;
+                     size = box->width * (size_t) bytes_per_block;
+             }
+
+             panfrost_bo_mem_invalidate(bo, offset, size);
       }
    }
 
@@ -1714,9 +1731,16 @@ panfrost_ptr_unmap(struct pipe_context *pctx, struct pipe_transfer *transfer)
     * fragment job is created; this is deferred to prevent useless surface
     * reloads that can cascade into DATA_INVALID_FAULTs due to reading
     * malformed AFBC data if uninitialized */
-
-   if (trans->staging.rsrc) {
+   
+   bool afbc = trans->staging.rsrc;
+   if (abfc) {
       if (transfer->usage & PIPE_MAP_WRITE) {
+         struct panfrost_resource *trans_rsrc = pan_resource(trans->staging.rsrc);
+         struct panfrost_bo *trans_bo = trans_rsrc->image.data.bo;
+
+
+         panfrost_bo_mem_clean(trans_bo, 0, trans_bo->size);
+
          if (panfrost_should_linear_convert(dev, prsrc, transfer)) {
 
             panfrost_bo_unreference(prsrc->image.data.bo);
@@ -1725,7 +1749,7 @@ panfrost_ptr_unmap(struct pipe_context *pctx, struct pipe_transfer *transfer)
                                     prsrc->image.layout.format);
 
             prsrc->image.data.bo =
-               pan_resource(trans->staging.rsrc)->image.data.bo;
+               trans_bo;
             panfrost_bo_reference(prsrc->image.data.bo);
          } else {
             pan_blit_from_staging(pctx, trans);
@@ -1756,10 +1780,11 @@ panfrost_ptr_unmap(struct pipe_context *pctx, struct pipe_transfer *transfer)
                panfrost_resource_setup(dev, prsrc, DRM_FORMAT_MOD_LINEAR,
                                        prsrc->image.layout.format);
                if (prsrc->image.layout.data_size > panfrost_bo_size(bo)) {
+                  /* We want the BO to be MMAPed. */
+                  uint32_t flags = bo->flags & ~PAN_BO_DELAY_MMAP;
                   const char *label = bo->label;
                   panfrost_bo_unreference(bo);
-                  bo = prsrc->image.data.bo = panfrost_bo_create(
-                     dev, prsrc->image.layout.data_size, 0, label);
+                  bo = prsrc->image.data.bo = panfrost_bo_create(dev, prsrc->image.layout.data_size, flags, label);
                   assert(bo);
                }
 
@@ -1774,7 +1799,25 @@ panfrost_ptr_unmap(struct pipe_context *pctx, struct pipe_transfer *transfer)
          }
       }
    }
+   /* TODO: Only the accessed region */
+   /* It is important to not do this for AFBC resources, or else the
+    * clean might overwrite the result of the blit. */
+   if (!afbc && (transfer->usage & PIPE_MAP_WRITE)) {
+        size_t offset = 0;
+        size_t size = prsrc->image.data.bo->size;
 
+        /* TODO: Don't recalculate */
+        if (prsrc->base.target == PIPE_BUFFER) {
+                enum pipe_format format = prsrc->image.layout.format;
+                int bytes_per_block = util_format_get_blocksize(format);
+
+                offset = transfer->box.x * (size_t) bytes_per_block;
+                size = transfer->box.width * (size_t) bytes_per_block;
+       }
+
+        panfrost_bo_mem_clean(prsrc->image.data.bo,
+                              offset, size);
+   }
    util_range_add(&prsrc->base, &prsrc->valid_buffer_range, transfer->box.x,
                   transfer->box.x + transfer->box.width);
 
@@ -1927,6 +1970,8 @@ panfrost_resource_context_init(struct pipe_context *pctx)
    pctx->texture_unmap = u_transfer_helper_transfer_unmap;
    pctx->create_surface = panfrost_create_surface;
    pctx->surface_destroy = panfrost_surface_destroy;
+   pctx->clear_render_target = panfrost_clear_render_target;
+   pctx->clear_depth_stencil = panfrost_clear_depth_stencil;
    pctx->resource_copy_region = util_resource_copy_region;
    pctx->blit = panfrost_blit;
    pctx->generate_mipmap = panfrost_generate_mipmap;

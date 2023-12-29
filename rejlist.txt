@@ -1,4 +1,3 @@
-./src/gallium/drivers/panfrost/pan_resource.c.rej
 ./src/gallium/drivers/panfrost/pan_screen.c.rej
 ./src/gallium/drivers/panfrost/pan_job.h.rej
 ./src/gallium/drivers/panfrost/pan_disk_cache.c.rej
@@ -49,6 +48,4 @@
 ./src/egl/meson.build.rej
 ./src/mesa/main/shaderapi.c.rej
 ./src/compiler/glsl/glsl_to_nir.cpp.rej
-./rejlist.txt
 ./meson.build.rej
-./docs/features.txt.rej
