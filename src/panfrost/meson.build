@@ -35,6 +35,7 @@ subdir('shared')
 subdir('util')
 subdir('midgard')
 subdir('compiler')
+subdir('base')
 
 if with_gallium_panfrost or with_panfrost_vk
    subdir('lib')
