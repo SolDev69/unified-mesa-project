@@ -25,7 +25,6 @@
 ./src/panfrost/lib/pan_bo.c.rej
 ./src/panfrost/lib/pan_blend.c.rej
 ./src/panfrost/lib/pan_pool.h.rej
-./src/panfrost/lib/pan_util.h.rej
 ./src/panfrost/lib/pan_bo.h.rej
 ./src/panfrost/lib/wrap.h.rej
 ./src/panfrost/lib/meson.build.rej

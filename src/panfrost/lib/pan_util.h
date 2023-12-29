@@ -51,6 +51,13 @@
 #ifndef NDEBUG
 #define PAN_DBG_OVERFLOW 0x8000
 #endif
+#define PAN_DBG_TILER         0x010000
+#define PAN_DBG_BO_LOG        0x020000
+#define PAN_DBG_BO_CLEAR      0x040000
+#define PAN_DBG_UNCACHED_GPU  0x100000
+#define PAN_DBG_UNCACHED_CPU  0x200000
+#define PAN_DBG_LOG           0x400000
+#define PAN_DBG_GOFASTER      0x800000
 
 #define PAN_DBG_YUV        0x20000
 #define PAN_DBG_FORCE_PACK 0x40000
