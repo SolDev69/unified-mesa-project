@@ -49,7 +49,7 @@
 
 #include "pan_shader.h"
 #include "compiler/nir/nir_builder.h"
-#include "bifrost/valhall/disassemble.h"
+#include "compiler/valhall/disassemble.h"
 
 #define CS_EVENT_REGISTER 0x5A
 
