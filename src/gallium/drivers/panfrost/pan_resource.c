@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <xf86drm.h>
 #include "drm-uapi/drm_fourcc.h"
+#include "drm-uapi/drm.h"
 
 #include "frontend/winsys_handle.h"
 #include "util/format/u_format.h"
@@ -53,6 +54,47 @@
 #include "pan_screen.h"
 #include "pan_tiling.h"
 #include "pan_util.h"
+
+/* The kbase kernel driver always maps imported BOs with caching. When we
+ * don't want that, instead do mmap from the display driver side to get a
+ * write-combine mapping.
+ */
+static void
+panfrost_bo_mmap_scanout(struct panfrost_bo *bo,
+                         struct renderonly *ro,
+                         struct renderonly_scanout *scanout)
+{
+        struct panfrost_device *dev = bo->dev;
+
+        /* If we are fine with a cached mapping, just return */
+        if (!(dev->debug & PAN_DBG_UNCACHED_CPU))
+                return;
+
+        struct drm_mode_map_dumb map_dumb = {
+                .handle = scanout->handle,
+        };
+
+        int err = drmIoctl(ro->kms_fd, DRM_IOCTL_MODE_MAP_DUMB, &map_dumb);
+        if (err < 0) {
+                fprintf(stderr, "DRM_IOCTL_MODE_MAP_DUMB failed: %s\n",
+                        strerror(errno));
+                return;
+        }
+
+        void *addr = mmap(NULL, bo->size,
+                          PROT_READ | PROT_WRITE, MAP_SHARED,
+                          ro->kms_fd, map_dumb.offset);
+        if (addr == MAP_FAILED) {
+                fprintf(stderr, "kms_fd mmap failed: %s\n",
+                        strerror(errno));
+                return;
+        }
+
+        bo->munmap_ptr = bo->ptr.cpu;
+        bo->ptr.cpu = addr;
+        bo->cached = false;
+}
+
 
 static void
 panfrost_clear_depth_stencil(struct pipe_context *pipe,
@@ -143,14 +185,16 @@ panfrost_resource_from_handle(struct pipe_screen *pscreen,
       return NULL;
    }
 
-   rsc->image.data.bo = panfrost_bo_import(dev, whandle->handle);
+   struct panfrost_bo *bo = panfrost_bo_import(dev, whandle->handle);
    /* Sometimes an import can fail e.g. on an invalid buffer fd, out of
     * memory space to mmap it etc.
     */
-   if (!rsc->image.data.bo) {
+   if (!bo) {
       FREE(rsc);
       return NULL;
    }
+
+   rsc->image.data.bo = bo;
 
    rsc->modifier_constant = true;
 
@@ -162,6 +206,9 @@ panfrost_resource_from_handle(struct pipe_screen *pscreen,
          renderonly_create_gpu_import_for_resource(prsc, dev->ro, NULL);
       /* failure is expected in some cases.. */
    }
+
+   if (rsc->scanout)
+      panfrost_bo_mmap_scanout(bo, dev->ro, rsc->scanout);
 
    return prsc;
 }
@@ -511,7 +558,9 @@ panfrost_resource_setup(struct panfrost_device *dev,
 static void
 panfrost_resource_init_afbc_headers(struct panfrost_resource *pres)
 {
-   panfrost_bo_mmap(pres->image.data.bo);
+   struct panfrost_bo *bo = pres->image.data.bo;
+
+   panfrost_bo_mmap(bo);
 
    unsigned nr_samples = MAX2(pres->base.nr_samples, 1);
 
@@ -520,15 +569,16 @@ panfrost_resource_init_afbc_headers(struct panfrost_resource *pres)
          struct pan_image_slice_layout *slice = &pres->image.layout.slices[l];
 
          for (unsigned s = 0; s < nr_samples; ++s) {
-            void *ptr = pres->image.data.bo->ptr.cpu +
-                        (i * pres->image.layout.array_stride) + slice->offset +
-                        (s * slice->afbc.surface_stride);
+            size_t offset = (i * pres->image.layout.array_stride) +
+                            slice->offset +
+                            (s * slice->afbc.surface_stride);
 
             /* Zero-ed AFBC headers seem to encode a plain
              * black. Let's use this pattern to keep the
              * initialization simple.
              */
-            memset(ptr, 0, slice->afbc.header_size);
+            memset(bo->ptr.cpu + offset, 0, slice->afbc.header_size);
+            panfrost_bo_mem_clean(bo, offset, slice->afbc.header_size);
          }
       }
    }
@@ -676,10 +726,11 @@ panfrost_resource_create_with_modifier(struct pipe_screen *screen,
                        : (bind & PIPE_BIND_SHADER_IMAGE)    ? "Shader image"
                                                             : "Other resource";
 
-   if (dev->ro && (template->bind & PIPE_BIND_SCANOUT)) {
+   /* Revert to doing a kmsro allocation for any shared BO, because kbase
+    * cannot do export */
+   if (dev->ro && (template->bind & PAN_BIND_SHARED_MASK)) {
       struct winsys_handle handle;
-      struct pan_block_size blocksize =
-         panfrost_block_size(modifier, template->format);
+      struct pan_block_size blocksize = panfrost_block_size(modifier, template->format);
 
       /* Block-based texture formats are only used for texture
        * compression (not framebuffer compression!), which doesn't
@@ -734,18 +785,24 @@ panfrost_resource_create_with_modifier(struct pipe_screen *screen,
          free(so);
          return NULL;
       }
+
+      panfrost_bo_mmap_scanout(so->image.data.bo, dev->ro, so->scanout);
    } else {
       /* We create a BO immediately but don't bother mapping, since we don't
        * care to map e.g. FBOs which the CPU probably won't touch */
+
+      /* For now, don't cache buffers as syncing can be slow when
+       * too much memory is mapped. TODO: dynamically switch, or use
+       * the STREAM_READ etc. hints? */
+      bool buffer = (template->target == PIPE_BUFFER);
+      unsigned cache_flag = buffer ? 0 : PAN_BO_CACHEABLE;
       uint32_t flags = PAN_BO_DELAY_MMAP;
 
       /* If the resource is never exported, we can make the BO private. */
       if (template->bind & PIPE_BIND_SHARED)
          flags |= PAN_BO_SHAREABLE;
 
-      so->image.data.bo =
-         panfrost_bo_create(dev, so->image.layout.data_size, flags, label);
-
+      so->image.data.bo = panfrost_bo_create(dev, so->image.layout.data_size, PAN_BO_DELAY_MMAP | cache_flag, label);
       so->constant_stencil = true;
    }
 
@@ -778,10 +835,22 @@ panfrost_resource_create_with_modifiers(struct pipe_screen *screen,
                                         const struct pipe_resource *template,
                                         const uint64_t *modifiers, int count)
 {
+   struct panfrost_device *dev = pan_device(screen);
+
    for (unsigned i = 0; i < PAN_MODIFIER_COUNT; ++i) {
-      if (drm_find_modifier(pan_best_modifiers[i], modifiers, count)) {
-         return panfrost_resource_create_with_modifier(screen, template,
-                                                       pan_best_modifiers[i]);
+          uint64_t mod = pan_best_modifiers[i];
+
+          if (drm_is_afbc(mod) && !dev->has_afbc)
+                  continue;
+
+          if (mod != DRM_FORMAT_MOD_LINEAR && (dev->debug & PAN_DBG_LINEAR))
+                  continue;
+
+          /* TODO: What if mod is an unsupported AFBC variant for this
+           * format? */
+
+          if (drm_find_modifier(mod, modifiers, count)) {
+                  return panfrost_resource_create_with_modifier(screen, template, mod);
       }
    }
 
@@ -808,6 +877,72 @@ panfrost_resource_destroy(struct pipe_screen *screen, struct pipe_resource *pt)
    util_range_destroy(&rsrc->valid_buffer_range);
    free(rsrc);
 }
+
+static void
+panfrost_clear_render_target(struct pipe_context *pipe,
+                             struct pipe_surface *dst,
+                             const union pipe_color_union *color,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height,
+                             bool render_condition_enabled)
+{
+        struct panfrost_context *ctx = pan_context(pipe);
+
+        /* TODO: dstx, etc. */
+
+        struct pipe_framebuffer_state tmp = {0};
+        util_copy_framebuffer_state(&tmp, &ctx->pipe_framebuffer);
+
+        struct pipe_framebuffer_state fb = {
+                .width = dst->width,
+                .height = dst->height,
+                .layers = 1,
+                .samples = 1,
+                .nr_cbufs = 1,
+                .cbufs[0] = dst,
+        };
+        pipe->set_framebuffer_state(pipe, &fb);
+
+        struct panfrost_batch *batch = panfrost_get_fresh_batch_for_fbo(ctx, "Clear render target");
+        panfrost_batch_clear(batch, PIPE_CLEAR_COLOR0, color, 0, 0);
+
+        pipe->set_framebuffer_state(pipe, &tmp);
+        util_unreference_framebuffer_state(&tmp);
+}
+
+static void
+panfrost_clear_depth_stencil(struct pipe_context *pipe,
+                             struct pipe_surface *dst,
+                             unsigned clear_flags,
+                             double depth, unsigned stencil,
+                             unsigned dstx, unsigned dsty,
+                             unsigned width, unsigned height,
+                             bool render_condition_enabled)
+{
+        struct panfrost_context *ctx = pan_context(pipe);
+
+        /* TODO: dstx, etc. */
+
+        struct pipe_framebuffer_state tmp = {0};
+        util_copy_framebuffer_state(&tmp, &ctx->pipe_framebuffer);
+
+        struct pipe_framebuffer_state fb = {
+                .width = dst->width,
+                .height = dst->height,
+                .layers = 1,
+                .samples = 1,
+                .nr_cbufs = 0,
+                .zsbuf = dst,
+        };
+        pipe->set_framebuffer_state(pipe, &fb);
+
+        struct panfrost_batch *batch = panfrost_get_fresh_batch_for_fbo(ctx, "Clear depth/stencil");
+        panfrost_batch_clear(batch, clear_flags, NULL, depth, stencil);
+
+        pipe->set_framebuffer_state(pipe, &tmp);
+        util_unreference_framebuffer_state(&tmp);
+}
+
 
 /* Most of the time we can do CPU-side transfers, but sometimes we need to use
  * the 3D pipe for this. Let's wrap u_blitter to blit to/from staging textures.
@@ -1113,6 +1248,8 @@ panfrost_ptr_map(struct pipe_context *pctx, struct pipe_resource *resource,
          pan_alloc_staging(ctx, rsrc, level, box);
       assert(staging);
 
+      panfrost_bo_mmap(staging->image.data.bo);
+
       /* Staging resources have one LOD: level 0. Query the strides
        * on this LOD.
        */
@@ -1136,6 +1273,8 @@ panfrost_ptr_map(struct pipe_context *pctx, struct pipe_resource *resource,
          pan_blit_to_staging(pctx, transfer);
          panfrost_flush_writer(ctx, staging, "AFBC read staging blit");
          panfrost_bo_wait(staging->image.data.bo, INT64_MAX, false);
+
+         panfrost_bo_mem_invalidate(staging->image.data.bo, 0, staging->image.data.bo->size);
       }
 
       panfrost_bo_mmap(staging->image.data.bo);
