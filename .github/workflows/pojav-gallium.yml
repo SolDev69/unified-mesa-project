@@ -58,9 +58,10 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=freedreno,zink \
+            -Dgallium-drivers=panfrost,swrast,freedreno,zink \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
+            -Dandroid-strict=false \
             -Dbuildtype=release
           ninja -C "build-android" install
       - name: Upload libraries

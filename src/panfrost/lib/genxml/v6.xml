@@ -467,7 +467,7 @@
     <value name="Constant" value="7"/>
   </enum>
 
-  <struct name="Blend Function" layout="none">
+  <struct name="Blend Function" no-direct-packing="true">
     <!-- Blend equation: A + (B * C) -->
     <field name="A" size="2" start="0" type="Blend Operand A"/>
     <field name="Negate A" size="1" start="3" type="bool"/>
@@ -689,7 +689,7 @@
     <field name="Stencil from shader" size="1" start="28" type="bool"/>
   </struct>
 
-  <struct name="Compute Preload" size="1" layout="none">
+  <struct name="Compute Preload" size="1" no-direct-packing="true">
     <field name="PC" size="1" start="6" type="bool"/>
     <field name="Local Invocation XY" size="1" start="7" type="bool"/>
     <field name="Local Invocation Z" size="1" start="8" type="bool"/>
@@ -708,7 +708,7 @@
     <value name="8" value="3"/>
   </enum>
 
-  <struct name="Vertex Preload" size="1" layout="none">
+  <struct name="Vertex Preload" size="1" no-direct-packing="true">
     <field name="Warp limit" size="2" start="0" type="Warp Limit"/>
     <field name="PC" size="1" start="6" type="bool"/>
     <field name="Position result address lo" size="1" start="10" type="bool"/>
@@ -717,7 +717,7 @@
     <field name="Instance ID" size="1" start="14" type="bool"/>
   </struct>
 
-  <struct name="Fragment Preload" size="1" layout="none">
+  <struct name="Fragment Preload" size="1" no-direct-packing="true">
     <field name="PC" size="1" start="6" type="bool"/>
     <field name="Coverage" size="1" start="7" type="bool"/>
     <field name="Primitive ID" size="1" start="9" type="bool"/>

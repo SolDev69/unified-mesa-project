@@ -46,7 +46,7 @@
     <value name="Constant" value="7"/>
   </enum>
 
-  <struct name="Blend Function" layout="none">
+  <struct name="Blend Function" no-direct-packing="true">
     <!-- Blend equation: A + (B * C) -->
     <field name="A" size="2" start="0" type="Blend Operand A"/>
     <field name="Negate A" size="1" start="3" type="bool"/>
