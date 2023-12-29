@@ -91,7 +91,7 @@ libpanfrost_lib = static_library(
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_panfrost_hw],
   c_args : [no_override_init_args],
   gnu_symbol_visibility : 'hidden',
-  dependencies: [dep_libdrm, idep_nir, idep_mesautil, libpanfrost_base_dep],
+  dependencies: [dep_libdrm, idep_nir, idep_mesautil], // [breakpoint]
   build_by_default : false,
   link_with: [libpanfrost_pixel_format, libpanfrost_per_arch, libpankmod_lib],
 )
