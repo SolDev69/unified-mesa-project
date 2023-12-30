@@ -34,9 +34,7 @@
 
 #include "pan_context.h"
 
-#ifdef ENABLE_SHADER_CACHE
 static bool debug = false;
-#endif
 
 extern int midgard_debug;
 extern int bifrost_debug;

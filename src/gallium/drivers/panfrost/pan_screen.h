@@ -51,7 +51,6 @@ static const struct pipe_driver_query_info panfrost_driver_query_list[] = {
 
 struct panfrost_batch;
 struct panfrost_context;
-struct panfrost_cs;
 struct panfrost_resource;
 struct panfrost_compiled_shader;
 struct pan_fb_info;

@@ -1,13 +1,3 @@
-./src/gallium/drivers/panfrost/pan_screen.c.rej
-./src/gallium/drivers/panfrost/pan_job.h.rej
-./src/gallium/drivers/panfrost/pan_disk_cache.c.rej
-./src/gallium/drivers/panfrost/pan_screen.h.rej
-./src/gallium/drivers/panfrost/pan_fence.h.rej
-./src/gallium/drivers/panfrost/pan_context.c.rej
-./src/gallium/drivers/panfrost/pan_job.c.rej
-./src/gallium/drivers/panfrost/pan_context.h.rej
-./src/gallium/drivers/panfrost/pan_cmdstream.c.rej
-./src/gallium/drivers/panfrost/pan_fence.c.rej
 ./src/gallium/targets/d3dadapter9/meson.build.rej
 ./src/gallium/targets/rusticl/meson.build.rej
 ./src/gallium/targets/osmesa/meson.build.rej
@@ -31,13 +21,6 @@
 ./src/panfrost/lib/pan_props.c.rej
 ./src/panfrost/lib/pan_texture.h.rej
 ./src/panfrost/lib/pan_layout.c.rej
-./src/panfrost/lib/genxml/decode.c.rej
-./src/panfrost/lib/genxml/v9.xml.rej
-./src/panfrost/lib/genxml/decode.h.rej
-./src/panfrost/lib/genxml/decode_common.c.rej
-./src/panfrost/lib/genxml/gen_macros.h.rej
-./src/panfrost/lib/genxml/meson.build.rej
-./src/android_stub/meson.build.rej
 ./src/util/perf/cpu_trace.h.rej
 ./src/util/u_debug_stack_android.cpp.rej
 ./src/util/os_misc.c.rej

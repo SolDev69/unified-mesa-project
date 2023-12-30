@@ -1,9 +1,0 @@
-diff a/src/gallium/drivers/panfrost/pan_fence.h b/src/gallium/drivers/panfrost/pan_fence.h	(rejected hunks)
-@@ -32,6 +32,7 @@ struct panfrost_context;
- struct pipe_fence_handle {
-         struct pipe_reference reference;
-         uint32_t syncobj;
-+        struct kbase_syncobj *kbase;
-         bool signaled;
- };
- 
