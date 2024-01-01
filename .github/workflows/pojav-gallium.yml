@@ -59,7 +59,7 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers=freedreno \
-            -Dgallium-drivers=freedreno,zink,swrast \
+            -Dgallium-drivers=freedreno,zink,swrast,panfrost,kmsro \
             -Dfreedreno-kmds=kgsl,virtio \
             -Dshared-glapi=false \
             -Dbuildtype=release
