@@ -34,7 +34,6 @@
 
 #include "util/format/u_format.h"
 #include "util/half_float.h"
-#include "util/libsync.h"
 #include "util/macros.h"
 #include "util/u_debug_cb.h"
 #include "util/u_helpers.h"
@@ -850,6 +849,58 @@ panfrost_create_fence_fd(struct pipe_context *pctx,
                          enum pipe_fd_type type)
 {
    *pfence = panfrost_fence_from_fd(pan_context(pctx), fd, type);
+}
+
+struct sync_merge_data {
+   char  name[32];
+   int32_t  fd2;
+   int32_t  fence;
+   uint32_t flags;
+   uint32_t pad;
+};
+
+#define SYNC_IOC_MAGIC     '>'
+#define SYNC_IOC_MERGE     _IOWR(SYNC_IOC_MAGIC, 3, struct sync_merge_data)
+
+static inline int sync_merge(const char *name, int fd1, int fd2)
+{
+   struct sync_merge_data data = {{0}};
+   int ret;
+
+   data.fd2 = fd2;
+   strncpy(data.name, name, sizeof(data.name));
+
+   do {
+      ret = ioctl(fd1, SYNC_IOC_MERGE, &data);
+   } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
+
+   if (ret < 0)
+      return ret;
+
+   return data.fence;
+}
+
+static inline int sync_accumulate(const char *name, int *fd1, int fd2)
+{
+   int ret;
+
+   assert(fd2 >= 0);
+
+   if (*fd1 < 0) {
+      *fd1 = dup(fd2);
+      return 0;
+   }
+
+   ret = sync_merge(name, *fd1, fd2);
+   if (ret < 0) {
+      /* leave *fd1 as it is */
+      return ret;
+   }
+
+   close(*fd1);
+   *fd1 = ret;
+
+   return 0;
 }
 
 static void
