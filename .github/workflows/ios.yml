@@ -14,9 +14,7 @@ jobs:
       - name: Build iOS
         run: |
           ln -s vulkan_ios.pc vulkan.pc
-          brew install meson pkg-config libclc bison expat python-mako libx11 libxcb libxdamage libxext ninja gettext python@3.12
-          brew update
-          brew bundle --verbose
+          brew install meson pkg-config libclc bison expat python-mako libx11 libxcb libxdamage libxext ninja gettext
           pip3 install mako
           # git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           # cd drm
