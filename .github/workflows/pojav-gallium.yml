@@ -8,7 +8,7 @@ jobs:
   build:
     strategy:
       matrix:
-        arch: [ "arm32", "aarch64" ]
+        arch: [ "arm32", "aarch64", "x86_64" ]
       fail-fast: false
 
     name: "Build for ${{matrix.arch}}"
@@ -48,8 +48,9 @@ jobs:
             --prefix=/tmp/mesa \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
-            -Dplatform-sdk-version=26 \
+            -Dplatform-sdk-version=33 \
             -Dandroid-stub=true \
+            -Dandroid-strict=false \
             -Dllvm=disabled \
             -Dxlib-lease=disabled \
             -Degl=disabled \
@@ -57,9 +58,9 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers= \
-            -Dgallium-drivers=freedreno,zink \
-            -Dfreedreno-kmds=kgsl \
+            -Dvulkan-drivers=freedreno \
+            -Dgallium-drivers=freedreno,zink,swrast \
+            -Dfreedreno-kmds=kgsl,virtio \
             -Dshared-glapi=false \
             -Dbuildtype=release
           ninja -C "build-android" install
