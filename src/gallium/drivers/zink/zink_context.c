@@ -3285,13 +3285,13 @@ static void
 reapply_color_write(struct zink_context *ctx)
 {
    struct zink_screen *screen = zink_screen(ctx->base.screen);
-   assert(screen->info.have_EXT_color_write_enable);
+   if(!screen->info.have_EXT_color_write_enable) return;
    const VkBool32 enables[PIPE_MAX_COLOR_BUFS] = {1, 1, 1, 1, 1, 1, 1, 1};
    const VkBool32 disables[PIPE_MAX_COLOR_BUFS] = {0};
    const unsigned max_att = MIN2(PIPE_MAX_COLOR_BUFS, screen->info.props.limits.maxColorAttachments);
    VKCTX(CmdSetColorWriteEnableEXT)(ctx->batch.state->cmdbuf, max_att, ctx->disable_color_writes ? disables : enables);
    VKCTX(CmdSetColorWriteEnableEXT)(ctx->batch.state->reordered_cmdbuf, max_att, enables);
-   assert(screen->info.have_EXT_extended_dynamic_state);
+   if(!screen->info.have_EXT_extended_dynamic_state) return;
    if (ctx->dsa_state)
       VKCTX(CmdSetDepthWriteEnableEXT)(ctx->batch.state->cmdbuf, ctx->disable_color_writes ? VK_FALSE : ctx->dsa_state->hw_state.depth_write);
 }
