@@ -675,7 +675,7 @@ zink_create_gfx_pipeline_input(struct zink_screen *screen,
    VkPipelineInputAssemblyStateCreateInfo primitive_state = {0};
    primitive_state.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
    primitive_state.topology = primitive_topology;
-   assert(screen->info.have_EXT_extended_dynamic_state2);
+   if(!screen->info.have_EXT_extended_dynamic_state2) return NULL;
 
    VkDynamicState dynamicStateEnables[30];
    unsigned state_count = 0;
@@ -718,7 +718,7 @@ zink_create_gfx_pipeline_input(struct zink_screen *screen,
 static VkPipeline
 create_gfx_pipeline_library(struct zink_screen *screen, struct zink_shader_object *objs, unsigned stage_mask, VkPipelineLayout layout, VkPipelineCache pipeline_cache)
 {
-   assert(screen->info.have_EXT_extended_dynamic_state && screen->info.have_EXT_extended_dynamic_state2);
+   if(!(screen->info.have_EXT_extended_dynamic_state && screen->info.have_EXT_extended_dynamic_state2)) return NULL;
    VkPipelineRenderingCreateInfo rendering_info;
    rendering_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
    rendering_info.pNext = NULL;

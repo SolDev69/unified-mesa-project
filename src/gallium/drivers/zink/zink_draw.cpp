@@ -539,7 +539,7 @@ zink_draw(struct pipe_context *pctx,
          zink_batch_reference_resource_rw(batch, zink_resource(index_buffer), false);
       }
       assert(index_size <= 4 && index_size != 3);
-      assert(index_size != 1 || screen->info.have_EXT_index_type_uint8);
+      if(!(index_size != 1 || screen->info.have_EXT_index_type_uint8)) return;
    }
 
    ctx->was_line_loop = dinfo->was_line_loop;

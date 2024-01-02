@@ -976,9 +976,10 @@ zink_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 
    case PIPE_CAP_MAX_SHADER_BUFFER_SIZE_UINT:
       /* 1<<27 is required by VK spec */
-      assert(screen->info.props.limits.maxStorageBufferRange >= 1 << 27);
       /* clamp to VK spec minimum */
-      return MIN2(get_smallest_buffer_heap(screen), screen->info.props.limits.maxStorageBufferRange);
+      if(screen->info.props.limits.maxStorageBufferRange >= 1 << 27)
+         return MIN2(get_smallest_buffer_heap(screen), screen->info.props.limits.maxStorageBufferRange);
+      return 0;
 
    case PIPE_CAP_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
@@ -1197,10 +1198,11 @@ zink_get_shader_param(struct pipe_screen *pscreen,
 
    case PIPE_SHADER_CAP_MAX_CONST_BUFFER0_SIZE:
       /* At least 16384 is guaranteed by VK spec */
-      assert(screen->info.props.limits.maxUniformBufferRange >= 16384);
       /* but Gallium can't handle values that are too big */
-      return MIN3(get_smallest_buffer_heap(screen),
+      if(screen->info.props.limits.maxUniformBufferRange >= 16384)
+         return MIN3(get_smallest_buffer_heap(screen),
                   screen->info.props.limits.maxUniformBufferRange, BITFIELD_BIT(31));
+      return 0;
 
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
       return  MIN2(screen->info.props.limits.maxPerStageDescriptorUniformBuffers,
@@ -2765,8 +2767,10 @@ init_driver_workarounds(struct zink_screen *screen)
 
    if (screen->info.driver_props.driverID ==
        VK_DRIVER_ID_IMAGINATION_PROPRIETARY) {
-      assert(screen->info.feats.features.geometryShader);
-      screen->driver_workarounds.no_linesmooth = true;
+      if(!screen->info.feats.features.geometryShader)
+         screen->driver_workarounds.no_linesmooth = true;
+      else
+         screen->driver_workarounds.no_linesmooth = false;
    }
 
    /* This is a workarround for the lack of
