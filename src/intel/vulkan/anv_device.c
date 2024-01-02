@@ -226,6 +226,7 @@ get_device_extensions(const struct anv_physical_device *device,
       .KHR_buffer_device_address             = true,
       .KHR_calibrated_timestamps             = device->has_reg_timestamp,
       .KHR_copy_commands2                    = true,
+      .KHR_cooperative_matrix                = anv_has_cooperative_matrix(device),
       .KHR_create_renderpass2                = true,
       .KHR_dedicated_allocation              = true,
       .KHR_deferred_host_operations          = true,
@@ -862,6 +863,9 @@ get_features(const struct anv_physical_device *pdevice,
       .nestedCommandBuffer = true,
       .nestedCommandBufferRendering = true,
       .nestedCommandBufferSimultaneousUse = false,
+
+      /* VK_KHR_cooperative_matrix */
+      .cooperativeMatrix = anv_has_cooperative_matrix(pdevice),
    };
 
    /* The new DOOM and Wolfenstein games require depthBounds without
@@ -1319,6 +1323,9 @@ get_properties(const struct anv_physical_device *pdevice,
       .sparseResidencyStandard3DBlockShape = has_sparse_or_fake,
       .sparseResidencyAlignedMipSize = false,
       .sparseResidencyNonResidentStrict = has_sparse_or_fake,
+
+      /* VK_KHR_cooperative_matrix */
+      .cooperativeMatrixSupportedStages = VK_SHADER_STAGE_COMPUTE_BIT,
    };
 
    snprintf(props->deviceName, sizeof(props->deviceName),
@@ -2239,6 +2246,9 @@ anv_physical_device_try_create(struct vk_instance *vk_instance,
    device->generated_indirect_draws =
       debug_get_bool_option("ANV_ENABLE_GENERATED_INDIRECT_DRAWS",
                             true);
+
+   device->has_cooperative_matrix =
+      device->info.cooperative_matrix_configurations[0].scope != SCOPE_NONE;
 
    unsigned st_idx = 0;
 
@@ -5126,4 +5136,107 @@ anv_device_get_pat_entry(struct anv_device *device,
       return &device->info->pat.writeback_incoherent;
    else
       return &device->info->pat.writecombining;
+}
+
+static VkComponentTypeKHR
+convert_component_type(enum intel_cooperative_matrix_component_type t)
+{
+   switch (t) {
+   case INTEL_CMAT_FLOAT16: return VK_COMPONENT_TYPE_FLOAT16_KHR;
+   case INTEL_CMAT_FLOAT32: return VK_COMPONENT_TYPE_FLOAT32_KHR;
+   case INTEL_CMAT_SINT32:  return VK_COMPONENT_TYPE_SINT32_KHR;
+   case INTEL_CMAT_SINT8:   return VK_COMPONENT_TYPE_SINT8_KHR;
+   case INTEL_CMAT_UINT32:  return VK_COMPONENT_TYPE_UINT32_KHR;
+   case INTEL_CMAT_UINT8:   return VK_COMPONENT_TYPE_UINT8_KHR;
+   }
+   unreachable("invalid cooperative matrix component type in configuration");
+}
+
+static VkScopeKHR
+convert_scope(mesa_scope scope)
+{
+   switch (scope) {
+   case SCOPE_DEVICE:       return VK_SCOPE_DEVICE_KHR;
+   case SCOPE_WORKGROUP:    return VK_SCOPE_WORKGROUP_KHR;
+   case SCOPE_SUBGROUP:     return VK_SCOPE_SUBGROUP_KHR;
+   case SCOPE_QUEUE_FAMILY: return VK_SCOPE_QUEUE_FAMILY_KHR;
+   default:
+      unreachable("invalid cooperative matrix scope in configuration");
+   }
+}
+
+VkResult anv_GetPhysicalDeviceCooperativeMatrixPropertiesKHR(
+   VkPhysicalDevice                            physicalDevice,
+   uint32_t*                                   pPropertyCount,
+   VkCooperativeMatrixPropertiesKHR*           pProperties)
+{
+   ANV_FROM_HANDLE(anv_physical_device, pdevice, physicalDevice);
+   const struct intel_device_info *devinfo = &pdevice->info;
+
+   assert(anv_has_cooperative_matrix(pdevice));
+
+   VK_OUTARRAY_MAKE_TYPED(VkCooperativeMatrixPropertiesKHR, out, pProperties, pPropertyCount);
+
+   for (int i = 0; i < ARRAY_SIZE(devinfo->cooperative_matrix_configurations); i++) {
+      const struct intel_cooperative_matrix_configuration *cfg =
+         &devinfo->cooperative_matrix_configurations[i];
+
+      if (cfg->scope == SCOPE_NONE)
+         break;
+
+      vk_outarray_append_typed(VkCooperativeMatrixPropertiesKHR, &out, prop) {
+         prop->sType = VK_STRUCTURE_TYPE_COOPERATIVE_MATRIX_PROPERTIES_KHR;
+
+         prop->MSize = cfg->m;
+         prop->NSize = cfg->n;
+         prop->KSize = cfg->k;
+
+         prop->AType      = convert_component_type(cfg->a);
+         prop->BType      = convert_component_type(cfg->b);
+         prop->CType      = convert_component_type(cfg->c);
+         prop->ResultType = convert_component_type(cfg->result);
+
+         prop->saturatingAccumulation = VK_FALSE;
+         prop->scope = convert_scope(cfg->scope);
+      }
+
+      /* VUID-RuntimeSpirv-saturatingAccumulation-08983 says:
+       *
+       *    For OpCooperativeMatrixMulAddKHR, the SaturatingAccumulation
+       *    cooperative matrix operand must be present if and only if
+       *    VkCooperativeMatrixPropertiesKHR::saturatingAccumulation is
+       *    VK_TRUE.
+       *
+       * As a result, we have to advertise integer configs both with and
+       * without this flag set.
+       *
+       * The DPAS instruction does not support the .sat modifier, so only
+       * advertise the configurations when the DPAS would be lowered.
+       *
+       * FINISHME: It should be possible to do better than full lowering on
+       * platforms that support DPAS. Emit a DPAS with a NULL accumulator
+       * argument, then perform the correct sequence of saturating add
+       * instructions.
+       */
+      if (cfg->a != INTEL_CMAT_FLOAT16 &&
+          (devinfo->verx10 < 125 || debug_get_bool_option("INTEL_LOWER_DPAS", false))) {
+         vk_outarray_append_typed(VkCooperativeMatrixPropertiesKHR, &out, prop) {
+            prop->sType = VK_STRUCTURE_TYPE_COOPERATIVE_MATRIX_PROPERTIES_KHR;
+
+            prop->MSize = cfg->m;
+            prop->NSize = cfg->n;
+            prop->KSize = cfg->k;
+
+            prop->AType      = convert_component_type(cfg->a);
+            prop->BType      = convert_component_type(cfg->b);
+            prop->CType      = convert_component_type(cfg->c);
+            prop->ResultType = convert_component_type(cfg->result);
+
+            prop->saturatingAccumulation = VK_TRUE;
+            prop->scope = convert_scope(cfg->scope);
+         }
+      }
+   }
+
+   return vk_outarray_status(&out);
 }

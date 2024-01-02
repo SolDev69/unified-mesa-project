@@ -574,7 +574,8 @@ private:
 namespace brw {
    fs_reg
    fetch_payload_reg(const brw::fs_builder &bld, uint8_t regs[2],
-                     brw_reg_type type = BRW_REGISTER_TYPE_F);
+                     brw_reg_type type = BRW_REGISTER_TYPE_F,
+                     unsigned n = 1);
 
    fs_reg
    fetch_barycentric_reg(const brw::fs_builder &bld, uint8_t regs[2]);
@@ -624,6 +625,8 @@ void brw_emit_predicate_on_sample_mask(const brw::fs_builder &bld, fs_inst *inst
 
 int brw_get_subgroup_id_param_index(const intel_device_info *devinfo,
                                     const brw_stage_prog_data *prog_data);
+
+bool brw_lower_dpas(fs_visitor &v);
 
 void nir_to_brw(fs_visitor *s);
 

@@ -5999,6 +5999,9 @@ emit_compute_walker(struct anv_cmd_buffer *cmd_buffer,
          .MessageSIMD                    = dispatch.simd_size / 16,
          .IndirectDataStartAddress       = comp_state->push_data.offset,
          .IndirectDataLength             = comp_state->push_data.alloc_size,
+#if GFX_VERx10 == 125
+         .SystolicModeEnable             = prog_data->uses_systolic,
+#endif
          .LocalXMaximum                  = prog_data->local_size[0] - 1,
          .LocalYMaximum                  = prog_data->local_size[1] - 1,
          .LocalZMaximum                  = prog_data->local_size[2] - 1,
@@ -6812,14 +6815,23 @@ genX(CmdTraceRaysIndirect2KHR)(
  * flush_pipeline_select()
  */
 void
-genX(emit_pipeline_select)(struct anv_batch *batch, uint32_t pipeline)
+genX(emit_pipeline_select)(struct anv_batch *batch, uint32_t pipeline,
+                           const struct anv_device *device)
 {
    anv_batch_emit(batch, GENX(PIPELINE_SELECT), ps) {
-      ps.MaskBits = GFX_VER == 12 ? 0x13 : 0x3;
+      ps.MaskBits = GFX_VERx10 >= 125 ? 0x93 : GFX_VER >= 12 ? 0x13 : 0x3;
 #if GFX_VER == 12
       ps.MediaSamplerDOPClockGateEnable = true;
 #endif
       ps.PipelineSelection = pipeline;
+#if GFX_VERx10 == 125
+      /* It might still be better to only enable this when the compute
+       * pipeline will have DPAS instructions.
+       */
+      ps.SystolicModeEnable = pipeline == GPGPU &&
+         device->vk.enabled_extensions.KHR_cooperative_matrix &&
+         device->vk.enabled_features.cooperativeMatrix;
+#endif
    }
 }
 
@@ -6969,7 +6981,7 @@ genX(flush_pipeline_select)(struct anv_cmd_buffer *cmd_buffer,
    }
 #endif
 
-   genX(emit_pipeline_select)(&cmd_buffer->batch, pipeline);
+   genX(emit_pipeline_select)(&cmd_buffer->batch, pipeline, cmd_buffer->device);
 
 #if GFX_VER == 9
    if (devinfo->platform == INTEL_PLATFORM_GLK) {

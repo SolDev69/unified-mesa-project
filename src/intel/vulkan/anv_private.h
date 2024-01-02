@@ -1036,6 +1036,9 @@ struct anv_physical_device {
 
     bool                                        uses_relocs;
 
+    /** Can the platform support cooperative matrices and is it enabled? */
+    bool                                        has_cooperative_matrix;
+
     struct {
       uint32_t                                  family_count;
       struct anv_queue_family                   families[ANV_MAX_QUEUE_FAMILIES];
@@ -5804,6 +5807,11 @@ static inline void anv_perfetto_end_submit(struct anv_queue *queue,
 {}
 #endif
 
+static bool
+anv_has_cooperative_matrix(const struct anv_physical_device *device)
+{
+   return device->has_cooperative_matrix;
+}
 
 #define ANV_FROM_HANDLE(__anv_type, __name, __handle) \
    VK_FROM_HANDLE(__anv_type, __name, __handle)

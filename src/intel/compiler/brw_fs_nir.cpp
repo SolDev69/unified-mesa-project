@@ -283,10 +283,15 @@ emit_system_values_block(nir_to_brw_state &ntb, nir_block *block)
 
             for (unsigned i = 0; i < DIV_ROUND_UP(s.dispatch_width, 16); i++) {
                const fs_builder hbld = abld.group(MIN2(16, s.dispatch_width), i);
+               /* According to the "PS Thread Payload for Normal
+                * Dispatch" pages on the BSpec, the dispatch mask is
+                * stored in R0.15/R1.15 on gfx20+ and in R1.7/R2.7 on
+                * gfx6+.
+                */
+               const struct brw_reg reg = s.devinfo->ver >= 20 ?
+                  xe2_vec1_grf(i, 15) : brw_vec1_grf(i + 1, 7);
                hbld.SHR(offset(shifted, hbld, i),
-                        stride(retype(brw_vec1_grf(1 + i, 7),
-                                      BRW_REGISTER_TYPE_UB),
-                               1, 8, 0),
+                        stride(retype(reg, BRW_REGISTER_TYPE_UB), 1, 8, 0),
                         brw_imm_v(0x76543210));
             }
 
@@ -540,7 +545,29 @@ optimize_frontfacing_ternary(nir_to_brw_state &ntb,
 
    fs_reg tmp = s.vgrf(glsl_int_type());
 
-   if (devinfo->ver >= 12 && s.max_polygons == 2) {
+   if (devinfo->ver >= 20) {
+      /* Gfx20+ has separate back-facing bits for each pair of
+       * subspans in order to support multiple polygons, so we need to
+       * use a <1;8,0> region in order to select the correct word for
+       * each channel.  Unfortunately they're no longer aligned to the
+       * sign bit of a 16-bit word, so a left shift is necessary.
+       */
+      fs_reg ff = ntb.bld.vgrf(BRW_REGISTER_TYPE_UW);
+
+      for (unsigned i = 0; i < DIV_ROUND_UP(s.dispatch_width, 16); i++) {
+         const fs_builder hbld = ntb.bld.group(16, i);
+         const struct brw_reg gi_uw = retype(xe2_vec1_grf(i, 9),
+                                             BRW_REGISTER_TYPE_UW);
+         hbld.SHL(offset(ff, hbld, i), stride(gi_uw, 1, 8, 0), brw_imm_ud(4));
+      }
+
+      if (value1 == -1.0f)
+         ff.negate = true;
+
+      ntb.bld.OR(subscript(tmp, BRW_REGISTER_TYPE_UW, 1), ff,
+                  brw_imm_uw(0x3f80));
+
+   } else if (devinfo->ver >= 12 && s.max_polygons == 2) {
       /* According to the BSpec "PS Thread Payload for Normal
        * Dispatch", the front/back facing interpolation bit is stored
        * as bit 15 of either the R1.1 or R1.6 poly info field, for the
@@ -3306,7 +3333,24 @@ fetch_render_target_array_index(const fs_builder &bld)
 {
    const fs_visitor *v = static_cast<const fs_visitor *>(bld.shader);
 
-   if (bld.shader->devinfo->ver >= 12 && v->max_polygons == 2) {
+   if (bld.shader->devinfo->ver >= 20) {
+      /* Gfx20+ has separate Render Target Array indices for each pair
+       * of subspans in order to support multiple polygons, so we need
+       * to use a <1;8,0> region in order to select the correct word
+       * for each channel.
+       */
+      const fs_reg idx = bld.vgrf(BRW_REGISTER_TYPE_UD);
+
+      for (unsigned i = 0; i < DIV_ROUND_UP(bld.dispatch_width(), 16); i++) {
+         const fs_builder hbld = bld.group(16, i);
+         const struct brw_reg reg = retype(brw_vec1_grf(2 * i + 1, 1),
+                                           BRW_REGISTER_TYPE_UW);
+         hbld.AND(offset(idx, hbld, i), stride(reg, 1, 8, 0),
+                  brw_imm_uw(0x7ff));
+      }
+
+      return idx;
+   } else if (bld.shader->devinfo->ver >= 12 && v->max_polygons == 2) {
       /* According to the BSpec "PS Thread Payload for Normal
        * Dispatch", the render target array index is stored as bits
        * 26:16 of either the R1.1 or R1.6 poly info dwords, for the
@@ -3591,7 +3635,24 @@ emit_frontfacing_interpolation(nir_to_brw_state &ntb)
 
    fs_reg ff = bld.vgrf(BRW_REGISTER_TYPE_D);
 
-   if (devinfo->ver >= 12 && s.max_polygons == 2) {
+   if (devinfo->ver >= 20) {
+      /* Gfx20+ has separate back-facing bits for each pair of
+       * subspans in order to support multiple polygons, so we need to
+       * use a <1;8,0> region in order to select the correct word for
+       * each channel.
+       */
+      const fs_reg tmp = bld.vgrf(BRW_REGISTER_TYPE_UW);
+
+      for (unsigned i = 0; i < DIV_ROUND_UP(s.dispatch_width, 16); i++) {
+         const fs_builder hbld = bld.group(16, i);
+         const struct brw_reg gi_uw = retype(xe2_vec1_grf(i, 9),
+                                             BRW_REGISTER_TYPE_UW);
+         hbld.AND(offset(tmp, hbld, i), gi_uw, brw_imm_uw(0x800));
+      }
+
+      bld.CMP(ff, tmp, brw_imm_uw(0), BRW_CONDITIONAL_Z);
+
+   } else if (devinfo->ver >= 12 && s.max_polygons == 2) {
       /* According to the BSpec "PS Thread Payload for Normal
        * Dispatch", the front/back facing interpolation bit is stored
        * as bit 15 of either the R1.1 or R1.6 poly info field, for the
@@ -3764,9 +3825,14 @@ emit_sampleid_setup(nir_to_brw_state &ntb)
 
       for (unsigned i = 0; i < DIV_ROUND_UP(s.dispatch_width, 16); i++) {
          const fs_builder hbld = abld.group(MIN2(16, s.dispatch_width), i);
+         /* According to the "PS Thread Payload for Normal Dispatch"
+          * pages on the BSpec, the sample ids are stored in R0.8/R1.8
+          * on gfx20+ and in R1.0/R2.0 on gfx8+.
+          */
+         const struct brw_reg id_reg = devinfo->ver >= 20 ? xe2_vec1_grf(i, 8) :
+                                       brw_vec1_grf(i + 1, 0);
          hbld.SHR(offset(tmp, hbld, i),
-                  stride(retype(brw_vec1_grf(1 + i, 0), BRW_REGISTER_TYPE_UB),
-                         1, 8, 0),
+                  stride(retype(id_reg, BRW_REGISTER_TYPE_UB), 1, 8, 0),
                   brw_imm_v(0x44440000));
       }
 
@@ -4171,9 +4237,14 @@ fs_nir_emit_fs_intrinsic(nir_to_brw_state &ntb,
                     retype(s.per_primitive_reg(bld, base, comp + i), dest.type));
          }
       } else {
+         /* Gfx20+ packs the plane parameters of a single logical
+          * input in a vec3 format instead of the previously used vec4
+          * format.
+          */
+         const unsigned k = devinfo->ver >= 20 ? 0 : 3;
          for (unsigned int i = 0; i < num_components; i++) {
             bld.MOV(offset(dest, bld, i),
-                    retype(s.interp_reg(bld, base, comp + i, 3), dest.type));
+                    retype(s.interp_reg(bld, base, comp + i, k), dest.type));
          }
       }
       break;
@@ -4185,9 +4256,21 @@ fs_nir_emit_fs_intrinsic(nir_to_brw_state &ntb,
       const unsigned base = nir_intrinsic_base(instr);
       const unsigned comp = nir_intrinsic_component(instr);
       dest.type = BRW_REGISTER_TYPE_F;
-      bld.MOV(offset(dest, bld, 0), s.interp_reg(bld, base, comp, 3));
-      bld.MOV(offset(dest, bld, 1), s.interp_reg(bld, base, comp, 1));
-      bld.MOV(offset(dest, bld, 2), s.interp_reg(bld, base, comp, 0));
+
+      /* Gfx20+ packs the plane parameters of a single logical
+       * input in a vec3 format instead of the previously used vec4
+       * format.
+       */
+      if (devinfo->ver >= 20) {
+         bld.MOV(offset(dest, bld, 0), s.interp_reg(bld, base, comp, 0));
+         bld.MOV(offset(dest, bld, 1), s.interp_reg(bld, base, comp, 2));
+         bld.MOV(offset(dest, bld, 2), s.interp_reg(bld, base, comp, 1));
+      } else {
+         bld.MOV(offset(dest, bld, 0), s.interp_reg(bld, base, comp, 3));
+         bld.MOV(offset(dest, bld, 1), s.interp_reg(bld, base, comp, 1));
+         bld.MOV(offset(dest, bld, 2), s.interp_reg(bld, base, comp, 0));
+      }
+
       break;
    }
 
@@ -4501,6 +4584,66 @@ fs_nir_emit_cs_intrinsic(nir_to_brw_state &ntb,
        * crocus/iris_setup_uniforms() for the variable group size case.
        */
       unreachable("Should have been lowered");
+      break;
+   }
+
+   case nir_intrinsic_dpas_intel: {
+      const unsigned sdepth = nir_intrinsic_systolic_depth(instr);
+      const unsigned rcount = nir_intrinsic_repeat_count(instr);
+
+      const brw_reg_type dest_type =
+         brw_type_for_nir_type(devinfo, nir_intrinsic_dest_type(instr));
+      const brw_reg_type src_type =
+         brw_type_for_nir_type(devinfo, nir_intrinsic_src_type(instr));
+
+      dest = retype(dest, dest_type);
+      fs_reg src2 = retype(get_nir_src(ntb, instr->src[2]), dest_type);
+      const fs_reg dest_hf = dest;
+
+      fs_builder bld8 = bld.exec_all().group(8, 0);
+      fs_builder bld16 = bld.exec_all().group(16, 0);
+
+      /* DG2 cannot have the destination or source 0 of DPAS be float16. It is
+       * still advantageous to support these formats for memory and bandwidth
+       * savings.
+       *
+       * The float16 source must be expanded to float32.
+       */
+      if (devinfo->verx10 == 125 && dest_type == BRW_REGISTER_TYPE_HF &&
+          !s.compiler->lower_dpas) {
+         dest = bld8.vgrf(BRW_REGISTER_TYPE_F, rcount);
+
+         if (src2.file != ARF) {
+            const fs_reg src2_hf = src2;
+
+            src2 = bld8.vgrf(BRW_REGISTER_TYPE_F, rcount);
+
+            for (unsigned i = 0; i < 4; i++) {
+               bld16.MOV(byte_offset(src2, REG_SIZE * i * 2),
+                         byte_offset(src2_hf, REG_SIZE * i));
+            }
+         } else {
+            src2 = retype(src2, BRW_REGISTER_TYPE_F);
+         }
+      }
+
+      bld8.DPAS(dest,
+                src2,
+                retype(get_nir_src(ntb, instr->src[1]), src_type),
+                retype(get_nir_src(ntb, instr->src[0]), src_type),
+                sdepth,
+                rcount)
+         ->saturate = nir_intrinsic_saturate(instr);
+
+      /* Compact the destination to float16 (from float32). */
+      if (!dest.equals(dest_hf)) {
+         for (unsigned i = 0; i < 4; i++) {
+            bld16.MOV(byte_offset(dest_hf, REG_SIZE * i),
+                      byte_offset(dest, REG_SIZE * i * 2));
+         }
+      }
+
+      cs_prog_data->uses_systolic = true;
       break;
    }
 
