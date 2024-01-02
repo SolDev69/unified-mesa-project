@@ -16,11 +16,7 @@ pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/b
 
 [host_machine]
 system = 'linux'
-# cpu_family = 'x86_64'
-# cpu = 'amd64'
-
-# ik this is wrong but workaround sanity check
-cpu_family = 'arm'
-cpu = 'armv8'
+cpu_family = 'x86_64'
+cpu = 'amd64'
 
 endian = 'little'
