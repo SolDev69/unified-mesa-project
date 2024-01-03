@@ -64,6 +64,8 @@ jobs:
             -Dshared-glapi=false \
             -Dbuildtype=release
           ninja -C "build-android" install
+          cd /tmp/mesa
+          mv lib/libOSMesa.so.8.0.0 lib/libOSMesa.so -v
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
