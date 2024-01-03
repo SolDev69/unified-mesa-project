@@ -28,6 +28,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_dynarray.h"
+#include "pan_csf.h"
 #include "pan_desc.h"
 #include "pan_jm.h"
 #include "pan_mempool.h"
@@ -212,6 +213,7 @@ struct panfrost_batch {
    /* Job frontend specific fields. */
    union {
       struct panfrost_jm_batch jm;
+      struct panfrost_csf_batch csf;
    };
 };
 

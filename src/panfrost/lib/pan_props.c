@@ -71,6 +71,9 @@ const struct panfrost_model panfrost_model_list[] = {
         MODEL(0x7402, "G52 r1", "TGOx", HAS_ANISO,         16384, {}),
         MODEL(0x9091, "G57",    "TNAx", HAS_ANISO,         16384, {}),
         MODEL(0x9093, "G57",    "TNAx", HAS_ANISO,         16384, {}),
+
+        MODEL(0xa867, "G610",   "TNAx", HAS_ANISO,         16384, {}), // TODO
+        MODEL(0xac74, "G310",   "TNAx", HAS_ANISO,         16384, {}), // TODO
 };
 /* clang-format on */
 
@@ -277,8 +280,11 @@ panfrost_open_device(void *memctx, int fd, struct panfrost_device *dev)
     * active for a single job chain at once, so a single heap can be
     * shared across batches/contextes */
 
-   dev->tiler_heap = panfrost_bo_create(
-      dev, 128 * 1024 * 1024, PAN_BO_INVISIBLE | PAN_BO_GROWABLE, "Tiler heap");
+   if (dev->arch < 10) {
+      dev->tiler_heap =
+         panfrost_bo_create(dev, 128 * 1024 * 1024,
+                            PAN_BO_INVISIBLE | PAN_BO_GROWABLE, "Tiler heap");
+   }
 
    pthread_mutex_init(&dev->submit_lock, NULL);
 
@@ -299,7 +305,8 @@ panfrost_close_device(struct panfrost_device *dev)
     */
    if (dev->model) {
       pthread_mutex_destroy(&dev->submit_lock);
-      panfrost_bo_unreference(dev->tiler_heap);
+      if (dev->tiler_heap)
+         panfrost_bo_unreference(dev->tiler_heap);
       panfrost_bo_unreference(dev->sample_positions);
       panfrost_bo_cache_evict_all(dev);
       pthread_mutex_destroy(&dev->bo_cache.lock);
