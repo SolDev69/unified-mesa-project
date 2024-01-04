@@ -304,7 +304,7 @@
         "description": "anv: fix incorrect ISL usage in buffer view creation",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "64f20cec28d8df7815157dc09ba0bd33d3202a57",
         "notes": null
