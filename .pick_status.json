@@ -584,7 +584,7 @@
         "description": "intel/compiler/fs: Restore SIMD32 restriction for ray_queries on Xe2",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "96e0d979a7b9fb65a8fa88079ae779310e36ad2a",
         "notes": null
