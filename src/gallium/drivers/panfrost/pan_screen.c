@@ -899,7 +899,11 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
    else if (dev->arch == 10)
       panfrost_cmdstream_screen_init_v10(screen);
    else
-      unreachable("Unhandled architecture major");
+   {
+      printf("Unhandled architecture major\n");
+      printf("Falling back to v10\n");
+      panfrost_cmdstream_screen_init_v10(screen);
+   }
 
    return &screen->base;
 }
