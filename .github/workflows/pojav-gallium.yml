@@ -62,7 +62,7 @@ jobs:
             -Dgallium-drivers=freedreno,zink,swrast,panfrost,kmsro \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
-            -Dbuildtype=release
+            -Dbuildtype=debug
           ninja -C "build-android" install
           cd /tmp/mesa
           mv lib/libOSMesa.so.8.0.0 lib/libOSMesa.so -v
