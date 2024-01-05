@@ -880,7 +880,7 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
    panfrost_resource_screen_init(&screen->base);
    pan_blend_shaders_init(dev);
 
-   panfrost_disk_cache_init(screen);
+   //panfrost_disk_cache_init(screen);
 
    panfrost_pool_init(&screen->blitter.bin_pool, NULL, dev, PAN_BO_EXECUTE,
                       4096, "Blitter shaders", false, true);
