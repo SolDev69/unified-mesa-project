@@ -534,7 +534,7 @@
         "description": "Revert \"ci: lima farm is down\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "601b826a5ec17da99c2984eeb720bc9e0f3ffeaa",
         "notes": null
