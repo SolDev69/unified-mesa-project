@@ -694,7 +694,7 @@
         "description": "intel/brw: Fix opt_split_sends() to allow for FIXED_GRF send sources",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "589b03d02f0662553012249cbf097b63e7a03d72",
         "notes": null
