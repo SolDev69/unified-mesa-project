@@ -57,9 +57,10 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=zink,swrast \
+            -Dgallium-drivers=zink \
             -Dfreedreno-kgsl=true \
-            -Dshared-glapi=false
+            -Dshared-glapi=false \
+            -Dbuildtype=debug
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v2
