@@ -22,7 +22,7 @@ jobs:
       - name: Build
         run: |
           sudo apt update
-          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev llvm*
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
@@ -56,6 +56,7 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
+            -Dllvm=enabled \
             -Dvulkan-drivers= \
             -Dgallium-drivers=zink,swrast \
             -Dfreedreno-kgsl=true \
