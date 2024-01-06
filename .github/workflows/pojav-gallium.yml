@@ -62,7 +62,7 @@ jobs:
             -Dgallium-drivers=freedreno,zink,swrast,panfrost,kmsro \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
-            -Dbuildtype=release
+            -Dbuildtype=debug
           ninja -C "build-android" install
       - name: Upload libraries
         uses: actions/upload-artifact@v2
