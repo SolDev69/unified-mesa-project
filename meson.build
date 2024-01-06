@@ -172,7 +172,7 @@ with_any_opengl = with_opengl or with_gles1 or with_gles2
 # Only build shared_glapi if at least one OpenGL API is enabled
 with_shared_glapi = with_shared_glapi and with_any_opengl
 
-system_has_kms_drm = ['openbsd', 'netbsd', 'freebsd', 'gnu/kfreebsd', 'dragonfly', 'linux', 'sunos'].contains(host_machine.system())
+system_has_kms_drm = ['openbsd', 'netbsd', 'freebsd', 'gnu/kfreebsd', 'dragonfly', 'linux', 'sunos', 'android'].contains(host_machine.system())
 
 dri_drivers = get_option('dri-drivers')
 if dri_drivers.length() != 0
@@ -1384,7 +1384,7 @@ if not ['linux'].contains(host_machine.system())
   endif
 endif
 
-foreach h : ['xlocale.h', 'linux/futex.h', 'endian.h', 'dlfcn.h', 'sys/shm.h', 'cet.h', 'pthread_np.h']
+foreach h : ['linux/futex.h', 'endian.h', 'dlfcn.h', 'sys/shm.h', 'cet.h', 'pthread_np.h']
   if cc.check_header(h)
     pre_args += '-DHAVE_@0@'.format(h.to_upper().underscorify())
   endif
@@ -1635,13 +1635,20 @@ if with_gallium_opencl
     'linker', 'coverage', 'instrumentation', 'ipo', 'irreader',
     'lto', 'option', 'objcarcopts', 'profiledata'
   ]
-  llvm_optional_modules += ['all-targets', 'frontendopenmp']
+  # all-targets is needed to support static linking LLVM build with multiple targets
+  # windowsdriver is needded with LLVM>=15, but we don't know what LLVM verrsion we are using yet
+  llvm_optional_modules += ['all-targets', 'frontendopenmp', 'windowsdriver']
 endif
 if with_clc
   llvm_modules += ['coverage', 'target', 'linker', 'irreader', 'option', 'libdriver', 'lto']
+  # all-targets is needed to support static linking LLVM build with multiple targets
+  # windowsdriver is needded with LLVM>=15, but we don't know what LLVM verrsion we are using yet
+  llvm_optional_modules += ['all-targets', 'windowsdriver']
 endif
 if with_tests or with_gallium_softpipe
   llvm_modules += 'native'
+  # lto is needded with LLVM>=15, but we don't know what LLVM verrsion we are using yet
+  llvm_optional_modules += ['lto']
 endif
 
 if with_amd_vk or with_gallium_radeonsi
@@ -1789,6 +1796,9 @@ if with_clc
     'clangHandleCXX', 'clangHandleLLVM', 'clangSerialization',
     'clangSema', 'clangParse', 'clangEdit', 'clangAnalysis'
   ]
+  if dep_llvm.version().version_compare('>= 15.0')
+    clang_modules += 'clangSupport'
+  endif
 
   dep_clang = []
   foreach m : clang_modules

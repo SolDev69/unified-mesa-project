@@ -70,7 +70,7 @@ if with_platform_wayland
   tu_wsi = true
 endif
 
-if system_has_kms_drm and not with_platform_android
+if system_has_kms_drm and not with_platform_android and not with_freedreno_kgsl
   libtu_files += files('tu_wsi_display.c')
   tu_wsi = true
 endif

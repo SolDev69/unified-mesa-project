@@ -99,7 +99,7 @@ __getProgramName()
 #    define GET_PROGRAM_NAME() __getProgramName()
 #elif defined(HAVE_PROGRAM_INVOCATION_NAME)
 #    define GET_PROGRAM_NAME() program_invocation_short_name
-#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(ANDROID)
+#elif defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__ANDROID__)
 #    define GET_PROGRAM_NAME() getprogname()
 #elif defined(__NetBSD__)
 #    include <sys/param.h>
@@ -170,7 +170,7 @@ __getProgramName()
 #endif
 
 #if !defined(GET_PROGRAM_NAME)
-#    if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__UCLIBC__) || defined(ANDROID)
+#    if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__UCLIBC__) || defined(__ANDROID__)
 /* This is a hack. It's said to work on OpenBSD, NetBSD and GNU.
  * Rogelio M.Serrano Jr. reported it's also working with UCLIBC. It's
  * used as a last resort, if there is no documented facility available. */

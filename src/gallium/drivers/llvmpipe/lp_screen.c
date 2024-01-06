@@ -1072,7 +1072,9 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
    screen->allow_cl = !!getenv("LP_CL");
    screen->use_tgsi = (LP_DEBUG & DEBUG_TGSI_IR);
    screen->num_threads = util_get_cpu_caps()->nr_cpus > 1 ? util_get_cpu_caps()->nr_cpus : 0;
-#ifdef EMBEDDED_DEVICE
+#if defined __ANDROID__
+   screen->num_threads = 0;
+#elif defined EMBEDDED_DEVICE
    screen->num_threads = MIN2(screen->num_threads, 2);
 #endif
    screen->num_threads = debug_get_num_option("LP_NUM_THREADS", screen->num_threads);

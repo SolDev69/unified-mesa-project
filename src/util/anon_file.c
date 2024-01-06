@@ -135,6 +135,11 @@ os_create_anonymous_file(off_t size, const char *debug_name)
    char *name;
 
    path = getenv("XDG_RUNTIME_DIR");
+#ifdef __TERMUX__
+   if (!path) {
+      path = "@TERMUX_PREFIX@/tmp";
+   }
+#endif
    if (!path) {
       errno = ENOENT;
       return -1;

@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-#if defined(ANDROID) || defined(_WIN32)
+#if 1
 #define WITH_XMLCONFIG 0
 #else
 #define WITH_XMLCONFIG 1

@@ -49,6 +49,13 @@ if with_platform_wayland
   lvp_deps += dep_wayland_client
 endif
 
+if with_dri
+  lvp_flags += '-DHAVE_PIPE_LOADER_DRI'
+endif
+if with_gallium_drisw_kms
+  lvp_flags += '-DHAVE_PIPE_LOADER_KMS'
+endif
+
 liblavapipe_st = static_library(
   'lavapipe_st',
   [liblvp_files, lvp_entrypoints, lvp_commands, sha1_h],
