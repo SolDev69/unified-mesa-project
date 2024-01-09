@@ -564,7 +564,7 @@
         "description": "Revert \"ci/radeonsi: disable VA-API testing on raven\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9017852de431ebdcc3989250184d7c9fd009c89a",
         "notes": null
