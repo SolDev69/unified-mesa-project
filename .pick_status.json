@@ -1144,7 +1144,7 @@
         "description": "ci: make sure we evaluate the python-test rules first",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2c9fdaa83013ac60b55ef821d502282e297505b8",
         "notes": null
