@@ -1474,7 +1474,7 @@
         "description": "ci/deqp: ensure that in `default` builds, wayland + x11 + xcb are all built",
         "nominated": false,
         "nomination_type": 3,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
