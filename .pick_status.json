@@ -1274,7 +1274,7 @@
         "description": "intel/compiler: Disable DPAS instructions on MTL",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3756f605586fb2dcf53d892606152ecc5ce1ad1d",
         "notes": null
