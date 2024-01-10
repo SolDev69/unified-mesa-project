@@ -1484,7 +1484,7 @@
         "description": "lavapipe: use pushconstants2 for dgc",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ec656e198402a535a20e7ac31cea277b060ab75a",
         "notes": null
