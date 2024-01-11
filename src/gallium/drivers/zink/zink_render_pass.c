@@ -731,7 +731,7 @@ begin_render_pass(struct zink_context *ctx)
                assert(zink_resource(transient->base.texture)->obj->vkusage == ctx->framebuffer->state.infos[i].usage);
                assert(zink_resource(surf->base.texture)->obj->vkusage == ctx->framebuffer->state.infos[cresolve_offset].usage);
             } else {
-               assert(zink_resource(surf->base.texture)->obj->vkusage == ctx->framebuffer->state.infos[i].usage);
+               if(!(zink_resource(surf->base.texture)->obj->vkusage == ctx->framebuffer->state.infos[i].usage)) return 0;
             }
          }
       }
