@@ -83,7 +83,7 @@ zink_create_vertex_elements_state(struct pipe_context *pctx,
          enum pipe_format new_format = zink_decompose_vertex_format(elem->src_format);
          assert(new_format);
          num_decomposed++;
-         assert(screen->format_props[new_format].bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT);
+         if(!(screen->format_props[new_format].bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT)) return;
          if (util_format_get_blocksize(new_format) == 4)
             size32 |= BITFIELD_BIT(i);
          else if (util_format_get_blocksize(new_format) == 2)
