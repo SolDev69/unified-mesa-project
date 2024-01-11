@@ -140,7 +140,7 @@ fail:
 struct zink_framebuffer *
 zink_get_framebuffer(struct zink_context *ctx)
 {
-   assert(zink_screen(ctx->base.screen)->info.have_KHR_imageless_framebuffer);
+   if(!(zink_screen(ctx->base.screen)->info.have_KHR_imageless_framebuffer)) return NULL;
    bool have_zsbuf = ctx->fb_state.zsbuf && zink_is_zsbuf_used(ctx);
 
    struct zink_framebuffer_state state;

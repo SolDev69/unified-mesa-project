@@ -12,7 +12,6 @@
             "extensions": {
                 "VK_KHR_maintenance1": 1,
                 "VK_KHR_create_renderpass2": 1,
-                "VK_KHR_imageless_framebuffer": 1,
                 "VK_KHR_timeline_semaphore": 1,
                 "VK_EXT_custom_border_color": 1,
                 "VK_EXT_line_rasterization": 1,

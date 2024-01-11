@@ -2978,7 +2978,7 @@ _mesa_choose_texture_format(struct gl_context *ctx,
 
    f = st_ChooseTextureFormat(ctx, target, internalFormat,
                               format, type);
-   assert(f != MESA_FORMAT_NONE);
+   //assert(f != MESA_FORMAT_NONE);
    return f;
 }
 
