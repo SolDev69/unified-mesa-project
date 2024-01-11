@@ -3030,8 +3030,8 @@ genX(emit_hs)(struct anv_cmd_buffer *cmd_buffer)
 ALWAYS_INLINE static void
 genX(emit_ds)(struct anv_cmd_buffer *cmd_buffer)
 {
-#if GFX_VERx10 >= 125
-   /* Wa_14019750404:
+#if INTEL_NEEDS_WA_22018402687
+   /* Wa_22018402687:
     *   In any 3D enabled context, just before any Tessellation enabled draw
     *   call (3D Primitive), re-send the last programmed 3DSTATE_DS again.
     *   This will make sure that the 3DSTATE_INT generated just before the
@@ -3043,7 +3043,6 @@ genX(emit_ds)(struct anv_cmd_buffer *cmd_buffer)
     * We don't need to track said switch, as it matters at the HW level, and
     * can be triggered even across processes, so we apply the Wa at all times.
     *
-    * FIXME: Use INTEL_NEEDS_WA_14019750404 once the tool picks it up.
     */
    struct anv_graphics_pipeline *pipeline =
       anv_pipeline_to_graphics(cmd_buffer->state.gfx.base.pipeline);
@@ -3333,8 +3332,7 @@ anv_use_generated_draws(const struct anv_cmd_buffer *cmd_buffer, uint32_t count)
        anv_pipeline_has_stage(pipeline, MESA_SHADER_TESS_CTRL))
       return false;
 
-   return device->physical->generated_indirect_draws &&
-          count >= device->physical->instance->generated_indirect_threshold;
+   return count >= device->physical->instance->generated_indirect_threshold;
 }
 
 VkResult
@@ -3813,7 +3811,7 @@ genX(CmdExecuteCommands)(
                                 "Secondary cmd buffer not tracked in VF cache");
    }
 
-#if INTEL_NEEDS_WA_16014538804
+#if INTEL_WA_16014538804_GFX_VER
    if (anv_cmd_buffer_is_render_queue(container) &&
        intel_needs_workaround(device->info, 16014538804))
       anv_batch_emit(&container->batch, GENX(PIPE_CONTROL), pc);
@@ -6818,6 +6816,8 @@ void
 genX(emit_pipeline_select)(struct anv_batch *batch, uint32_t pipeline,
                            const struct anv_device *device)
 {
+   /* Bspec 55860: Xe2+ no longer requires PIPELINE_SELECT */
+#if GFX_VER < 20
    anv_batch_emit(batch, GENX(PIPELINE_SELECT), ps) {
       ps.MaskBits = GFX_VERx10 >= 125 ? 0x93 : GFX_VER >= 12 ? 0x13 : 0x3;
 #if GFX_VER == 12
@@ -6833,6 +6833,7 @@ genX(emit_pipeline_select)(struct anv_batch *batch, uint32_t pipeline,
          device->vk.enabled_features.cooperativeMatrix;
 #endif
    }
+#endif /* if GFX_VER < 20 */
 }
 
 static void
@@ -6843,6 +6844,14 @@ genX(flush_pipeline_select)(struct anv_cmd_buffer *cmd_buffer,
 
    if (cmd_buffer->state.current_pipeline == pipeline)
       return;
+
+#if GFX_VER >= 20
+   /* Since we are not stalling/flushing caches explicitly while switching
+    * between the pipelines, we need to apply data dependency flushes recorded
+    * previously on the resource.
+    */
+   genX(cmd_buffer_apply_pipe_flushes)(cmd_buffer);
+#else
 
 #if GFX_VER == 9
    /* From the Broadwell PRM, Volume 2a: Instructions, PIPELINE_SELECT:
@@ -6999,7 +7008,7 @@ genX(flush_pipeline_select)(struct anv_cmd_buffer *cmd_buffer,
       }
    }
 #endif
-
+#endif /* else of if GFX_VER >= 20 */
    cmd_buffer->state.current_pipeline = pipeline;
 }
 
@@ -8397,7 +8406,7 @@ void genX(CmdBindIndexBuffer2KHR)(
       cmd_buffer->state.gfx.index_buffer = buffer;
       cmd_buffer->state.gfx.index_type = vk_to_intel_index_type(indexType);
       cmd_buffer->state.gfx.index_offset = offset;
-      cmd_buffer->state.gfx.index_size = vk_buffer_range(&buffer->vk, offset, size);
+      cmd_buffer->state.gfx.index_size = buffer ? vk_buffer_range(&buffer->vk, offset, size) : 0;
       cmd_buffer->state.gfx.dirty |= ANV_CMD_DIRTY_INDEX_BUFFER;
    }
 }
@@ -8590,7 +8599,7 @@ genX(batch_emit_post_3dprimitive_was)(struct anv_batch *batch,
                                       uint32_t primitive_topology,
                                       uint32_t vertex_count)
 {
-#if INTEL_NEEDS_WA_22014412737 || INTEL_NEEDS_WA_16014538804
+#if INTEL_WA_22014412737_GFX_VER || INTEL_WA_16014538804_GFX_VER
    if (intel_needs_workaround(device->info, 22014412737) &&
        (primitive_topology == _3DPRIM_POINTLIST ||
         primitive_topology == _3DPRIM_LINELIST ||
