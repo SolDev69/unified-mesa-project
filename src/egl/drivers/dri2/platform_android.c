@@ -100,11 +100,9 @@ droid_create_image_from_native_buffer(_EGLDisplay *disp,
    /* May fail in some cases, defaults will be used in that case */
    u_gralloc_get_buffer_color_info(dri2_dpy->gralloc, &gr_handle, &color_info);
 
-   if (!img && !kgsl_window_buffer_get_buffer_info(dri2_dpy, buf, &buf_info))
-      img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
+   img = droid_create_image_from_buffer_info(dri2_dpy, buf->width, buf->height,
+                                             &buf_info, &color_info, priv);
 
-   if (!img && !native_window_buffer_get_buffer_info(dri2_dpy, buf, &buf_info))
-      img = droid_create_image_from_buffer_info(dri2_dpy, &buf_info, priv);
 
    if (!img) {
       /* If dri driver is gallium virgl, real modifier info queried back from
