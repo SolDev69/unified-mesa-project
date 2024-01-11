@@ -734,7 +734,7 @@
         "description": "radv: Recompute max_waves after postprocessing RT config",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "533ec9843e466e0cadf876a39d6fac74db2bdcd6",
         "notes": null
