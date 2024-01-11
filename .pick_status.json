@@ -124,7 +124,7 @@
         "description": "nir: Mark nir_intrinsic_load_global_block_intel as divergent",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9f44a264623461c98368185b023d99446676e039",
         "notes": null
