@@ -314,7 +314,7 @@
         "description": "anv: Fix PAT entry for userptr in integrated GPUs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "060439bdf0e74f0f2e255d0a81b5356f9a2f5457",
         "notes": null
