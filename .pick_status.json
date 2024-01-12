@@ -674,7 +674,7 @@
         "description": "ci: fix job dependency error in MRs for bin/ci/* scripts",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f298a0e7092addb9db5ab14c9085cd5a0f54fa1d",
         "notes": null
