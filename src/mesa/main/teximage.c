@@ -2971,7 +2971,7 @@ _mesa_choose_texture_format(struct gl_context *ctx,
           prevImage->Width > 0 &&
           prevImage->InternalFormat == internalFormat) {
          /* use the same format */
-         assert(prevImage->TexFormat != MESA_FORMAT_NONE);
+         //assert(prevImage->TexFormat != MESA_FORMAT_NONE);
          return prevImage->TexFormat;
       }
    }
@@ -3211,7 +3211,7 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
                                               internalFormat, format, type);
    }
 
-   assert(texFormat != MESA_FORMAT_NONE);
+   if(texFormat == MESA_FORMAT_NONE) return;
 
    if (!no_error) {
       /* check that width, height, depth are legal for the mipmap level */
@@ -4580,7 +4580,7 @@ copyteximage(struct gl_context *ctx, GLuint dims, struct gl_texture_object *texO
       }
    }
 
-   assert(texFormat != MESA_FORMAT_NONE);
+   if(texFormat == MESA_FORMAT_NONE) return;
 
    if (!st_TestProxyTexImage(ctx, proxy_target(target),
                              0, level, texFormat, 1,
@@ -7048,7 +7048,7 @@ texture_image_multisample(struct gl_context *ctx, GLuint dims,
 
    texFormat = _mesa_choose_texture_format(ctx, texObj, target, 0,
          internalformat, GL_NONE, GL_NONE);
-   assert(texFormat != MESA_FORMAT_NONE);
+   if(texFormat == MESA_FORMAT_NONE) return;
 
    dimensionsOK = _mesa_legal_texture_dimensions(ctx, target, 0,
          width, height, depth, 0);
