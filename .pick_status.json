@@ -754,7 +754,7 @@
         "description": "ci/deqp: uprev deqp-runner for Linux too to 0.18.0",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1ff4687e866043f938fa5d4b14f79393b8361ec7",
         "notes": null
