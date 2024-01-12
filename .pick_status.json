@@ -484,7 +484,7 @@
         "description": "venus: populate oom from ring submit alloc failures",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ec131c6e55313d5816a4d69e5a828d7e56965e3d",
         "notes": null
