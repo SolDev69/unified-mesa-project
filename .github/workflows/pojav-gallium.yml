@@ -57,7 +57,7 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=zink \
+            -Dgallium-drivers=zink,virgl,freedreno \
             -Dfreedreno-kgsl=true \
             -Dshared-glapi=false \
             -Dbuildtype=debug
