@@ -1,0 +1,36 @@
+diff a/src/gallium/drivers/virgl/virgl_screen.c b/src/gallium/drivers/virgl/virgl_screen.c	(rejected hunks)
+@@ -898,17 +898,23 @@ static struct disk_cache *virgl_get_disk_shader_cache (struct pipe_screen *pscre
+ 
+ static void virgl_disk_cache_create(struct virgl_screen *screen)
+ {
+-   const struct build_id_note *note =
+-      build_id_find_nhdr_for_addr(virgl_disk_cache_create);
+-   assert(note && build_id_length(note) == 20); /* sha1 */
+-
+-   const uint8_t *id_sha1 = build_id_data(note);
+-   assert(id_sha1);
+-
+-   char timestamp[41];
+-   _mesa_sha1_format(timestamp, id_sha1);
+-
+-   screen->disk_cache = disk_cache_create("virgl", timestamp, 0);
++//#ifndef __APPLE__
++//   const struct build_id_note *note =
++//      build_id_find_nhdr_for_addr(virgl_disk_cache_create);
++//   assert(note && build_id_length(note) == 20); /* sha1 */
++//
++//   const uint8_t *id_sha1 = build_id_data(note);
++//   assert(id_sha1);
++//
++//   char timestamp[41];
++//   _mesa_sha1_format(timestamp, id_sha1);
++//
++//   screen->disk_cache = disk_cache_create("virgl", timestamp, 0);
++//#else
++//   screen->disk_cache = disk_cache_create("virgl", "??? (build_id unimplemented)", 0);
++//#endif
++
++   screen->disk_cache = disk_cache_create("virgl", "unknown", 0);
+ }
+ 
+ static void

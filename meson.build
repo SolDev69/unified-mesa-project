@@ -293,7 +293,8 @@ with_libclc = with_clc
 with_spirv_to_dxil = get_option('spirv-to-dxil')
 
 if host_machine.system() == 'darwin'
-  with_dri_platform = 'apple'
+  # with_dri_platform = 'apple'
+  with_dri_platform = 'none'
   pre_args += '-DBUILDING_MESA'
 elif ['windows', 'cygwin'].contains(host_machine.system())
   with_dri_platform = 'windows'
@@ -1608,7 +1609,7 @@ with_gallium_drisw_kms = false
 dep_libdrm = dependency(
   'libdrm', version : '>=' + _drm_ver,
   # GNU/Hurd includes egl_dri2, without drm.
-  required : (with_dri2 and host_machine.system() != 'gnu') or with_dri3
+  required : not with_platform_android and ((with_dri2 and host_machine.system() != 'gnu') or with_dri3)
 )
 if dep_libdrm.found()
   pre_args += '-DHAVE_LIBDRM'
@@ -2015,7 +2016,7 @@ if host_machine.cpu_family() == 'x86_64' and cc.get_id() == 'gcc'
   endif
 endif
 
-if with_platform_x11
+if with_platform_x11 and host_machine.system() != 'darwin'
   if with_glx == 'xlib' or with_glx == 'gallium-xlib'
     dep_x11 = dependency('x11')
     dep_xext = dependency('xext')

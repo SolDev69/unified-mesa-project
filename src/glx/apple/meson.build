@@ -48,7 +48,7 @@ files_libappleglx = files(
 
 dep_xplugin = null_dep
 if with_dri_platform == 'apple'
-  dep_xplugin = meson.get_compiler('c').find_library('Xplugin')
+  # dep_xplugin = meson.get_compiler('c').find_library('Xplugin')
 endif
 
 libappleglx = static_library(

@@ -2108,8 +2108,10 @@ zink_internal_create_screen(const struct pipe_screen_config *config)
    zink_internal_setup_moltenvk(screen);
 
    screen->dev = zink_create_logical_device(screen);
-   if (!screen->dev)
+   if (!screen->dev) {
+      debug_printf("ZINK: failed to init: no logical device\n");
       goto fail;
+   }
 
    init_queue(screen);
    if (screen->info.driver_props.driverID == VK_DRIVER_ID_MESA_RADV ||

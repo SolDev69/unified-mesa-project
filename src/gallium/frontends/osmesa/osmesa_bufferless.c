@@ -399,13 +399,13 @@ osmesa_st_framebuffer_flush_front(struct st_context_iface *stctx,
    else
       dst_stride = bpp * osbuffer->width;
 
-   osmesa_read_buffer(osmesa, res, osbuffer->map, dst_stride, osmesa->y_up);
+//   osmesa_read_buffer(osmesa, res, osbuffer->map, dst_stride, osmesa->y_up);
 
    /* If the user has requested the Z/S buffer, then snapshot that one too. */
-   if (osmesa->zs) {
-      osmesa_read_buffer(osmesa, osbuffer->textures[ST_ATTACHMENT_DEPTH_STENCIL],
-                         osmesa->zs, osmesa->zs_stride, true);
-   }
+//   if (osmesa->zs) {
+//      osmesa_read_buffer(osmesa, osbuffer->textures[ST_ATTACHMENT_DEPTH_STENCIL],
+//                         osmesa->zs, osmesa->zs_stride, true);
+//   }
 
    return true;
 }
@@ -807,11 +807,8 @@ OSMesaMakeCurrent(OSMesaContext osmesa, void *buffer, GLenum type,
    if (osmesa->current_buffer &&
        (osmesa->current_buffer->visual.color_format != color_format ||
         osmesa->current_buffer->visual.depth_stencil_format != osmesa->depth_stencil_format ||
-        osmesa->current_buffer->visual.accum_format != osmesa->accum_format ||
-        osmesa->current_buffer->width != width ||
-        osmesa->current_buffer->height != height)) {
+        osmesa->current_buffer->visual.accum_format != osmesa->accum_format)) {
       osmesa_destroy_buffer(osmesa->current_buffer);
-      osmesa->current_buffer = NULL;
    }
 
    if (!osmesa->current_buffer) {

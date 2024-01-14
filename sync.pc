@@ -1,0 +1,4 @@
+Name: sync
+Description: Android libsync library
+Version: 1.0
+Libs:

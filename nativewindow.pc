@@ -1,0 +1,4 @@
+Name: nativewindow
+Description: Android libnativewindow library
+Version: 1.0
+Libs:

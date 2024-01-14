@@ -42,7 +42,8 @@
 extern "C" {
 #endif
 
-#ifdef ANDROID
+//#ifdef ANDROID
+#if ANDROID_API_LEVEL >= 26
 /* On Android, rely on the system's libsync instead of rolling our own
  * sync_wait() and sync_merge().  This gives us compatibility with pre-4.7
  * Android kernels.

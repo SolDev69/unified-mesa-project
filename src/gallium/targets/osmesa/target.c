@@ -20,7 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+#include <stdio.h>
+ 
 #include "target-helpers/inline_sw_helper.h"
 #include "target-helpers/inline_debug_helper.h"
 
@@ -41,16 +42,20 @@ osmesa_create_screen(void)
     * driver resources.
     */
    winsys = null_sw_create();
-   if (!winsys)
+   if (!winsys) {
+      printf("OSMESA_TARGET: winsys is null\n");
       return NULL;
+   }
 
    /* Create llvmpipe or softpipe screen */
    screen = sw_screen_create(winsys);
    if (!screen) {
+      printf("OSMESA_TARGET: generated screen is null\n");
       winsys->destroy(winsys);
       return NULL;
    }
 
+   printf("OSMESA_TARGET: screen=%p\n",screen);
    /* Inject optional trace, debug, etc. wrappers */
    return debug_screen_wrap(screen);
 }

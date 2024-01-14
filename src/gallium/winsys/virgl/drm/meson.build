@@ -18,9 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#   'virgl_drm_winsys.c',
 libvirgldrm = static_library(
   'virgldrm',
-  'virgl_drm_winsys.c',
+  'empty.c',
   include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_gallium_drivers, inc_virtio],
   dependencies : [dep_libdrm, dep_libvirglcommon, idep_mesautil],
   gnu_symbol_visibility : 'hidden',

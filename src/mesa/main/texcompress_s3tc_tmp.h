@@ -25,7 +25,7 @@
 #ifndef TEXCOMPRESS_S3TC_TMP_H
 #define TEXCOMPRESS_S3TC_TMP_H
 
-#ifdef __APPLE__
+#ifdef __APPLE___COMMENTED_OUT
 #include <OpenGL/gl.h>
 #else
 #include <GL/gl.h>

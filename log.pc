@@ -1,0 +1,4 @@
+Name: log
+Description: Android liblog library
+Version: 1.0
+Libs: -llog
