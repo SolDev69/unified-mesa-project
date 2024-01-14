@@ -34,7 +34,7 @@
         "description": "intel/disasm: Remove duplicate variable reg_file",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1c92dad5cb7f5d46dfaf56d2f9ce0203c2fbefbe",
         "notes": null
