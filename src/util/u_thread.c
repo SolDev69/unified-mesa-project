@@ -174,7 +174,7 @@ util_thread_get_time_nano(thrd_t thread)
 #endif
 }
 
-#if defined(HAVE_PTHREAD) && !defined(__APPLE__) && !defined(__HAIKU__)
+#if defined(HAVE_PTHREAD) && !defined(__APPLE__) && !defined(__HAIKU__) && !defined(__ANDROID__)
 
 void util_barrier_init(util_barrier *barrier, unsigned count)
 {
