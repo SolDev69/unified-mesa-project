@@ -1,4 +1,0 @@
-Name: vulkan
-Description: MoltenVK library
-Version: 1.2
-Libs: -L/Users/runner/work/mesa/mesa/ext -lMoltenVK

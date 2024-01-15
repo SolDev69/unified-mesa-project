@@ -93,7 +93,6 @@ st_glFlush(struct gl_context *ctx, unsigned gallium_flush_flags)
     */
    st_flush(st, NULL, gallium_flush_flags);
 
-   if (st->iface.should_flush_frontbuffer)
    st_manager_flush_frontbuffer(st);
 }
 
@@ -104,7 +103,6 @@ st_glFinish(struct gl_context *ctx)
 
    st_finish(st);
 
-   if (st->iface.should_flush_frontbuffer)
    st_manager_flush_frontbuffer(st);
 }
 

@@ -162,7 +162,6 @@ create_st_manager(void)
    }
 
    stapi = st_gl_api_create();
-   debug_printf("OSMESA: stmgr=%p; stapi=%p\n",stmgr,stapi);
 }
 
 /**
@@ -702,31 +701,6 @@ OSMesaCreateContextAttribs(const int *attribList, OSMesaContext sharelist)
    osmesa->stctx = stapi->create_context(stapi, get_st_manager(),
                                          &attribs, &st_error, st_shared);
    if (!osmesa->stctx) {
-      char* st_error_str;
-      switch (st_error) {
-         case ST_CONTEXT_ERROR_NO_MEMORY:
-            st_error_str="ST_CONTEXT_ERROR_NO_MEMORY";
-            break;
-         case ST_CONTEXT_ERROR_BAD_API:
-            st_error_str="ST_CONTEXT_ERROR_BAD_API";
-            break;
-         case ST_CONTEXT_ERROR_BAD_VERSION:
-            st_error_str="ST_CONTEXT_ERROR_BAD_VERSION";
-            break;
-         case ST_CONTEXT_ERROR_BAD_FLAG:
-            st_error_str="ST_CONTEXT_ERROR_BAD_FLAG";
-            break;
-         case ST_CONTEXT_ERROR_UNKNOWN_ATTRIBUTE:
-            st_error_str="ST_CONTEXT_ERROR_UNKNOWN_ATTRIBUTE";
-            break;
-         case ST_CONTEXT_ERROR_UNKNOWN_FLAG:
-            st_error_str="ST_CONTEXT_ERROR_UNKNOWN_FLAG";
-            break;
-         default:
-            st_error_str="UNKNOWN";
-            break;
-      }
-      debug_printf("OSMESA: error: unable to create st context, st_error=%s",st_error_str);
       FREE(osmesa);
       return NULL;
    }
