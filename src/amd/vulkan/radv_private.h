@@ -890,6 +890,7 @@ struct radv_device_cache_key {
    uint32_t image_2d_view_of_3d : 1;
    uint32_t invariant_geom : 1;
    uint32_t lower_discard_to_demote : 1;
+   uint32_t mesh_fast_launch_2 : 1;
    uint32_t mesh_shader_queries : 1;
    uint32_t no_fmask : 1;
    uint32_t no_rt : 1;
@@ -2009,16 +2010,16 @@ struct radv_pipeline_key;
 struct radv_ray_tracing_group;
 
 void radv_pipeline_stage_init(const VkPipelineShaderStageCreateInfo *sinfo, const struct radv_pipeline_layout *layout,
-                              struct radv_shader_stage *out_stage);
+                              const struct radv_pipeline_key *pipeline_key, struct radv_shader_stage *out_stage);
 
 void radv_hash_shaders(const struct radv_device *device, unsigned char *hash, const struct radv_shader_stage *stages,
                        uint32_t stage_count, const struct radv_pipeline_layout *layout,
                        const struct radv_pipeline_key *key);
 
-void radv_hash_rt_stages(struct mesa_sha1 *ctx, const VkPipelineShaderStageCreateInfo *stages, unsigned stage_count);
-
+struct radv_ray_tracing_stage;
 void radv_hash_rt_shaders(const struct radv_device *device, unsigned char *hash,
-                          const VkRayTracingPipelineCreateInfoKHR *pCreateInfo, const struct radv_pipeline_key *key,
+                          const struct radv_ray_tracing_stage *stages,
+                          const VkRayTracingPipelineCreateInfoKHR *pCreateInfo,
                           const struct radv_ray_tracing_group *groups);
 
 bool radv_enable_rt(const struct radv_physical_device *pdevice, bool rt_pipelines);
@@ -2265,6 +2266,7 @@ struct radv_shader_stage {
 
    struct radv_shader_info info;
    struct radv_shader_args args;
+   struct radv_shader_stage_key key;
 
    VkPipelineCreationFeedback feedback;
 
@@ -2273,6 +2275,9 @@ struct radv_shader_stage {
 
 void radv_shader_layout_init(const struct radv_pipeline_layout *pipeline_layout, gl_shader_stage stage,
                              struct radv_shader_layout *layout);
+
+void radv_shader_stage_key_init(const struct radv_pipeline_key *pipeline_key, gl_shader_stage stage,
+                                struct radv_shader_stage_key *stage_key);
 
 static inline bool
 radv_is_last_vgt_stage(const struct radv_shader_stage *stage)
@@ -3167,9 +3172,9 @@ radv_primitive_topology_is_line_list(unsigned primitive_topology)
 }
 
 static inline unsigned
-radv_get_num_vertices_per_prim(const struct radv_pipeline_key *pipeline_key)
+radv_get_num_vertices_per_prim(const struct radv_graphics_state_key *gfx_state)
 {
-   if (pipeline_key->vs.topology == V_008958_DI_PT_NONE) {
+   if (gfx_state->ia.topology == V_008958_DI_PT_NONE) {
       /* When the topology is unknown (with graphics pipeline library), return the maximum number of
        * vertices per primitives for VS. This is used to lower NGG (the HW will ignore the extra
        * bits for points/lines) and also to enable NGG culling unconditionally (it will be disabled
@@ -3178,7 +3183,7 @@ radv_get_num_vertices_per_prim(const struct radv_pipeline_key *pipeline_key)
       return 3;
    } else {
       /* Need to add 1, because: V_028A6C_POINTLIST=0, V_028A6C_LINESTRIP=1, V_028A6C_TRISTRIP=2, etc. */
-      return radv_conv_prim_to_gs_out(pipeline_key->vs.topology, false) + 1;
+      return radv_conv_prim_to_gs_out(gfx_state->ia.topology, false) + 1;
    }
 }
 

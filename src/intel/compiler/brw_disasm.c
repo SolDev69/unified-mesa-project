@@ -227,6 +227,12 @@ static const char *const pred_ctrl_align1[16] = {
    [BRW_PREDICATE_ALIGN1_ALL32H] = ".all32h",
 };
 
+static const char *const xe2_pred_ctrl[4] = {
+   [BRW_PREDICATE_NORMAL]        = "",
+   [XE2_PREDICATE_ANY]           = ".any",
+   [XE2_PREDICATE_ALL]           = ".all",
+};
+
 static const char *const thread_ctrl[4] = {
    [BRW_THREAD_NORMAL] = "",
    [BRW_THREAD_ATOMIC] = "atomic",
@@ -1055,8 +1061,7 @@ static int
 dest_dpas_3src(FILE *file, const struct intel_device_info *devinfo,
                const brw_inst *inst)
 {
-   uint32_t reg_file =
-      reg_file = brw_inst_dpas_3src_dst_reg_file(devinfo, inst);
+   uint32_t reg_file = brw_inst_dpas_3src_dst_reg_file(devinfo, inst);
 
    if (reg(file, reg_file, brw_inst_dpas_3src_dst_reg_nr(devinfo, inst)) == -1)
       return 0;
@@ -1551,8 +1556,7 @@ static int
 src0_dpas_3src(FILE *file, const struct intel_device_info *devinfo,
                const brw_inst *inst)
 {
-   uint32_t reg_file =
-      reg_file = brw_inst_dpas_3src_src0_reg_file(devinfo, inst);
+   uint32_t reg_file = brw_inst_dpas_3src_src0_reg_file(devinfo, inst);
 
    if (reg(file, reg_file, brw_inst_dpas_3src_src0_reg_nr(devinfo, inst)) == -1)
       return 0;
@@ -1573,8 +1577,7 @@ static int
 src1_dpas_3src(FILE *file, const struct intel_device_info *devinfo,
                const brw_inst *inst)
 {
-   uint32_t reg_file =
-      reg_file = brw_inst_dpas_3src_src1_reg_file(devinfo, inst);
+   uint32_t reg_file = brw_inst_dpas_3src_src1_reg_file(devinfo, inst);
 
    if (reg(file, reg_file, brw_inst_dpas_3src_src1_reg_nr(devinfo, inst)) == -1)
       return 0;
@@ -1595,8 +1598,7 @@ static int
 src2_dpas_3src(FILE *file, const struct intel_device_info *devinfo,
                const brw_inst *inst)
 {
-   uint32_t reg_file =
-      reg_file = brw_inst_dpas_3src_src2_reg_file(devinfo, inst);
+   uint32_t reg_file = brw_inst_dpas_3src_src2_reg_file(devinfo, inst);
 
    if (reg(file, reg_file, brw_inst_dpas_3src_src2_reg_nr(devinfo, inst)) == -1)
       return 0;
@@ -2059,7 +2061,10 @@ brw_disassemble_inst(FILE *file, const struct brw_isa_info *isa,
       format(file, "f%"PRIu64".%"PRIu64,
              devinfo->ver >= 7 ? brw_inst_flag_reg_nr(devinfo, inst) : 0,
              brw_inst_flag_subreg_nr(devinfo, inst));
-      if (brw_inst_access_mode(devinfo, inst) == BRW_ALIGN_1) {
+      if (devinfo->ver >= 20) {
+         err |= control(file, "predicate control", xe2_pred_ctrl,
+                        brw_inst_pred_control(devinfo, inst), NULL);
+      } else if (brw_inst_access_mode(devinfo, inst) == BRW_ALIGN_1) {
          err |= control(file, "predicate control align1", pred_ctrl_align1,
                         brw_inst_pred_control(devinfo, inst), NULL);
       } else {
