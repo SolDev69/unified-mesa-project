@@ -63,7 +63,7 @@ jobs:
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
             -Dbuildtype=debug \
-            -Dc_args='-Wno-error=implicit-function-declaration'
+            -Dc_args='-Wno-error=implicit-function-declaration,int-conversion'
           ninja -C "build-android" install
           mv /tmp/mesa/lib/libOSMesa.so.8.0.0 /tmp/mesa/libOSMesa.so -v
       - name: Upload libraries
