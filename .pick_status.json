@@ -1524,7 +1524,7 @@
         "description": "Revert \"v3d: use kmsro to create drm screen on real hw\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "8f621174da089e87e2bdd48e683defc83a3472c9",
         "notes": null
