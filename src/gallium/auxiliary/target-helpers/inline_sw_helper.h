@@ -57,6 +57,7 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
 
 #if defined(GALLIUM_VIRGL)
    if (screen == NULL && strcmp(driver, "virpipe") == 0) {
+      printf("VT_OSMESA: loading\n");
       struct virgl_winsys *vws;
       vws = virgl_vtest_winsys_wrap(winsys);
       screen = virgl_create_screen(vws, NULL);
