@@ -94,7 +94,7 @@
         "description": "nvk: Unref shaders on pipeline free",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d6a1e29ccdc12461495e01b7dc0b510a9bb84c3d",
         "notes": null
