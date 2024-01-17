@@ -124,7 +124,7 @@
         "description": "venus: fix shmem leak on vn_ring_destroy",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d1e29b7557877c9b278593b8f0c7e6c531849f23",
         "notes": null
