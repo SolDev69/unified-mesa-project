@@ -1254,7 +1254,7 @@
         "description": "intel/compiler: Track lower_dpas flag in brw_get_compiler_config_value",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3756f605586fb2dcf53d892606152ecc5ce1ad1d",
         "notes": null
