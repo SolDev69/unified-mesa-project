@@ -251,6 +251,8 @@ brw_get_compiler_config_value(const struct brw_compiler *compiler)
    bits++;
    insert_u64_bit(&config, compiler->lower_dpas);
    bits++;
+   insert_u64_bit(&config, compiler->mesh.mue_compaction);
+   bits++;
 
    uint64_t mask = DEBUG_DISK_CACHE_MASK;
    bits += util_bitcount64(mask);
@@ -267,6 +269,12 @@ brw_get_compiler_config_value(const struct brw_compiler *compiler)
       insert_u64_bit(&config, (intel_simd & bit) != 0);
       mask &= ~bit;
    }
+
+   mask = 3;
+   bits += util_bitcount64(mask);
+
+   u_foreach_bit64(bit, mask)
+      insert_u64_bit(&config, (compiler->mesh.mue_header_packing & (1ULL << bit)) != 0);
 
    assert(bits <= util_bitcount64(UINT64_MAX));
 
