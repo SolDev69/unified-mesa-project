@@ -204,7 +204,9 @@ int virgl_vtest_connect(struct virgl_vtest_winsys *vws)
 
    memset(&un, 0, sizeof(un));
    un.sun_family = AF_UNIX;
-   snprintf(un.sun_path, sizeof(un.sun_path), "%s", VTEST_DEFAULT_SOCKET_NAME);
+   const char *override_socket_name = getenv("VTEST_SOCKET_NAME");
+   snprintf(un.sun_path, sizeof(un.sun_path), "%s", override_socket_name ?
+      override_socket_name : VTEST_DEFAULT_SOCKET_NAME);
 
    do {
       ret = 0;

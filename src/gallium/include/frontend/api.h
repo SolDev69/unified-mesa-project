@@ -394,6 +394,11 @@ struct st_context_iface
    struct pipe_context *pipe;
 
    /**
+    * Should we flush front buffer?
+    */
+   bool should_flush_frontbuffer;
+
+   /**
     * Destroy the context.
     */
    void (*destroy)(struct st_context_iface *stctxi);

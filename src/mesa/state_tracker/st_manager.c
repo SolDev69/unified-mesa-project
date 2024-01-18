@@ -1133,6 +1133,7 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    st->iface.cso_context = st->cso_context;
    st->iface.pipe = st->pipe;
    st->iface.state_manager = smapi;
+   st->iface.should_flush_frontbuffer = getenv("OSMESA_NO_FLUSH_FRONTBUFFER") == NULL;
 
    if (st->ctx->IntelBlackholeRender &&
        st->screen->get_param(st->screen, PIPE_CAP_FRONTEND_NOOP))
