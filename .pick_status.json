@@ -1,5 +1,215 @@
 [
     {
+        "sha": "d2b08f9437f692f6ff4be2512967973f18796cb2",
+        "description": "freedreno/replay: Make meta \"print\" instruction take any number of regs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "30e09d0e9815a1edd64f19d73e9d992c2121b042",
+        "description": "nak: implement FLO on SM50",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f33683e4dad9e1dfb7dcd4f86bb86ef3e3954315",
+        "description": "radv: don't submit empty command buffers on encoder ring.",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d32f2ee7b632b87c9ea8de66aa41423bf36f8268",
+        "description": "radv/video: refactor sq start/end code to avoid decode hangs.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "d8f3060bd915e6ba6cc01086978d126e70bfea92",
+        "notes": null
+    },
+    {
+        "sha": "6bd31b60e14aa8d573c4352e32458243c94d1c7c",
+        "description": "vulkan/video: constify the encoding apis.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7f9381782f984f7db18646c0fbf99042ada88222",
+        "description": "venus: ensure object id is unique",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "184bcfdc1c3cf22d248053cd22834a1c052b4323",
+        "description": "nvk: Implement VK_KHR_zero_initialize_workgroup_memory",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6e214f21579456d7f149986fcebd0448365ee6e6",
+        "description": "nvk: Properly configure the min/max shared mem size",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "eaa7980e15ecf81e78ea7e9b0fe4515b465e7e43",
+        "description": "nvk: Add a #define for max shared memory size",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "be0f04f5bd3155c05af14b2c8ffee887838af807",
+        "description": "nvk: Unref shaders on pipeline free",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "d6a1e29ccdc12461495e01b7dc0b510a9bb84c3d",
+        "notes": null
+    },
+    {
+        "sha": "4b0448d8f8b1edfbf74104eabcbf473846eccbac",
+        "description": "nvk: Set framebufferIntegerColorSampleCounts",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "03f5fc45bbd29ad3eab8385a53001bd9b54f1e69",
+        "description": "docs: update calendar for 24.0.0-rc2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6e4bb8253ed36f911a0a45dfecf89c237a8cd362",
+        "description": "venus: fix shmem leak on vn_ring_destroy",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "d1e29b7557877c9b278593b8f0c7e6c531849f23",
+        "notes": null
+    },
+    {
+        "sha": "531505f8c598316ee69b916bfbe414598fec9a72",
+        "description": "nouveau: mme: Add a dumper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cb6d954c67d83c03b018afe4ab14b06dbf285dd8",
+        "description": "nouveau: nvidia-headers: Add nv_push_dump tool",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d9cd3e4c55bedb732ac8b340f247bf3bde1fb9ad",
+        "description": "nouveau: nvidia-headers: Add compute array parsing to class_parser.py",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2cc9ad0e5c415a41a8b3d655d67904849404cf28",
+        "description": "nouveau: nvidia_header: Add AMPERE_COMPUTE_B in vk_push_print",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "20b3f9521ee7a4383bf8bd96f6c3b6de500291b9",
+        "description": "nouveau: nvidia_header: Add TURING_COMPUTE_A and AMPERE_COMPUTE_A in vk_push_print",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2d8b9b91601c14f065644f0c9dba1c5981cce117",
+        "description": "nouveau: nvidia_header: Add AMPERE_A in vk_push_print",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "32f2a0f1e15fe9d8c8ba45b5dd9fe37c73dd9645",
+        "description": "nouveau/mme: Stop using isaspec",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a69b7f1b19cf2cf87eef1c4a87a189515f092c3b",
+        "description": "nouveau/mme/fermi: Stop truncating iadd immediates",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "10e2dbb63b9d1f8f35c4fc3f570cd19b3fc03b43",
         "description": "radv: delay emitting streamout enable at draw time",
         "nominated": false,
