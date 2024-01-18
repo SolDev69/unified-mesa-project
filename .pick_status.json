@@ -1064,7 +1064,7 @@
         "description": "intel/compiler: Fix rebuilding the CFG in fs_combine_constants",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "65237f8bbcaae12929fa4c35a71626f3c53f5b56",
         "notes": null
