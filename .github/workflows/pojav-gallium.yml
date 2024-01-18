@@ -67,4 +67,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: libOSMesa_znL_${{matrix.arch}}
-          path: /tmp/mesa
+          path: /tmp/mesa/lib/libOSMesa_znL.so
