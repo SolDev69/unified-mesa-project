@@ -57,13 +57,14 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=zink,virgl,freedreno \
-            -Dfreedreno-kgsl=true \
+            -Dgallium-drivers=zink,virgl \
             -Dshared-glapi=false \
             -Dbuildtype=debug
           ninja -C "build-android" install
+          cd /tmp/mesa/lib
+          mv libOSMesa.so libOSMesa_znL.so
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
-          name: libOSMesa_${{matrix.arch}}
+          name: libOSMesa_znL_${{matrix.arch}}
           path: /tmp/mesa
