@@ -324,7 +324,7 @@
         "description": "panfrost: fix panfrost drm-shim",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "91fe8a0d2859e0b869edf83a56c463cf548ac10a",
         "notes": null
