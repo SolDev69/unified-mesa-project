@@ -344,7 +344,7 @@
         "description": "radv: fix indirect draws with NULL index buffer on GFX10",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "db9816fd666a53dcd6285517c558373f93b12599",
         "notes": null
