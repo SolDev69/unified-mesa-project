@@ -49,8 +49,7 @@ jobs:
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
-            -Dglx=dri \
-            -Dglx-direct=true \
+            -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
