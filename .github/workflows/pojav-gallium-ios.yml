@@ -22,23 +22,6 @@ jobs:
           pip3 install mako
           # -Dglx=gallium-xlib \
           # -Dglx=dri
-          envsubst <ios-drm-aarch64 >build-crossfile-drm
-          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
-          cd drm
-          meson setup "build-ios-libdrm" \
-            --prefix=/Users/runner/work/unified-mesa-project/unified-mesa-project/libdrm \
-            --cross-file "../build-crossfile-drm" \
-            -Ddefault_library=static \
-            -Dintel=disabled \
-            -Dradeon=disabled \
-            -Damdgpu=disabled \
-            -Dnouveau=disabled \
-            -Dvmwgfx=disabled \
-            -Dfreedreno=disabled \
-            -Dvc4=disabled \
-            -Detnaviv=disabled
-          ninja -C build-ios-libdrm install
-          cd ..
           envsubst <ios-aarch64 >build-crossfile
           meson build-ios-aarch64 \
             --prefix="/tmp/mesa" \
