@@ -22,7 +22,7 @@ jobs:
           pip3 install mako
           # -Dglx=gallium-xlib \
           # -Dglx=dri
-          envsubst <ios-drm-aarch64} >build-crossfile-drm
+          envsubst <ios-drm-aarch64 >build-crossfile-drm
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
           cd drm
           meson setup "build-ios-libdrm" \
@@ -39,7 +39,7 @@ jobs:
             -Detnaviv=disabled
           ninja -C build-ios-libdrm install
           cd ..
-          envsubst <ios-aarch64} >build-crossfile
+          envsubst <ios-aarch64 >build-crossfile
           meson build-ios-aarch64 \
             --prefix="/tmp/mesa" \
             --cross-file "build-crossfile" \
