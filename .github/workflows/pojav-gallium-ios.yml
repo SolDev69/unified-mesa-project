@@ -14,6 +14,7 @@ jobs:
       - name: Build iOS
         run: |
           git clone --depth 1 https://github.com/KhronosGroup/MoltenVK
+          ln -s vulkan_ios.pc vulkan.pc
           brew install meson pkg-config
           # sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxshmfence-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
           # cp -R /usr/include/X11 include/
