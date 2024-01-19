@@ -1,0 +1,65 @@
+
+name: Build iOS
+
+on:
+  [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build iOS
+        run: |
+          git clone --depth 1 https://github.com/KhronosGroup/MoltenVK
+          brew install meson pkg-config
+          # sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxshmfence-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          # cp -R /usr/include/X11 include/
+          # cp -R /usr/include/xcb include/
+          # cp -R /usr/include/GL/* include/GL/
+          pip3 install mako
+          # -Dglx=gallium-xlib \
+          # -Dglx=dri
+          envsubst <ios-drm-${{matrix.arch}} >build-crossfile-drm
+          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
+          cd drm
+          meson setup "build-ios-libdrm" \
+            --prefix=/Users/runner/work/unified-mesa-project/unified-mesa-project/libdrm \
+            --cross-file "../build-crossfile-drm" \
+            -Ddefault_library=static \
+            -Dintel=disabled \
+            -Dradeon=disabled \
+            -Damdgpu=disabled \
+            -Dnouveau=disabled \
+            -Dvmwgfx=disabled \
+            -Dfreedreno=disabled \
+            -Dvc4=disabled \
+            -Detnaviv=disabled
+          ninja -C build-ios-libdrm install
+          cd ..
+          envsubst <ios-${{matrix.arch}} >build-crossfile
+          meson build-ios-aarch64 \
+            --prefix="/tmp/mesa" \
+            --cross-file "build-crossfile" \
+            -Dmoltenvk-dir=../../../../MoltenVK/MoltenVK \
+            -Db_lundef=false \
+            -Dllvm=disabled \
+            -Dxlib-lease=disabled \
+            -Degl=disabled \
+            -Dgbm=disabled \
+            -Dglx=dri \
+            -Dglx-direct=true \
+            -Dopengl=true \
+            -Dosmesa=true \
+            -Dvulkan-drivers= \
+            -Dgallium-drivers=zink
+          ninja -C build-ios-aarch64 install
+          # cp build-ios-aarch64/src/gallium/drivers/zink/libzink.a /tmp/zink/lib/
+          install_name_tool -change /tmp/zink/lib/libglapi.0.dylib @executable_path/Frameworks/libglapi.0.dylib.framework/libglapi.0.dylib -add_rpath @executable_path/Frameworks/libMoltenVK.dylib.framework /tmp/zink/lib/libOSMesa.8.dylib
+      - name: Upload libraries
+        uses: actions/upload-artifact@v2
+        with:
+          name: libOSMesa
+          path: /tmp/mesa
