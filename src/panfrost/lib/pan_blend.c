@@ -583,10 +583,10 @@ pan_inline_blend_constants(nir_builder *b, nir_instr *instr, void *data)
 
         float *floats = data;
         const nir_const_value constants[4] = {
-                { .f32 = floats[0] },
-                { .f32 = floats[1] },
-                { .f32 = floats[2] },
-                { .f32 = floats[3] }
+                nir_const_value_for_float(floats[0], 32),
+                nir_const_value_for_float(floats[1], 32),
+                nir_const_value_for_float(floats[2], 32),
+                nir_const_value_for_float(floats[3], 32)
         };
 
         b->cursor = nir_after_instr(instr);
@@ -695,7 +695,7 @@ GENX(pan_blend_create_shader)(const struct panfrost_device *dev,
 
         options.src1 = s_src[1];
 
-        NIR_PASS_V(b.shader, nir_lower_blend, options);
+        NIR_PASS_V(b.shader, nir_lower_blend, &options);
         nir_shader_instructions_pass(b.shader, pan_inline_blend_constants,
                         nir_metadata_block_index | nir_metadata_dominance,
                         (void *) state->constants);
@@ -823,6 +823,7 @@ GENX(pan_blend_get_shader_locked)(const struct panfrost_device *dev,
                 .is_blend = true,
                 .blend.rt = shader->key.rt,
                 .blend.nr_samples = key.nr_samples,
+                .fixed_sysval_ubo = -1,
                 .rt_formats = { key.format },
         };
 
@@ -834,6 +835,9 @@ GENX(pan_blend_get_shader_locked)(const struct panfrost_device *dev,
         struct pan_shader_info info;
 
         GENX(pan_shader_compile)(nir, &inputs, &variant->binary, &info);
+
+        /* Blend shaders can't have sysvals */
+        assert(info.sysvals.sysval_count == 0);
 
         variant->work_reg_count = info.work_reg_count;
 

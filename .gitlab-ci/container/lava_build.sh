@@ -25,6 +25,7 @@ check_minio "${CI_PROJECT_PATH}"
 if [[ "$DEBIAN_ARCH" = "arm64" ]]; then
     GCC_ARCH="aarch64-linux-gnu"
     KERNEL_ARCH="arm64"
+    SKQP_ARCH="arm64"
     DEFCONFIG="arch/arm64/configs/defconfig"
     DEVICE_TREES="arch/arm64/boot/dts/rockchip/rk3399-gru-kevin.dtb"
     DEVICE_TREES+=" arch/arm64/boot/dts/amlogic/meson-gxl-s805x-libretech-ac.dtb"
@@ -35,11 +36,13 @@ if [[ "$DEBIAN_ARCH" = "arm64" ]]; then
     DEVICE_TREES+=" arch/arm64/boot/dts/amlogic/meson-g12b-a311d-khadas-vim3.dtb"
     DEVICE_TREES+=" arch/arm64/boot/dts/mediatek/mt8183-kukui-jacuzzi-juniper-sku16.dtb"
     DEVICE_TREES+=" arch/arm64/boot/dts/nvidia/tegra210-p3450-0000.dtb"
-    DEVICE_TREES+=" arch/arm64/boot/dts/qcom/sc7180-trogdor-lazor-limozeen-nots.dtb"
+    DEVICE_TREES+=" arch/arm64/boot/dts/qcom/sc7180-trogdor-lazor-limozeen-nots-r5.dtb"
     KERNEL_IMAGE_NAME="Image"
+
 elif [[ "$DEBIAN_ARCH" = "armhf" ]]; then
     GCC_ARCH="arm-linux-gnueabihf"
     KERNEL_ARCH="arm"
+    SKQP_ARCH="arm"
     DEFCONFIG="arch/arm/configs/multi_v7_defconfig"
     DEVICE_TREES="arch/arm/boot/dts/rk3288-veyron-jaq.dtb"
     DEVICE_TREES+=" arch/arm/boot/dts/sun8i-h3-libretech-all-h3-cc.dtb"
@@ -49,6 +52,7 @@ elif [[ "$DEBIAN_ARCH" = "armhf" ]]; then
 else
     GCC_ARCH="x86_64-linux-gnu"
     KERNEL_ARCH="x86_64"
+    SKQP_ARCH="x64"
     DEFCONFIG="arch/x86/configs/x86_64_defconfig"
     DEVICE_TREES=""
     KERNEL_IMAGE_NAME="bzImage"
@@ -152,11 +156,11 @@ mv /deqp /lava-files/rootfs-${DEBIAN_ARCH}/.
 
 
 ############### Build SKQP
-if [[ "$DEBIAN_ARCH" = "arm64" ]]; then
-    SKQP_ARCH="arm64" . .gitlab-ci/container/build-skqp.sh
+if [[ "$DEBIAN_ARCH" = "arm64" ]] \
+  || [[ "$DEBIAN_ARCH" = "amd64" ]]; then
+    . .gitlab-ci/container/build-skqp.sh
     mv /skqp /lava-files/rootfs-${DEBIAN_ARCH}/.
 fi
-
 
 ############### Build piglit
 PIGLIT_OPTS="-DPIGLIT_BUILD_DMA_BUF_TESTS=ON" . .gitlab-ci/container/build-piglit.sh
@@ -210,7 +214,9 @@ fi
 set -e
 
 cp .gitlab-ci/container/create-rootfs.sh /lava-files/rootfs-${DEBIAN_ARCH}/.
+cp .gitlab-ci/container/debian/llvm-snapshot.gpg.key /lava-files/rootfs-${DEBIAN_ARCH}/.
 chroot /lava-files/rootfs-${DEBIAN_ARCH} sh /create-rootfs.sh
+rm /lava-files/rootfs-${DEBIAN_ARCH}/llvm-snapshot.gpg.key
 rm /lava-files/rootfs-${DEBIAN_ARCH}/create-rootfs.sh
 
 
@@ -238,7 +244,6 @@ popd
 . .gitlab-ci/container/container_post_build.sh
 
 ############### Upload the files!
-ci-fairy minio login --token-file "${CI_JOB_JWT_FILE}"
 FILES_TO_UPLOAD="lava-rootfs.tgz \
                  $KERNEL_IMAGE_NAME"
 
@@ -247,9 +252,9 @@ if [[ -n $DEVICE_TREES ]]; then
 fi
 
 for f in $FILES_TO_UPLOAD; do
-    ci-fairy minio cp /lava-files/$f \
-             minio://${MINIO_PATH}/$f
+    ci-fairy s3cp --token-file "${CI_JOB_JWT_FILE}" /lava-files/$f \
+             https://${MINIO_PATH}/$f
 done
 
 touch /lava-files/done
-ci-fairy minio cp /lava-files/done minio://${MINIO_PATH}/done
+ci-fairy s3cp --token-file "${CI_JOB_JWT_FILE}" /lava-files/done https://${MINIO_PATH}/done

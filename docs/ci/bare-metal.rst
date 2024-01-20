@@ -200,11 +200,13 @@ want a pass-through HTTP cache.  On your runner box, install nginx:
 
 Add the server setup files:
 
-.. literalinclude: fdo-cache:
+.. literalinclude:: fdo-cache
    :name: /etc/nginx/sites-available/fdo-cache
+   :caption: /etc/nginx/sites-available/fdo-cache
 
-.. literalinclude: uri-caching.conf:
-   :name: /etc/nginx/sites-available/snippets/uri-caching.conf
+.. literalinclude:: uri-caching.conf
+   :name: /etc/nginx/snippets/uri-caching.conf
+   :caption: /etc/nginx/snippets/uri-caching.conf
 
 Edit the listener addresses in fdo-cache to suit the ethernet interface that
 your devices are on.
@@ -217,12 +219,12 @@ Enable the site and restart nginx:
   sudo service nginx restart
 
   # First download will hit the internet
-  wget http://localhost/cache/?uri=https://minio-packet.freedesktop.org/mesa-tracie-public/itoral-gl-terrain-demo/demo.trace
+  wget http://localhost/cache/?uri=https://s3.freedesktop.org/mesa-tracie-public/itoral-gl-terrain-demo/demo.trace
   # Second download should be cached.
-  wget http://localhost/cache/?uri=https://minio-packet.freedesktop.org/mesa-tracie-public/itoral-gl-terrain-demo/demo.trace
+  wget http://localhost/cache/?uri=https://s3.freedesktop.org/mesa-tracie-public/itoral-gl-terrain-demo/demo.trace
 
 Now, set ``download-url`` in your ``traces-*.yml`` entry to something like
-``http://10.42.0.1:8888/cache/?uri=https://minio-packet.freedesktop.org/mesa-tracie-public``
+``http://10.42.0.1:8888/cache/?uri=https://s3.freedesktop.org/mesa-tracie-public``
 and you should have cached downloads for traces.  Add it to
 ``FDO_HTTP_CACHE_URI=`` in your ``config.toml`` runner environment lines and you
 can use it for cached artifact downloads instead of going all the way to

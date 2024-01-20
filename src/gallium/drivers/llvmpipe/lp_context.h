@@ -35,7 +35,6 @@
 
 #include "draw/draw_vertex.h"
 #include "util/u_blitter.h"
-#include "util/list.h"
 
 #include "lp_tex_sample.h"
 #include "lp_jit.h"

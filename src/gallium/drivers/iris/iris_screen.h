@@ -138,6 +138,7 @@ struct iris_vtable {
    void (*populate_cs_key)(const struct iris_context *ice,
                            struct iris_cs_prog_key *key);
    void (*lost_genx_state)(struct iris_context *ice, struct iris_batch *batch);
+   void (*disable_rhwo_optimization)(struct iris_batch *batch, bool disable);
 };
 
 struct iris_address {
@@ -181,13 +182,12 @@ struct iris_screen {
       bool disable_throttling;
       bool always_flush_cache;
       bool sync_compile;
+      bool limit_trig_input_range;
    } driconf;
 
    /** Does the kernel support various features (KERNEL_HAS_* bitfield)? */
    unsigned kernel_features;
 #define KERNEL_HAS_WAIT_FOR_SUBMIT (1<<0)
-
-   uint64_t aperture_bytes;
 
    /**
     * Last sequence number allocated by the cache tracking mechanism.

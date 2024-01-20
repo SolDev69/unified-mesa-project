@@ -100,6 +100,7 @@ static bool virgl_can_copy_transfer_from_host(struct virgl_screen *vs,
 {
    return virgl_can_use_staging(vs, res) &&
          !is_stencil_array(res) &&
+         !(bind & VIRGL_BIND_SHARED) &&
          virgl_has_readback_format(&vs->base, pipe_to_virgl_format(res->b.format), false) &&
          ((!(vs->caps.caps.v2.capability_bits & VIRGL_CAP_FAKE_FP64)) ||
           virgl_can_readback_from_rendertarget(vs, res) ||
@@ -253,11 +254,6 @@ virgl_resource_transfer_prepare(struct virgl_context *vctx,
          else
             return VIRGL_TRANSFER_MAP_WRITE_TO_STAGING_WITH_READBACK;
       }
-      /* Readback is yet another command and is transparent to the state
-       * trackers.  It should be waited for in all cases, including when
-       * PIPE_MAP_UNSYNCHRONIZED is set.
-       */
-      wait = true;
 
       /* When the transfer queue has pending writes to this transfer's region,
        * we have to flush before readback.
@@ -281,8 +277,16 @@ virgl_resource_transfer_prepare(struct virgl_context *vctx,
       return VIRGL_TRANSFER_MAP_ERROR;
 
    if (readback) {
+      /* Readback is yet another command and is transparent to the state
+       * trackers.  It should be waited for in all cases, including when
+       * PIPE_MAP_UNSYNCHRONIZED is set.
+       */
+      vws->resource_wait(vws, res->hw_res);
       vws->transfer_get(vws, res->hw_res, &xfer->base.box, xfer->base.stride,
                         xfer->l_stride, xfer->offset, xfer->base.level);
+      /* transfer_get puts the resource into a maybe_busy state, so we will have
+       * to wait another time if we want to use that resource. */
+      wait = true;
    }
 
    if (wait)

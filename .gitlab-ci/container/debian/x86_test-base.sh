@@ -5,7 +5,7 @@ set -o xtrace
 
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get install -y ca-certificates
+apt-get install -y ca-certificates gnupg2 software-properties-common
 
 sed -i -e 's/http:\/\/deb/https:\/\/deb/g' /etc/apt/sources.list
 
@@ -19,6 +19,10 @@ STABLE_EPHEMERAL=" \
       python3-wheel \
       "
 
+# Add llvm 13 to the build image
+apt-key add .gitlab-ci/container/debian/llvm-snapshot.gpg.key
+add-apt-repository "deb https://apt.llvm.org/bullseye/ llvm-toolchain-bullseye-13 main"
+
 apt-get update
 apt-get dist-upgrade -y
 
@@ -27,6 +31,7 @@ apt-get install -y --no-remove \
       git-lfs \
       libasan6 \
       libexpat1 \
+      libllvm13 \
       libllvm11 \
       libllvm9 \
       liblz4-1 \
@@ -59,7 +64,7 @@ apt-get install -y --no-install-recommends \
 
 # Needed for ci-fairy, this revision is able to upload files to MinIO
 # and doesn't depend on git
-pip3 install git+http://gitlab.freedesktop.org/freedesktop/ci-templates@34f4ade99434043f88e164933f570301fd18b125
+pip3 install git+http://gitlab.freedesktop.org/freedesktop/ci-templates@ffe4d1b10aab7534489f0c4bbc4c5899df17d3f2
 
 ############### Build dEQP runner
 . .gitlab-ci/container/build-deqp-runner.sh

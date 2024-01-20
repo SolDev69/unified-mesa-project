@@ -1,37 +1,18 @@
-
 /*
  * Copyright © 2016 Red Hat.
  * Copyright © 2016 Bas Nieuwenhuizen
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  */
 
-#include "tu_private.h"
+#include "tu_formats.h"
 
-#include "adreno_common.xml.h"
-#include "a6xx.xml.h"
 #include "fdl/fd6_format_table.h"
 
-#include "vk_format.h"
 #include "vk_util.h"
 #include "drm-uapi/drm_fourcc.h"
+
+#include "tu_device.h"
+#include "tu_image.h"
 
 struct tu_native_format
 tu6_format_vtx(VkFormat vk_format)
@@ -120,14 +101,6 @@ tu6_format_texture_unchecked(enum pipe_format format, enum a6xx_tile_mode tile_m
       .swap = fd6_texture_swap(format, tile_mode),
    };
 
-   /* No texturing support for NPOT textures yet.  See
-    * https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/5536
-    */
-   if (util_format_is_plain(format) &&
-       !util_is_power_of_two_nonzero(util_format_get_blocksize(format))) {
-      fmt.fmt = FMT6_NONE;
-   }
-
    switch (format) {
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
@@ -172,25 +145,34 @@ tu_physical_device_get_format_properties(
    bool supported_vtx = tu6_format_vtx_supported(vk_format);
    bool supported_color = tu6_format_color_supported(format);
    bool supported_tex = tu6_format_texture_supported(format);
+   bool is_npot = !util_is_power_of_two_or_zero(desc->block.bits);
 
    if (format == PIPE_FORMAT_NONE ||
        !(supported_vtx || supported_color || supported_tex)) {
       goto end;
    }
 
-   buffer |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_TRANSFER_DST_BIT;
+   /* We don't support BufferToImage/ImageToBuffer for npot formats */
+   if (!is_npot)
+      buffer |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_TRANSFER_DST_BIT;
+
    if (supported_vtx)
       buffer |= VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT;
 
-   if (supported_tex) {
+   if (supported_tex)
+      buffer |= VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT;
+
+   /* Don't support anything but texel buffers for non-power-of-two formats
+    * with 3 components. We'd need several workarounds for copying and
+    * clearing them because they're not renderable.
+    */
+   if (supported_tex && !is_npot) {
       optimal |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT |
                  VK_FORMAT_FEATURE_TRANSFER_DST_BIT |
                  VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
                  VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT |
                  VK_FORMAT_FEATURE_COSITED_CHROMA_SAMPLES_BIT |
                  VK_FORMAT_FEATURE_MIDPOINT_CHROMA_SAMPLES_BIT;
-
-      buffer |= VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT;
 
       /* no blit src bit for YUYV/NV12/I420 formats */
       if (desc->layout != UTIL_FORMAT_LAYOUT_SUBSAMPLED &&
@@ -215,11 +197,11 @@ tu_physical_device_get_format_properties(
                  VK_FORMAT_FEATURE_BLIT_DST_BIT |
                  VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT |
                  VK_FORMAT_FEATURE_2_STORAGE_READ_WITHOUT_FORMAT_BIT |
-                 VK_FORMAT_FEATURE_2_STORAGE_WRITE_WITHOUT_FORMAT_BIT_KHR;
+                 VK_FORMAT_FEATURE_2_STORAGE_WRITE_WITHOUT_FORMAT_BIT;
 
       buffer |= VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT |
                 VK_FORMAT_FEATURE_2_STORAGE_READ_WITHOUT_FORMAT_BIT |
-                VK_FORMAT_FEATURE_2_STORAGE_WRITE_WITHOUT_FORMAT_BIT_KHR;
+                VK_FORMAT_FEATURE_2_STORAGE_WRITE_WITHOUT_FORMAT_BIT;
 
       /* TODO: The blob also exposes these for R16G16_UINT/R16G16_SINT, but we
        * don't have any tests for those.
@@ -266,6 +248,15 @@ tu_physical_device_get_format_properties(
        * planar YUV would be really silly.
        */
       buffer = 0;
+   }
+
+   /* We don't support writing into VK__FORMAT_*_PACK16 images/buffers  */
+   if (desc->nr_channels > 2 && desc->block.bits == 16) {
+      buffer &= VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT;
+      linear &= ~(VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT |
+                  VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT);
+      optimal &= ~(VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT |
+                   VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT);
    }
 
    /* All our depth formats support shadow comparisons. */
@@ -329,7 +320,7 @@ tu_GetPhysicalDeviceFormatProperties2(
       if (pFormatProperties->formatProperties.linearTilingFeatures) {
          vk_outarray_append_typed(VkDrmFormatModifierPropertiesEXT, &out, mod_props) {
             mod_props->drmFormatModifier = DRM_FORMAT_MOD_LINEAR;
-            mod_props->drmFormatModifierPlaneCount = 1;
+            mod_props->drmFormatModifierPlaneCount = tu6_plane_count(format);
             mod_props->drmFormatModifierTilingFeatures =
                pFormatProperties->formatProperties.linearTilingFeatures;
          }
@@ -338,10 +329,10 @@ tu_GetPhysicalDeviceFormatProperties2(
       /* note: ubwc_possible() argument values to be ignored except for format */
       if (pFormatProperties->formatProperties.optimalTilingFeatures &&
           tiling_possible(format) &&
-          ubwc_possible(format, VK_IMAGE_TYPE_2D, 0, 0, physical_device->info, VK_SAMPLE_COUNT_1_BIT)) {
+          ubwc_possible(format, VK_IMAGE_TYPE_2D, 0, 0, physical_device->info, VK_SAMPLE_COUNT_1_BIT, false)) {
          vk_outarray_append_typed(VkDrmFormatModifierPropertiesEXT, &out, mod_props) {
             mod_props->drmFormatModifier = DRM_FORMAT_MOD_QCOM_COMPRESSED;
-            mod_props->drmFormatModifierPlaneCount = 1;
+            mod_props->drmFormatModifierPlaneCount = tu6_plane_count(format);
             mod_props->drmFormatModifierTilingFeatures =
                pFormatProperties->formatProperties.optimalTilingFeatures;
          }
@@ -389,7 +380,7 @@ tu_get_image_format_properties(
             return VK_ERROR_FORMAT_NOT_SUPPORTED;
 
 
-         if (!ubwc_possible(info->format, info->type, info->usage, info->usage, physical_device->info, sampleCounts))
+         if (!ubwc_possible(info->format, info->type, info->usage, info->usage, physical_device->info, sampleCounts, false))
             return VK_ERROR_FORMAT_NOT_SUPPORTED;
 
          format_feature_flags = format_props.optimalTilingFeatures;

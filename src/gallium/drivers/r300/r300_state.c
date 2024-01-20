@@ -890,7 +890,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
 
     if (r300->cmask_in_use) {
         r300->fb_state.size += 6;
-        if (r300->screen->caps.is_r500 && r300->screen->info.drm_minor >= 29) {
+        if (r300->screen->caps.is_r500) {
             r300->fb_state.size += 3;
         }
     }
@@ -1218,7 +1218,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
 
     /* Line control. */
     line_control = pack_float_16_6x(state->line_width) |
-        R300_GA_LINE_CNTL_END_TYPE_COMP;
+        (state->line_smooth ? R300_GA_LINE_CNTL_END_TYPE_COMP : R300_GA_LINE_CNTL_END_TYPE_SQR);
 
     /* Enable polygon mode */
     polygon_mode = 0;
@@ -2075,7 +2075,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
         struct r300_resource *rbuf = r300_resource(cb->buffer);
 
         if (rbuf && rbuf->malloced_buffer)
-            mapped = (uint32_t*)rbuf->malloced_buffer;
+            mapped = (uint32_t*)(rbuf->malloced_buffer + cb->buffer_offset);
         else
             return;
     }

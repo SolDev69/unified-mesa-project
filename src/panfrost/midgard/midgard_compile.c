@@ -297,6 +297,8 @@ mdg_should_scalarize(const nir_instr *instr, const void *_unused)
         case nir_op_fdot2:
         case nir_op_umul_high:
         case nir_op_imul_high:
+        case nir_op_pack_half_2x16:
+        case nir_op_unpack_half_2x16:
                 return true;
         default:
                 return false;
@@ -304,25 +306,20 @@ mdg_should_scalarize(const nir_instr *instr, const void *_unused)
 }
 
 /* Only vectorize int64 up to vec2 */
-static bool
-midgard_vectorize_filter(const nir_instr *instr, void *data)
+static uint8_t
+midgard_vectorize_filter(const nir_instr *instr, const void *data)
 {
         if (instr->type != nir_instr_type_alu)
-                return true;
+                return 0;
 
         const nir_alu_instr *alu = nir_instr_as_alu(instr);
-
-        unsigned num_components = alu->dest.dest.ssa.num_components;
-
         int src_bit_size = nir_src_bit_size(alu->src[0].src);
         int dst_bit_size = nir_dest_bit_size(alu->dest.dest);
 
-        if (src_bit_size == 64 || dst_bit_size == 64) {
-                if (num_components > 1)
-                        return false;
-        }
+        if (src_bit_size == 64 || dst_bit_size == 64)
+                return 2;
 
-        return true;
+        return 4;
 }
 
 static void
@@ -347,6 +344,7 @@ optimise_nir(nir_shader *nir, unsigned quirks, bool is_blend, bool is_blit)
                 .lower_tg4_broadcom_swizzle = true,
                 /* TODO: we have native gradient.. */
                 .lower_txd = true,
+                .lower_invalid_implicit_lod = true,
         };
 
         NIR_PASS(progress, nir, nir_lower_tex, &lower_tex_options);
@@ -364,6 +362,13 @@ optimise_nir(nir_shader *nir, unsigned quirks, bool is_blend, bool is_blit)
         NIR_PASS(progress, nir, midgard_nir_lower_helper_writes);
         NIR_PASS(progress, nir, pan_lower_helper_invocation);
         NIR_PASS(progress, nir, pan_lower_sample_pos);
+
+        if (nir->xfb_info != NULL && nir->info.has_transform_feedback_varyings) {
+                NIR_PASS_V(nir, nir_io_add_const_offset_to_base,
+                           nir_var_shader_in | nir_var_shader_out);
+                NIR_PASS_V(nir, nir_io_add_intrinsic_xfb_info);
+                NIR_PASS_V(nir, pan_lower_xfb);
+        }
 
         NIR_PASS(progress, nir, midgard_nir_lower_algebraic_early);
         NIR_PASS_V(nir, nir_lower_alu_to_scalar, mdg_should_scalarize, NULL);
@@ -946,7 +951,7 @@ emit_alu(compiler_context *ctx, nir_alu_instr *instr)
         }
 
         default:
-                DBG("Unhandled ALU op %s\n", nir_op_infos[instr->op].name);
+                mesa_loge("Unhandled ALU op %s\n", nir_op_infos[instr->op].name);
                 assert(0);
                 return;
         }
@@ -1575,8 +1580,9 @@ emit_sysval_read(compiler_context *ctx, nir_instr *instr,
         nir_dest nir_dest;
 
         /* Figure out which uniform this is */
-        unsigned sysval_ubo =
-                MAX2(ctx->inputs->sysval_ubo, ctx->nir->info.num_ubos);
+        unsigned sysval_ubo = ctx->inputs->fixed_sysval_ubo >= 0 ?
+                              ctx->inputs->fixed_sysval_ubo :
+                              ctx->nir->info.num_ubos;
         int sysval = panfrost_sysval_for_instr(instr, &nir_dest);
         unsigned dest = nir_dest_index(&nir_dest);
         unsigned uniform =
@@ -2090,9 +2096,14 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                 emit_global(ctx, &instr->instr, false, reg, &instr->src[1], seg);
                 break;
 
-        case nir_intrinsic_load_first_vertex:
         case nir_intrinsic_load_ssbo_address:
+        case nir_intrinsic_load_xfb_address:
+                emit_sysval_read(ctx, &instr->instr, 2, 0);
+                break;
+
+        case nir_intrinsic_load_first_vertex:
         case nir_intrinsic_load_work_dim:
+        case nir_intrinsic_load_num_vertices:
                 emit_sysval_read(ctx, &instr->instr, 1, 0);
                 break;
 
@@ -2101,15 +2112,12 @@ emit_intrinsic(compiler_context *ctx, nir_intrinsic_instr *instr)
                 break;
 
         case nir_intrinsic_load_base_instance:
+        case nir_intrinsic_get_ssbo_size:
                 emit_sysval_read(ctx, &instr->instr, 1, 8);
                 break;
 
         case nir_intrinsic_load_sample_positions_pan:
                 emit_sysval_read(ctx, &instr->instr, 2, 0);
-                break;
-
-        case nir_intrinsic_get_ssbo_size:
-                emit_sysval_read(ctx, &instr->instr, 1, 8);
                 break;
 
         case nir_intrinsic_load_viewport_scale:
@@ -3126,7 +3134,9 @@ midgard_compile_shader_nir(nir_shader *nir,
 
         /* TODO: Bound against what? */
         compiler_context *ctx = rzalloc(NULL, compiler_context);
-        ctx->sysval_to_id = panfrost_init_sysvals(&info->sysvals, ctx);
+        ctx->sysval_to_id = panfrost_init_sysvals(&info->sysvals,
+                                                  inputs->fixed_sysval_layout,
+                                                  ctx);
 
         ctx->inputs = inputs;
         ctx->nir = nir;

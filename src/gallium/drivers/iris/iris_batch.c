@@ -49,6 +49,7 @@
 #include "intel/common/intel_gem.h"
 #include "intel/ds/intel_tracepoints.h"
 #include "util/hash_table.h"
+#include "util/debug.h"
 #include "util/set.h"
 #include "util/u_upload_mgr.h"
 
@@ -229,7 +230,8 @@ iris_init_batch(struct iris_context *ice,
          INTEL_BATCH_DECODE_OFFSETS |
          INTEL_BATCH_DECODE_FLOATS;
 
-      intel_batch_decode_ctx_init(&batch->decoder, &screen->devinfo,
+      intel_batch_decode_ctx_init(&batch->decoder, &screen->compiler->isa,
+                                  &screen->devinfo,
                                   stderr, decode_flags, NULL,
                                   decode_get_bo, decode_get_state_size, batch);
       batch->decoder.dynamic_base = IRIS_MEMZONE_DYNAMIC_START;
@@ -291,6 +293,10 @@ iris_create_engines_context(struct iris_context *ice, int priority)
    /* Blitter is only supported on Gfx12+ */
    unsigned num_batches = IRIS_BATCH_COUNT - (devinfo->ver >= 12 ? 0 : 1);
 
+   if (env_var_as_boolean("INTEL_COMPUTE_CLASS", false) &&
+       intel_gem_count_engines(engines_info, I915_ENGINE_CLASS_COMPUTE) > 0)
+      engine_classes[IRIS_BATCH_COMPUTE] = I915_ENGINE_CLASS_COMPUTE;
+
    int engines_ctx =
       intel_gem_create_context_engines(fd, engines_info, num_batches,
                                        engine_classes);
@@ -302,6 +308,7 @@ iris_create_engines_context(struct iris_context *ice, int priority)
 
    iris_hw_context_set_unrecoverable(screen->bufmgr, engines_ctx);
    iris_hw_context_set_vm_id(screen->bufmgr, engines_ctx);
+   iris_hw_context_set_priority(screen->bufmgr, engines_ctx, priority);
 
    free(engines_info);
    return engines_ctx;
@@ -313,9 +320,6 @@ iris_init_engines_context(struct iris_context *ice, int priority)
    int engines_ctx = iris_create_engines_context(ice, priority);
    if (engines_ctx < 0)
       return false;
-
-   struct iris_screen *screen = (void *) ice->ctx.screen;
-   iris_hw_context_set_priority(screen->bufmgr, engines_ctx, priority);
 
    iris_foreach_batch(ice, batch) {
       unsigned i = batch - &ice->batches[0];
@@ -481,7 +485,7 @@ create_batch(struct iris_batch *batch)
 
    /* TODO: We probably could suballocate batches... */
    batch->bo = iris_bo_alloc(bufmgr, "command buffer",
-                             BATCH_SZ + BATCH_RESERVED, 1,
+                             BATCH_SZ + BATCH_RESERVED, 8,
                              IRIS_MEMZONE_OTHER, BO_ALLOC_NO_SUBALLOC);
    iris_get_backing_bo(batch->bo)->real.kflags |= EXEC_OBJECT_CAPTURE;
    batch->map = iris_bo_map(NULL, batch->bo, MAP_READ | MAP_WRITE);
@@ -708,7 +712,7 @@ iris_finish_batch(struct iris_batch *batch)
 
    finish_seqno(batch);
 
-   trace_intel_end_batch(&batch->trace, batch, batch->name);
+   trace_intel_end_batch(&batch->trace, batch->name);
 
    /* Emit MI_BATCH_BUFFER_END to finish our batch. */
    uint32_t *map = batch->map_next;

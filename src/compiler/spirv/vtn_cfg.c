@@ -924,6 +924,11 @@ vtn_handle_phis_first_pass(struct vtn_builder *b, SpvOp opcode,
    struct vtn_type *type = vtn_get_type(b, w[1]);
    nir_variable *phi_var =
       nir_local_variable_create(b->nb.impl, type->type, "phi");
+
+   struct vtn_value *phi_val = vtn_untyped_value(b, w[2]);
+   if (vtn_value_is_relaxed_precision(b, phi_val))
+      phi_var->data.precision = GLSL_PRECISION_MEDIUM;
+
    _mesa_hash_table_insert(b->phi_table, w, phi_var);
 
    vtn_push_ssa_value(b, w[2],
