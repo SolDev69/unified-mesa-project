@@ -472,6 +472,12 @@ st_translate_stream_output_info(struct gl_program *prog)
    memset(output_mapping, 0, sizeof(output_mapping));
 
    for (unsigned attr = 0; attr < VARYING_SLOT_MAX; attr++) {
+      /* this output was added by mesa/st and should not be tracked for xfb:
+       * drivers must check var->data.explicit_location to find the original output
+       * and only emit that one for xfb
+       */
+      if (prog->skip_pointsize_xfb && attr == VARYING_SLOT_PSIZ)
+         continue;
       if (prog->info.outputs_written & BITFIELD64_BIT(attr))
          output_mapping[attr] = num_outputs++;
    }
@@ -508,6 +514,7 @@ st_create_nir_shader(struct st_context *st, struct pipe_shader_state *state)
 
    assert(state->type == PIPE_SHADER_IR_NIR);
    nir_shader *nir = state->ir.nir;
+   struct shader_info info = nir->info;
    gl_shader_stage stage = nir->info.stage;
    enum pipe_shader_type sh = pipe_shader_type_from_mesa(stage);
 
@@ -554,7 +561,7 @@ st_create_nir_shader(struct st_context *st, struct pipe_shader_state *state)
    case MESA_SHADER_COMPUTE: {
       struct pipe_compute_state cs = {0};
       cs.ir_type = state->type;
-      cs.req_local_mem = nir->info.shared_size;
+      cs.req_local_mem = info.shared_size;
 
       if (state->type == PIPE_SHADER_IR_NIR)
          cs.prog = state->ir.nir;
@@ -792,14 +799,11 @@ st_create_common_variant(struct st_context *st,
 
       if (key->export_point_size) {
          /* if flag is set, shader must export psiz */
-         nir_shader *nir = state.ir.nir;
-         /* avoid clobbering existing psiz output */
-         if (!(nir->info.outputs_written & BITFIELD64_BIT(VARYING_SLOT_PSIZ))) {
-            _mesa_add_state_reference(params, point_size_state);
-            NIR_PASS_V(state.ir.nir, nir_lower_point_size_mov,
-                       point_size_state);
-            finalize = true;
-         }
+         _mesa_add_state_reference(params, point_size_state);
+         NIR_PASS_V(state.ir.nir, nir_lower_point_size_mov,
+                    point_size_state);
+
+         finalize = true;
       }
 
       if (key->lower_ucp) {
@@ -1912,34 +1916,31 @@ st_destroy_program_variants(struct st_context *st)
                   destroy_shader_program_variants_cb, st);
 }
 
-static bool
-is_last_vertex_stage(struct gl_context *ctx, struct gl_program *prog)
+bool
+st_can_add_pointsize_to_program(struct st_context *st, struct gl_program *prog)
 {
-   struct gl_program *last = NULL;
-   /* fixedfunc */
-   if (prog->Id == 0)
-      return true;
+   nir_shader *nir = prog->nir;
+   if (!nir)
+      return true; //fixedfunction
+   assert(nir->info.stage == MESA_SHADER_VERTEX ||
+          nir->info.stage == MESA_SHADER_TESS_EVAL ||
+          nir->info.stage == MESA_SHADER_GEOMETRY);
+   unsigned max_components = nir->info.stage == MESA_SHADER_GEOMETRY ?
+                             st->ctx->Const.MaxGeometryTotalOutputComponents :
+                             st->ctx->Const.Program[nir->info.stage].MaxOutputComponents;
+   unsigned num_components = 0;
+   unsigned needed_components = nir->info.stage == MESA_SHADER_GEOMETRY ? nir->info.gs.vertices_out : 1;
+   nir_foreach_shader_out_variable(var, nir) {
+      num_components += glsl_count_dword_slots(var->type, false);
+   }
+   /* Ensure that there is enough attribute space to emit at least one primitive */
+   if (nir->info.stage == MESA_SHADER_GEOMETRY) {
+      if (num_components + needed_components > st->ctx->Const.Program[nir->info.stage].MaxOutputComponents)
+         return false;
+      num_components *= nir->info.gs.vertices_out;
+   }
 
-   /* shader info accurately set */
-   if (prog->info.next_stage == MESA_SHADER_FRAGMENT)
-      return true;
-   if (prog->info.next_stage != MESA_SHADER_VERTEX)
-      return false;
-
-   /* check bound programs */
-   if (ctx->GeometryProgram._Current)
-      last = ctx->GeometryProgram._Current;
-   else if (ctx->TessEvalProgram._Current)
-      last = ctx->TessEvalProgram._Current;
-   else
-      last = ctx->VertexProgram._Current;
-   if (last)
-      return prog == last;
-
-   /* assume this will be the last vertex stage;
-    * at worst, another variant without psiz is created later
-    */
-   return true;
+   return num_components + needed_components <= max_components;
 }
 
 /**
@@ -1968,12 +1969,6 @@ st_precompile_shader_variant(struct st_context *st,
          key.clamp_color = true;
       }
 
-      if (prog->Target == GL_VERTEX_PROGRAM_ARB ||
-          prog->Target == GL_TESS_EVALUATION_PROGRAM_NV ||
-          prog->Target == GL_GEOMETRY_PROGRAM_NV) {
-         if (st->ctx->API == API_OPENGLES2 || !st->ctx->VertexProgram.PointSizeEnabled)
-            key.export_point_size = st->lower_point_size && is_last_vertex_stage(st->ctx, prog);
-      }
       key.st = st->has_shareable_shaders ? NULL : st;
       st_get_common_variant(st, prog, &key);
       break;
@@ -2069,6 +2064,10 @@ st_program_string_notify( struct gl_context *ctx,
    } else if (target == GL_VERTEX_PROGRAM_ARB) {
       if (!st_translate_vertex_program(st, prog))
          return false;
+      if (st->lower_point_size && st_can_add_pointsize_to_program(st, prog)) {
+         prog->skip_pointsize_xfb = true;
+         NIR_PASS_V(prog->nir, st_nir_add_point_size);
+      }
    } else {
       if (!st_translate_common_program(st, prog))
          return false;

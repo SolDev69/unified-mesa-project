@@ -150,8 +150,7 @@ panfrost_batch_cleanup(struct panfrost_context *ctx, struct panfrost_batch *batc
 
 static void
 panfrost_batch_submit(struct panfrost_context *ctx,
-                      struct panfrost_batch *batch,
-                      uint32_t in_sync, uint32_t out_sync);
+                      struct panfrost_batch *batch);
 
 static struct panfrost_batch *
 panfrost_get_batch(struct panfrost_context *ctx,
@@ -177,7 +176,7 @@ panfrost_get_batch(struct panfrost_context *ctx,
 
         /* The selected slot is used, we need to flush the batch */
         if (batch->seqnum)
-                panfrost_batch_submit(ctx, batch, 0, 0);
+                panfrost_batch_submit(ctx, batch);
 
         panfrost_batch_init(ctx, key, batch);
 
@@ -225,7 +224,7 @@ panfrost_get_fresh_batch_for_fbo(struct panfrost_context *ctx, const char *reaso
 
         if (batch->scoreboard.first_job) {
                 perf_debug_ctx(ctx, "Flushing the current FBO due to: %s", reason);
-                panfrost_batch_submit(ctx, batch, 0, 0);
+                panfrost_batch_submit(ctx, batch);
                 batch = panfrost_get_batch(ctx, &ctx->pipe_framebuffer);
         }
 
@@ -265,7 +264,7 @@ panfrost_batch_update_access(struct panfrost_batch *batch,
 
                         /* Submit if it's a user */
                         if (_mesa_set_search(batch->resources, rsrc))
-                                panfrost_batch_submit(ctx, batch, 0, 0);
+                                panfrost_batch_submit(ctx, batch);
                 }
         }
 
@@ -644,6 +643,9 @@ panfrost_batch_submit_ioctl(struct panfrost_batch *batch,
                 if (dev->debug & PAN_DBG_TRACE)
                         pandecode_jc(submit.jc, dev->gpu_id);
 
+                if (dev->debug & PAN_DBG_DUMP)
+                        pandecode_dump_mappings();
+
                 /* Jobs won't be complete if blackhole rendering, that's ok */
                 if (!ctx->is_noop && dev->debug & PAN_DBG_SYNC)
                         pandecode_abort_on_fault(submit.jc, dev->gpu_id);
@@ -685,13 +687,6 @@ panfrost_batch_submit_jobs(struct panfrost_batch *batch,
         }
 
         if (has_frag) {
-                /* Whether we program the fragment job for draws or not depends
-                 * on whether there is any *tiler* activity (so fragment
-                 * shaders). If there are draws but entirely RASTERIZER_DISCARD
-                 * (say, for transform feedback), we want a fragment job that
-                 * *only* clears, since otherwise the tiler structures will be
-                 * uninitialized leading to faults (or state leaks) */
-
                 mali_ptr fragjob = screen->vtbl.emit_fragment_job(batch, fb);
                 ret = panfrost_batch_submit_ioctl(batch, fragjob,
                                                   PANFROST_JD_REQ_FS, 0,
@@ -728,8 +723,7 @@ panfrost_emit_tile_map(struct panfrost_batch *batch, struct pan_fb_info *fb)
 
 static void
 panfrost_batch_submit(struct panfrost_context *ctx,
-                      struct panfrost_batch *batch,
-                      uint32_t in_sync, uint32_t out_sync)
+                      struct panfrost_batch *batch)
 {
         struct pipe_screen *pscreen = ctx->base.screen;
         struct panfrost_screen *screen = pan_screen(pscreen);
@@ -756,7 +750,7 @@ panfrost_batch_submit(struct panfrost_context *ctx,
         if (batch->scoreboard.first_tiler || batch->clear)
                 screen->vtbl.emit_fbd(batch, &fb);
 
-        ret = panfrost_batch_submit_jobs(batch, &fb, in_sync, out_sync);
+        ret = panfrost_batch_submit_jobs(batch, &fb, 0, ctx->syncobj);
 
         if (ret)
                 fprintf(stderr, "panfrost_batch_submit failed: %d\n", ret);
@@ -783,21 +777,20 @@ out:
         panfrost_batch_cleanup(ctx, batch);
 }
 
-/* Submit all batches, applying the out_sync to the currently bound batch */
+/* Submit all batches */
 
 void
 panfrost_flush_all_batches(struct panfrost_context *ctx, const char *reason)
 {
         struct panfrost_batch *batch = panfrost_get_batch_for_fbo(ctx);
-        panfrost_batch_submit(ctx, batch, ctx->syncobj, ctx->syncobj);
+        panfrost_batch_submit(ctx, batch);
 
         for (unsigned i = 0; i < PAN_MAX_BATCHES; i++) {
                 if (ctx->batches.slots[i].seqnum) {
                         if (reason)
                                 perf_debug_ctx(ctx, "Flushing everything due to: %s", reason);
 
-                        panfrost_batch_submit(ctx, &ctx->batches.slots[i],
-                                              ctx->syncobj, ctx->syncobj);
+                        panfrost_batch_submit(ctx, &ctx->batches.slots[i]);
                 }
         }
 }
@@ -811,7 +804,7 @@ panfrost_flush_writer(struct panfrost_context *ctx,
 
         if (entry) {
                 perf_debug_ctx(ctx, "Flushing writer due to: %s", reason);
-                panfrost_batch_submit(ctx, entry->data, ctx->syncobj, ctx->syncobj);
+                panfrost_batch_submit(ctx, entry->data);
         }
 }
 
@@ -828,7 +821,7 @@ panfrost_flush_batches_accessing_rsrc(struct panfrost_context *ctx,
                         continue;
 
                 perf_debug_ctx(ctx, "Flushing user due to: %s", reason);
-                panfrost_batch_submit(ctx, batch, ctx->syncobj, ctx->syncobj);
+                panfrost_batch_submit(ctx, batch);
         }
 }
 

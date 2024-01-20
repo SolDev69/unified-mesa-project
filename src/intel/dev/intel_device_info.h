@@ -72,7 +72,8 @@ enum intel_platform {
    INTEL_PLATFORM_ADL,
    INTEL_PLATFORM_RPL,
    INTEL_PLATFORM_GROUP_START(DG2, INTEL_PLATFORM_DG2_G10),
-   INTEL_PLATFORM_GROUP_END(DG2, INTEL_PLATFORM_DG2_G11),
+   INTEL_PLATFORM_DG2_G11,
+   INTEL_PLATFORM_GROUP_END(DG2, INTEL_PLATFORM_DG2_G12),
 };
 
 #undef INTEL_PLATFORM_GROUP_START
@@ -136,6 +137,7 @@ struct intel_device_info
    bool has_aux_map;
    bool has_tiling_uapi;
    bool has_ray_tracing;
+   bool has_ray_query;
    bool has_local_mem;
    bool has_lsc;
    bool has_mesh_shading;

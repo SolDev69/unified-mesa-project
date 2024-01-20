@@ -895,7 +895,7 @@ tc_get_query_result(struct pipe_context *_pipe,
 
 struct tc_query_result_resource {
    struct tc_call_base base;
-   bool wait;
+   enum pipe_query_flags flags:8;
    enum pipe_query_value_type result_type:8;
    int8_t index; /* it can be -1 */
    unsigned offset;
@@ -908,7 +908,7 @@ tc_call_get_query_result_resource(struct pipe_context *pipe, void *call, uint64_
 {
    struct tc_query_result_resource *p = to_call(call, tc_query_result_resource);
 
-   pipe->get_query_result_resource(pipe, p->query, p->wait, p->result_type,
+   pipe->get_query_result_resource(pipe, p->query, p->flags, p->result_type,
                                    p->index, p->resource, p->offset);
    tc_drop_resource_reference(p->resource);
    return call_size(tc_query_result_resource);
@@ -916,7 +916,8 @@ tc_call_get_query_result_resource(struct pipe_context *pipe, void *call, uint64_
 
 static void
 tc_get_query_result_resource(struct pipe_context *_pipe,
-                             struct pipe_query *query, bool wait,
+                             struct pipe_query *query,
+                             enum pipe_query_flags flags,
                              enum pipe_query_value_type result_type, int index,
                              struct pipe_resource *resource, unsigned offset)
 {
@@ -928,7 +929,7 @@ tc_get_query_result_resource(struct pipe_context *_pipe,
       tc_add_call(tc, TC_CALL_get_query_result_resource,
                   tc_query_result_resource);
    p->query = query;
-   p->wait = wait;
+   p->flags = flags;
    p->result_type = result_type;
    p->index = index;
    tc_set_resource_reference(&p->resource, resource);
@@ -2013,7 +2014,7 @@ tc_invalidate_buffer(struct threaded_context *tc,
    /* Shared, pinned, and sparse buffers can't be reallocated. */
    if (tbuf->is_shared ||
        tbuf->is_user_ptr ||
-       tbuf->b.flags & PIPE_RESOURCE_FLAG_SPARSE)
+       tbuf->b.flags & (PIPE_RESOURCE_FLAG_SPARSE | PIPE_RESOURCE_FLAG_UNMAPPABLE))
       return false;
 
    /* Allocate a new one. */
@@ -2085,7 +2086,7 @@ tc_improve_map_buffer_flags(struct threaded_context *tc,
     * (fully invalidated). That may just be a radeonsi limitation, but
     * the threaded context must obey it with radeonsi.
     */
-   if (tres->b.flags & PIPE_RESOURCE_FLAG_SPARSE) {
+   if (tres->b.flags & (PIPE_RESOURCE_FLAG_SPARSE | PIPE_RESOURCE_FLAG_UNMAPPABLE)) {
       /* We can use DISCARD_RANGE instead of full discard. This is the only
        * fast path for sparse buffers that doesn't need thread synchronization.
        */
@@ -2364,8 +2365,14 @@ tc_transfer_flush_region(struct pipe_context *_pipe,
          tc_buffer_do_flush_region(tc, ttrans, &box);
       }
 
-      /* Staging transfers don't send the call to the driver. */
-      if (ttrans->staging)
+      /* Staging transfers don't send the call to the driver.
+       *
+       * Transfers using the CPU storage shouldn't call transfer_flush_region
+       * in the driver because the buffer is not really mapped on the driver
+       * side and the CPU storage always re-uploads everything (flush_region
+       * makes no difference).
+       */
+      if (ttrans->staging || ttrans->cpu_storage_mapped)
          return;
    }
 
@@ -2768,7 +2775,7 @@ tc_dump_debug_state(struct pipe_context *_pipe, FILE *stream,
 
 static void
 tc_set_debug_callback(struct pipe_context *_pipe,
-                      const struct pipe_debug_callback *cb)
+                      const struct util_debug_callback *cb)
 {
    struct threaded_context *tc = threaded_context(_pipe);
    struct pipe_context *pipe = tc->pipe;
@@ -2834,27 +2841,14 @@ tc_fence_server_sync(struct pipe_context *_pipe,
    screen->fence_reference(screen, &call->fence, fence);
 }
 
-static uint16_t
-tc_call_fence_server_signal(struct pipe_context *pipe, void *call, uint64_t *last)
-{
-   struct pipe_fence_handle *fence = to_call(call, tc_fence_call)->fence;
-
-   pipe->fence_server_signal(pipe, fence);
-   pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-   return call_size(tc_fence_call);
-}
-
 static void
 tc_fence_server_signal(struct pipe_context *_pipe,
                            struct pipe_fence_handle *fence)
 {
    struct threaded_context *tc = threaded_context(_pipe);
-   struct pipe_screen *screen = tc->pipe->screen;
-   struct tc_fence_call *call = tc_add_call(tc, TC_CALL_fence_server_signal,
-                                            tc_fence_call);
-
-   call->fence = NULL;
-   screen->fence_reference(screen, &call->fence, fence);
+   struct pipe_context *pipe = tc->pipe;
+   tc_sync(tc);
+   pipe->fence_server_signal(pipe, fence);
 }
 
 static struct pipe_video_codec *
@@ -3226,9 +3220,6 @@ tc_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info,
    unsigned index_size = info->index_size;
    bool has_user_indices = info->has_user_indices;
 
-   if (unlikely(tc->add_all_gfx_bindings_to_buffer_list))
-      tc_add_all_gfx_bindings_to_buffer_list(tc);
-
    if (unlikely(indirect)) {
       assert(!has_user_indices);
       assert(num_draws == 1);
@@ -3262,6 +3253,10 @@ tc_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info,
 
       memcpy(&p->indirect, indirect, sizeof(*indirect));
       p->draw.start = draws[0].start;
+
+      /* This must be after tc_add_call, which can flush the batch. */
+      if (unlikely(tc->add_all_gfx_bindings_to_buffer_list))
+         tc_add_all_gfx_bindings_to_buffer_list(tc);
       return;
    }
 
@@ -3316,6 +3311,10 @@ tc_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info,
          p->info.max_index = draws[0].count;
          p->index_bias = draws[0].index_bias;
       }
+
+      /* This must be after tc_add_call, which can flush the batch. */
+      if (unlikely(tc->add_all_gfx_bindings_to_buffer_list))
+         tc_add_all_gfx_bindings_to_buffer_list(tc);
       return;
    }
 
@@ -3428,6 +3427,10 @@ tc_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info,
          total_offset += dr;
       }
    }
+
+   /* This must be after tc_add_*call, which can flush the batch. */
+   if (unlikely(tc->add_all_gfx_bindings_to_buffer_list))
+      tc_add_all_gfx_bindings_to_buffer_list(tc);
 }
 
 struct tc_draw_vstate_single {
@@ -3526,9 +3529,6 @@ tc_draw_vertex_state(struct pipe_context *_pipe,
 {
    struct threaded_context *tc = threaded_context(_pipe);
 
-   if (unlikely(tc->add_all_gfx_bindings_to_buffer_list))
-      tc_add_all_gfx_bindings_to_buffer_list(tc);
-
    if (num_draws == 1) {
       /* Single draw. */
       struct tc_draw_vstate_single *p =
@@ -3547,6 +3547,11 @@ tc_draw_vertex_state(struct pipe_context *_pipe,
          tc_set_vertex_state_reference(&p->state, state);
       else
          p->state = state;
+
+
+      /* This must be after tc_add_*call, which can flush the batch. */
+      if (unlikely(tc->add_all_gfx_bindings_to_buffer_list))
+         tc_add_all_gfx_bindings_to_buffer_list(tc);
       return;
    }
 
@@ -3588,6 +3593,11 @@ tc_draw_vertex_state(struct pipe_context *_pipe,
 
       total_offset += dr;
    }
+
+
+   /* This must be after tc_add_*call, which can flush the batch. */
+   if (unlikely(tc->add_all_gfx_bindings_to_buffer_list))
+      tc_add_all_gfx_bindings_to_buffer_list(tc);
 }
 
 struct tc_launch_grid_call {
@@ -3614,14 +3624,15 @@ tc_launch_grid(struct pipe_context *_pipe,
                                                tc_launch_grid_call);
    assert(info->input == NULL);
 
-   if (unlikely(tc->add_all_compute_bindings_to_buffer_list))
-      tc_add_all_compute_bindings_to_buffer_list(tc);
-
    tc_set_resource_reference(&p->info.indirect, info->indirect);
    memcpy(&p->info, info, sizeof(*info));
 
    if (info->indirect)
       tc_add_to_buffer_list(&tc->buffer_lists[tc->next_buf_list], info->indirect);
+
+   /* This must be after tc_add_*call, which can flush the batch. */
+   if (unlikely(tc->add_all_compute_bindings_to_buffer_list))
+      tc_add_all_compute_bindings_to_buffer_list(tc);
 }
 
 static uint16_t

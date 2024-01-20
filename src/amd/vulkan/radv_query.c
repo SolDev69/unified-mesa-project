@@ -854,6 +854,13 @@ radv_query_shader(struct radv_cmd_buffer *cmd_buffer, VkPipeline *pipeline,
 
    radv_unaligned_dispatch(cmd_buffer, count, 1, 1);
 
+   /* Ensure that the query copy dispatch is complete before a potential vkCmdResetPool because
+    * there is an implicit execution dependency from each such query command to all query commands
+    * previously submitted to the same queue.
+    */
+   cmd_buffer->active_query_flush_bits |=
+      RADV_CMD_FLAG_CS_PARTIAL_FLUSH | RADV_CMD_FLAG_INV_L2 | RADV_CMD_FLAG_INV_VCACHE;
+
    /* Restore conditional rendering. */
    cmd_buffer->state.predicating = old_predicating;
 
@@ -1615,8 +1622,8 @@ radv_CmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t 
 }
 
 VKAPI_ATTR void VKAPI_CALL
-radv_CmdWriteTimestamp2KHR(VkCommandBuffer commandBuffer, VkPipelineStageFlags2KHR stage,
-                           VkQueryPool queryPool, uint32_t query)
+radv_CmdWriteTimestamp2(VkCommandBuffer commandBuffer, VkPipelineStageFlags2 stage,
+                        VkQueryPool queryPool, uint32_t query)
 {
    RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
    RADV_FROM_HANDLE(radv_query_pool, pool, queryPool);
@@ -1636,7 +1643,7 @@ radv_CmdWriteTimestamp2KHR(VkCommandBuffer commandBuffer, VkPipelineStageFlags2K
    ASSERTED unsigned cdw_max = radeon_check_space(cmd_buffer->device->ws, cs, 28 * num_queries);
 
    for (unsigned i = 0; i < num_queries; i++) {
-      if (stage == VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR) {
+      if (stage == VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT) {
          radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
          radeon_emit(cs, COPY_DATA_COUNT_SEL | COPY_DATA_WR_CONFIRM |
                             COPY_DATA_SRC_SEL(COPY_DATA_TIMESTAMP) | COPY_DATA_DST_SEL(V_370_MEM));

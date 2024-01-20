@@ -36,6 +36,8 @@
 #error This file is included by means other than anv_private.h
 #endif
 
+struct intel_sample_positions;
+
 extern const uint32_t genX(vk_to_intel_cullmode)[];
 
 extern const uint32_t genX(vk_to_intel_front_face)[];
@@ -119,6 +121,8 @@ void genX(cmd_buffer_mark_image_written)(struct anv_cmd_buffer *cmd_buffer,
 
 void genX(cmd_emit_conditional_render_predicate)(struct anv_cmd_buffer *cmd_buffer);
 
+struct anv_state genX(cmd_buffer_ray_query_globals)(struct anv_cmd_buffer *cmd_buffer);
+
 void
 genX(emit_urb_setup)(struct anv_device *device, struct anv_batch *batch,
                      const struct intel_l3_config *l3_config,
@@ -127,10 +131,10 @@ genX(emit_urb_setup)(struct anv_device *device, struct anv_batch *batch,
                      enum intel_urb_deref_block_size *deref_block_size);
 
 void genX(emit_multisample)(struct anv_batch *batch, uint32_t samples,
-                            const VkSampleLocationEXT *locations);
+                            const struct intel_sample_position *positions);
 
-void genX(emit_sample_pattern)(struct anv_batch *batch, uint32_t samples,
-                               const VkSampleLocationEXT *locations);
+void genX(emit_sample_pattern)(struct anv_batch *batch,
+                               const struct anv_dynamic_state *dynamic_state);
 
 void genX(emit_shading_rate)(struct anv_batch *batch,
                              const struct anv_graphics_pipeline *pipeline,

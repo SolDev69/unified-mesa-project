@@ -162,7 +162,7 @@ static VkResult
 init_render_queue_state(struct anv_queue *queue)
 {
    struct anv_device *device = queue->device;
-   uint32_t cmds[64];
+   uint32_t cmds[128];
    struct anv_batch batch = {
       .start = cmds,
       .next = cmds,
@@ -188,6 +188,60 @@ init_render_queue_state(struct anv_queue *queue)
    }
 #endif
 
+#if GFX_VERx10 >= 125
+   /* GEN:BUG:1607854226:
+    *
+    *  Non-pipelined state has issues with not applying in MEDIA/GPGPU mode.
+    *  Fortunately, we always start the context off in 3D mode.
+    */
+   uint32_t mocs = device->isl_dev.mocs.internal;
+   anv_batch_emit(&batch, GENX(STATE_BASE_ADDRESS), sba) {
+      sba.GeneralStateBaseAddress = (struct anv_address) { NULL, 0 };
+      sba.GeneralStateBufferSize  = 0xfffff;
+      sba.GeneralStateMOCS = mocs;
+      sba.GeneralStateBaseAddressModifyEnable = true;
+      sba.GeneralStateBufferSizeModifyEnable = true;
+
+      sba.StatelessDataPortAccessMOCS = mocs;
+
+      sba.SurfaceStateBaseAddress =
+         (struct anv_address) { .offset = SURFACE_STATE_POOL_MIN_ADDRESS };
+      sba.SurfaceStateMOCS = mocs;
+      sba.SurfaceStateBaseAddressModifyEnable = true;
+
+      sba.DynamicStateBaseAddress =
+         (struct anv_address) { .offset = DYNAMIC_STATE_POOL_MIN_ADDRESS };
+      sba.DynamicStateBufferSize = DYNAMIC_STATE_POOL_SIZE / 4096;
+      sba.DynamicStateMOCS = mocs;
+      sba.DynamicStateBaseAddressModifyEnable = true;
+      sba.DynamicStateBufferSizeModifyEnable = true;
+
+      sba.IndirectObjectBaseAddress = (struct anv_address) { NULL, 0 };
+      sba.IndirectObjectBufferSize = 0xfffff;
+      sba.IndirectObjectMOCS = mocs;
+      sba.IndirectObjectBaseAddressModifyEnable = true;
+      sba.IndirectObjectBufferSizeModifyEnable = true;
+
+      sba.InstructionBaseAddress =
+         (struct anv_address) { .offset = INSTRUCTION_STATE_POOL_MIN_ADDRESS };
+      sba.InstructionBufferSize = INSTRUCTION_STATE_POOL_SIZE / 4096;
+      sba.InstructionMOCS = mocs;
+      sba.InstructionBaseAddressModifyEnable = true;
+      sba.InstructionBuffersizeModifyEnable = true;
+
+      sba.BindlessSurfaceStateBaseAddress =
+         (struct anv_address) { .offset = SURFACE_STATE_POOL_MIN_ADDRESS };
+      sba.BindlessSurfaceStateSize = (1 << 20) - 1;
+      sba.BindlessSurfaceStateMOCS = mocs;
+      sba.BindlessSurfaceStateBaseAddressModifyEnable = true;
+
+      sba.BindlessSamplerStateBaseAddress = (struct anv_address) { NULL, 0 };
+      sba.BindlessSamplerStateMOCS = mocs;
+      sba.BindlessSamplerStateBaseAddressModifyEnable = true;
+      sba.BindlessSamplerStateBufferSize = 0;
+   }
+#endif
+
    anv_batch_emit(&batch, GENX(3DSTATE_AA_LINE_PARAMETERS), aa);
 
    anv_batch_emit(&batch, GENX(3DSTATE_DRAWING_RECTANGLE), rect) {
@@ -202,7 +256,7 @@ init_render_queue_state(struct anv_queue *queue)
 #if GFX_VER >= 8
    anv_batch_emit(&batch, GENX(3DSTATE_WM_CHROMAKEY), ck);
 
-   genX(emit_sample_pattern)(&batch, 0, NULL);
+   genX(emit_sample_pattern)(&batch, NULL);
 
    /* The BDW+ docs describe how to use the 3DSTATE_WM_HZ_OP instruction in the
     * section titled, "Optimized Depth Buffer Clear and/or Stencil Buffer
@@ -268,6 +322,17 @@ init_render_queue_state(struct anv_queue *queue)
       cc1.DisablePreemptionandHighPriorityPausingdueto3DPRIMITIVECommandMask = true;
 #endif
    }
+
+#if GFX_VERx10 == 120
+   /* Wa_1806527549 says to disable the following HiZ optimization when the
+    * depth buffer is D16_UNORM. We've found the WA to help with more depth
+    * buffer configurations however, so we always disable it just to be safe.
+    */
+   anv_batch_write_reg(&batch, GENX(HIZ_CHICKEN), reg) {
+      reg.HZDepthTestLEGEOptimizationDisable = true;
+      reg.HZDepthTestLEGEOptimizationDisableMask = true;
+   }
+#endif
 
 #if GFX_VERx10 < 125
 #define AA_LINE_QUALITY_REG GENX(3D_CHICKEN3)
@@ -592,7 +657,7 @@ genX(emit_l3_config)(struct anv_batch *batch,
 
 void
 genX(emit_multisample)(struct anv_batch *batch, uint32_t samples,
-                       const VkSampleLocationEXT *locations)
+                       const struct intel_sample_position *positions)
 {
    anv_batch_emit(batch, GENX(3DSTATE_MULTISAMPLE), ms) {
       ms.NumberofMultisamples       = __builtin_ffs(samples) - 1;
@@ -606,41 +671,21 @@ genX(emit_multisample)(struct anv_batch *batch, uint32_t samples,
        */
       ms.PixelPositionOffsetEnable  = false;
 #else
-
-      if (locations) {
-         switch (samples) {
-         case 1:
-            INTEL_SAMPLE_POS_1X_ARRAY(ms.Sample, locations);
+      switch (samples) {
+      case 1:
+         INTEL_SAMPLE_POS_1X_ARRAY(ms.Sample, positions);
+         break;
+      case 2:
+         INTEL_SAMPLE_POS_2X_ARRAY(ms.Sample, positions);
+         break;
+      case 4:
+         INTEL_SAMPLE_POS_4X_ARRAY(ms.Sample, positions);
+         break;
+      case 8:
+         INTEL_SAMPLE_POS_8X_ARRAY(ms.Sample, positions);
+         break;
+      default:
             break;
-         case 2:
-            INTEL_SAMPLE_POS_2X_ARRAY(ms.Sample, locations);
-            break;
-         case 4:
-            INTEL_SAMPLE_POS_4X_ARRAY(ms.Sample, locations);
-            break;
-         case 8:
-            INTEL_SAMPLE_POS_8X_ARRAY(ms.Sample, locations);
-            break;
-         default:
-            break;
-         }
-      } else {
-         switch (samples) {
-         case 1:
-            INTEL_SAMPLE_POS_1X(ms.Sample);
-            break;
-         case 2:
-            INTEL_SAMPLE_POS_2X(ms.Sample);
-            break;
-         case 4:
-            INTEL_SAMPLE_POS_4X(ms.Sample);
-            break;
-         case 8:
-            INTEL_SAMPLE_POS_8X(ms.Sample);
-            break;
-         default:
-            break;
-         }
       }
 #endif
    }
@@ -648,53 +693,38 @@ genX(emit_multisample)(struct anv_batch *batch, uint32_t samples,
 
 #if GFX_VER >= 8
 void
-genX(emit_sample_pattern)(struct anv_batch *batch, uint32_t samples,
-                          const VkSampleLocationEXT *locations)
+genX(emit_sample_pattern)(struct anv_batch *batch,
+                          const struct anv_dynamic_state *d)
 {
    /* See the Vulkan 1.0 spec Table 24.1 "Standard sample locations" and
     * VkPhysicalDeviceFeatures::standardSampleLocations.
     */
    anv_batch_emit(batch, GENX(3DSTATE_SAMPLE_PATTERN), sp) {
-      if (locations) {
-         /* The Skylake PRM Vol. 2a "3DSTATE_SAMPLE_PATTERN" says:
-          *
-          *    "When programming the sample offsets (for NUMSAMPLES_4 or _8
-          *    and MSRASTMODE_xxx_PATTERN), the order of the samples 0 to 3
-          *    (or 7 for 8X, or 15 for 16X) must have monotonically increasing
-          *    distance from the pixel center. This is required to get the
-          *    correct centroid computation in the device."
-          *
-          * However, the Vulkan spec seems to require that the the samples
-          * occur in the order provided through the API. The standard sample
-          * patterns have the above property that they have monotonically
-          * increasing distances from the center but client-provided ones do
-          * not. As long as this only affects centroid calculations as the
-          * docs say, we should be ok because OpenGL and Vulkan only require
-          * that the centroid be some lit sample and that it's the same for
-          * all samples in a pixel; they have no requirement that it be the
-          * one closest to center.
-          */
-         switch (samples) {
-         case 1:
-            INTEL_SAMPLE_POS_1X_ARRAY(sp._1xSample, locations);
-            break;
-         case 2:
-            INTEL_SAMPLE_POS_2X_ARRAY(sp._2xSample, locations);
-            break;
-         case 4:
-            INTEL_SAMPLE_POS_4X_ARRAY(sp._4xSample, locations);
-            break;
-         case 8:
-            INTEL_SAMPLE_POS_8X_ARRAY(sp._8xSample, locations);
-            break;
+      /* The Skylake PRM Vol. 2a "3DSTATE_SAMPLE_PATTERN" says:
+       *
+       *    "When programming the sample offsets (for NUMSAMPLES_4 or _8
+       *    and MSRASTMODE_xxx_PATTERN), the order of the samples 0 to 3
+       *    (or 7 for 8X, or 15 for 16X) must have monotonically increasing
+       *    distance from the pixel center. This is required to get the
+       *    correct centroid computation in the device."
+       *
+       * However, the Vulkan spec seems to require that the the samples occur
+       * in the order provided through the API. The standard sample patterns
+       * have the above property that they have monotonically increasing
+       * distances from the center but client-provided ones do not. As long as
+       * this only affects centroid calculations as the docs say, we should be
+       * ok because OpenGL and Vulkan only require that the centroid be some
+       * lit sample and that it's the same for all samples in a pixel; they
+       * have no requirement that it be the one closest to center.
+       */
+      if (d) {
+         INTEL_SAMPLE_POS_1X_ARRAY(sp._1xSample,  d->sample_locations.locations_1);
+         INTEL_SAMPLE_POS_2X_ARRAY(sp._2xSample,  d->sample_locations.locations_2);
+         INTEL_SAMPLE_POS_4X_ARRAY(sp._4xSample,  d->sample_locations.locations_4);
+         INTEL_SAMPLE_POS_8X_ARRAY(sp._8xSample,  d->sample_locations.locations_8);
 #if GFX_VER >= 9
-         case 16:
-            INTEL_SAMPLE_POS_16X_ARRAY(sp._16xSample, locations);
-            break;
+         INTEL_SAMPLE_POS_16X_ARRAY(sp._16xSample, d->sample_locations.locations_16);
 #endif
-         default:
-            break;
-         }
       } else {
          INTEL_SAMPLE_POS_1X(sp._1xSample);
          INTEL_SAMPLE_POS_2X(sp._2xSample);
@@ -888,21 +918,30 @@ VkResult genX(CreateSampler)(
             (VkSamplerCustomBorderColorCreateInfoEXT *) ext;
          if (sampler->custom_border_color.map == NULL)
             break;
-         struct gfx8_border_color *cbc = sampler->custom_border_color.map;
-         if (custom_border_color->format == VK_FORMAT_B4G4R4A4_UNORM_PACK16) {
-            /* B4G4R4A4_UNORM_PACK16 is treated as R4G4B4A4_UNORM_PACK16 with
-             * a swizzle, but this does not carry over to the sampler for
-             * border colors, so we need to do the swizzle ourselves here.
-             */
-            cbc->uint32[0] = custom_border_color->customBorderColor.uint32[2];
-            cbc->uint32[1] = custom_border_color->customBorderColor.uint32[1];
-            cbc->uint32[2] = custom_border_color->customBorderColor.uint32[0];
-            cbc->uint32[3] = custom_border_color->customBorderColor.uint32[3];
-         } else {
-            /* Both structs share the same layout, so just copy them over. */
-            memcpy(cbc, &custom_border_color->customBorderColor,
-                   sizeof(VkClearColorValue));
+
+         union isl_color_value color = { .u32 = {
+            custom_border_color->customBorderColor.uint32[0],
+            custom_border_color->customBorderColor.uint32[1],
+            custom_border_color->customBorderColor.uint32[2],
+            custom_border_color->customBorderColor.uint32[3],
+         } };
+
+         const struct anv_format *format_desc =
+            custom_border_color->format != VK_FORMAT_UNDEFINED ?
+            anv_get_format(custom_border_color->format) : NULL;
+
+         /* For formats with a swizzle, it does not carry over to the sampler
+          * for border colors, so we need to do the swizzle ourselves here.
+          */
+         if (format_desc && format_desc->n_planes == 1 &&
+             !isl_swizzle_is_identity(format_desc->planes[0].swizzle)) {
+            const struct anv_format_plane *fmt_plane = &format_desc->planes[0];
+
+            assert(!isl_format_has_int_channel(fmt_plane->isl_format));
+            color = isl_color_value_swizzle(color, fmt_plane->swizzle, true);
          }
+
+         memcpy(sampler->custom_border_color.map, color.u32, sizeof(color));
          has_custom_color = true;
          break;
       }

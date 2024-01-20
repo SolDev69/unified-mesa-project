@@ -1863,6 +1863,9 @@ bool isl_formats_are_ccs_e_compatible(const struct intel_device_info *devinfo,
 uint8_t isl_format_get_aux_map_encoding(enum isl_format format);
 uint8_t isl_get_render_compression_format(enum isl_format format);
 
+bool isl_formats_have_same_bits_per_channel(enum isl_format format1,
+                                            enum isl_format format2);
+
 bool isl_format_has_unorm_channel(enum isl_format fmt) ATTRIBUTE_CONST;
 bool isl_format_has_snorm_channel(enum isl_format fmt) ATTRIBUTE_CONST;
 bool isl_format_has_ufloat_channel(enum isl_format fmt) ATTRIBUTE_CONST;
@@ -2012,6 +2015,11 @@ isl_format_is_rgbx(enum isl_format fmt)
 enum isl_format isl_format_rgb_to_rgba(enum isl_format rgb) ATTRIBUTE_CONST;
 enum isl_format isl_format_rgb_to_rgbx(enum isl_format rgb) ATTRIBUTE_CONST;
 enum isl_format isl_format_rgbx_to_rgba(enum isl_format rgb) ATTRIBUTE_CONST;
+
+union isl_color_value
+isl_color_value_swizzle(union isl_color_value src,
+                        struct isl_swizzle swizzle,
+                        bool is_float);
 
 union isl_color_value
 isl_color_value_swizzle_inv(union isl_color_value src,

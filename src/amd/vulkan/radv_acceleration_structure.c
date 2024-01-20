@@ -179,7 +179,13 @@ build_triangles(struct radv_bvh_build_ctx *ctx, const VkAccelerationStructureGeo
 {
    const VkAccelerationStructureGeometryTrianglesDataKHR *tri_data = &geom->geometry.triangles;
    VkTransformMatrixKHR matrix;
-   const char *index_data = (const char *)tri_data->indexData.hostAddress + range->primitiveOffset;
+   const char *index_data = (const char *)tri_data->indexData.hostAddress;
+   const char *v_data_base = (const char *)tri_data->vertexData.hostAddress;
+
+   if (tri_data->indexType == VK_INDEX_TYPE_NONE_KHR)
+      v_data_base += range->primitiveOffset;
+   else
+      index_data += range->primitiveOffset;
 
    if (tri_data->transformData.hostAddress) {
       matrix = *(const VkTransformMatrixKHR *)((const char *)tri_data->transformData.hostAddress +
@@ -218,7 +224,7 @@ build_triangles(struct radv_bvh_build_ctx *ctx, const VkAccelerationStructureGeo
             break;
          }
 
-         const char *v_data = (const char *)tri_data->vertexData.hostAddress + v_index * tri_data->vertexStride;
+         const char *v_data = v_data_base + v_index * tri_data->vertexStride;
          float coords[4];
          switch (tri_data->vertexFormat) {
          case VK_FORMAT_R32G32_SFLOAT:
@@ -263,6 +269,12 @@ build_triangles(struct radv_bvh_build_ctx *ctx, const VkAccelerationStructureGeo
             coords[2] = 0.0f;
             coords[3] = 1.0f;
             break;
+         case VK_FORMAT_R16G16_UNORM:
+            coords[0] = _mesa_unorm_to_float(*(const uint16_t *)(v_data + 0), 16);
+            coords[1] = _mesa_unorm_to_float(*(const uint16_t *)(v_data + 2), 16);
+            coords[2] = 0.0f;
+            coords[3] = 1.0f;
+            break;
          case VK_FORMAT_R16G16B16A16_SNORM:
             coords[0] = _mesa_snorm_to_float(*(const int16_t *)(v_data + 0), 16);
             coords[1] = _mesa_snorm_to_float(*(const int16_t *)(v_data + 2), 16);
@@ -275,6 +287,37 @@ build_triangles(struct radv_bvh_build_ctx *ctx, const VkAccelerationStructureGeo
             coords[2] = _mesa_unorm_to_float(*(const uint16_t *)(v_data + 4), 16);
             coords[3] = _mesa_unorm_to_float(*(const uint16_t *)(v_data + 6), 16);
             break;
+         case VK_FORMAT_R8G8_SNORM:
+            coords[0] = _mesa_snorm_to_float(*(const int8_t *)(v_data + 0), 8);
+            coords[1] = _mesa_snorm_to_float(*(const int8_t *)(v_data + 1), 8);
+            coords[2] = 0.0f;
+            coords[3] = 1.0f;
+            break;
+         case VK_FORMAT_R8G8_UNORM:
+            coords[0] = _mesa_unorm_to_float(*(const uint8_t *)(v_data + 0), 8);
+            coords[1] = _mesa_unorm_to_float(*(const uint8_t *)(v_data + 1), 8);
+            coords[2] = 0.0f;
+            coords[3] = 1.0f;
+            break;
+         case VK_FORMAT_R8G8B8A8_SNORM:
+            coords[0] = _mesa_snorm_to_float(*(const int8_t *)(v_data + 0), 8);
+            coords[1] = _mesa_snorm_to_float(*(const int8_t *)(v_data + 1), 8);
+            coords[2] = _mesa_snorm_to_float(*(const int8_t *)(v_data + 2), 8);
+            coords[3] = _mesa_snorm_to_float(*(const int8_t *)(v_data + 3), 8);
+            break;
+         case VK_FORMAT_R8G8B8A8_UNORM:
+            coords[0] = _mesa_unorm_to_float(*(const uint8_t *)(v_data + 0), 8);
+            coords[1] = _mesa_unorm_to_float(*(const uint8_t *)(v_data + 1), 8);
+            coords[2] = _mesa_unorm_to_float(*(const uint8_t *)(v_data + 2), 8);
+            coords[3] = _mesa_unorm_to_float(*(const uint8_t *)(v_data + 3), 8);
+            break;
+         case VK_FORMAT_A2B10G10R10_UNORM_PACK32: {
+            uint32_t val = *(const uint32_t *)v_data;
+            coords[0] = _mesa_unorm_to_float((val >> 0) & 0x3FF, 10);
+            coords[1] = _mesa_unorm_to_float((val >> 10) & 0x3FF, 10);
+            coords[2] = _mesa_unorm_to_float((val >> 20) & 0x3FF, 10);
+            coords[3] = _mesa_unorm_to_float((val >> 30) & 0x3, 2);
+         } break;
          default:
             unreachable("Unhandled vertex format in BVH build");
          }
@@ -303,10 +346,12 @@ build_instances(struct radv_device *device, struct radv_bvh_build_ctx *ctx,
    const VkAccelerationStructureGeometryInstancesDataKHR *inst_data = &geom->geometry.instances;
 
    for (uint32_t p = 0; p < range->primitiveCount; ++p, ctx->curr_ptr += 128) {
+      const char *instance_data =
+         (const char *)inst_data->data.hostAddress + range->primitiveOffset;
       const VkAccelerationStructureInstanceKHR *instance =
          inst_data->arrayOfPointers
-            ? (((const VkAccelerationStructureInstanceKHR *const *)inst_data->data.hostAddress)[p])
-            : &((const VkAccelerationStructureInstanceKHR *)inst_data->data.hostAddress)[p];
+            ? (((const VkAccelerationStructureInstanceKHR *const *)instance_data)[p])
+            : &((const VkAccelerationStructureInstanceKHR *)instance_data)[p];
       if (!instance->accelerationStructureReference) {
          continue;
       }
@@ -374,7 +419,7 @@ build_aabbs(struct radv_bvh_build_ctx *ctx, const VkAccelerationStructureGeometr
 
       const VkAabbPositionsKHR *aabb =
          (const VkAabbPositionsKHR *)((const char *)aabb_data->data.hostAddress +
-                                      p * aabb_data->stride);
+                                      range->primitiveOffset + p * aabb_data->stride);
 
       node->aabb[0][0] = aabb->minX;
       node->aabb[0][1] = aabb->minY;
@@ -771,9 +816,21 @@ get_vertices(nir_builder *b, nir_ssa_def *addresses, nir_ssa_def *format, nir_ss
       nir_variable_create(b->shader, nir_var_shader_temp, vec3_type, "vertex2")};
 
    VkFormat formats[] = {
-      VK_FORMAT_R32G32B32_SFLOAT,    VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_R16G16B16_SFLOAT,
-      VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16_SFLOAT,       VK_FORMAT_R32G32_SFLOAT,
-      VK_FORMAT_R16G16_SNORM,        VK_FORMAT_R16G16B16A16_SNORM,  VK_FORMAT_R16G16B16A16_UNORM,
+      VK_FORMAT_R32G32B32_SFLOAT,
+      VK_FORMAT_R32G32B32A32_SFLOAT,
+      VK_FORMAT_R16G16B16_SFLOAT,
+      VK_FORMAT_R16G16B16A16_SFLOAT,
+      VK_FORMAT_R16G16_SFLOAT,
+      VK_FORMAT_R32G32_SFLOAT,
+      VK_FORMAT_R16G16_SNORM,
+      VK_FORMAT_R16G16_UNORM,
+      VK_FORMAT_R16G16B16A16_SNORM,
+      VK_FORMAT_R16G16B16A16_UNORM,
+      VK_FORMAT_R8G8_SNORM,
+      VK_FORMAT_R8G8_UNORM,
+      VK_FORMAT_R8G8B8A8_SNORM,
+      VK_FORMAT_R8G8B8A8_UNORM,
+      VK_FORMAT_A2B10G10R10_UNORM_PACK32,
    };
 
    for (unsigned f = 0; f < ARRAY_SIZE(formats); ++f) {
@@ -792,20 +849,34 @@ get_vertices(nir_builder *b, nir_ssa_def *addresses, nir_ssa_def *format, nir_ss
          case VK_FORMAT_R16G16B16_SFLOAT:
          case VK_FORMAT_R16G16B16A16_SFLOAT:
          case VK_FORMAT_R16G16_SNORM:
+         case VK_FORMAT_R16G16_UNORM:
          case VK_FORMAT_R16G16B16A16_SNORM:
-         case VK_FORMAT_R16G16B16A16_UNORM: {
+         case VK_FORMAT_R16G16B16A16_UNORM:
+         case VK_FORMAT_R8G8_SNORM:
+         case VK_FORMAT_R8G8_UNORM:
+         case VK_FORMAT_R8G8B8A8_SNORM:
+         case VK_FORMAT_R8G8B8A8_UNORM:
+         case VK_FORMAT_A2B10G10R10_UNORM_PACK32: {
             unsigned components = MIN2(3, vk_format_get_nr_components(formats[f]));
             unsigned comp_bits =
                vk_format_get_blocksizebits(formats[f]) / vk_format_get_nr_components(formats[f]);
             unsigned comp_bytes = comp_bits / 8;
             nir_ssa_def *values[3];
             nir_ssa_def *addr = nir_channel(b, addresses, i);
-            for (unsigned j = 0; j < components; ++j)
-               values[j] = nir_build_load_global(
-                  b, 1, comp_bits, nir_iadd(b, addr, nir_imm_int64(b, j * comp_bytes)));
 
-            for (unsigned j = components; j < 3; ++j)
-               values[j] = nir_imm_intN_t(b, 0, comp_bits);
+            if (formats[f] == VK_FORMAT_A2B10G10R10_UNORM_PACK32) {
+               comp_bits = 10;
+               nir_ssa_def *val = nir_build_load_global(b, 1, 32, addr);
+               for (unsigned j = 0; j < 3; ++j)
+                  values[j] = nir_ubfe(b, val, nir_imm_int(b, j * 10), nir_imm_int(b, 10));
+            } else {
+               for (unsigned j = 0; j < components; ++j)
+                  values[j] = nir_build_load_global(
+                     b, 1, comp_bits, nir_iadd(b, addr, nir_imm_int64(b, j * comp_bytes)));
+
+               for (unsigned j = components; j < 3; ++j)
+                  values[j] = nir_imm_intN_t(b, 0, comp_bits);
+            }
 
             nir_ssa_def *vec;
             if (util_format_is_snorm(vk_format_to_pipe_format(formats[f]))) {
@@ -1760,12 +1831,14 @@ radv_CmdBuildAccelerationStructuresKHR(
             case VK_GEOMETRY_TYPE_TRIANGLES_KHR:
                prim_consts.vertex_addr =
                   geom->geometry.triangles.vertexData.deviceAddress +
-                  ppBuildRangeInfos[i][j].firstVertex * geom->geometry.triangles.vertexStride +
-                  (geom->geometry.triangles.indexType != VK_INDEX_TYPE_NONE_KHR
-                      ? ppBuildRangeInfos[i][j].primitiveOffset
-                      : 0);
-               prim_consts.index_addr = geom->geometry.triangles.indexData.deviceAddress +
-                                        ppBuildRangeInfos[i][j].primitiveOffset;
+                  ppBuildRangeInfos[i][j].firstVertex * geom->geometry.triangles.vertexStride;
+               prim_consts.index_addr = geom->geometry.triangles.indexData.deviceAddress;
+
+               if (geom->geometry.triangles.indexType == VK_INDEX_TYPE_NONE_KHR)
+                  prim_consts.vertex_addr += ppBuildRangeInfos[i][j].primitiveOffset;
+               else
+                  prim_consts.index_addr += ppBuildRangeInfos[i][j].primitiveOffset;
+
                prim_consts.transform_addr = geom->geometry.triangles.transformData.deviceAddress +
                                             ppBuildRangeInfos[i][j].transformOffset;
                prim_consts.vertex_stride = geom->geometry.triangles.vertexStride;
@@ -1780,7 +1853,8 @@ radv_CmdBuildAccelerationStructuresKHR(
                prim_size = 64;
                break;
             case VK_GEOMETRY_TYPE_INSTANCES_KHR:
-               prim_consts.instance_data = geom->geometry.instances.data.deviceAddress;
+               prim_consts.instance_data = geom->geometry.instances.data.deviceAddress +
+                                           ppBuildRangeInfos[i][j].primitiveOffset;
                prim_consts.array_of_pointers = geom->geometry.instances.arrayOfPointers ? 1 : 0;
                prim_size = 128;
                bvh_states[i].instance_count += ppBuildRangeInfos[i][j].primitiveCount;
@@ -1817,9 +1891,9 @@ radv_CmdBuildAccelerationStructuresKHR(
          if (!progress) {
             cmd_buffer->state.flush_bits |=
                RADV_CMD_FLAG_CS_PARTIAL_FLUSH |
-               radv_src_access_flush(cmd_buffer, VK_ACCESS_2_SHADER_WRITE_BIT_KHR, NULL) |
+               radv_src_access_flush(cmd_buffer, VK_ACCESS_2_SHADER_WRITE_BIT, NULL) |
                radv_dst_access_flush(cmd_buffer,
-                                     VK_ACCESS_2_SHADER_READ_BIT_KHR | VK_ACCESS_2_SHADER_WRITE_BIT_KHR, NULL);
+                                     VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT, NULL);
          }
          progress = true;
          uint32_t dst_node_count = MAX2(1, DIV_ROUND_UP(bvh_states[i].node_count, 4));
@@ -1905,6 +1979,9 @@ radv_CmdCopyAccelerationStructureKHR(VkCommandBuffer commandBuffer,
    radv_CmdPushConstants(radv_cmd_buffer_to_handle(cmd_buffer),
                          cmd_buffer->device->meta_state.accel_struct_build.copy_p_layout,
                          VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(consts), &consts);
+
+   cmd_buffer->state.flush_bits |=
+      radv_dst_access_flush(cmd_buffer, VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT, NULL);
 
    radv_indirect_dispatch(cmd_buffer, src->bo,
                           src_addr + offsetof(struct radv_accel_struct_header, copy_dispatch_size));
@@ -2051,6 +2128,9 @@ radv_CmdCopyAccelerationStructureToMemoryKHR(
    radv_CmdPushConstants(radv_cmd_buffer_to_handle(cmd_buffer),
                          cmd_buffer->device->meta_state.accel_struct_build.copy_p_layout,
                          VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(consts), &consts);
+
+   cmd_buffer->state.flush_bits |=
+      radv_dst_access_flush(cmd_buffer, VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT, NULL);
 
    radv_indirect_dispatch(cmd_buffer, src->bo,
                           src_addr + offsetof(struct radv_accel_struct_header, copy_dispatch_size));

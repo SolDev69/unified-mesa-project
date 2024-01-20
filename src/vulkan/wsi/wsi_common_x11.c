@@ -247,7 +247,7 @@ wsi_x11_connection_create(struct wsi_device *wsi_dev,
 
       ver_cookie = xcb_dri3_query_version(conn, 1, 2);
       ver_reply = xcb_dri3_query_version_reply(conn, ver_cookie, NULL);
-      has_dri3_v1_2 =
+      has_dri3_v1_2 = ver_reply != NULL &&
          (ver_reply->major_version > 1 || ver_reply->minor_version >= 2);
       free(ver_reply);
    }
@@ -302,7 +302,6 @@ wsi_x11_connection_create(struct wsi_device *wsi_dev,
             free(error);
          }
       }
-      free(shm_reply);
    }
 
    free(dri3_reply);
@@ -310,6 +309,8 @@ wsi_x11_connection_create(struct wsi_device *wsi_dev,
    free(randr_reply);
    free(amd_reply);
    free(nv_reply);
+   if (wsi_dev->sw)
+      free(shm_reply);
 
    return wsi_conn;
 }
@@ -592,7 +593,7 @@ x11_surface_get_support(VkIcdSurfaceBase *icd_surface,
 }
 
 static uint32_t
-x11_get_min_image_count(struct wsi_device *wsi_device)
+x11_get_min_image_count(const struct wsi_device *wsi_device)
 {
    if (wsi_device->x11.override_minImageCount)
       return wsi_device->x11.override_minImageCount;
@@ -746,7 +747,8 @@ x11_surface_get_formats(VkIcdSurfaceBase *surface,
                         uint32_t *pSurfaceFormatCount,
                         VkSurfaceFormatKHR *pSurfaceFormats)
 {
-   VK_OUTARRAY_MAKE(out, pSurfaceFormats, pSurfaceFormatCount);
+   VK_OUTARRAY_MAKE_TYPED(VkSurfaceFormatKHR, out,
+                          pSurfaceFormats, pSurfaceFormatCount);
 
    unsigned count;
    VkFormat sorted_formats[ARRAY_SIZE(formats)];
@@ -754,7 +756,7 @@ x11_surface_get_formats(VkIcdSurfaceBase *surface,
       return VK_ERROR_SURFACE_LOST_KHR;
 
    for (unsigned i = 0; i < count; i++) {
-      vk_outarray_append(&out, f) {
+      vk_outarray_append_typed(VkSurfaceFormatKHR, &out, f) {
          f->format = sorted_formats[i];
          f->colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
       }
@@ -770,7 +772,8 @@ x11_surface_get_formats2(VkIcdSurfaceBase *surface,
                         uint32_t *pSurfaceFormatCount,
                         VkSurfaceFormat2KHR *pSurfaceFormats)
 {
-   VK_OUTARRAY_MAKE(out, pSurfaceFormats, pSurfaceFormatCount);
+   VK_OUTARRAY_MAKE_TYPED(VkSurfaceFormat2KHR, out,
+                          pSurfaceFormats, pSurfaceFormatCount);
 
    unsigned count;
    VkFormat sorted_formats[ARRAY_SIZE(formats)];
@@ -778,7 +781,7 @@ x11_surface_get_formats2(VkIcdSurfaceBase *surface,
       return VK_ERROR_SURFACE_LOST_KHR;
 
    for (unsigned i = 0; i < count; i++) {
-      vk_outarray_append(&out, f) {
+      vk_outarray_append_typed(VkSurfaceFormat2KHR, &out, f) {
          assert(f->sType == VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR);
          f->surfaceFormat.format = sorted_formats[i];
          f->surfaceFormat.colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
@@ -813,9 +816,9 @@ x11_surface_get_present_rectangles(VkIcdSurfaceBase *icd_surface,
 {
    xcb_connection_t *conn = x11_surface_get_connection(icd_surface);
    xcb_window_t window = x11_surface_get_window(icd_surface);
-   VK_OUTARRAY_MAKE(out, pRects, pRectCount);
+   VK_OUTARRAY_MAKE_TYPED(VkRect2D, out, pRects, pRectCount);
 
-   vk_outarray_append(&out, rect) {
+   vk_outarray_append_typed(VkRect2D, &out, rect) {
       xcb_generic_error_t *err = NULL;
       xcb_get_geometry_cookie_t geom_cookie = xcb_get_geometry(conn, window);
       xcb_get_geometry_reply_t *geom =
@@ -1105,7 +1108,7 @@ x11_acquire_next_image_poll_x11(struct x11_swapchain *chain,
       if (timeout == UINT64_MAX) {
          event = xcb_wait_for_special_event(chain->conn, chain->special_event);
          if (!event)
-            return x11_swapchain_result(chain, VK_ERROR_OUT_OF_DATE_KHR);
+            return x11_swapchain_result(chain, VK_ERROR_SURFACE_LOST_KHR);
       } else {
          event = xcb_poll_for_special_event(chain->conn, chain->special_event);
          if (!event) {
@@ -1267,21 +1270,46 @@ x11_present_to_x11_sw(struct x11_swapchain *chain, uint32_t image_index,
 
    xcb_void_cookie_t cookie;
    void *myptr;
+   size_t hdr_len = sizeof(xcb_put_image_request_t);
+   int stride_b = image->base.row_pitches[0];
+   size_t size = (hdr_len + stride_b * chain->extent.height) >> 2;
+   uint64_t max_req_len = xcb_get_maximum_request_length(chain->conn);
+
    chain->base.wsi->MapMemory(chain->base.device,
                               image->base.memory,
-                              0, 0, 0, &myptr);
+                              0, VK_WHOLE_SIZE, 0, &myptr);
 
-   cookie = xcb_put_image(chain->conn, XCB_IMAGE_FORMAT_Z_PIXMAP,
-                          chain->window,
-                          chain->gc,
-			  image->base.row_pitches[0] / 4,
-                          chain->extent.height,
-                          0,0,0,24,
-                          image->base.row_pitches[0] * chain->extent.height,
-                          myptr);
+   if (size < max_req_len) {
+      cookie = xcb_put_image(chain->conn, XCB_IMAGE_FORMAT_Z_PIXMAP,
+                             chain->window,
+                             chain->gc,
+                             image->base.row_pitches[0] / 4,
+                             chain->extent.height,
+                             0,0,0,24,
+                             image->base.row_pitches[0] * chain->extent.height,
+                             myptr);
+      xcb_discard_reply(chain->conn, cookie.sequence);
+   } else {
+      int num_lines = ((max_req_len << 2) - hdr_len) / stride_b;
+      int y_start = 0;
+      int y_todo = chain->extent.height;
+      while (y_todo) {
+         int this_lines = MIN2(num_lines, y_todo);
+         cookie = xcb_put_image(chain->conn, XCB_IMAGE_FORMAT_Z_PIXMAP,
+                                chain->window,
+                                chain->gc,
+                                image->base.row_pitches[0] / 4,
+                                this_lines,
+                                0,y_start,0,24,
+                                this_lines * stride_b,
+                                (const uint8_t *)myptr + (y_start * stride_b));
+         xcb_discard_reply(chain->conn, cookie.sequence);
+         y_start += this_lines;
+         y_todo -= this_lines;
+      }
+   }
 
    chain->base.wsi->UnmapMemory(chain->base.device, image->base.memory);
-   xcb_discard_reply(chain->conn, cookie.sequence);
    xcb_flush(chain->conn);
    return x11_swapchain_result(chain, VK_SUCCESS);
 }
@@ -1388,6 +1416,17 @@ x11_needs_wait_for_fences(const struct wsi_device *wsi_device,
 }
 
 /**
+ * The number of images that are not owned by X11:
+ *  (1) in the ownership of the app, or
+ *  (2) app to take ownership through an acquire, or
+ *  (3) in the present queue waiting for the FIFO thread to present to X11.
+ */
+static unsigned x11_driver_owned_images(const struct x11_swapchain *chain)
+{
+   return chain->base.image_count - chain->sent_image_count;
+}
+
+/**
  * Our queue manager. Albeit called x11_manage_fifo_queues only directly
  * manages the present-queue and does this in general in fifo and mailbox presentation
  * modes (there is no present-queue in immediate mode with the exception of Xwayland).
@@ -1455,16 +1494,41 @@ x11_manage_fifo_queues(void *state)
          goto fail;
 
       if (chain->has_acquire_queue) {
+         /* Assume this isn't a swapchain where we force 5 images, because those
+          * don't end up with an acquire queue at the moment.
+          */
+         unsigned min_image_count = x11_get_min_image_count(chain->base.wsi);
+
+         /* With drirc overrides some games have swapchain with less than
+          * minimum number of images. */
+         min_image_count = MIN2(min_image_count, chain->base.image_count);
+
+         /* We always need to ensure that the app can have this number of images
+          * acquired concurrently in between presents:
+          * "VUID-vkAcquireNextImageKHR-swapchain-01802
+          *  If the number of currently acquired images is greater than the difference
+          *  between the number of images in swapchain and the value of
+          *  VkSurfaceCapabilitiesKHR::minImageCount as returned by a call to
+          *  vkGetPhysicalDeviceSurfaceCapabilities2KHR with the surface used to
+          *  create swapchain, timeout must not be UINT64_MAX"
+          */
+         unsigned forward_progress_guaranteed_acquired_images =
+            chain->base.image_count - min_image_count + 1;
+
          /* Wait for our presentation to occur and ensure we have at least one
           * image that can be acquired by the client afterwards. This ensures we
           * can pull on the present-queue on the next loop.
           */
          while (chain->images[image_index].present_queued ||
-                chain->sent_image_count == chain->base.image_count) {
+                /* If we have images in the present queue the outer loop won't block and a break
+                 * here would end up at this loop again, otherwise a break here satisfies
+                 * VUID-vkAcquireNextImageKHR-swapchain-01802 */
+                x11_driver_owned_images(chain) < forward_progress_guaranteed_acquired_images) {
+
             xcb_generic_event_t *event =
                xcb_wait_for_special_event(chain->conn, chain->special_event);
             if (!event) {
-               result = VK_ERROR_OUT_OF_DATE_KHR;
+               result = VK_ERROR_SURFACE_LOST_KHR;
                goto fail;
             }
 
@@ -1859,13 +1923,13 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
    /* When our local device is not compatible with the DRI3 device provided by
     * the X server we assume this is a PRIME system.
     */
-   bool use_prime_blit = false;
+   bool use_buffer_blit = false;
    if (!wsi_device->sw)
       if (!wsi_x11_check_dri3_compatible(wsi_device, conn))
-         use_prime_blit = true;
+         use_buffer_blit = true;
 
    result = wsi_swapchain_init(wsi_device, &chain->base, device,
-                               pCreateInfo, pAllocator, use_prime_blit);
+                               pCreateInfo, pAllocator, use_buffer_blit);
    if (result != VK_SUCCESS)
       goto fail_alloc;
 
@@ -1958,7 +2022,7 @@ x11_surface_create_swapchain(VkIcdSurfaceBase *icd_surface,
                                  modifiers, num_modifiers, &num_tranches,
                                  pAllocator);
 
-   if (chain->base.use_prime_blit) {
+   if (chain->base.use_buffer_blit) {
       bool use_modifier = num_tranches > 0;
       result = wsi_configure_prime_image(&chain->base, pCreateInfo,
                                          use_modifier,

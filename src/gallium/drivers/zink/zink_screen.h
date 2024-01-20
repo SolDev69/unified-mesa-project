@@ -40,6 +40,7 @@
 #include "util/u_vertex_state_cache.h"
 #include "pipebuffer/pb_cache.h"
 #include "pipebuffer/pb_slab.h"
+
 #include <vulkan/vulkan.h>
 
 extern uint32_t zink_debug;
@@ -63,6 +64,8 @@ enum zink_descriptor_type;
 #define NUM_SLAB_ALLOCATORS 3
 #define MIN_SLAB_ORDER 8
 
+#define ZINK_CONTEXT_COPY_ONLY (1<<30)
+
 enum zink_descriptor_mode {
    ZINK_DESCRIPTOR_MODE_AUTO,
    ZINK_DESCRIPTOR_MODE_LAZY,
@@ -83,13 +86,16 @@ struct zink_screen {
    uint32_t last_finished; //this is racy but ultimately doesn't matter
    VkSemaphore sem;
    VkSemaphore prev_sem;
+   VkFence fence;
    struct util_queue flush_queue;
+   struct zink_context *copy_context;
 
    unsigned buffer_rebind_counter;
 
+   struct hash_table dts;
+   simple_mtx_t dt_lock;
+
    bool device_lost;
-   struct sw_winsys *winsys;
-   int drm_fd;
 
    struct hash_table framebuffer_cache;
    simple_mtx_t framebuffer_mtx;
@@ -110,6 +116,7 @@ struct zink_screen {
       uint32_t next_bo_unique_id;
    } pb;
    uint8_t heap_map[VK_MAX_MEMORY_TYPES];
+   VkMemoryPropertyFlags heap_flags[VK_MAX_MEMORY_TYPES];
    bool resizable_bar;
 
    uint64_t total_video_mem;
@@ -129,8 +136,10 @@ struct zink_screen {
 
    bool have_X8_D24_UNORM_PACK32;
    bool have_D24_UNORM_S8_UINT;
+   bool have_D32_SFLOAT_S8_UINT;
    bool have_triangle_fans;
    bool need_2D_zs;
+   bool need_2D_sparse;
    bool faked_e5sparse; //drivers may not expose R9G9B9E5 but cts requires it
 
    uint32_t gfx_queue;
@@ -144,9 +153,6 @@ struct zink_screen {
    VkDebugUtilsMessengerEXT debugUtilsCallbackHandle;
 
    uint32_t cur_custom_border_color_samplers;
-
-   bool needs_mesa_wsi;
-   bool needs_mesa_flush_wsi;
 
    struct vk_dispatch_table vk;
 
@@ -177,8 +183,13 @@ struct zink_screen {
    } null_descriptor_hashes;
 
    VkExtent2D maxSampleLocationGridSize[5];
-};
 
+   struct {
+      bool color_write_missing;
+      bool depth_clip_control_missing;
+      bool implicit_sync;
+   } driver_workarounds;
+};
 
 /* update last_finished to account for batch_id wrapping */
 static inline void
@@ -277,13 +288,12 @@ zink_screen_init_descriptor_funcs(struct zink_screen *screen, bool fallback);
 void
 zink_stub_function_not_loaded(void);
 
-#define warn_missing_feature(feat) \
+#define warn_missing_feature(warned, feat) \
    do { \
-      static bool warned = false; \
       if (!warned) { \
-         fprintf(stderr, "WARNING: Incorrect rendering will happen, " \
+         mesa_logw("WARNING: Incorrect rendering will happen " \
                          "because the Vulkan device doesn't support " \
-                         "the %s feature\n", feat); \
+                         "the '%s' feature\n", feat); \
          warned = true; \
       } \
    } while (0)

@@ -401,7 +401,7 @@ bufferobj_data_mem(struct gl_context *ctx,
                    GLenum usage,
                    struct gl_buffer_object *bufObj)
 {
-   return bufferobj_data(ctx, target, size, NULL, memObj, offset, usage, 0, bufObj);
+   return bufferobj_data(ctx, target, size, NULL, memObj, offset, usage, GL_DYNAMIC_STORAGE_BIT, bufObj);
 }
 
 /**
@@ -484,6 +484,9 @@ _mesa_bufferobj_map_range(struct gl_context *ctx,
       if (transfer_flags & (PIPE_MAP_DISCARD_RANGE | PIPE_MAP_DISCARD_WHOLE_RESOURCE))
          transfer_flags &= ~PIPE_MAP_UNSYNCHRONIZED;
    }
+
+   if (ctx->Const.ForceMapBufferSynchronized)
+      transfer_flags &= ~PIPE_MAP_UNSYNCHRONIZED;
 
    obj->Mappings[index].Pointer = pipe_buffer_map_range(pipe,
                                                         obj->buffer,

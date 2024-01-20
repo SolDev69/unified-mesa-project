@@ -902,8 +902,10 @@ vlVaCreateSurfaces2(VADriverContextP ctx, unsigned int format,
          if (attrib_list[i].value.type != VAGenericValueTypePointer)
             return VA_STATUS_ERROR_INVALID_PARAMETER;
          modifier_list = attrib_list[i].value.value.p;
-         modifiers = modifier_list->modifiers;
-         modifiers_count = modifier_list->num_modifiers;
+         if (modifier_list != NULL) {
+            modifiers = modifier_list->modifiers;
+            modifiers_count = modifier_list->num_modifiers;
+         }
          break;
 #endif
       case VASurfaceAttribUsageHint:
@@ -1291,7 +1293,10 @@ vlVaExportSurfaceHandle(VADriverContextP ctx,
       }
 
       desc->objects[p].fd   = (int)whandle.handle;
-      desc->objects[p].size = surf->templat.width * surf->templat.height;
+      /* As per VADRMPRIMESurfaceDescriptor documentation, size must be the
+       * "Total size of this object (may include regions which are not part
+       * of the surface)."" */
+      desc->objects[p].size = (uint32_t) whandle.size;
       desc->objects[p].drm_format_modifier = whandle.modifier;
 
       if (flags & VA_EXPORT_SURFACE_COMPOSED_LAYERS) {

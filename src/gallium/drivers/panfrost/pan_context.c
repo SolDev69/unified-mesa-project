@@ -61,18 +61,26 @@ panfrost_clear(
         double depth, unsigned stencil)
 {
         struct panfrost_context *ctx = pan_context(pipe);
+        struct panfrost_batch *batch = panfrost_get_batch_for_fbo(ctx);
 
         if (!panfrost_render_condition_check(ctx))
                 return;
 
-        /* TODO: panfrost_get_fresh_batch_for_fbo() instantiates a new batch if
-         * the existing batch targeting this FBO has draws. We could probably
-         * avoid that by replacing plain clears by quad-draws with a specific
-         * color/depth/stencil value, thus avoiding the generation of extra
-         * fragment jobs.
-         */
-        struct panfrost_batch *batch = panfrost_get_fresh_batch_for_fbo(ctx, "Clear");
-        panfrost_batch_clear(batch, buffers, color, depth, stencil);
+        /* At the start of the batch, we can clear for free */
+        if (!batch->scoreboard.first_job) {
+                panfrost_batch_clear(batch, buffers, color, depth, stencil);
+                return;
+        }
+
+        /* Once there is content, clear with a fullscreen quad */
+        panfrost_blitter_save(ctx, false /* render condition */);
+
+        util_blitter_clear(ctx->blitter,
+                           ctx->pipe_framebuffer.width,
+                           ctx->pipe_framebuffer.height,
+                           util_framebuffer_get_num_layers(&ctx->pipe_framebuffer),
+                           buffers, color, depth, stencil,
+                           util_framebuffer_get_num_samples(&ctx->pipe_framebuffer) > 1);
 }
 
 bool
@@ -192,7 +200,7 @@ panfrost_get_blend(struct panfrost_batch *batch, unsigned rti, struct panfrost_b
         nir_alu_type col1_type = nir_type_float32;
 
         /* Bifrost has per-output types, respect them */
-        if (pan_is_bifrost(dev)) {
+        if (dev->arch >= 6) {
                 col0_type = ss->info.bifrost.blend[rti].type;
                 col1_type = ss->info.bifrost.blend_src1_type;
         }
@@ -630,28 +638,43 @@ panfrost_set_sampler_views(
         unsigned new_nr = 0;
         unsigned i;
 
-        assert(start_slot == 0);
-
-        if (!views)
-                num_views = 0;
-
         for (i = 0; i < num_views; ++i) {
-                if (views[i])
-                        new_nr = i + 1;
+                struct pipe_sampler_view *view = views ? views[i] : NULL;
+                unsigned p = i + start_slot;
+
+                if (view)
+                        new_nr = p + 1;
+
                 if (take_ownership) {
-                        pipe_sampler_view_reference((struct pipe_sampler_view **)&ctx->sampler_views[shader][i],
+                        pipe_sampler_view_reference((struct pipe_sampler_view **)&ctx->sampler_views[shader][p],
                                                     NULL);
-                        ctx->sampler_views[shader][i] = (struct panfrost_sampler_view *)views[i];
+                        ctx->sampler_views[shader][i] = (struct panfrost_sampler_view *)view;
                 } else {
-                        pipe_sampler_view_reference((struct pipe_sampler_view **)&ctx->sampler_views[shader][i],
-                                                    views[i]);
+                        pipe_sampler_view_reference((struct pipe_sampler_view **)&ctx->sampler_views[shader][p],
+                                                    view);
                 }
         }
 
-        for (; i < ctx->sampler_view_count[shader]; i++) {
-		pipe_sampler_view_reference((struct pipe_sampler_view **)&ctx->sampler_views[shader][i],
+        for (; i < num_views + unbind_num_trailing_slots; i++) {
+                unsigned p = i + start_slot;
+		pipe_sampler_view_reference((struct pipe_sampler_view **)&ctx->sampler_views[shader][p],
 		                            NULL);
         }
+
+        /* If the sampler view count is higher than the greatest sampler view
+         * we touch, it can't change */
+        if (ctx->sampler_view_count[shader] > start_slot + num_views + unbind_num_trailing_slots)
+                return;
+
+        /* If we haven't set any sampler views here, search lower numbers for
+         * set sampler views */
+        if (new_nr == 0) {
+                for (i = 0; i < start_slot; ++i) {
+                        if (ctx->sampler_views[shader][i])
+                                new_nr = i + 1;
+                }
+        }
+
         ctx->sampler_view_count[shader] = new_nr;
 }
 
@@ -930,7 +953,7 @@ panfrost_get_query_result(struct pipe_context *pipe,
                         for (int i = 0; i < dev->core_count; ++i)
                                 passed += result[i];
 
-                        if (!pan_is_bifrost(dev) && !query->msaa)
+                        if (dev->arch <= 5 && !query->msaa)
                                 passed /= 4;
 
                         vresult->u64 = passed;
@@ -1024,7 +1047,7 @@ panfrost_set_stream_output_targets(struct pipe_context *pctx,
                 pipe_so_target_reference(&so->targets[i], targets[i]);
         }
 
-        for (unsigned i = 0; i < so->num_targets; i++)
+        for (unsigned i = num_targets; i < so->num_targets; i++)
                 pipe_so_target_reference(&so->targets[i], NULL);
 
         so->num_targets = num_targets;
@@ -1033,7 +1056,7 @@ panfrost_set_stream_output_targets(struct pipe_context *pctx,
 struct pipe_context *
 panfrost_create_context(struct pipe_screen *screen, void *priv, unsigned flags)
 {
-        struct panfrost_context *ctx = rzalloc(screen, struct panfrost_context);
+        struct panfrost_context *ctx = rzalloc(NULL, struct panfrost_context);
         struct pipe_context *gallium = (struct pipe_context *) ctx;
         struct panfrost_device *dev = pan_device(screen);
 

@@ -21,7 +21,7 @@
 
 subdir('genxml')
 
-pixel_format_versions = ['6', '7']
+pixel_format_versions = ['6', '7', '9']
 libpanfrost_pixel_format = []
 
 foreach ver : pixel_format_versions
@@ -78,6 +78,7 @@ libpanfrost_lib_files = files(
   'pan_bo.c',
   'pan_blend.c',
   'pan_clear.c',
+  'pan_earlyzs.c',
   'pan_samples.c',
   'pan_tiler.c',
   'pan_texture.c',

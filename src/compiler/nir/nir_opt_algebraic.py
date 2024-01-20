@@ -1166,6 +1166,23 @@ optimizations.extend([
    (('bany_fnequal3', a, b), ('ior', ('ior', ('fneu', 'a.x', 'b.x'), ('fneu', 'a.y', 'b.y')), ('fneu', 'a.z', 'b.z')), 'options->lower_vector_cmp'),
    (('bany_fnequal4', a, b), ('ior', ('ior', ('fneu', 'a.x', 'b.x'), ('fneu', 'a.y', 'b.y')), ('ior', ('fneu', 'a.z', 'b.z'), ('fneu', 'a.w', 'b.w'))), 'options->lower_vector_cmp'),
 
+   (('feq', ('seq', a, b), 1.0), ('feq', a, b)),
+   (('feq', ('sne', a, b), 1.0), ('fneu', a, b)),
+   (('feq', ('slt', a, b), 1.0), ('flt', a, b)),
+   (('feq', ('sge', a, b), 1.0), ('fge', a, b)),
+   (('fneu', ('seq', a, b), 0.0), ('feq', a, b)),
+   (('fneu', ('sne', a, b), 0.0), ('fneu', a, b)),
+   (('fneu', ('slt', a, b), 0.0), ('flt', a, b)),
+   (('fneu', ('sge', a, b), 0.0), ('fge', a, b)),
+   (('feq', ('seq', a, b), 0.0), ('fneu', a, b)),
+   (('feq', ('sne', a, b), 0.0), ('feq', a, b)),
+   (('feq', ('slt', a, b), 0.0), ('fge', a, b)),
+   (('feq', ('sge', a, b), 0.0), ('flt', a, b)),
+   (('fneu', ('seq', a, b), 1.0), ('fneu', a, b)),
+   (('fneu', ('sne', a, b), 1.0), ('feq', a, b)),
+   (('fneu', ('slt', a, b), 1.0), ('fge', a, b)),
+   (('fneu', ('sge', a, b), 1.0), ('flt', a, b)),
+
    (('fneu', ('fneg', a), a), ('fneu', a, 0.0)),
    (('feq', ('fneg', a), a), ('feq', a, 0.0)),
    # Emulating booleans
@@ -1661,7 +1678,7 @@ optimizations.extend([
    (('uadd_sat@64', a, b), ('bcsel', ('ult', ('iadd', a, b), a), -1, ('iadd', a, b)), 'options->lower_uadd_sat || (options->lower_int64_options & nir_lower_iadd64) != 0'),
    (('uadd_sat', a, b), ('bcsel', ('ult', ('iadd', a, b), a), -1, ('iadd', a, b)), 'options->lower_uadd_sat'),
    (('usub_sat', a, b), ('bcsel', ('ult', a, b), 0, ('isub', a, b)), 'options->lower_uadd_sat'),
-   (('usub_sat@64', a, b), ('bcsel', ('ult', a, b), 0, ('isub', a, b)), 'options->lower_usub_sat64 || (options->lower_int64_options & nir_lower_iadd64) != 0'),
+   (('usub_sat@64', a, b), ('bcsel', ('ult', a, b), 0, ('isub', a, b)), '(options->lower_int64_options & nir_lower_usub_sat64) != 0'),
 
    # int64_t sum = a + b;
    #
@@ -1693,7 +1710,7 @@ optimizations.extend([
                              ('ior', ('ior', ('ilt', a, 0), ('ilt', b, 0)), ('ige', ('iadd', a, b), 0)),
                              ('iadd', a, b),
                              0x7fffffffffffffff)),
-    '(options->lower_int64_options & nir_lower_iadd64) != 0'),
+    '(options->lower_int64_options & nir_lower_iadd_sat64) != 0'),
 
    # int64_t sum = a - b;
    #
@@ -1711,7 +1728,7 @@ optimizations.extend([
                              ('ior', ('ior', ('ilt', a, 0), ('ige', b, 0)), ('ige', ('isub', a, b), 0)),
                              ('isub', a, b),
                              0x7fffffffffffffff)),
-    '(options->lower_int64_options & nir_lower_iadd64) != 0'),
+    '(options->lower_int64_options & nir_lower_iadd_sat64) != 0'),
 
    # These are done here instead of in the backend because the int64 lowering
    # pass will make a mess of the patterns.  The first patterns are
@@ -1955,9 +1972,9 @@ optimizations.extend([
    (('imul24', a, 0), (0)),
 
    (('fcsel', ('slt', 0, a), b, c), ('fcsel_gt', a, b, c), "options->has_fused_comp_and_csel"),
-   (('fcsel', ('slt', a, 0), b, c), ('fcsel_ge', a, c, b), "options->has_fused_comp_and_csel"),
+   (('fcsel', ('slt', a, 0), b, c), ('fcsel_gt', ('fneg', a), b, c), "options->has_fused_comp_and_csel"),
    (('fcsel', ('sge', a, 0), b, c), ('fcsel_ge', a, b, c), "options->has_fused_comp_and_csel"),
-   (('fcsel', ('sge', 0, a), b, c), ('fcsel_gt', a, c, b), "options->has_fused_comp_and_csel"),
+   (('fcsel', ('sge', 0, a), b, c), ('fcsel_ge', ('fneg', a), b, c), "options->has_fused_comp_and_csel"),
 
    (('bcsel', ('ilt', 0, 'a@32'), 'b@32', 'c@32'), ('i32csel_gt', a, b, c), "options->has_fused_comp_and_csel"),
    (('bcsel', ('ilt', 'a@32', 0), 'b@32', 'c@32'), ('i32csel_ge', a, c, b), "options->has_fused_comp_and_csel"),
@@ -1965,9 +1982,9 @@ optimizations.extend([
    (('bcsel', ('ige', 0, 'a@32'), 'b@32', 'c@32'), ('i32csel_gt', a, c, b), "options->has_fused_comp_and_csel"),
 
    (('bcsel', ('flt', 0, 'a@32'), 'b@32', 'c@32'), ('fcsel_gt', a, b, c), "options->has_fused_comp_and_csel"),
-   (('bcsel', ('flt', 'a@32', 0), 'b@32', 'c@32'), ('fcsel_ge', a, c, b), "options->has_fused_comp_and_csel"),
+   (('bcsel', ('flt', 'a@32', 0), 'b@32', 'c@32'), ('fcsel_gt', ('fneg', a), b, c), "options->has_fused_comp_and_csel"),
    (('bcsel', ('fge', 'a@32', 0), 'b@32', 'c@32'), ('fcsel_ge', a, b, c), "options->has_fused_comp_and_csel"),
-   (('bcsel', ('fge', 0, 'a@32'), 'b@32', 'c@32'), ('fcsel_gt', a, c, b), "options->has_fused_comp_and_csel"),
+   (('bcsel', ('fge', 0, 'a@32'), 'b@32', 'c@32'), ('fcsel_ge', ('fneg', a), b, c), "options->has_fused_comp_and_csel"),
 
 ])
 
@@ -2827,7 +2844,7 @@ distribute_src_mods = [
 
    (('fneg', ('ffma(is_used_once)', a, b, c)), ('ffma', ('fneg', a), b, ('fneg', c))),
    (('fneg', ('flrp(is_used_once)', a, b, c)), ('flrp', ('fneg', a), ('fneg', b), c)),
-   (('fneg', ('fadd(is_used_once)', a, b)), ('fadd', ('fneg', a), ('fneg', b))),
+   (('fneg', ('~fadd(is_used_once)', a, b)), ('fadd', ('fneg', a), ('fneg', b))),
 
    # Note that fmin <-> fmax.  I don't think there is a way to distribute
    # fabs() into fmin or fmax.

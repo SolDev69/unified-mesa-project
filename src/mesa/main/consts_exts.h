@@ -312,7 +312,6 @@ struct gl_shader_compiler_options
    GLboolean EmitNoLoops;
    GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
    GLboolean EmitNoMainReturn;            /**< Emit CONT/RET opcodes? */
-   GLboolean EmitNoPow;                   /**< Emit POW opcodes? */
    GLboolean EmitNoSat;                   /**< Emit SAT opcodes? */
    GLboolean LowerCombinedClipCullDistance; /** Lower gl_ClipDistance and
                                               * gl_CullDistance together from
@@ -943,6 +942,9 @@ struct gl_constants
     * deletion is thread-safe.
     */
    bool BufferCreateMapUnsynchronizedThreadSafe;
+
+   /** Override GL_MAP_UNSYNCHRONIZED_BIT */
+   bool ForceMapBufferSynchronized;
 
    /** GL_ARB_get_program_binary */
    GLuint NumProgramBinaryFormats;
