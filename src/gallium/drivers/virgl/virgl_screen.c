@@ -966,8 +966,10 @@ virgl_is_dmabuf_modifier_supported(UNUSED struct pipe_screen *pscreen,
 
 static unsigned int
 virgl_get_dmabuf_modifier_planes(UNUSED struct pipe_screen *pscreen,
-                                 UNUSED uint64_t modifier,            +                                 enum pipe_format format)
-{                                                                     +   /* Return the format plane count queried from pipe_format. For virgl,
+                                 UNUSED uint64_t modifier,
+                                 enum pipe_format format)
+{
+   /* Return the format plane count queried from pipe_format. For virgl,
     * additional aux planes are entirely resolved on the host side.
     */
    return util_format_get_num_planes(format);
