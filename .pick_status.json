@@ -244,7 +244,7 @@
         "description": "d3d12: Implement cap for PIPE_VIDEO_CAP_ENC_INTRA_REFRESH",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c81967fa89d918e11107cc787ae70bf32cc56a56",
         "notes": null
