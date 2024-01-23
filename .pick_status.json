@@ -684,7 +684,7 @@
         "description": "nak/opt_out: fix comparison in try_combine_outs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5b355ff25a769193cfe83af669e69d9e51f109ec",
         "notes": null
