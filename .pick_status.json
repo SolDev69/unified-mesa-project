@@ -1,5 +1,295 @@
 [
     {
+        "sha": "eca4f0f632b1e3e6e24bd12ee5f00522eb7d0fdb",
+        "description": "rusticl/kernel: check that local size on dispatch doesn't exceed limits",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2a0c15d5ebc55a233eabb155a6291efb206fbd39",
+        "description": "rust/spirv: fix clippy lint on unneeded late initialization",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4dd404dd2eecd6d658255925ead02ced6495f9aa",
+        "description": "rusticl/meson: use rust_abi instead of rust_crate_type",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9f22b95956cb11ccba12dd9f7e4510851fb744a3",
+        "description": "nir: Handle casts in nir_opt_copy_prop_vars",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6c845ed548f87fdade9293c83858f2876d3b7cc6",
+        "description": "nir: Make is_trivial_deref_cast public",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f6f7715c5824922e867aa739c587eb1718db66c1",
+        "description": "panfrost: Clamp the render area to the damage region",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "ff3eada7eb4e4df0abe93ee76b77101f9d24e72c",
+        "notes": null
+    },
+    {
+        "sha": "69d39dba425b1e10f711a2bc171849720cf62629",
+        "description": ".gitignore: Add .venv folder",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "60c2bcb8afd5e1af8aacf29f82662e8a9046cedc",
+        "description": "etnaviv: Use TP cores to accelerate tensor transformations",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d6473ce28ee0f36890e24b3832cd53d3ed5e98e7",
+        "description": "etnaviv: Use NN cores to accelerate convolutions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f014f1bba99ba157260ba5081b277d05cd2ee810",
+        "description": "etnaviv: Don't emit boilerplate for compute only contexts",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "30a8c071e9ee40fdd437349d94197229ebeb87b0",
+        "description": "etnaviv: Add a bunch of new params for NPUs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9e055508881b77278cf79134330f7ca3c1e867e3",
+        "description": "etnaviv: Update headers from rnndb",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "af199e0ff01250313bad5fde2905cfb796fb1930",
+        "description": "teflon: Initial commit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "92904108706f979cd80cee57af58d866e0f9f7ba",
+        "description": "mesa: Import TensorFlow Lite headers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d8fb1dc7aea35a497f5282977ff04d6c51549376",
+        "description": "gallium/util: Fix pipe_buffer_copy",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a6d9e21c237c4667260e9885c5f0d2c369349ede",
+        "description": "ci: disable Igalia farm",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fdf6b22ffe7d63121bd7a9170639e79a77b59bb6",
+        "description": "Revert \"ci: disable Igalia farm\"",
+        "nominated": false,
+        "nomination_type": 2,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c16645c091a478fe441a732d9807ebfaa3c7823c",
+        "notes": null
+    },
+    {
+        "sha": "26564b8515d8fec01216c4ec5242b0deaa8e15e6",
+        "description": "bin/ci: Don't submit jobs on integration test",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ffe2b31f9a0ef07fd1380580986302bbfd936f32",
+        "description": "ci/lava: Detect hard resets during test phase",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "94d075d049387243e109492b678cef2930c28a13",
+        "description": "nak: handle nop ops from NAK IR on SM50",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fc232a67a4cbf3b3e3923ed7dea35aaea1c02a7b",
+        "description": "nak: implement cs2r op on SM50",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "48055f6a239e989c22bb5eb39feabc9f74d0ae97",
+        "description": "nak: implement kill op on SM50",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "354c26d0c066f14657146442d140d6ae3bbdf5e6",
+        "description": "tu/drm/virtio: Fix dmabuf import",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1a43970276dc3048653fe9803418fd7456b89304",
+        "description": "driconf: Change vendorid on Palworld for Intel",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "aa56740dede991483715af7852fe7d0aa2ba170c",
+        "description": "rpi5/ci: add flake seen today",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "79a27848d7698c3f8ba78b9fe30301892bdcefe1",
+        "description": "rpi4/ci: add timeouts seen today",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d9abd16d96fd5009fb1567785d1f3714c10cef25",
+        "description": "rpi3/ci: add flake seen today",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e465ac25618b3ce2d8666b5015101414f05f9876",
+        "description": "nir/lower_shader_calls: remove CF before nir_opt_if",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "015b0d678f8027008a5ae4cc3bb066a859839c8a",
+        "description": "nir/lower_non_uniform: set non_uniform=false when lowering is not needed",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "b1619109ca91f5b9b4f29d75479241ec82c31549",
+        "notes": null
+    },
+    {
         "sha": "90939e93f6657e1334a9c5edd05e80344b17ff66",
         "description": "radv: do nir_shader_gather_info after radv_nir_lower_rt_abi",
         "nominated": true,
