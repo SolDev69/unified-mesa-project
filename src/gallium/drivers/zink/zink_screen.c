@@ -2149,7 +2149,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config)
       abort();
    }
 
-   screen->loader_lib = util_dl_open(VK_LIBNAME);
+   screen->loader_lib = (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);
    if (!screen->loader_lib)
       goto fail;
 
