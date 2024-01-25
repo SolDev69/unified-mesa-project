@@ -1274,7 +1274,7 @@
         "description": "nak: Fix TCS output reads",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "abe9c1fea2d7ae613ce63a13828eaa0683047552",
         "notes": null
