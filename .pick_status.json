@@ -154,7 +154,7 @@
         "description": "radv: fix segfault when getting device vm fault info",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8097becc7f1be886d91727b87abbdab03dd1d6a1",
         "notes": null
