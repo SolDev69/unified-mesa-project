@@ -564,7 +564,7 @@
         "description": "anv: retain ccs image binding address",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e519e06f4b274fabf9302626c6e63d084372c1ea",
         "notes": null
