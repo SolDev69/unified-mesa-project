@@ -11884,7 +11884,7 @@
         "description": "venus: force async pipeline create on threads creating descriptor pools",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d17ddcc84773899ef8b022d94969ffc0909db0bc",
         "notes": null
