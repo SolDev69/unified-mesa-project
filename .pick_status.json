@@ -854,7 +854,7 @@
         "description": "radeonsi: fix video processing path without VPE enabled",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6b441ef6ab1e89da5560cd31711feb499a9cd8ff",
         "notes": null
