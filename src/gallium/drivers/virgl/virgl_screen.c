@@ -1052,30 +1052,7 @@ static struct disk_cache *virgl_get_disk_shader_cache (struct pipe_screen *pscre
 
 static void virgl_disk_cache_create(struct virgl_screen *screen)
 {
-   const struct build_id_note *note =
-      build_id_find_nhdr_for_addr(virgl_disk_cache_create);
-   assert(note);
-
-   unsigned build_id_len = build_id_length(note);
-   assert(build_id_len == 20); /* sha1 */
-
-   const uint8_t *id_sha1 = build_id_data(note);
-   assert(id_sha1);
-
-   struct mesa_sha1 sha1_ctx;
-   _mesa_sha1_init(&sha1_ctx);
-   _mesa_sha1_update(&sha1_ctx, id_sha1, build_id_len);
-
-   /* When we switch the host the caps might change and then we might have to
-    * apply different lowering. */
-   _mesa_sha1_update(&sha1_ctx, &screen->caps, sizeof(screen->caps));
-
-   uint8_t sha1[20];
-   _mesa_sha1_final(&sha1_ctx, sha1);
-   char timestamp[41];
-   _mesa_sha1_format(timestamp, sha1);
-
-   screen->disk_cache = disk_cache_create("virgl", timestamp, 0);
+   screen->disk_cache = disk_cache_create("virgl", "unknown", 0);
 }
 
 static bool
