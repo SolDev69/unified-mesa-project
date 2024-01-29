@@ -36,6 +36,7 @@ radv_entrypoints_gen_command += [
   # Application layer entrypoints
   '--device-prefix', 'metro_exodus',
   '--device-prefix', 'rage2',
+  '--device-prefix', 'quantic_dream',
 ]
 
 radv_entrypoints = custom_target(
@@ -50,6 +51,7 @@ libradv_files = files(
   'bvh/bvh.h',
   'layers/radv_metro_exodus.c',
   'layers/radv_rage2.c',
+  'layers/radv_quantic_dream.c',
   'layers/radv_rmv_layer.c',
   'layers/radv_rra_layer.c',
   'layers/radv_sqtt_layer.c',
@@ -88,6 +90,8 @@ libradv_files = files(
   'nir/radv_nir_lower_view_index.c',
   'nir/radv_nir_lower_viewport_to_zero.c',
   'nir/radv_nir_lower_vs_inputs.c',
+  'nir/radv_nir_rt_common.c',
+  'nir/radv_nir_rt_shader.c',
   'winsys/null/radv_null_bo.c',
   'winsys/null/radv_null_bo.h',
   'winsys/null/radv_null_cs.c',
@@ -125,8 +129,6 @@ libradv_files = files(
   'radv_radeon_winsys.h',
   'radv_rmv.c',
   'radv_rra.c',
-  'radv_rt_common.c',
-  'radv_rt_shader.c',
   'radv_sampler.c',
   'radv_sdma.c',
   'radv_sdma.h',

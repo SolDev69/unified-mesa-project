@@ -906,7 +906,7 @@ struct anv_queue_family {
    enum intel_engine_class engine_class;
 };
 
-#define ANV_MAX_QUEUE_FAMILIES 4
+#define ANV_MAX_QUEUE_FAMILIES 5
 
 struct anv_memory_type {
    /* Standard bits passed on to the client */
@@ -1004,16 +1004,6 @@ struct anv_physical_device {
     bool                                        uses_ex_bso;
 
     bool                                        always_flush_cache;
-
-    /**
-     * True if the generated indirect draw optimization is turned on.
-     *
-     * This optimization is currently only available on Gfx11+ to avoid
-     * dealing with the annoying Gfx8/9 tracking of vertex buffer for the VF
-     * cache workaround.
-     */
-    bool                                        generated_indirect_draws;
-
     /**
      * True if the descriptors buffers are holding one of the following :
      *    - anv_sampled_image_descriptor
@@ -4026,8 +4016,7 @@ anv_cmd_buffer_exec_batch_debug(struct anv_queue *queue,
                                 uint32_t cmd_buffer_count,
                                 struct anv_cmd_buffer **cmd_buffers,
                                 struct anv_query_pool *perf_query_pool,
-                                uint32_t perf_query_pass,
-                                bool is_companion_rcs_cmd_buffer);
+                                uint32_t perf_query_pass);
 void
 anv_cmd_buffer_clflush(struct anv_cmd_buffer **cmd_buffers,
                        uint32_t num_cmd_buffers);
