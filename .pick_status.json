@@ -2014,7 +2014,7 @@
         "description": "spirv: only consider IO variables when adjusting patch locations for TES",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "dfbc03fa88478126607c69723a61280f6e9a011f",
         "notes": null
