@@ -734,7 +734,7 @@
         "description": "rusticl/mem: properly handle buffers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2645003bdc527b5dc046366fce5e65b44b27334f",
         "notes": null
