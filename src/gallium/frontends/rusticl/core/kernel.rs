@@ -448,9 +448,9 @@ fn lower_and_optimize_nir(
 
     nir_pass!(nir, nir_dedup_inline_samplers);
 
-    let mut printf_opts = nir_lower_printf_options::default();
-    printf_opts.set_treat_doubles_as_floats(false);
-    printf_opts.max_buffer_size = dev.printf_buffer_size() as u32;
+    let printf_opts = nir_lower_printf_options {
+        max_buffer_size: dev.printf_buffer_size() as u32,
+    };
     nir_pass!(nir, nir_lower_printf, &printf_opts);
 
     opt_nir(nir, dev, false);
@@ -509,13 +509,14 @@ fn lower_and_optimize_nir(
         !dev.samplers_as_deref(),
     );
 
-    nir.reset_scratch_size();
     nir_pass!(
         nir,
         nir_lower_vars_to_explicit_types,
         nir_variable_mode::nir_var_mem_constant,
         Some(glsl_get_cl_type_size_align),
     );
+
+    // has to run before adding internal kernel arguments
     nir.extract_constant_initializers();
 
     // run before gather info
@@ -615,6 +616,8 @@ fn lower_and_optimize_nir(
         );
     }
 
+    // need to run after first opt loop and remove_dead_variables to get rid of uneccessary scratch
+    // memory
     nir_pass!(
         nir,
         nir_lower_vars_to_explicit_types,

@@ -142,6 +142,7 @@ vn_physical_device_init_features(struct vn_physical_device *physical_dev)
 
       /* KHR */
       VkPhysicalDeviceShaderClockFeaturesKHR shader_clock;
+      VkPhysicalDeviceShaderExpectAssumeFeaturesKHR expect_assume;
 
       /* EXT */
       VkPhysicalDeviceBorderColorSwizzleFeaturesEXT border_color_swizzle;
@@ -244,6 +245,7 @@ vn_physical_device_init_features(struct vn_physical_device *physical_dev)
 
    /* KHR */
    VN_ADD_PNEXT_EXT(feats2, SHADER_CLOCK_FEATURES_KHR, local_feats.shader_clock, exts->KHR_shader_clock);
+   VN_ADD_PNEXT_EXT(feats2, SHADER_EXPECT_ASSUME_FEATURES_KHR, local_feats.expect_assume, exts->KHR_shader_expect_assume);
 
    /* EXT */
    VN_ADD_PNEXT_EXT(feats2, BORDER_COLOR_SWIZZLE_FEATURES_EXT, local_feats.border_color_swizzle, exts->EXT_border_color_swizzle);
@@ -1122,6 +1124,7 @@ vn_physical_device_get_passthrough_extensions(
       .KHR_pipeline_library = true,
       .KHR_push_descriptor = true,
       .KHR_shader_clock = true,
+      .KHR_shader_expect_assume = true,
 
       /* EXT */
       .EXT_border_color_swizzle = true,
@@ -1135,7 +1138,7 @@ vn_physical_device_get_passthrough_extensions(
       .EXT_extended_dynamic_state3 = true,
       .EXT_dynamic_rendering_unused_attachments = true,
       .EXT_fragment_shader_interlock = true,
-      .EXT_graphics_pipeline_library = VN_DEBUG(GPL),
+      .EXT_graphics_pipeline_library = !VN_DEBUG(NO_GPL),
       .EXT_image_2d_view_of_3d = true,
       .EXT_image_drm_format_modifier = true,
       .EXT_image_view_min_lod = true,

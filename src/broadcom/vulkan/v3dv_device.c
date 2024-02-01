@@ -161,6 +161,7 @@ get_device_extensions(const struct v3dv_physical_device *device,
       .KHR_multiview                        = true,
       .KHR_pipeline_executable_properties   = true,
       .KHR_separate_depth_stencil_layouts   = true,
+      .KHR_shader_expect_assume             = true,
       .KHR_shader_float_controls            = true,
       .KHR_shader_non_semantic_info         = true,
       .KHR_sampler_mirror_clamp_to_edge     = true,
@@ -187,6 +188,7 @@ get_device_extensions(const struct v3dv_physical_device *device,
       .EXT_color_write_enable               = true,
       .EXT_custom_border_color              = true,
       .EXT_depth_clip_control               = true,
+      .EXT_depth_clip_enable                = device->devinfo.ver >= 71,
       .EXT_load_store_op_none               = true,
       .EXT_inline_uniform_block             = true,
       .EXT_external_memory_dma_buf          = true,
@@ -335,12 +337,10 @@ get_features(const struct v3dv_physical_device *physical_device,
 
       .samplerMirrorClampToEdge = true,
 
-      /* These are mandatory by Vulkan 1.2, however, we don't support any of
-       * the optional features affected by them (non 32-bit types for
-       * shaderSubgroupExtendedTypes and additional subgroup ballot for
-       * subgroupBroadcastDynamicId), so in practice setting them to true
-       * doesn't have any implications for us until we implement any of these
-       * optional features.
+      /* Extended subgroup types is mandatory by Vulkan 1.2, however, it is
+       * only in effect if the implementation supports non 32-bit types, which
+       * we don't, so in practice setting it to true doesn't have any
+       * implications for us.
        */
       .shaderSubgroupExtendedTypes = true,
       .subgroupBroadcastDynamicId = true,
@@ -430,6 +430,9 @@ get_features(const struct v3dv_physical_device *physical_device,
       /* VK_EXT_depth_clip_control */
       .depthClipControl = true,
 
+      /* VK_EXT_depth_clip_enable */
+      .depthClipEnable = physical_device->devinfo.ver >= 71,
+
       /* VK_EXT_attachment_feedback_loop_layout */
       .attachmentFeedbackLoopLayout = true,
 
@@ -453,6 +456,9 @@ get_features(const struct v3dv_physical_device *physical_device,
       /* VK_EXT_subgroup_size_control */
       .subgroupSizeControl = true,
       .computeFullSubgroups = true,
+
+      /* VK_KHR_shader_expect_assume */
+      .shaderExpectAssume = true,
    };
 }
 
@@ -1373,11 +1379,21 @@ v3dv_GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
    snprintf(vk12.driverInfo, VK_MAX_DRIVER_INFO_SIZE,
             "Mesa " PACKAGE_VERSION MESA_GIT_SHA1);
 
+   VkSubgroupFeatureFlags subgroup_ops = VK_SUBGROUP_FEATURE_BASIC_BIT;
+   if (pdevice->devinfo.ver >= 71) {
+      subgroup_ops |= VK_SUBGROUP_FEATURE_BALLOT_BIT |
+                      VK_SUBGROUP_FEATURE_SHUFFLE_BIT |
+                      VK_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT |
+                      VK_SUBGROUP_FEATURE_VOTE_BIT |
+                      VK_SUBGROUP_FEATURE_QUAD_BIT;
+   }
+
    VkPhysicalDeviceVulkan11Properties vk11 = {
       .deviceLUIDValid = false,
       .subgroupSize = V3D_CHANNELS,
-      .subgroupSupportedStages = VK_SHADER_STAGE_COMPUTE_BIT,
-      .subgroupSupportedOperations = VK_SUBGROUP_FEATURE_BASIC_BIT,
+      .subgroupSupportedStages = VK_SHADER_STAGE_COMPUTE_BIT |
+                                 VK_SHADER_STAGE_FRAGMENT_BIT,
+      .subgroupSupportedOperations = subgroup_ops,
       .subgroupQuadOperationsInAllStages = false,
       .pointClippingBehavior = VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES,
       .maxMultiviewViewCount = MAX_MULTIVIEW_VIEW_COUNT,

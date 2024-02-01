@@ -740,6 +740,15 @@ add_aux_surface_if_supported(struct anv_device *device,
    if (anv_image_is_sparse(image))
       return VK_SUCCESS;
 
+   /* If resource created with sharing mode CONCURRENT when multiple queues
+    * are supported, we can't support the compression since we can't do
+    * FULL_RESOLVE/PARTIAL_RESOLVE to construct the main surface data without
+    * barrier.
+    */
+   if (image->vk.sharing_mode == VK_SHARING_MODE_CONCURRENT &&
+       device->queue_count > 1)
+      return VK_SUCCESS;
+
    uint32_t binding;
    if (image->vk.drm_format_mod == DRM_FORMAT_MOD_INVALID ||
        isl_drm_modifier_has_aux(image->vk.drm_format_mod)) {
@@ -1891,6 +1900,8 @@ VkResult anv_CreateImage(
       return result;
    }
 
+   ANV_RMV(image_create, device, false, image);
+
    *pImage = anv_image_to_handle(image);
 
    return result;
@@ -1905,6 +1916,8 @@ anv_DestroyImage(VkDevice _device, VkImage _image,
 
    if (!image)
       return;
+
+   ANV_RMV(image_destroy, device, image);
 
    assert(&device->vk == image->vk.base.device);
    anv_image_finish(image);
@@ -2315,6 +2328,9 @@ anv_bind_image_memory(struct anv_device *device,
             .offset = bind_info->memoryOffset,
          };
 
+         ANV_RMV(image_bind, device, image,
+                 binding - image->bindings);
+
          did_bind = true;
          break;
       }
@@ -2377,6 +2393,9 @@ anv_bind_image_memory(struct anv_device *device,
          .bo = mem->bo,
          .offset = bind_info->memoryOffset,
       };
+
+      ANV_RMV(image_bind, device, image,
+              ANV_IMAGE_MEMORY_BINDING_MAIN);
 
       did_bind = true;
    }
@@ -2770,7 +2789,9 @@ anv_layout_to_aux_state(const struct intel_device_info * const devinfo,
    bool aux_supported = true;
    bool clear_supported = isl_aux_usage_has_fast_clears(aux_usage);
 
-   if ((usage & VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT) && !read_only) {
+   if ((usage & (VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT |
+                 VK_IMAGE_USAGE_ATTACHMENT_FEEDBACK_LOOP_BIT_EXT)) &&
+       !read_only) {
       /* This image could be used as both an input attachment and a render
        * target (depth, stencil, or color) at the same time and this can cause
        * corruption.

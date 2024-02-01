@@ -95,6 +95,12 @@ radv_calibrated_timestamps_enabled(const struct radv_physical_device *pdevice)
           !(pdevice->rad_info.family == CHIP_RAVEN || pdevice->rad_info.family == CHIP_RAVEN2);
 }
 
+static bool
+radv_shader_object_enabled(const struct radv_physical_device *pdevice)
+{
+   return pdevice->rad_info.gfx_level < GFX9 && pdevice->instance->perftest_flags & RADV_PERFTEST_SHADER_OBJECT;
+}
+
 bool
 radv_enable_rt(const struct radv_physical_device *pdevice, bool rt_pipelines)
 {
@@ -459,6 +465,9 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
 #ifdef RADV_USE_WSI_PLATFORM
       .KHR_incremental_present = true,
 #endif
+      .KHR_index_type_uint8 = device->rad_info.gfx_level >= GFX8,
+      .KHR_line_rasterization = true,
+      .KHR_load_store_op_none = true,
       .KHR_maintenance1 = true,
       .KHR_maintenance2 = true,
       .KHR_maintenance3 = true,
@@ -491,11 +500,13 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
       .KHR_shader_atomic_int64 = true,
       .KHR_shader_clock = true,
       .KHR_shader_draw_parameters = true,
+      .KHR_shader_expect_assume = true,
       .KHR_shader_float16_int8 = true,
       .KHR_shader_float_controls = true,
       .KHR_shader_integer_dot_product = true,
       .KHR_shader_non_semantic_info = true,
       .KHR_shader_subgroup_extended_types = true,
+      .KHR_shader_subgroup_rotate = true,
       .KHR_shader_subgroup_uniform_control_flow = true,
       .KHR_shader_terminate_invocation = true,
       .KHR_spirv_1_4 = true,
@@ -591,6 +602,7 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
       .EXT_shader_demote_to_helper_invocation = true,
       .EXT_shader_image_atomic_int64 = true,
       .EXT_shader_module_identifier = true,
+      .EXT_shader_object = radv_shader_object_enabled(device),
       .EXT_shader_stencil_export = true,
       .EXT_shader_subgroup_ballot = true,
       .EXT_shader_subgroup_vote = true,
@@ -813,7 +825,7 @@ radv_physical_device_get_features(const struct radv_physical_device *pdevice, st
       /* VK_EXT_ycbcr_image_arrays */
       .ycbcrImageArrays = true,
 
-      /* VK_EXT_index_type_uint8 */
+      /* VK_KHR_index_type_uint8 */
       .indexTypeUint8 = pdevice->rad_info.gfx_level >= GFX8,
 
       /* VK_KHR_pipeline_executable_properties */
@@ -829,7 +841,7 @@ radv_physical_device_get_features(const struct radv_physical_device *pdevice, st
       /* VK_AMD_device_coherent_memory */
       .deviceCoherentMemory = pdevice->rad_info.has_l2_uncached,
 
-      /* VK_EXT_line_rasterization */
+      /* VK_KHR_line_rasterization */
       .rectangularLines = true,
       .bresenhamLines = true,
       .smoothLines = true,
@@ -1104,13 +1116,23 @@ radv_physical_device_get_features(const struct radv_physical_device *pdevice, st
 
       /* VK_EXT_device_fault */
       .deviceFault = true,
-      .deviceFaultVendorBinary = false,
+      .deviceFaultVendorBinary = pdevice->instance->debug_flags & RADV_DEBUG_HANG,
 
       /* VK_EXT_depth_clamp_zero_one */
       .depthClampZeroOne = true,
 
       /* VK_KHR_maintenance6 */
       .maintenance6 = true,
+
+      /* VK_KHR_shader_subgroup_rotate */
+      .shaderSubgroupRotate = true,
+      .shaderSubgroupRotateClustered = true,
+
+      /* VK_EXT_shader_object */
+      .shaderObject = true,
+
+      /* VK_KHR_shader_expect_assume */
+      .shaderExpectAssume = true,
    };
 }
 
@@ -1581,7 +1603,7 @@ radv_get_physical_device_properties(struct radv_physical_device *pdevice)
    p->sampleLocationSubPixelBits = 4;
    p->variableSampleLocations = false;
 
-   /* VK_EXT_line_rasterization */
+   /* VK_KHR_line_rasterization */
    p->lineSubPixelPrecisionBits = 4;
 
    /* VK_EXT_robustness2 */
@@ -1791,6 +1813,10 @@ radv_get_physical_device_properties(struct radv_physical_device *pdevice)
    p->blockTexelViewCompatibleMultipleLayers = true;
    p->maxCombinedImageSamplerDescriptorCount = 1;
    p->fragmentShadingRateClampCombinerInputs = true;
+
+   /* VK_EXT_shader_object */
+   radv_device_get_cache_uuid(pdevice, p->shaderBinaryUUID);
+   p->shaderBinaryVersion = 1;
 }
 
 static VkResult

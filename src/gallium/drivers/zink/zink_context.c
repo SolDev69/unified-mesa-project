@@ -52,6 +52,7 @@
 #include "util/u_thread.h"
 #include "util/perf/u_trace.h"
 #include "util/u_cpu_detect.h"
+#include "util/thread_sched.h"
 #include "util/strndup.h"
 #include "nir.h"
 #include "nir_builder.h"
@@ -329,11 +330,10 @@ zink_set_context_param(struct pipe_context *pctx, enum pipe_context_param param,
    struct zink_screen *screen = zink_screen(ctx->base.screen);
 
    switch (param) {
-   case PIPE_CONTEXT_PARAM_PIN_THREADS_TO_L3_CACHE:
+   case PIPE_CONTEXT_PARAM_UPDATE_THREAD_SCHEDULING:
       if (screen->threaded_submit)
-         util_set_thread_affinity(screen->flush_queue.threads[0],
-                                 util_get_cpu_caps()->L3_affinity_mask[value],
-                                 NULL, util_get_cpu_caps()->num_cpu_mask_bits);
+         util_thread_sched_apply_policy(screen->flush_queue.threads[0],
+                                        UTIL_THREAD_DRIVER_SUBMIT, value, NULL);
       break;
    default:
       break;
@@ -1340,7 +1340,6 @@ update_existing_vbo(struct zink_context *ctx, unsigned slot)
 static void
 zink_set_vertex_buffers(struct pipe_context *pctx,
                         unsigned num_buffers,
-                        unsigned unbind_num_trailing_slots,
                         bool take_ownership,
                         const struct pipe_vertex_buffer *buffers)
 {
@@ -1349,44 +1348,39 @@ zink_set_vertex_buffers(struct pipe_context *pctx,
    const bool need_state_change = !zink_screen(pctx->screen)->info.have_EXT_extended_dynamic_state &&
                                   !have_input_state;
    uint32_t enabled_buffers = ctx->gfx_pipeline_state.vertex_buffers_enabled_mask;
-   enabled_buffers |= u_bit_consecutive(0, num_buffers);
-   enabled_buffers &= ~u_bit_consecutive(num_buffers, unbind_num_trailing_slots);
+   unsigned last_count = util_last_bit(enabled_buffers);
+   enabled_buffers = u_bit_consecutive(0, num_buffers);
 
-   if (buffers) {
-      for (unsigned i = 0; i < num_buffers; ++i) {
-         const struct pipe_vertex_buffer *vb = buffers + i;
-         struct pipe_vertex_buffer *ctx_vb = &ctx->vertex_buffers[i];
-         update_existing_vbo(ctx, i);
-         if (!take_ownership)
-            pipe_resource_reference(&ctx_vb->buffer.resource, vb->buffer.resource);
-         else {
-            pipe_resource_reference(&ctx_vb->buffer.resource, NULL);
-            ctx_vb->buffer.resource = vb->buffer.resource;
-         }
-         if (vb->buffer.resource) {
-            struct zink_resource *res = zink_resource(vb->buffer.resource);
-            res->vbo_bind_mask |= BITFIELD_BIT(i);
-            res->vbo_bind_count++;
-            res->gfx_barrier |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-            res->barrier_access[0] |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-            update_res_bind_count(ctx, res, false, false);
-            ctx_vb->buffer_offset = vb->buffer_offset;
-            /* always barrier before possible rebind */
-            zink_screen(ctx->base.screen)->buffer_barrier(ctx, res, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
-                                         VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
-            zink_batch_resource_usage_set(&ctx->batch, res, false, true);
-            res->obj->unordered_read = false;
-         } else {
-            enabled_buffers &= ~BITFIELD_BIT(i);
-         }
+   assert(!num_buffers || buffers);
+
+   for (unsigned i = 0; i < num_buffers; ++i) {
+      const struct pipe_vertex_buffer *vb = buffers + i;
+      struct pipe_vertex_buffer *ctx_vb = &ctx->vertex_buffers[i];
+      update_existing_vbo(ctx, i);
+      if (!take_ownership)
+         pipe_resource_reference(&ctx_vb->buffer.resource, vb->buffer.resource);
+      else {
+         pipe_resource_reference(&ctx_vb->buffer.resource, NULL);
+         ctx_vb->buffer.resource = vb->buffer.resource;
       }
-   } else {
-      for (unsigned i = 0; i < num_buffers; ++i) {
-         update_existing_vbo(ctx, i);
-         pipe_resource_reference(&ctx->vertex_buffers[i].buffer.resource, NULL);
+      if (vb->buffer.resource) {
+         struct zink_resource *res = zink_resource(vb->buffer.resource);
+         res->vbo_bind_mask |= BITFIELD_BIT(i);
+         res->vbo_bind_count++;
+         res->gfx_barrier |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+         res->barrier_access[0] |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+         update_res_bind_count(ctx, res, false, false);
+         ctx_vb->buffer_offset = vb->buffer_offset;
+         /* always barrier before possible rebind */
+         zink_screen(ctx->base.screen)->buffer_barrier(ctx, res, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+                                      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
+         zink_batch_resource_usage_set(&ctx->batch, res, false, true);
+         res->obj->unordered_read = false;
+      } else {
+         enabled_buffers &= ~BITFIELD_BIT(i);
       }
    }
-   for (unsigned i = 0; i < unbind_num_trailing_slots; i++) {
+   for (unsigned i = num_buffers; i < last_count; i++) {
       update_existing_vbo(ctx, i);
       pipe_resource_reference(&ctx->vertex_buffers[i].buffer.resource, NULL);
    }
@@ -2412,7 +2406,7 @@ zink_create_image_handle(struct pipe_context *pctx, const struct pipe_image_view
       debug_printf("couldn't create storage image!");
       return 0;
    }
-   bd = malloc(sizeof(struct zink_bindless_descriptor));
+   bd = calloc(1, sizeof(struct zink_bindless_descriptor));
    if (!bd)
       return 0;
    bd->sampler = NULL;
@@ -2987,6 +2981,10 @@ zink_batch_rp(struct zink_context *ctx)
    else
       clear_buffers = begin_rendering(ctx);
    assert(!ctx->rp_changed);
+
+   /* update the render-passes HUD query */
+   ctx->hud.render_passes++;
+
    if (!in_rp && ctx->batch.in_rp) {
       /* only hit this for valid swapchain and new renderpass */
       if (ctx->render_condition.query)

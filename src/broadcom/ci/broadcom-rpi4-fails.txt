@@ -13,6 +13,7 @@ shaders@point-vertex-id gl_vertexid divisor,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid divisor,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid,Fail
 shaders@point-vertex-id gl_vertexid,Fail
+spec@!opengl 1.0@depth-clear-precision-check,Fail
 spec@!opengl 1.0@gl-1.0-edgeflag,Fail
 spec@!opengl 1.0@gl-1.0-edgeflag-const,Fail
 spec@!opengl 1.0@gl-1.0-edgeflag-quads,Fail
@@ -136,7 +137,6 @@ spec@arb_direct_state_access@gettextureimage-formats,Fail
 spec@arb_framebuffer_object@fbo-blit-scaled-linear,Fail
 spec@arb_point_sprite@arb_point_sprite-checkerboard,Fail
 spec@arb_point_sprite@arb_point_sprite-mipmap,Fail
-spec@arb_separate_shader_objects@atomic counter,Fail
 spec@arb_shader_storage_buffer_object@compiler@atomicmin-swizzle.vert,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgradcube,Fail
@@ -289,10 +289,7 @@ spec@ext_framebuffer_object@getteximage-formats init-by-clear-and-render,Fail
 spec@ext_framebuffer_object@getteximage-formats init-by-rendering,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-export,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-modifiers,Fail
-spec@ext_image_dma_buf_import@ext_image_dma_buf_import-modifiers@autogen-AB24-DRM_FORMAT_MOD_LINEAR-clear_reimport,Fail
-spec@ext_image_dma_buf_import@ext_image_dma_buf_import-modifiers@autogen-AR24-DRM_FORMAT_MOD_LINEAR-clear_reimport,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-modifiers@autogen-R16-DRM_FORMAT_MOD_LINEAR-clear_reimport,Fail
-spec@ext_image_dma_buf_import@ext_image_dma_buf_import-modifiers@autogen-R8-DRM_FORMAT_MOD_LINEAR-clear_reimport,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-refcount,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_argb8888,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_nv12,Fail
@@ -504,3 +501,10 @@ dEQP-VK.pipeline.shader_object_linked_binary.framebuffer_attachment.unused_attac
 dEQP-VK.pipeline.shader_object_linked_spirv.framebuffer_attachment.unused_attachment,Crash
 dEQP-VK.pipeline.shader_object_unlinked_binary.framebuffer_attachment.unused_attachment,Crash
 dEQP-VK.pipeline.shader_object_unlinked_spirv.framebuffer_attachment.unused_attachment,Crash
+
+# https://gitlab.khronos.org/Tracker/vk-gl-cts/-/issues/4422
+KHR-GL31.texture_size_promotion.functional,Fail
+
+# uprev Piglit in Mesa
+spec@glsl-1.40@uniform_buffer@two-stages,Fail
+

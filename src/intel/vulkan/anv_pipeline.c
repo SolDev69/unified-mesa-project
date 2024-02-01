@@ -197,6 +197,7 @@ anv_shader_stage_to_nir(struct anv_device *device,
          .subgroup_ballot = true,
          .subgroup_dispatch = true,
          .subgroup_quad = true,
+         .subgroup_rotate = true,
          .subgroup_uniform_control_flow = true,
          .subgroup_shuffle = true,
          .subgroup_vote = true,
@@ -326,6 +327,8 @@ void anv_DestroyPipeline(
 
    if (!pipeline)
       return;
+
+   ANV_RMV(resource_destroy, device, pipeline);
 
    switch (pipeline->type) {
    case ANV_PIPELINE_GRAPHICS_LIB: {
@@ -1165,8 +1168,10 @@ anv_pipeline_lower_nir(struct anv_pipeline *pipeline,
    }
 
    if (gl_shader_stage_is_compute(nir->info.stage) ||
-       gl_shader_stage_is_mesh(nir->info.stage))
-      NIR_PASS(_, nir, brw_nir_lower_cs_intrinsics);
+       gl_shader_stage_is_mesh(nir->info.stage)) {
+      NIR_PASS(_, nir, brw_nir_lower_cs_intrinsics, compiler->devinfo,
+               &stage->prog_data.cs);
+   }
 
    stage->push_desc_info.used_set_buffer =
       anv_nir_loads_push_desc_buffer(nir, layout, &stage->bind_map);
@@ -2471,19 +2476,24 @@ anv_graphics_pipeline_compile(struct anv_graphics_base_pipeline *pipeline,
       anv_nir_validate_push_layout(&stage->prog_data.base,
                                    &stage->bind_map);
 
+      struct anv_shader_upload_params upload_params = {
+         .stage               = s,
+         .key_data            = &stage->cache_key,
+         .key_size            = sizeof(stage->cache_key),
+         .kernel_data         = stage->code,
+         .kernel_size         = stage->prog_data.base.program_size,
+         .prog_data           = &stage->prog_data.base,
+         .prog_data_size      = brw_prog_data_size(s),
+         .stats               = stage->stats,
+         .num_stats           = stage->num_stats,
+         .xfb_info            = stage->nir->xfb_info,
+         .bind_map            = &stage->bind_map,
+         .push_desc_info      = &stage->push_desc_info,
+         .dynamic_push_values = stage->dynamic_push_values,
+      };
+
       stage->bin =
-         anv_device_upload_kernel(device, cache, s,
-                                  &stage->cache_key,
-                                  sizeof(stage->cache_key),
-                                  stage->code,
-                                  stage->prog_data.base.program_size,
-                                  &stage->prog_data.base,
-                                  brw_prog_data_size(s),
-                                  stage->stats, stage->num_stats,
-                                  stage->nir->xfb_info,
-                                  &stage->bind_map,
-                                  &stage->push_desc_info,
-                                  stage->dynamic_push_values);
+         anv_device_upload_kernel(device, cache, &upload_params);
       if (!stage->bin) {
          ralloc_free(stage_ctx);
          result = vk_error(pipeline, VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -2662,17 +2672,22 @@ anv_pipeline_compile_cs(struct anv_compute_pipeline *pipeline,
          stage.bind_map.surface_to_descriptor[0].set = ANV_DESCRIPTOR_SET_NULL;
       }
 
-      const unsigned code_size = stage.prog_data.base.program_size;
-      stage.bin = anv_device_upload_kernel(device, cache,
-                                     MESA_SHADER_COMPUTE,
-                                     &stage.cache_key, sizeof(stage.cache_key),
-                                     stage.code, code_size,
-                                     &stage.prog_data.base,
-                                     sizeof(stage.prog_data.cs),
-                                     stage.stats, stage.num_stats,
-                                     NULL, &stage.bind_map,
-                                     &stage.push_desc_info,
-                                     stage.dynamic_push_values);
+      struct anv_shader_upload_params upload_params = {
+         .stage               = MESA_SHADER_COMPUTE,
+         .key_data            = &stage.cache_key,
+         .key_size            = sizeof(stage.cache_key),
+         .kernel_data         = stage.code,
+         .kernel_size         = stage.prog_data.base.program_size,
+         .prog_data           = &stage.prog_data.base,
+         .prog_data_size      = sizeof(stage.prog_data.cs),
+         .stats               = stage.stats,
+         .num_stats           = stage.num_stats,
+         .bind_map            = &stage.bind_map,
+         .push_desc_info      = &stage.push_desc_info,
+         .dynamic_push_values = stage.dynamic_push_values,
+      };
+
+      stage.bin = anv_device_upload_kernel(device, cache, &upload_params);
       if (!stage.bin) {
          ralloc_free(mem_ctx);
          return vk_error(pipeline, VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -2754,6 +2769,8 @@ anv_compute_pipeline_create(struct anv_device *device,
    }
 
    anv_genX(device->info, compute_pipeline_emit)(pipeline);
+
+   ANV_RMV(compute_pipeline_create, device, pipeline, false);
 
    *pPipeline = anv_pipeline_to_handle(&pipeline->base);
 
@@ -3280,6 +3297,8 @@ anv_graphics_pipeline_create(struct anv_device *device,
    anv_fill_pipeline_creation_feedback(&pipeline->base, &pipeline_feedback,
                                        pCreateInfo, stages);
 
+   ANV_RMV(graphics_pipeline_create, device, pipeline, false);
+
    *pPipeline = anv_pipeline_to_handle(&pipeline->base.base);
 
    return pipeline->base.base.batch.status;
@@ -3402,19 +3421,23 @@ compile_upload_rt_shader(struct anv_ray_tracing_pipeline *pipeline,
    /* Ray-tracing shaders don't have a "real" bind map */
    struct anv_pipeline_bind_map empty_bind_map = {};
 
-   const unsigned code_size = stage->prog_data.base.program_size;
+   struct anv_shader_upload_params upload_params = {
+      .stage               = stage->stage,
+      .key_data            = &stage->cache_key,
+      .key_size            = sizeof(stage->cache_key),
+      .kernel_data         = stage->code,
+      .kernel_size         = stage->prog_data.base.program_size,
+      .prog_data           = &stage->prog_data.base,
+      .prog_data_size      = brw_prog_data_size(stage->stage),
+      .stats               = stage->stats,
+      .num_stats           = 1,
+      .bind_map            = &empty_bind_map,
+      .push_desc_info      = &stage->push_desc_info,
+      .dynamic_push_values = stage->dynamic_push_values,
+   };
+
    stage->bin =
-      anv_device_upload_kernel(pipeline->base.device,
-                               cache,
-                               stage->stage,
-                               &stage->cache_key, sizeof(stage->cache_key),
-                               stage->code, code_size,
-                               &stage->prog_data.base,
-                               sizeof(stage->prog_data.bs),
-                               stage->stats, 1,
-                               NULL, &empty_bind_map,
-                               &stage->push_desc_info,
-                               stage->dynamic_push_values);
+      anv_device_upload_kernel(pipeline->base.device, cache, &upload_params);
    if (stage->bin == NULL)
       return vk_error(pipeline, VK_ERROR_OUT_OF_HOST_MEMORY);
 
@@ -3807,6 +3830,8 @@ anv_device_init_rt_shaders(struct anv_device *device)
 
    bool cache_hit;
 
+   struct anv_push_descriptor_info empty_push_desc_info = {};
+   struct anv_pipeline_bind_map empty_bind_map = {};
    struct brw_rt_trampoline {
       char name[16];
       struct brw_cs_prog_key key;
@@ -3825,11 +3850,6 @@ anv_device_init_rt_shaders(struct anv_device *device)
 
       trampoline_nir->info.subgroup_size = SUBGROUP_SIZE_REQUIRE_16;
 
-      struct anv_push_descriptor_info push_desc_info = {};
-      struct anv_pipeline_bind_map bind_map = {
-         .surface_count = 0,
-         .sampler_count = 0,
-      };
       uint32_t dummy_params[4] = { 0, };
       struct brw_cs_prog_data trampoline_prog_data = {
          .base.nr_params = 4,
@@ -3849,17 +3869,21 @@ anv_device_init_rt_shaders(struct anv_device *device)
       const unsigned *tramp_data =
          brw_compile_cs(device->physical->compiler, &params);
 
+      struct anv_shader_upload_params upload_params = {
+         .stage               = MESA_SHADER_COMPUTE,
+         .key_data            = &trampoline_key,
+         .key_size            = sizeof(trampoline_key),
+         .kernel_data         = tramp_data,
+         .kernel_size         = trampoline_prog_data.base.program_size,
+         .prog_data           = &trampoline_prog_data.base,
+         .prog_data_size      = sizeof(trampoline_prog_data),
+         .bind_map            = &empty_bind_map,
+         .push_desc_info      = &empty_push_desc_info,
+      };
+
       device->rt_trampoline =
          anv_device_upload_kernel(device, device->internal_cache,
-                                  MESA_SHADER_COMPUTE,
-                                  &trampoline_key, sizeof(trampoline_key),
-                                  tramp_data,
-                                  trampoline_prog_data.base.program_size,
-                                  &trampoline_prog_data.base,
-                                  sizeof(trampoline_prog_data),
-                                  NULL, 0, NULL, &bind_map,
-                                  &push_desc_info,
-                                  0 /* dynamic_push_values */);
+                                  &upload_params);
 
       ralloc_free(tmp_ctx);
 
@@ -3889,11 +3913,6 @@ anv_device_init_rt_shaders(struct anv_device *device)
 
       NIR_PASS_V(trivial_return_nir, brw_nir_lower_rt_intrinsics, device->info);
 
-      struct anv_push_descriptor_info push_desc_info = {};
-      struct anv_pipeline_bind_map bind_map = {
-         .surface_count = 0,
-         .sampler_count = 0,
-      };
       struct brw_bs_prog_data return_prog_data = { 0, };
       struct brw_compile_bs_params params = {
          .base = {
@@ -3907,15 +3926,21 @@ anv_device_init_rt_shaders(struct anv_device *device)
       const unsigned *return_data =
          brw_compile_bs(device->physical->compiler, &params);
 
+      struct anv_shader_upload_params upload_params = {
+         .stage               = MESA_SHADER_CALLABLE,
+         .key_data            = &return_key,
+         .key_size            = sizeof(return_key),
+         .kernel_data         = return_data,
+         .kernel_size         = return_prog_data.base.program_size,
+         .prog_data           = &return_prog_data.base,
+         .prog_data_size      = sizeof(return_prog_data),
+         .bind_map            = &empty_bind_map,
+         .push_desc_info      = &empty_push_desc_info,
+      };
+
       device->rt_trivial_return =
          anv_device_upload_kernel(device, device->internal_cache,
-                                  MESA_SHADER_CALLABLE,
-                                  &return_key, sizeof(return_key),
-                                  return_data, return_prog_data.base.program_size,
-                                  &return_prog_data.base, sizeof(return_prog_data),
-                                  NULL, 0, NULL, &bind_map,
-                                  &push_desc_info,
-                                  0 /* dynamic_push_values */);
+                                  &upload_params);
 
       ralloc_free(tmp_ctx);
 
@@ -4100,8 +4125,11 @@ anv_ray_tracing_pipeline_create(
                          pCreateInfo->pLibraryInfo->pLibraries[l]);
          struct anv_ray_tracing_pipeline *rt_library =
             anv_pipeline_to_ray_tracing(library);
-         for (uint32_t lg = 0; lg < rt_library->group_count; lg++)
-            pipeline->groups[g++] = rt_library->groups[lg];
+         for (uint32_t lg = 0; lg < rt_library->group_count; lg++) {
+            pipeline->groups[g] = rt_library->groups[lg];
+            pipeline->groups[g].imported = true;
+            g++;
+         }
 
          /* Account for shaders in the library. */
          util_dynarray_foreach(&rt_library->shaders,
@@ -4126,6 +4154,8 @@ anv_ray_tracing_pipeline_create(
    anv_genX(device->info, ray_tracing_pipeline_emit)(pipeline);
 
    ralloc_free(tmp_ctx);
+
+   ANV_RMV(rt_pipeline_create, device, pipeline, false);
 
    *pPipeline = anv_pipeline_to_handle(&pipeline->base);
 

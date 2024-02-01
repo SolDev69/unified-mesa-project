@@ -53,7 +53,7 @@ struct st_context;
 struct st_program;
 struct u_upload_mgr;
 
-#define ST_L3_PINNING_DISABLED 0xffffffff
+#define ST_THREAD_SCHEDULER_DISABLED 0xffffffff
 
 struct st_bitmap_cache
 {
@@ -357,8 +357,6 @@ struct st_context
 
    void *winsys_drawable_handle;
 
-   /* The number of vertex buffers from the last call of validate_arrays. */
-   unsigned last_num_vbuffers;
    bool uses_user_vertex_buffers;
 
    unsigned last_used_atomic_bindings[PIPE_SHADER_TYPES];

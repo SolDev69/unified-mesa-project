@@ -1330,7 +1330,7 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
       si_update_vrs_flat_shading(sctx);
 
    if (old_rs->flatshade_first != rs->flatshade_first)
-      si_update_ngg_prim_state_sgpr(sctx, si_get_vs(sctx)->current, sctx->ngg);
+      si_update_ngg_sgpr_state_provoking_vtx(sctx, si_get_vs(sctx)->current, sctx->ngg);
 }
 
 static void si_delete_rs_state(struct pipe_context *ctx, void *state)
@@ -1688,24 +1688,22 @@ static void si_emit_db_render_state(struct si_context *sctx, unsigned index)
    }
 
    if (sctx->gfx_level >= GFX11) {
-      unsigned max_allowed_tiles_in_wave = 0;
+      unsigned max_allowed_tiles_in_wave;
 
       if (sctx->screen->info.has_dedicated_vram) {
          if (sctx->framebuffer.nr_samples == 8)
-            max_allowed_tiles_in_wave = 7;
+            max_allowed_tiles_in_wave = 6;
          else if (sctx->framebuffer.nr_samples == 4)
-            max_allowed_tiles_in_wave = 14;
+            max_allowed_tiles_in_wave = 13;
+         else
+            max_allowed_tiles_in_wave = 0;
       } else {
          if (sctx->framebuffer.nr_samples == 8)
-            max_allowed_tiles_in_wave = 8;
-      }
-
-      /* TODO: We may want to disable this workaround for future chips. */
-      if (sctx->framebuffer.nr_samples >= 4) {
-         if (max_allowed_tiles_in_wave)
-            max_allowed_tiles_in_wave--;
-         else
+            max_allowed_tiles_in_wave = 7;
+         else if (sctx->framebuffer.nr_samples == 4)
             max_allowed_tiles_in_wave = 15;
+         else
+            max_allowed_tiles_in_wave = 0;
       }
 
       db_render_control |= S_028000_MAX_ALLOWED_TILES_IN_WAVE(max_allowed_tiles_in_wave);
@@ -5546,70 +5544,48 @@ static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
    FREE(state);
 }
 
-static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
-                                  unsigned unbind_num_trailing_slots, bool take_ownership,
+static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned count, bool take_ownership,
                                   const struct pipe_vertex_buffer *buffers)
 {
    struct si_context *sctx = (struct si_context *)ctx;
-   unsigned updated_mask = u_bit_consecutive(0, count + unbind_num_trailing_slots);
-   uint32_t orig_unaligned = sctx->vertex_buffer_unaligned;
    uint32_t unaligned = 0;
-   int i;
+   unsigned i;
 
-   assert(count + unbind_num_trailing_slots <= ARRAY_SIZE(sctx->vertex_buffer));
+   assert(count <= ARRAY_SIZE(sctx->vertex_buffer));
+   assert(!count || buffers);
 
-   if (buffers) {
+   for (i = 0; i < count; i++) {
+      const struct pipe_vertex_buffer *src = buffers + i;
+      struct pipe_vertex_buffer *dst = sctx->vertex_buffer + i;
+      struct pipe_resource *buf = src->buffer.resource;
+
+      dst->buffer_offset = src->buffer_offset;
+
+      /* Only unreference bound vertex buffers. (take_ownership) */
       if (take_ownership) {
-         for (i = 0; i < count; i++) {
-            const struct pipe_vertex_buffer *src = buffers + i;
-            struct pipe_vertex_buffer *dst = sctx->vertex_buffer + i;
-            struct pipe_resource *buf = src->buffer.resource;
-            unsigned slot_bit = 1 << i;
-
-            /* Only unreference bound vertex buffers. (take_ownership) */
-            pipe_resource_reference(&dst->buffer.resource, NULL);
-
-            if (src->buffer_offset & 3)
-               unaligned |= slot_bit;
-
-            if (buf) {
-               si_resource(buf)->bind_history |= SI_BIND_VERTEX_BUFFER;
-               radeon_add_to_buffer_list(sctx, &sctx->gfx_cs, si_resource(buf),
-                                         RADEON_USAGE_READ | RADEON_PRIO_VERTEX_BUFFER);
-            }
-         }
-         /* take_ownership allows us to copy pipe_resource pointers without refcounting. */
-         memcpy(sctx->vertex_buffer, buffers, count * sizeof(struct pipe_vertex_buffer));
+         pipe_resource_reference(&dst->buffer.resource, NULL);
+         dst->buffer.resource = src->buffer.resource;
       } else {
-         for (i = 0; i < count; i++) {
-            const struct pipe_vertex_buffer *src = buffers + i;
-            struct pipe_vertex_buffer *dst = sctx->vertex_buffer + i;
-            struct pipe_resource *buf = src->buffer.resource;
-            unsigned slot_bit = 1 << i;
-
-            pipe_resource_reference(&dst->buffer.resource, buf);
-            dst->buffer_offset = src->buffer_offset;
-
-            if (dst->buffer_offset & 3)
-               unaligned |= slot_bit;
-
-            if (buf) {
-               si_resource(buf)->bind_history |= SI_BIND_VERTEX_BUFFER;
-               radeon_add_to_buffer_list(sctx, &sctx->gfx_cs, si_resource(buf),
-                                         RADEON_USAGE_READ | RADEON_PRIO_VERTEX_BUFFER);
-            }
-         }
+         pipe_resource_reference(&dst->buffer.resource, src->buffer.resource);
       }
-   } else {
-      for (i = 0; i < count; i++)
-         pipe_resource_reference(&sctx->vertex_buffer[i].buffer.resource, NULL);
+
+      if (src->buffer_offset & 3)
+         unaligned |= BITFIELD_BIT(i);
+
+      if (buf) {
+         si_resource(buf)->bind_history |= SI_BIND_VERTEX_BUFFER;
+         radeon_add_to_buffer_list(sctx, &sctx->gfx_cs, si_resource(buf),
+                                   RADEON_USAGE_READ | RADEON_PRIO_VERTEX_BUFFER);
+      }
    }
 
-   for (i = 0; i < unbind_num_trailing_slots; i++)
-      pipe_resource_reference(&sctx->vertex_buffer[count + i].buffer.resource, NULL);
+   unsigned last_count = sctx->num_vertex_buffers;
+   for (; i < last_count; i++)
+      pipe_resource_reference(&sctx->vertex_buffer[i].buffer.resource, NULL);
 
+   sctx->num_vertex_buffers = count;
    sctx->vertex_buffers_dirty = sctx->num_vertex_elements > 0;
-   sctx->vertex_buffer_unaligned = (orig_unaligned & ~updated_mask) | unaligned;
+   sctx->vertex_buffer_unaligned = unaligned;
 
    /* Check whether alignment may have changed in a way that requires
     * shader changes. This check is conservative: a vertex buffer can only
@@ -5618,8 +5594,7 @@ static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
     * whether buffers are at least dword-aligned, since that should always
     * be the case in well-behaved applications anyway.
     */
-   if ((sctx->vertex_elements->vb_alignment_check_mask &
-        (unaligned | orig_unaligned) & updated_mask)) {
+   if (sctx->vertex_elements->vb_alignment_check_mask & unaligned) {
       si_vs_key_update_inputs(sctx);
       sctx->do_update_shaders = true;
    }

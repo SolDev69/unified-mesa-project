@@ -1732,7 +1732,17 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width,
       const bool compressed =
            inst->dst.component_size(inst->exec_size) > REG_SIZE;
       brw_set_default_compression(p, compressed);
-      brw_set_default_group(p, inst->group);
+
+      if ((devinfo->ver >= 20 || devinfo->ver < 7) && inst->group % 8 != 0) {
+         assert(inst->force_writemask_all);
+         assert(!inst->predicate && !inst->conditional_mod);
+         assert(!inst->writes_accumulator_implicitly(devinfo) &&
+                !inst->reads_accumulator_implicitly());
+         assert(inst->opcode != SHADER_OPCODE_SEL_EXEC);
+         brw_set_default_group(p, 0);
+      } else {
+         brw_set_default_group(p, inst->group);
+      }
 
       for (unsigned int i = 0; i < inst->sources; i++) {
          src[i] = brw_reg_from_fs_reg(devinfo, inst,
@@ -1762,7 +1772,14 @@ fs_generator::generate_code(const cfg_t *cfg, int dispatch_width,
       brw_set_default_flag_reg(p, flag_subreg / 2, flag_subreg % 2);
       brw_set_default_saturate(p, inst->saturate);
       brw_set_default_mask_control(p, inst->force_writemask_all);
-      brw_set_default_acc_write_control(p, inst->writes_accumulator);
+      if (devinfo->ver >= 20 && inst->writes_accumulator) {
+         assert(inst->dst.is_accumulator() ||
+                inst->opcode == BRW_OPCODE_ADDC ||
+                inst->opcode == BRW_OPCODE_MACH ||
+                inst->opcode == BRW_OPCODE_SUBB);
+      } else {
+         brw_set_default_acc_write_control(p, inst->writes_accumulator);
+      }
       brw_set_default_swsb(p, swsb);
 
       unsigned exec_size = inst->exec_size;

@@ -129,6 +129,7 @@ struct intel_perf_query_result;
 #include "anv_android.h"
 #include "anv_entrypoints.h"
 #include "anv_kmd_backend.h"
+#include "anv_rmv.h"
 #include "isl/isl.h"
 
 #include "dev/intel_debug.h"
@@ -442,6 +443,9 @@ enum anv_bo_alloc_flags {
     */
    ANV_BO_ALLOC_IMPORTED =                (1 << 18),
 
+   /** Specify whether this BO is internal to the driver */
+   ANV_BO_ALLOC_INTERNAL =                (1 << 19),
+
    /** Specifies that the BO should be cached and coherent. */
    ANV_BO_ALLOC_HOST_CACHED_COHERENT =    (ANV_BO_ALLOC_HOST_COHERENT | ANV_BO_ALLOC_HOST_CACHED),
 };
@@ -497,6 +501,9 @@ struct anv_bo {
 
    /** True if this BO wraps a host pointer */
    bool from_host_ptr:1;
+
+   /** True if this BO is mapped in the GTT (only used for RMV) */
+   bool gtt_mapped:1;
 };
 
 static inline bool
@@ -738,6 +745,9 @@ struct anv_state_stream {
 
    /* Offset into the current block at which to allocate the next state */
    uint32_t next;
+
+   /* Sum of all the blocks in all_blocks */
+   uint32_t total_size;
 
    /* List of all blocks allocated from this pool */
    struct util_dynarray all_blocks;
@@ -1239,20 +1249,12 @@ anv_device_search_for_kernel(struct anv_device *device,
                              const void *key_data, uint32_t key_size,
                              bool *user_cache_bit);
 
+struct anv_shader_upload_params;
+
 struct anv_shader_bin *
 anv_device_upload_kernel(struct anv_device *device,
                          struct vk_pipeline_cache *cache,
-                         gl_shader_stage stage,
-                         const void *key_data, uint32_t key_size,
-                         const void *kernel_data, uint32_t kernel_size,
-                         const struct brw_stage_prog_data *prog_data,
-                         uint32_t prog_data_size,
-                         const struct brw_compile_stats *stats,
-                         uint32_t num_stats,
-                         const struct nir_xfb_info *xfb_info,
-                         const struct anv_pipeline_bind_map *bind_map,
-                         const struct anv_push_descriptor_info *push_desc_info,
-                         enum anv_dynamic_push_bits dynamic_push_values);
+                         const struct anv_shader_upload_params *params);
 
 struct nir_shader;
 struct nir_shader_compiler_options;
@@ -1299,7 +1301,6 @@ enum anv_gfx_state_bits {
    ANV_GFX_STATE_DS,
    ANV_GFX_STATE_GS,
    ANV_GFX_STATE_PS,
-   ANV_GFX_STATE_PS_EXTRA,
    ANV_GFX_STATE_SBE_MESH,
    ANV_GFX_STATE_CLIP_MESH,
    ANV_GFX_STATE_MESH_CONTROL,
@@ -1333,6 +1334,7 @@ enum anv_gfx_state_bits {
    ANV_GFX_STATE_VIEWPORT_SF_CLIP,
    ANV_GFX_STATE_WM,
    ANV_GFX_STATE_WM_DEPTH_STENCIL,
+   ANV_GFX_STATE_PS_EXTRA,
    ANV_GFX_STATE_PMA_FIX, /* Fake state to implement workaround */
    ANV_GFX_STATE_WA_18019816803, /* Fake state to implement workaround */
    ANV_GFX_STATE_TBIMR_TILE_PASS_INFO,
@@ -1420,6 +1422,11 @@ struct anv_gfx_dynamic_state {
       float    LineStippleInverseRepeatCount;
       uint32_t LineStippleRepeatCount;
    } ls;
+
+   /* 3DSTATE_PS_EXTRA */
+   struct {
+      bool PixelShaderKillsPixel;
+   } ps_extra;
 
    /* 3DSTATE_PS_BLEND */
    struct {
@@ -4007,6 +4014,30 @@ enum anv_dynamic_push_bits {
    ANV_DYNAMIC_PUSH_INPUT_VERTICES = BITFIELD_BIT(0),
 };
 
+struct anv_shader_upload_params {
+   gl_shader_stage stage;
+
+   const void *key_data;
+   uint32_t key_size;
+
+   const void *kernel_data;
+   uint32_t kernel_size;
+
+   const struct brw_stage_prog_data *prog_data;
+   uint32_t prog_data_size;
+
+   const struct brw_compile_stats *stats;
+   uint32_t num_stats;
+
+   const struct nir_xfb_info *xfb_info;
+
+   const struct anv_pipeline_bind_map *bind_map;
+
+   const struct anv_push_descriptor_info *push_desc_info;
+
+   enum anv_dynamic_push_bits dynamic_push_values;
+};
+
 struct anv_shader_bin {
    struct vk_pipeline_cache_object base;
 
@@ -4207,6 +4238,8 @@ struct anv_graphics_pipeline {
    uint32_t                                     view_mask;
    uint32_t                                     instance_multiplier;
 
+   bool                                         rp_has_ds_self_dep;
+
    bool                                         kill_pixel;
    bool                                         force_fragment_thread_dispatch;
    bool                                         uses_xfb;
@@ -4258,7 +4291,6 @@ struct anv_graphics_pipeline {
       struct anv_gfx_state_ptr                  hs;
       struct anv_gfx_state_ptr                  ds;
       struct anv_gfx_state_ptr                  ps;
-      struct anv_gfx_state_ptr                  ps_extra;
 
       struct anv_gfx_state_ptr                  task_control;
       struct anv_gfx_state_ptr                  task_shader;
@@ -4277,6 +4309,7 @@ struct anv_graphics_pipeline {
       struct anv_gfx_state_ptr                  clip;
       struct anv_gfx_state_ptr                  sf;
       struct anv_gfx_state_ptr                  raster;
+      struct anv_gfx_state_ptr                  ps_extra;
       struct anv_gfx_state_ptr                  wm;
       struct anv_gfx_state_ptr                  so;
       struct anv_gfx_state_ptr                  gs;
@@ -4327,6 +4360,9 @@ struct anv_compute_pipeline {
 
 struct anv_rt_shader_group {
    VkRayTracingShaderGroupTypeKHR type;
+
+   /* Whether this group was imported from another pipeline */
+   bool imported;
 
    struct anv_shader_bin *general;
    struct anv_shader_bin *closest_hit;
@@ -5309,6 +5345,40 @@ void anv_image_fill_surface_state(struct anv_device *device,
                                   enum anv_image_view_state_flags flags,
                                   struct anv_surface_state *state_inout);
 
+
+static inline const struct anv_surface_state *
+anv_image_view_texture_surface_state(const struct anv_image_view *iview,
+                                     uint32_t plane, VkImageLayout layout)
+{
+   return layout == VK_IMAGE_LAYOUT_GENERAL ?
+          &iview->planes[plane].general_sampler :
+          &iview->planes[plane].optimal_sampler;
+}
+
+static inline const struct anv_surface_state *
+anv_image_view_storage_surface_state(const struct anv_image_view *iview)
+{
+   return &iview->planes[0].storage;
+}
+
+static inline bool
+anv_cmd_graphics_state_has_image_as_attachment(const struct anv_cmd_graphics_state *state,
+                                               const struct anv_image *image)
+{
+   for (unsigned a = 0; a < state->color_att_count; a++) {
+      if (state->color_att[a].iview &&
+          state->color_att[a].iview->image == image)
+         return true;
+   }
+
+   if (state->depth_att.iview && state->depth_att.iview->image == image)
+      return true;
+   if (state->stencil_att.iview && state->stencil_att.iview->image == image)
+      return true;
+
+   return false;
+}
+
 struct anv_image_create_info {
    const VkImageCreateInfo *vk_info;
 
@@ -5346,25 +5416,37 @@ enum isl_format
 anv_isl_format_for_descriptor_type(const struct anv_device *device,
                                    VkDescriptorType type);
 
+static inline isl_surf_usage_flags_t
+anv_isl_usage_for_descriptor_type(const VkDescriptorType type)
+{
+   switch(type) {
+      case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+      case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+         return ISL_SURF_USAGE_CONSTANT_BUFFER_BIT;
+      default:
+         return ISL_SURF_USAGE_STORAGE_BIT;
+   }
+}
+
 static inline uint32_t
 anv_rasterization_aa_mode(VkPolygonMode raster_mode,
-                          VkLineRasterizationModeEXT line_mode)
+                          VkLineRasterizationModeKHR line_mode)
 {
    if (raster_mode == VK_POLYGON_MODE_LINE &&
-       line_mode == VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_EXT)
+       line_mode == VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_KHR)
       return true;
    return false;
 }
 
-static inline VkLineRasterizationModeEXT
-anv_line_rasterization_mode(VkLineRasterizationModeEXT line_mode,
+static inline VkLineRasterizationModeKHR
+anv_line_rasterization_mode(VkLineRasterizationModeKHR line_mode,
                             unsigned rasterization_samples)
 {
-   if (line_mode == VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT) {
+   if (line_mode == VK_LINE_RASTERIZATION_MODE_DEFAULT_KHR) {
       if (rasterization_samples > 1) {
-         return VK_LINE_RASTERIZATION_MODE_RECTANGULAR_EXT;
+         return VK_LINE_RASTERIZATION_MODE_RECTANGULAR_KHR;
       } else {
-         return VK_LINE_RASTERIZATION_MODE_BRESENHAM_EXT;
+         return VK_LINE_RASTERIZATION_MODE_BRESENHAM_KHR;
       }
    }
    return line_mode;
@@ -5619,25 +5701,6 @@ anv_device_utrace_flush_cmd_buffers(struct anv_queue *queue,
                                     uint32_t cmd_buffer_count,
                                     struct anv_cmd_buffer **cmd_buffers,
                                     struct anv_utrace_submit **out_submit);
-
-#ifdef HAVE_PERFETTO
-void anv_perfetto_init(void);
-uint64_t anv_perfetto_begin_submit(struct anv_queue *queue);
-void anv_perfetto_end_submit(struct anv_queue *queue, uint32_t submission_id,
-                             uint64_t start_ts);
-#else
-static inline void anv_perfetto_init(void)
-{
-}
-static inline uint64_t anv_perfetto_begin_submit(struct anv_queue *queue)
-{
-   return 0;
-}
-static inline void anv_perfetto_end_submit(struct anv_queue *queue,
-                                           uint32_t submission_id,
-                                           uint64_t start_ts)
-{}
-#endif
 
 static bool
 anv_has_cooperative_matrix(const struct anv_physical_device *device)

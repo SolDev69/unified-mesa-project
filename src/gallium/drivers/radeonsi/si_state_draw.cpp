@@ -247,8 +247,10 @@ static bool si_update_shaders(struct si_context *sctx)
 
    /* If we start to use any of these, we need to update the SGPR. */
    if ((hw_vs->uses_vs_state_provoking_vertex && !old_uses_vs_state_provoking_vertex) ||
-       (hw_vs->uses_gs_state_outprim && !old_uses_gs_state_outprim))
-      si_update_ngg_prim_state_sgpr(sctx, hw_vs, NGG);
+       (hw_vs->uses_gs_state_outprim && !old_uses_gs_state_outprim)) {
+      si_update_ngg_sgpr_state_out_prim(sctx, hw_vs, NGG);
+      si_update_ngg_sgpr_state_provoking_vtx(sctx, hw_vs, NGG);
+   }
 
    r = si_shader_select(ctx, &sctx->shader.ps);
    if (r)
@@ -2132,21 +2134,21 @@ static void si_draw(struct pipe_context *ctx,
        * so disable any non-trivial VS prolog that is based on them, such as vertex
        * format lowering.
        */
-      if (!sctx->force_trivial_vs_prolog) {
-         sctx->force_trivial_vs_prolog = true;
+      if (!sctx->force_trivial_vs_inputs) {
+         sctx->force_trivial_vs_inputs = true;
 
          /* Update shaders to disable the non-trivial VS prolog. */
-         if (sctx->uses_nontrivial_vs_prolog) {
+         if (sctx->uses_nontrivial_vs_inputs) {
             si_vs_key_update_inputs(sctx);
             sctx->do_update_shaders = true;
          }
       }
    } else {
-      if (sctx->force_trivial_vs_prolog) {
-         sctx->force_trivial_vs_prolog = false;
+      if (sctx->force_trivial_vs_inputs) {
+         sctx->force_trivial_vs_inputs = false;
 
          /* Update shaders to enable the non-trivial VS prolog. */
-         if (sctx->uses_nontrivial_vs_prolog) {
+         if (sctx->uses_nontrivial_vs_inputs) {
             si_vs_key_update_inputs(sctx);
             sctx->do_update_shaders = true;
          }

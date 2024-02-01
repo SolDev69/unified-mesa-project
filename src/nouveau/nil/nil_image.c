@@ -464,7 +464,7 @@ nil_image_init(struct nv_device_info *dev,
    image->align_B = nil_tiling_size_B(image->levels[0].tiling);
 
    /* I have no idea why but hardware seems to align layer strides */
-   image->array_stride_B = ALIGN(layer_size_B, image->align_B);
+   image->array_stride_B = (uint32_t)align64(layer_size_B, image->align_B);
 
    image->size_B = (uint64_t)image->array_stride_B * image->extent_px.a;
 
@@ -527,7 +527,7 @@ nil_image_for_level(const struct nil_image *image_in,
 
    const struct nil_extent4d lvl_extent_px =
       nil_image_level_extent_px(image_in, level);
-   const struct nil_image_level lvl = image_in->levels[level];
+   struct nil_image_level lvl = image_in->levels[level];
    const uint32_t align_B = nil_tiling_size_B(lvl.tiling);
 
    uint64_t size_B = image_in->size_B - lvl.offset_B;
@@ -542,6 +542,8 @@ nil_image_for_level(const struct nil_image *image_in,
    }
 
    *offset_B_out = lvl.offset_B;
+   lvl.offset_B = 0;
+
    *lvl_image_out = (struct nil_image) {
       .dim = image_in->dim,
       .format = image_in->format,

@@ -5137,7 +5137,7 @@ bool nir_lower_indirect_var_derefs(nir_shader *shader,
 
 bool nir_lower_locals_to_regs(nir_shader *shader, uint8_t bool_bitsize);
 
-void nir_lower_io_to_temporaries(nir_shader *shader,
+bool nir_lower_io_to_temporaries(nir_shader *shader,
                                  nir_function_impl *entrypoint,
                                  bool outputs, bool inputs);
 
@@ -5563,7 +5563,7 @@ bool nir_clear_shared_memory(nir_shader *shader,
 bool nir_move_vec_src_uses_to_dest(nir_shader *shader, bool skip_const_srcs);
 bool nir_lower_vec_to_regs(nir_shader *shader, nir_instr_writemask_filter_cb cb,
                            const void *_data);
-void nir_lower_alpha_test(nir_shader *shader, enum compare_func func,
+bool nir_lower_alpha_test(nir_shader *shader, enum compare_func func,
                           bool alpha_to_one,
                           const gl_state_index16 *alpha_ref_state_tokens);
 bool nir_lower_alu(nir_shader *shader);
@@ -5591,7 +5591,7 @@ bool nir_lower_load_const_to_scalar(nir_shader *shader);
 bool nir_lower_read_invocation_to_scalar(nir_shader *shader);
 bool nir_lower_phis_to_scalar(nir_shader *shader, bool lower_all);
 void nir_lower_io_arrays_to_elements(nir_shader *producer, nir_shader *consumer);
-void nir_lower_io_arrays_to_elements_no_indirects(nir_shader *shader,
+bool nir_lower_io_arrays_to_elements_no_indirects(nir_shader *shader,
                                                   bool outputs_only);
 bool nir_lower_io_to_scalar(nir_shader *shader, nir_variable_mode mask, nir_instr_filter_cb filter, void *filter_data);
 bool nir_lower_io_to_scalar_early(nir_shader *shader, nir_variable_mode mask);
@@ -5643,6 +5643,7 @@ typedef struct nir_lower_subgroups_options {
    bool lower_ballot_bit_count_to_mbcnt_amd : 1;
    bool lower_inverse_ballot : 1;
    bool lower_boolean_reduce : 1;
+   bool lower_boolean_shuffle : 1;
 } nir_lower_subgroups_options;
 
 bool nir_lower_subgroups(nir_shader *shader,
@@ -6022,11 +6023,11 @@ bool nir_lower_clip_gs(nir_shader *shader, unsigned ucp_enables,
 bool nir_lower_clip_fs(nir_shader *shader, unsigned ucp_enables,
                        bool use_clipdist_array);
 
-void nir_lower_clip_cull_distance_to_vec4s(nir_shader *shader);
+bool nir_lower_clip_cull_distance_to_vec4s(nir_shader *shader);
 bool nir_lower_clip_cull_distance_arrays(nir_shader *nir);
 bool nir_lower_clip_disable(nir_shader *shader, unsigned clip_plane_enable);
 
-void nir_lower_point_size_mov(nir_shader *shader,
+bool nir_lower_point_size_mov(nir_shader *shader,
                               const gl_state_index16 *pointsize_state_tokens);
 
 bool nir_lower_frexp(nir_shader *nir);
@@ -6037,7 +6038,7 @@ bool nir_lower_clamp_color_outputs(nir_shader *shader);
 
 bool nir_lower_flatshade(nir_shader *shader);
 
-void nir_lower_passthrough_edgeflags(nir_shader *shader);
+bool nir_lower_passthrough_edgeflags(nir_shader *shader);
 bool nir_lower_patch_vertices(nir_shader *nir, unsigned static_count,
                               const gl_state_index16 *uniform_state_tokens);
 
@@ -6070,7 +6071,7 @@ typedef struct nir_lower_drawpixels_options {
    bool scale_and_bias : 1;
 } nir_lower_drawpixels_options;
 
-void nir_lower_drawpixels(nir_shader *shader,
+bool nir_lower_drawpixels(nir_shader *shader,
                           const nir_lower_drawpixels_options *options);
 
 typedef struct nir_lower_bitmap_options {
@@ -6078,7 +6079,7 @@ typedef struct nir_lower_bitmap_options {
    bool swizzle_xxxx;
 } nir_lower_bitmap_options;
 
-void nir_lower_bitmap(nir_shader *shader, const nir_lower_bitmap_options *options);
+bool nir_lower_bitmap(nir_shader *shader, const nir_lower_bitmap_options *options);
 
 bool nir_lower_atomics_to_ssbo(nir_shader *shader, unsigned offset_align_state);
 
@@ -6251,7 +6252,6 @@ bool nir_lower_ssbo(nir_shader *shader);
 bool nir_lower_helper_writes(nir_shader *shader, bool lower_plain_stores);
 
 typedef struct nir_lower_printf_options {
-   bool treat_doubles_as_floats : 1;
    unsigned max_buffer_size;
 } nir_lower_printf_options;
 

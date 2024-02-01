@@ -116,9 +116,9 @@ nvc3c0_compute_setup_launch_desc_template(uint32_t *qmd,
    NVC3C0_QMDV02_02_VAL_SET(qmd, SM_GLOBAL_CACHING_ENABLE, 1);
    /* those are all QMD 2.2+ */
    NVC3C0_QMDV02_02_VAL_SET(qmd, MIN_SM_CONFIG_SHARED_MEM_SIZE,
-                            gv100_sm_config_smem_size(8 * 1024));
+                            gv100_sm_config_smem_size(shader->info.cs.smem_size));
    NVC3C0_QMDV02_02_VAL_SET(qmd, MAX_SM_CONFIG_SHARED_MEM_SIZE,
-                            gv100_sm_config_smem_size(96 * 1024));
+                            gv100_sm_config_smem_size(NVK_MAX_SHARED_SIZE));
    NVC3C0_QMDV02_02_VAL_SET(qmd, TARGET_SM_CONFIG_SHARED_MEM_SIZE,
                             gv100_sm_config_smem_size(shader->info.cs.smem_size));
 
@@ -138,9 +138,9 @@ nvc6c0_compute_setup_launch_desc_template(uint32_t *qmd,
    NVC6C0_QMDV03_00_VAL_SET(qmd, SM_GLOBAL_CACHING_ENABLE, 1);
    /* those are all QMD 2.2+ */
    NVC6C0_QMDV03_00_VAL_SET(qmd, MIN_SM_CONFIG_SHARED_MEM_SIZE,
-                            gv100_sm_config_smem_size(8 * 1024));
+                            gv100_sm_config_smem_size(shader->info.cs.smem_size));
    NVC6C0_QMDV03_00_VAL_SET(qmd, MAX_SM_CONFIG_SHARED_MEM_SIZE,
-                            gv100_sm_config_smem_size(96 * 1024));
+                            gv100_sm_config_smem_size(NVK_MAX_SHARED_SIZE));
    NVC6C0_QMDV03_00_VAL_SET(qmd, TARGET_SM_CONFIG_SHARED_MEM_SIZE,
                             gv100_sm_config_smem_size(shader->info.cs.smem_size));
 
@@ -214,7 +214,8 @@ nvk_compute_pipeline_create(struct nvk_device *dev,
       if(shader == NULL)
          return vk_error(dev, VK_ERROR_OUT_OF_HOST_MEMORY);
 
-      nvk_lower_nir(dev, nir, &robustness, false, pipeline_layout, shader);
+      nvk_lower_nir(dev, nir, &robustness, false, pipeline_layout,
+                    &shader->cbuf_map);
 
       result = nvk_compile_nir(dev, nir, pipeline_flags, &robustness, NULL, cache, shader);
 

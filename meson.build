@@ -1736,14 +1736,10 @@ if draw_with_llvm
   llvm_optional_modules += ['lto']
 endif
 
-if with_amd_vk or with_gallium_radeonsi
+if with_amd_vk or with_gallium_radeonsi or with_clc
   _llvm_version = '>= 15.0.0'
-elif with_intel_clc
-  _llvm_version = '>= 13.0.0'
 elif with_gallium_opencl
   _llvm_version = '>= 11.0.0'
-elif with_clc
-  _llvm_version = '>= 10.0.0'
 else
   _llvm_version = '>= 5.0.0'
 endif
@@ -1835,8 +1831,8 @@ if with_opencl_spirv
   # does not have the required API and those are only available starting from
   # 8.0.1.3.
   _llvmspirvlib_min_version = '>= 8.0.1.3'
-  if with_intel_clc
-    _llvmspirvlib_min_version = '>= 13.0.0.0'
+  if with_clc
+    _llvmspirvlib_min_version = '>= 15.0.0.0'
   endif
 
   _llvmspirvlib_version = [
@@ -1892,6 +1888,8 @@ if not with_platform_windows and not dep_elf.found()
 endif
 if dep_elf.found()
   pre_args += '-DUSE_LIBELF'
+elif with_gallium_radeonsi
+  error('Gallium driver radeonsi requires libelf')
 endif
 
 dep_glvnd = null_dep
@@ -2150,6 +2148,13 @@ if with_perfetto
   pre_args += '-DHAVE_PERFETTO'
 endif
 
+with_teflon = get_option('teflon')
+if with_teflon and with_tests
+  dep_xtensor = dependency('xtensor')
+  dep_flatbuffers = dependency('flatbuffers')
+  prog_flatc = find_program('flatc')
+endif
+
 with_gpuvis = get_option('gpuvis')
 if with_gpuvis
   pre_args += '-DHAVE_GPUVIS'
@@ -2368,3 +2373,6 @@ if with_perfetto and with_any_datasource
   perfetto_summary += {'Data source': with_datasources}
 endif
 summary(perfetto_summary, section: 'Perfetto', bool_yn: true, list_sep: ' ')
+
+teflon_summary = {'Enabled': with_teflon}
+summary(teflon_summary, section: 'Teflon (TensorFlow Lite delegate)', bool_yn: true, list_sep: ' ')

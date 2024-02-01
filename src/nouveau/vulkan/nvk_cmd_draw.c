@@ -22,12 +22,9 @@
 #include "nouveau_context.h"
 
 #include "nvk_cl902d.h"
-#include "nvk_cl9039.h"
+#include "nvk_cl9097.h"
 #include "nvk_cl90b5.h"
 #include "nvk_cl90c0.h"
-#include "nvk_clb0c0.h"
-
-#include "nvk_cl9097.h"
 #include "nvk_cla097.h"
 #include "nvk_clb097.h"
 #include "nvk_clb197.h"
@@ -80,37 +77,20 @@ nvk_mme_set_priv_reg(struct mme_builder *b)
 }
 
 VkResult
-nvk_queue_init_context_draw_state(struct nvk_queue *queue)
+nvk_push_draw_state_init(struct nvk_device *dev, struct nv_push *p)
 {
-   struct nvk_device *dev = nvk_queue_device(queue);
-
-   uint32_t push_data[2048];
-   struct nv_push push;
-   nv_push_init(&push, push_data, ARRAY_SIZE(push_data));
-   struct nv_push *p = &push;
-
-   /* M2MF state */
-   if (dev->pdev->info.cls_m2mf <= FERMI_MEMORY_TO_MEMORY_FORMAT_A) {
-      /* we absolutely do not support Fermi, but if somebody wants to toy
-       * around with it, this is a must
-       */
-      P_MTHD(p, NV9039, SET_OBJECT);
-      P_NV9039_SET_OBJECT(p, {
-         .class_id = dev->pdev->info.cls_m2mf,
-         .engine_id = 0,
-      });
-   }
+   struct nvk_physical_device *pdev = nvk_device_physical(dev);
 
    /* 3D state */
    P_MTHD(p, NV9097, SET_OBJECT);
    P_NV9097_SET_OBJECT(p, {
-      .class_id = dev->pdev->info.cls_eng3d,
+      .class_id = pdev->info.cls_eng3d,
       .engine_id = 0,
    });
 
    for (uint32_t mme = 0, mme_pos = 0; mme < NVK_MME_COUNT; mme++) {
       size_t size;
-      uint32_t *dw = nvk_build_mme(&nvk_device_physical(dev)->info, mme, &size);
+      uint32_t *dw = nvk_build_mme(&pdev->info, mme, &size);
       if (dw == NULL)
          return vk_error(dev, VK_ERROR_OUT_OF_HOST_MEMORY);
 
@@ -387,11 +367,34 @@ nvk_queue_init_context_draw_state(struct nvk_queue *queue)
 
    P_IMMD(p, NV9097, SET_CT_MRT_ENABLE, V_TRUE);
 
+   if (pdev->info.cls_eng3d < VOLTA_A) {
+      uint64_t shader_base_addr =
+         nvk_heap_contiguous_base_address(&dev->shader_heap);
+
+      P_MTHD(p, NV9097, SET_PROGRAM_REGION_A);
+      P_NV9097_SET_PROGRAM_REGION_A(p, shader_base_addr >> 32);
+      P_NV9097_SET_PROGRAM_REGION_B(p, shader_base_addr);
+   }
+
    for (uint32_t i = 0; i < 6; i++) {
       P_IMMD(p, NV9097, SET_PIPELINE_SHADER(i), {
          .enable  = ENABLE_FALSE,
          .type    = i,
       });
+   }
+
+   P_MTHD(p, NV9097, SET_CONSTANT_BUFFER_SELECTOR_A);
+   P_NV9097_SET_CONSTANT_BUFFER_SELECTOR_A(p, 0);
+   P_NV9097_SET_CONSTANT_BUFFER_SELECTOR_B(p, 0);
+   P_NV9097_SET_CONSTANT_BUFFER_SELECTOR_C(p, 0);
+
+   for (uint32_t group = 0; group < 5; group++) {
+      for (uint32_t slot = 0; slot < 16; slot++) {
+         P_IMMD(p, NV9097, BIND_GROUP_CONSTANT_BUFFER(group), {
+            .valid = VALID_FALSE,
+            .shader_slot = slot,
+         });
+      }
    }
 
 //   P_MTHD(cmd->push, NVC0_3D, MACRO_GP_SELECT);
@@ -425,18 +428,7 @@ nvk_queue_init_context_draw_state(struct nvk_queue *queue)
    if (dev->pdev->info.cls_eng3d == MAXWELL_A)
       P_IMMD(p, NVB097, SET_SELECT_MAXWELL_TEXTURE_HEADERS, V_TRUE);
 
-   /* Compute state */
-   P_MTHD(p, NV90C0, SET_OBJECT);
-   P_NV90C0_SET_OBJECT(p, {
-      .class_id = dev->pdev->info.cls_compute,
-      .engine_id = 0,
-   });
-
-   if (dev->pdev->info.cls_compute == MAXWELL_COMPUTE_A)
-      P_IMMD(p, NVB0C0, SET_SELECT_MAXWELL_TEXTURE_HEADERS, V_TRUE);
-
-   return nvk_queue_submit_simple(queue, nv_push_dw_count(&push), push_data,
-                                  0, NULL);
+   return VK_SUCCESS;
 }
 
 static void
@@ -455,6 +447,9 @@ nvk_cmd_buffer_dirty_render_pass(struct nvk_cmd_buffer *cmd)
    BITSET_SET(dyn->dirty, MESA_VK_DYNAMIC_DS_DEPTH_WRITE_ENABLE);
    BITSET_SET(dyn->dirty, MESA_VK_DYNAMIC_DS_DEPTH_BOUNDS_TEST_ENABLE);
    BITSET_SET(dyn->dirty, MESA_VK_DYNAMIC_DS_STENCIL_TEST_ENABLE);
+
+   /* This may depend on render targets for ESO */
+   BITSET_SET(dyn->dirty, MESA_VK_DYNAMIC_MS_RASTERIZATION_SAMPLES);
 }
 
 void
@@ -496,6 +491,7 @@ nvk_cmd_buffer_begin_graphics(struct nvk_cmd_buffer *cmd,
          render->area = (VkRect2D) { };
          render->layer_count = 0;
          render->view_mask = inheritance_info->viewMask;
+         render->samples = inheritance_info->rasterizationSamples;
 
          render->color_att_count = inheritance_info->colorAttachmentCount;
          for (uint32_t i = 0; i < render->color_att_count; i++) {
@@ -510,6 +506,25 @@ nvk_cmd_buffer_begin_graphics(struct nvk_cmd_buffer *cmd,
          nvk_cmd_buffer_dirty_render_pass(cmd);
       }
    }
+}
+
+void
+nvk_cmd_invalidate_graphics_state(struct nvk_cmd_buffer *cmd)
+{
+   vk_dynamic_graphics_state_dirty_all(&cmd->vk.dynamic_graphics_state);
+
+   /* From the Vulkan 1.3.275 spec:
+    *
+    *    "...There is one exception to this rule - if the primary command
+    *    buffer is inside a render pass instance, then the render pass and
+    *    subpass state is not disturbed by executing secondary command
+    *    buffers."
+    *
+    * We need to reset everything EXCEPT the render pass state.
+    */
+   struct nvk_rendering_state render_save = cmd->state.gfx.render;
+   memset(&cmd->state.gfx, 0, sizeof(cmd->state.gfx));
+   cmd->state.gfx.render = render_save;
 }
 
 static void
@@ -573,6 +588,7 @@ nvk_CmdBeginRendering(VkCommandBuffer commandBuffer,
    render->area = pRenderingInfo->renderArea;
    render->view_mask = pRenderingInfo->viewMask;
    render->layer_count = pRenderingInfo->layerCount;
+   render->samples = 0;
 
    const uint32_t layer_count =
       render->view_mask ? util_last_bit(render->view_mask) :
@@ -628,13 +644,14 @@ nvk_CmdBeginRendering(VkCommandBuffer commandBuffer,
          assert(sample_layout == NIL_SAMPLE_LAYOUT_INVALID ||
                 sample_layout == image->planes[ip].nil.sample_layout);
          sample_layout = image->planes[ip].nil.sample_layout;
+         render->samples = image->vk.samples;
 
          uint64_t addr = nvk_image_base_address(image, ip) + level->offset_B;
 
          P_MTHD(p, NV9097, SET_COLOR_TARGET_A(i));
          P_NV9097_SET_COLOR_TARGET_A(p, i, addr >> 32);
          P_NV9097_SET_COLOR_TARGET_B(p, i, addr);
-         
+
          if (level->tiling.is_tiled) {
             P_NV9097_SET_COLOR_TARGET_WIDTH(p, i, level_extent_sa.w);
             P_NV9097_SET_COLOR_TARGET_HEIGHT(p, i, level_extent_sa.h);
@@ -652,7 +669,7 @@ nvk_CmdBeginRendering(VkCommandBuffer commandBuffer,
                   (image->planes[ip].nil.dim == NIL_IMAGE_DIM_3D) ?
                   THIRD_DIMENSION_CONTROL_THIRD_DIMENSION_DEFINES_DEPTH_SIZE :
                   THIRD_DIMENSION_CONTROL_THIRD_DIMENSION_DEFINES_ARRAY_SIZE,
-         });
+            });
 
             P_NV9097_SET_COLOR_TARGET_THIRD_DIMENSION(p, i,
                iview->vk.base_array_layer + layer_count);
@@ -675,7 +692,7 @@ nvk_CmdBeginRendering(VkCommandBuffer commandBuffer,
              */
             P_NV9097_SET_COLOR_TARGET_WIDTH(p, i, pitch);
             P_NV9097_SET_COLOR_TARGET_HEIGHT(p, i, level_extent_sa.h);
-            
+
             const uint8_t ct_format = nil_format_to_color_target(p_format);
             P_NV9097_SET_COLOR_TARGET_FORMAT(p, i, ct_format);
 
@@ -748,6 +765,7 @@ nvk_CmdBeginRendering(VkCommandBuffer commandBuffer,
       assert(sample_layout == NIL_SAMPLE_LAYOUT_INVALID ||
              sample_layout == nil_image.sample_layout);
       sample_layout = nil_image.sample_layout;
+      render->samples = image->vk.samples;
 
       P_MTHD(p, NV9097, SET_ZT_A);
       P_NV9097_SET_ZT_A(p, addr >> 32);
@@ -788,10 +806,28 @@ nvk_CmdBeginRendering(VkCommandBuffer commandBuffer,
       P_IMMD(p, NV9097, SET_ZT_SELECT, 0 /* target_count */);
    }
 
-   if (sample_layout == NIL_SAMPLE_LAYOUT_INVALID)
-      sample_layout = NIL_SAMPLE_LAYOUT_1X1;
-
-   P_IMMD(p, NV9097, SET_ANTI_ALIAS, nil_to_nv9097_samples_mode(sample_layout));
+   /* From the Vulkan 1.3.275 spec:
+    *
+    *    "It is legal for a subpass to use no color or depth/stencil
+    *    attachments, either because it has no attachment references or
+    *    because all of them are VK_ATTACHMENT_UNUSED. This kind of subpass
+    *    can use shader side effects such as image stores and atomics to
+    *    produce an output. In this case, the subpass continues to use the
+    *    width, height, and layers of the framebuffer to define the dimensions
+    *    of the rendering area, and the rasterizationSamples from each
+    *    pipeline’s VkPipelineMultisampleStateCreateInfo to define the number
+    *    of samples used in rasterization;"
+    *
+    * In the case where we have attachments, we emit SET_ANTI_ALIAS here
+    * because SET_COLOR_TARGET_* and SET_ZT_* don't have any other way of
+    * specifying the sample layout and we want to ensure it matches.  When
+    * we don't have any attachments, we defer SET_ANTI_ALIAS to draw time
+    * where we base it on dynamic rasterizationSamples.
+    */
+   if (sample_layout != NIL_SAMPLE_LAYOUT_INVALID) {
+      P_IMMD(p, NV9097, SET_ANTI_ALIAS,
+             nil_to_nv9097_samples_mode(sample_layout));
+   }
 
    if (render->flags & VK_RENDERING_RESUMING_BIT)
       return;
@@ -1011,7 +1047,10 @@ nvk_flush_ts_state(struct nvk_cmd_buffer *cmd)
    struct nv_push *p = nvk_cmd_buffer_push(cmd, 4);
 
    if (BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_TS_PATCH_CONTROL_POINTS)) {
-      P_IMMD(p, NV9097, SET_PATCH, dyn->ts.patch_control_points);
+      /* The hardware gets grumpy if we set this to 0 so make sure we set it
+       * to at least 1 in case it's dirty but uninitialized.
+       */
+      P_IMMD(p, NV9097, SET_PATCH, MAX2(1, dyn->ts.patch_control_points));
    }
 
    if (BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_TS_DOMAIN_ORIGIN)) {
@@ -1316,18 +1355,18 @@ nvk_flush_rs_state(struct nvk_cmd_buffer *cmd)
 
    if (BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_RS_LINE_MODE)) {
       switch (dyn->rs.line.mode) {
-      case VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT:
-      case VK_LINE_RASTERIZATION_MODE_RECTANGULAR_EXT:
+      case VK_LINE_RASTERIZATION_MODE_DEFAULT_KHR:
+      case VK_LINE_RASTERIZATION_MODE_RECTANGULAR_KHR:
          P_IMMD(p, NV9097, SET_LINE_MULTISAMPLE_OVERRIDE, ENABLE_FALSE);
          P_IMMD(p, NV9097, SET_ANTI_ALIASED_LINE, ENABLE_FALSE);
          break;
 
-      case VK_LINE_RASTERIZATION_MODE_BRESENHAM_EXT:
+      case VK_LINE_RASTERIZATION_MODE_BRESENHAM_KHR:
          P_IMMD(p, NV9097, SET_LINE_MULTISAMPLE_OVERRIDE, ENABLE_TRUE);
          P_IMMD(p, NV9097, SET_ANTI_ALIASED_LINE, ENABLE_FALSE);
          break;
 
-      case VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_EXT:
+      case VK_LINE_RASTERIZATION_MODE_RECTANGULAR_SMOOTH_KHR:
          P_IMMD(p, NV9097, SET_LINE_MULTISAMPLE_OVERRIDE, ENABLE_TRUE);
          P_IMMD(p, NV9097, SET_ANTI_ALIASED_LINE, ENABLE_TRUE);
          break;
@@ -1376,8 +1415,44 @@ static void
 nvk_flush_ms_state(struct nvk_cmd_buffer *cmd)
 {
    struct nvk_descriptor_state *desc = &cmd->state.gfx.descriptors;
+   const struct nvk_rendering_state *render = &cmd->state.gfx.render;
    const struct vk_dynamic_graphics_state *dyn =
       &cmd->vk.dynamic_graphics_state;
+
+   if (BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_MS_RASTERIZATION_SAMPLES)) {
+      struct nv_push *p = nvk_cmd_buffer_push(cmd, 4);
+
+      /* When we don't have any attachments, we can't know the sample count
+       * from the render pass so we need to emit SET_ANTI_ALIAS here.  See the
+       * comment in nvk_BeginRendering() for more details.
+       */
+      if (render->samples == 0) {
+         /* Multisample information MAY be missing (rasterizationSamples == 0)
+          * if rasterizer discard is enabled.  However, this isn't valid in
+          * the hardware so always use at least one sample.
+          */
+         const uint32_t samples = MAX2(1, dyn->ms.rasterization_samples);
+         enum nil_sample_layout layout = nil_choose_sample_layout(samples);
+         P_IMMD(p, NV9097, SET_ANTI_ALIAS, nil_to_nv9097_samples_mode(layout));
+      } else {
+         /* Multisample information MAY be missing (rasterizationSamples == 0)
+          * if rasterizer discard is enabled.
+          */
+         assert(dyn->ms.rasterization_samples == 0 ||
+                dyn->ms.rasterization_samples == render->samples);
+      }
+
+      const struct nvk_graphics_pipeline *pipeline = cmd->state.gfx.pipeline;
+      uint32_t min_samples = ceilf(dyn->ms.rasterization_samples *
+                                   pipeline->min_sample_shading);
+      min_samples = util_next_power_of_two(MAX2(1, min_samples));
+
+      P_IMMD(p, NV9097, SET_HYBRID_ANTI_ALIAS_CONTROL, {
+         .passes = min_samples,
+         .centroid = min_samples > 1 ? CENTROID_PER_PASS
+                                     : CENTROID_PER_FRAGMENT,
+      });
+   }
 
    if (BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_MS_ALPHA_TO_COVERAGE_ENABLE) ||
        BITSET_TEST(dyn->dirty, MESA_VK_DYNAMIC_MS_ALPHA_TO_ONE_ENABLE)) {
@@ -1881,16 +1956,28 @@ nvk_flush_descriptors(struct nvk_cmd_buffer *cmd)
    desc->root.root_desc_addr = root_desc_addr;
    memcpy(root_desc_map, &desc->root, sizeof(desc->root));
 
-   uint32_t root_cbuf_count = 0;
+   /* Find cbuf maps for the 5 cbuf groups */
+   const struct nvk_shader *cbuf_shaders[5] = { NULL, };
    for (gl_shader_stage stage = 0; stage < MESA_SHADER_STAGES; stage++) {
       const struct nvk_shader *shader = pipeline->base.shaders[stage];
       if (!shader || shader->code_size == 0)
          continue;
 
-      uint32_t group = stage;
+      uint32_t group = nvk_cbuf_binding_for_stage(stage);
+      assert(group < ARRAY_SIZE(cbuf_shaders));
+      cbuf_shaders[group] = shader;
+   }
 
-      for (uint32_t c = 0; c < shader->cbuf_map.cbuf_count; c++) {
-         const struct nvk_cbuf *cbuf = &shader->cbuf_map.cbufs[c];
+   uint32_t root_cbuf_count = 0;
+   for (uint32_t group = 0; group < ARRAY_SIZE(cbuf_shaders); group++) {
+      if (cbuf_shaders[group] == NULL)
+         continue;
+
+      const struct nvk_shader *shader = cbuf_shaders[group];
+      const struct nvk_cbuf_map *cbuf_map = &shader->cbuf_map;
+
+      for (uint32_t c = 0; c < cbuf_map->cbuf_count; c++) {
+         const struct nvk_cbuf *cbuf = &cbuf_map->cbufs[c];
 
          /* We bind these at the very end */
          if (cbuf->type == NVK_CBUF_TYPE_ROOT_DESC) {
@@ -1899,7 +1986,7 @@ nvk_flush_descriptors(struct nvk_cmd_buffer *cmd)
          }
 
          struct nvk_buffer_address ba;
-         if (nvk_cmd_buffer_get_cbuf_descriptor(cmd, desc, cbuf, &ba)) {
+         if (nvk_cmd_buffer_get_cbuf_descriptor(cmd, desc, shader, cbuf, &ba)) {
             assert(ba.base_addr % min_cbuf_alignment == 0);
             ba.size = align(ba.size, min_cbuf_alignment);
             ba.size = MIN2(ba.size, NVK_MAX_CBUF_SIZE);
@@ -1952,15 +2039,15 @@ nvk_flush_descriptors(struct nvk_cmd_buffer *cmd)
    P_NV9097_SET_CONSTANT_BUFFER_SELECTOR_B(p, root_desc_addr >> 32);
    P_NV9097_SET_CONSTANT_BUFFER_SELECTOR_C(p, root_desc_addr);
 
-   for (gl_shader_stage stage = 0; stage < MESA_SHADER_STAGES; stage++) {
-      const struct nvk_shader *shader = pipeline->base.shaders[stage];
-      if (!shader || shader->code_size == 0)
+   for (uint32_t group = 0; group < ARRAY_SIZE(cbuf_shaders); group++) {
+      if (cbuf_shaders[group] == NULL)
          continue;
 
-      uint32_t group = stage;
+      const struct nvk_cbuf_map *cbuf_map = &cbuf_shaders[group]->cbuf_map;
 
-      for (uint32_t c = 0; c < shader->cbuf_map.cbuf_count; c++) {
-         if (shader->cbuf_map.cbufs[c].type == NVK_CBUF_TYPE_ROOT_DESC) {
+      for (uint32_t c = 0; c < cbuf_map->cbuf_count; c++) {
+         const struct nvk_cbuf *cbuf = &cbuf_map->cbufs[c];
+         if (cbuf->type == NVK_CBUF_TYPE_ROOT_DESC) {
             P_IMMD(p, NV9097, BIND_GROUP_CONSTANT_BUFFER(group), {
                .valid = VALID_TRUE,
                .shader_slot = c,
@@ -1985,7 +2072,7 @@ vk_to_nv_index_format(VkIndexType type)
       return NVC597_SET_INDEX_BUFFER_E_INDEX_SIZE_TWO_BYTES;
    case VK_INDEX_TYPE_UINT32:
       return NVC597_SET_INDEX_BUFFER_E_INDEX_SIZE_FOUR_BYTES;
-   case VK_INDEX_TYPE_UINT8_EXT:
+   case VK_INDEX_TYPE_UINT8_KHR:
       return NVC597_SET_INDEX_BUFFER_E_INDEX_SIZE_ONE_BYTE;
    default:
       unreachable("Invalid index type");
@@ -2000,7 +2087,7 @@ vk_index_to_restart(VkIndexType index_type)
       return 0xffff;
    case VK_INDEX_TYPE_UINT32:
       return 0xffffffff;
-   case VK_INDEX_TYPE_UINT8_EXT:
+   case VK_INDEX_TYPE_UINT8_KHR:
       return 0xff;
    default:
       unreachable("unexpected index type");

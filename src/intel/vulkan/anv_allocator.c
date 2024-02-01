@@ -378,7 +378,8 @@ anv_block_pool_init(struct anv_block_pool *pool,
       ANV_BO_ALLOC_FIXED_ADDRESS |
       ANV_BO_ALLOC_MAPPED |
       ANV_BO_ALLOC_HOST_CACHED_COHERENT |
-      ANV_BO_ALLOC_CAPTURE;
+      ANV_BO_ALLOC_CAPTURE |
+      ANV_BO_ALLOC_INTERNAL;
 
    result = anv_block_pool_expand_range(pool, initial_size);
    if (result != VK_SUCCESS)
@@ -994,6 +995,7 @@ anv_state_stream_init(struct anv_state_stream *stream,
     */
    stream->next = block_size;
 
+   stream->total_size = 0;
    util_dynarray_init(&stream->all_blocks, NULL);
 
    VG(VALGRIND_CREATE_MEMPOOL(stream, 0, false));
@@ -1036,6 +1038,7 @@ anv_state_stream_alloc(struct anv_state_stream *stream,
       /* Reset back to the start */
       stream->next = offset = 0;
       assert(offset + size <= stream->block.alloc_size);
+      stream->total_size += block_size;
    }
    const bool new_block = stream->next == 0;
 
@@ -1262,7 +1265,8 @@ anv_scratch_pool_alloc(struct anv_device *device, struct anv_scratch_pool *pool,
     * so nothing will ever touch the top page.
     */
    const enum anv_bo_alloc_flags alloc_flags =
-      devinfo->verx10 < 125 ? ANV_BO_ALLOC_32BIT_ADDRESS : 0;
+      ANV_BO_ALLOC_INTERNAL |
+      (devinfo->verx10 < 125 ? ANV_BO_ALLOC_32BIT_ADDRESS : 0);
    VkResult result = anv_device_alloc_bo(device, "scratch", size,
                                          alloc_flags,
                                          0 /* explicit_address */,
@@ -1563,6 +1567,8 @@ anv_device_alloc_bo(struct anv_device *device,
 
    *bo_out = bo;
 
+   ANV_RMV(bo_allocate, device, bo);
+
    return VK_SUCCESS;
 }
 
@@ -1693,6 +1699,8 @@ anv_device_import_bo_from_host_ptr(struct anv_device *device,
       }
 
       *bo = new_bo;
+
+      ANV_RMV(bo_allocate, device, bo);
    }
 
    pthread_mutex_unlock(&cache->mutex);
@@ -1786,6 +1794,8 @@ anv_device_import_bo(struct anv_device *device,
       }
 
       *bo = new_bo;
+
+      ANV_RMV(bo_allocate, device, bo);
    }
 
    bo->flags = bo_flags;
@@ -1883,6 +1893,8 @@ anv_device_release_bo(struct anv_device *device,
     */
    if (atomic_dec_not_one(&bo->refcount))
       return;
+
+   ANV_RMV(bo_destroy, device, bo);
 
    pthread_mutex_lock(&cache->mutex);
 

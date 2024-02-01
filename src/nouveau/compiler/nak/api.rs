@@ -81,10 +81,13 @@ fn nir_options(dev: &nv_device_info) -> nir_shader_compiler_options {
     let mut op: nir_shader_compiler_options = unsafe { std::mem::zeroed() };
 
     op.lower_fdiv = true;
+    op.fuse_ffma16 = true;
+    op.fuse_ffma32 = true;
+    op.fuse_ffma64 = true;
     op.lower_flrp16 = true;
     op.lower_flrp32 = true;
     op.lower_flrp64 = true;
-    op.lower_bitfield_extract = true;
+    op.lower_bitfield_extract = dev.sm >= 70;
     op.lower_bitfield_insert = true;
     op.lower_pack_half_2x16 = true;
     op.lower_pack_unorm_2x16 = true;
@@ -133,11 +136,14 @@ fn nir_options(dev: &nv_device_info) -> nir_shader_compiler_options {
     op.has_sdot_4x8 = dev.sm >= 70;
     op.has_udot_4x8 = dev.sm >= 70;
     op.has_sudot_4x8 = dev.sm >= 70;
-    op.max_unroll_iterations = 32;
-
     // We set .ftz on f32 by default so we can support fmulz whenever the client
     // doesn't explicitly request denorms.
     op.has_fmulz_no_denorms = true;
+    op.has_find_msb_rev = true;
+    op.has_pack_half_2x16_rtz = true;
+    op.has_bfm = dev.sm >= 70;
+
+    op.max_unroll_iterations = 32;
 
     op
 }
@@ -149,10 +155,11 @@ pub extern "C" fn nak_compiler_create(
     assert!(!dev.is_null());
     let dev = unsafe { &*dev };
 
-    DEBUG.get_or_init(|| Debug::new());
+    DEBUG.get_or_init(Debug::new);
 
     let nak = Box::new(nak_compiler {
         sm: dev.sm,
+        warps_per_sm: dev.max_warps_per_mp,
         nir_options: nir_options(dev),
     });
 
@@ -304,6 +311,7 @@ pub extern "C" fn nak_compile_shader(
             max(4, s.info.num_gprs)
         },
         num_barriers: s.info.num_barriers,
+        _pad0: Default::default(),
         slm_size: s.info.slm_size,
         __bindgen_anon_1: match &s.info.stage {
             ShaderStageInfo::Compute(cs_info) => {
@@ -315,6 +323,7 @@ pub extern "C" fn nak_compile_shader(
                             cs_info.local_size[2],
                         ],
                         smem_size: cs_info.smem_size,
+                        _pad: Default::default(),
                     },
                 }
             }
@@ -333,6 +342,7 @@ pub extern "C" fn nak_compile_shader(
                         uses_sample_shading: nir_fs_info.uses_sample_shading(),
                         early_fragment_tests: nir_fs_info
                             .early_fragment_tests(),
+                        _pad: Default::default(),
                     },
                 }
             }
@@ -369,10 +379,14 @@ pub extern "C" fn nak_compile_shader(
                         } else {
                             NAK_TS_PRIMS_TRIANGLES_CW
                         },
+
+                        _pad: Default::default(),
                     },
                 }
             }
-            _ => nak_shader_info__bindgen_ty_1 { dummy: 0 },
+            _ => nak_shader_info__bindgen_ty_1 {
+                _pad: Default::default(),
+            },
         },
         vtg: match &s.info.stage {
             ShaderStageInfo::Geometry(_)
@@ -388,6 +402,7 @@ pub extern "C" fn nak_compile_shader(
                     writes_layer: writes_layer,
                     clip_enable: clip_enable.try_into().unwrap(),
                     cull_enable: cull_enable.try_into().unwrap(),
+                    _pad: Default::default(),
                     xfb: unsafe { nak_xfb_from_nir(nir.xfb_info) },
                 }
             }

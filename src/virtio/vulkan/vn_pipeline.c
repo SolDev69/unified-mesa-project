@@ -461,8 +461,6 @@ vn_get_target_ring(struct vn_device *dev)
        * ready on the renderer side.
        *
        * TODO:
-       * - For pipeline objects, avoid object id re-use between async pipeline
-       *   destroy on the primary ring and sync pipeline create on TLS ring.
        * - For pipeline create, track ring seqnos of layout and renderpass
        *   objects it depends on, and only wait for those seqnos once.
        * - For pipeline cache retrieval, track ring seqno of pipeline cache
@@ -848,10 +846,6 @@ vn_render_pass_state_update(
    /* We must set validity before early returns, to ensure we don't erase
     * valid info during fixup.  We must not erase valid info because, even if
     * we don't read it, the host driver may read it.
-    */
-
-   /* XXX: Should this ignore the render pass for some state subsets when
-    * rasterization is statically disabled? The spec suggests "yes" and "no".
     */
 
    /* VUID-VkGraphicsPipelineCreateInfo-flags-06643
@@ -1551,10 +1545,6 @@ vn_CreateGraphicsPipelines(VkDevice device,
 
    for (uint32_t i = 0; i < createInfoCount; i++) {
       struct vn_pipeline *pipeline = vn_pipeline_from_handle(pPipelines[i]);
-
-      /* Grab a refcount on the pipeline layout when needed. Take care; the
-       * pipeline layout may be omitted or ignored in incomplete pipelines.
-       */
       struct vn_pipeline_layout *layout =
          vn_pipeline_layout_from_handle(pCreateInfos[i].layout);
       if (layout && (layout->push_descriptor_set_layout ||

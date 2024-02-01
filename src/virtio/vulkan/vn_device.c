@@ -570,6 +570,8 @@ vn_CreateDevice(VkPhysicalDevice physicalDevice,
       vn_log(instance, "%s", physical_dev->properties.vulkan_1_2.driverInfo);
    }
 
+   vn_tls_set_async_pipeline_create();
+
    *pDevice = vn_device_to_handle(dev);
 
    return VK_SUCCESS;
@@ -603,10 +605,6 @@ vn_DestroyDevice(VkDevice device, const VkAllocationCallbacks *pAllocator)
 
    vn_device_memory_report_fini(dev);
 
-   /* We must emit vkDestroyDevice before freeing dev->queues.  Otherwise,
-    * another thread might reuse their object ids while they still refer to
-    * the queues in the renderer.
-    */
    vn_async_vkDestroyDevice(dev->primary_ring, device, NULL);
 
    /* We must emit vn_call_vkDestroyDevice before releasing bound ring_idx.
