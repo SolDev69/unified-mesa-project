@@ -59,10 +59,10 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=freedreno,zink,swrast,panfrost,kmsro \
+            -Dgallium-drivers=freedreno,zink \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
-            -Dbuildtype=debug
+            -Dbuildtype=release
           ninja -C "build-android" install
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson setup "build-android-turnip" \
