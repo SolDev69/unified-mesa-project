@@ -1395,7 +1395,6 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 		.lower_insert_byte = true,
 		.lower_insert_word = true,
 		.lower_ldexp = true,
-		.lower_rotate = true,
 		/* due to a bug in the shader compiler, some loops hang
 		 * if they are not unrolled, see:
 		 *    https://bugs.freedesktop.org/show_bug.cgi?id=86720
@@ -1454,7 +1453,8 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			nir_lower_dceil |
 			nir_lower_dmod |
 			nir_lower_dsub |
-			nir_lower_dtrunc;
+			nir_lower_dtrunc |
+			nir_lower_dround_even;
 	}
 
         rscreen->nir_options_fs = rscreen->nir_options;
