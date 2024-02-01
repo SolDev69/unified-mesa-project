@@ -59,7 +59,7 @@ jobs:
             -Dvulkan-drivers= \
             -Dgallium-drivers=zink,virgl \
             -Dshared-glapi=false \
-            -Dbuildtype=debug
+            -Dbuildtype=release
           ninja -C "build-android" install
           cd /tmp/mesa/lib
           mv libOSMesa.so libOSMesa_znL.so
