@@ -9394,7 +9394,7 @@
         "description": "venus: fix image reqs cache store locking",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b51ff22fbe8c9786f968e102ef8d223f415fcaba",
         "notes": null
