@@ -3544,7 +3544,7 @@
         "description": "r300: add explicit flrp lowering",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f8a5cba3b4265ccf088c05d9d44f36f42c961e0b",
         "notes": null
