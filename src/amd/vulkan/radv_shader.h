@@ -130,7 +130,6 @@ struct radv_graphics_state_key {
 
    uint32_t has_multiview_view_index : 1;
    uint32_t adjust_frag_coord_z : 1;
-   uint32_t dynamic_patch_control_points : 1;
    uint32_t dynamic_rasterization_samples : 1;
    uint32_t dynamic_provoking_vtx_mode : 1;
    uint32_t dynamic_line_rast_mode : 1;
@@ -775,7 +774,7 @@ void radv_postprocess_nir(struct radv_device *device, const struct radv_graphics
 
 bool radv_shader_should_clear_lds(const struct radv_device *device, const nir_shader *shader);
 
-nir_shader *radv_parse_rt_stage(struct radv_device *device, const struct radv_shader_stage *rt_stage);
+void radv_nir_lower_rt_io(nir_shader *shader, bool monolithic, uint32_t payload_offset);
 
 void radv_nir_lower_rt_abi(nir_shader *shader, const VkRayTracingPipelineCreateInfoKHR *pCreateInfo,
                            const struct radv_shader_args *args, const struct radv_shader_info *info,
@@ -1056,5 +1055,8 @@ void radv_nir_shader_info_init(gl_shader_stage stage, gl_shader_stage next_stage
 
 void radv_nir_shader_info_link(struct radv_device *device, const struct radv_graphics_state_key *gfx_state,
                                struct radv_shader_stage *stages);
+
+void radv_shader_combine_cfg_vs_tcs(const struct radv_shader *vs, const struct radv_shader *tcs, uint32_t *rsrc1_out,
+                                    uint32_t *rsrc2_out);
 
 #endif

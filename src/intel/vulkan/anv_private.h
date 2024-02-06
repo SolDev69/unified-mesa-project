@@ -56,6 +56,7 @@
 #include "ds/intel_driver_ds.h"
 #include "util/bitset.h"
 #include "util/bitscan.h"
+#include "util/detect_os.h"
 #include "util/macros.h"
 #include "util/hash_table.h"
 #include "util/list.h"
@@ -63,7 +64,7 @@
 #include "util/set.h"
 #include "util/sparse_array.h"
 #include "util/u_atomic.h"
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
 #include "util/u_gralloc/u_gralloc.h"
 #endif
 #include "util/u_vector.h"
@@ -1800,7 +1801,7 @@ struct anv_device {
 
     uint32_t                                    draw_call_count;
     struct anv_state                            breakpoint;
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
     struct u_gralloc                            *u_gralloc;
 #endif
 
@@ -3332,6 +3333,8 @@ struct anv_simple_shader {
    struct anv_shader_bin *kernel;
    /* L3 config used by the shader */
    const struct intel_l3_config *l3_config;
+   /* Current URB config */
+   const struct intel_urb_config *urb_cfg;
 
    /* Managed by the simpler shader helper*/
    struct anv_state bt_state;
@@ -3441,6 +3444,8 @@ struct anv_cmd_graphics_state {
     * State tracking for Wa_18020335297.
     */
    bool                                         viewport_set;
+
+   struct intel_urb_config urb_cfg;
 
    uint32_t n_occlusion_queries;
 
@@ -4273,6 +4278,9 @@ struct anv_graphics_pipeline {
     * anv_cmd_buffer.
     */
    uint32_t                                     batch_data[416];
+
+   /* Urb setup utilized by this pipeline. */
+   struct intel_urb_config urb_cfg;
 
    /* Fully backed instructions, ready to be emitted in the anv_cmd_buffer */
    struct {

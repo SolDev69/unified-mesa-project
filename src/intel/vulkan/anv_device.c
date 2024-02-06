@@ -48,7 +48,7 @@
 #include "util/os_file.h"
 #include "util/os_misc.h"
 #include "util/u_atomic.h"
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
 #include "util/u_gralloc/u_gralloc.h"
 #endif
 #include "util/u_string.h"
@@ -101,7 +101,7 @@ static const driOptionDescription anv_dri_options[] = {
       DRI_CONF_ANV_MESH_CONV_PRIM_ATTRS_TO_VERT_ATTRS(-2)
       DRI_CONF_FORCE_VK_VENDOR(0)
       DRI_CONF_FAKE_SPARSE(false)
-#if defined(ANDROID) && ANDROID_API_LEVEL >= 34
+#if DETECT_OS_ANDROID && ANDROID_API_LEVEL >= 34
       DRI_CONF_VK_REQUIRE_ASTC(true)
 #else
       DRI_CONF_VK_REQUIRE_ASTC(false)
@@ -405,7 +405,7 @@ get_device_extensions(const struct anv_physical_device *device,
       .EXT_vertex_input_dynamic_state        = true,
       .EXT_ycbcr_image_arrays                = true,
       .AMD_buffer_marker                     = true,
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
       .ANDROID_external_memory_android_hardware_buffer = true,
       .ANDROID_native_buffer                 = true,
 #endif
@@ -958,7 +958,9 @@ get_properties_1_1(const struct anv_physical_device *pdevice,
                                     VK_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT |
                                     VK_SUBGROUP_FEATURE_QUAD_BIT |
                                     VK_SUBGROUP_FEATURE_ARITHMETIC_BIT |
-                                    VK_SUBGROUP_FEATURE_CLUSTERED_BIT;
+                                    VK_SUBGROUP_FEATURE_CLUSTERED_BIT |
+                                    VK_SUBGROUP_FEATURE_ROTATE_BIT_KHR |
+                                    VK_SUBGROUP_FEATURE_ROTATE_CLUSTERED_BIT_KHR;
    p->subgroupQuadOperationsInAllStages = true;
 
    p->pointClippingBehavior      = VK_POINT_CLIPPING_BEHAVIOR_USER_CLIP_PLANES_ONLY;
@@ -2566,7 +2568,7 @@ void anv_GetPhysicalDeviceProperties2(
    /* Unfortunately the runtime isn't handling ANDROID extensions. */
    vk_foreach_struct(ext, pProperties->pNext) {
       switch (ext->sType) {
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch"
       case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENTATION_PROPERTIES_ANDROID: {
@@ -3118,7 +3120,7 @@ VkResult anv_CreateDevice(
                                                 true);
       override_initial_entrypoints = false;
    }
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
    vk_device_dispatch_table_from_entrypoints(&dispatch_table,
                                              &anv_android_device_entrypoints,
                                              true);
@@ -3593,7 +3595,7 @@ VkResult anv_CreateDevice(
       goto fail_internal_cache;
    }
 
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
    device->u_gralloc = u_gralloc_create(U_GRALLOC_TYPE_AUTO);
 #endif
 
@@ -3750,7 +3752,7 @@ void anv_DestroyDevice(
    if (!device)
       return;
 
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
    u_gralloc_destroy(&device->u_gralloc);
 #endif
 
@@ -4017,10 +4019,14 @@ VkResult anv_AllocateMemory(
 
    const VkImportMemoryFdInfoKHR *fd_info = NULL;
    const VkMemoryDedicatedAllocateInfo *dedicated_info = NULL;
+   const struct wsi_memory_allocate_info *wsi_info = NULL;
    uint64_t client_address = 0;
 
    vk_foreach_struct_const(ext, pAllocateInfo->pNext) {
-      switch (ext->sType) {
+      /* VK_STRUCTURE_TYPE_WSI_MEMORY_ALLOCATE_INFO_MESA isn't a real enum
+       * value, so use cast to avoid compiler warn
+       */
+      switch ((uint32_t)ext->sType) {
       case VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO:
       case VK_STRUCTURE_TYPE_IMPORT_ANDROID_HARDWARE_BUFFER_INFO_ANDROID:
       case VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT:
@@ -4044,21 +4050,12 @@ VkResult anv_AllocateMemory(
          break;
       }
 
+      case VK_STRUCTURE_TYPE_WSI_MEMORY_ALLOCATE_INFO_MESA:
+         wsi_info = (void *)ext;
+         break;
+
       default:
-         /* VK_STRUCTURE_TYPE_WSI_MEMORY_ALLOCATE_INFO_MESA isn't a real
-          * enum value, so use conditional to avoid compiler warn
-          */
-         if (ext->sType == VK_STRUCTURE_TYPE_WSI_MEMORY_ALLOCATE_INFO_MESA) {
-            /* TODO: Android, ChromeOS and other applications may need another
-             * way to allocate buffers that can be scanout to display but it
-             * should pretty easy to catch those as Xe KMD driver will print
-             * warnings in dmesg when scanning buffers allocated without
-             * proper flag set.
-             */
-            alloc_flags |= ANV_BO_ALLOC_SCANOUT;
-         } else {
-            anv_debug_ignored_stype(ext->sType);
-         }
+         anv_debug_ignored_stype(ext->sType);
          break;
       }
    }
@@ -4096,12 +4093,38 @@ VkResult anv_AllocateMemory(
    if (device->info->has_aux_map)
       alloc_flags |= ANV_BO_ALLOC_AUX_TT_ALIGNED;
 
-   /* Anything imported or exported is EXTERNAL. Apply implicit sync to be
-    * compatible with clients relying on implicit fencing. This matches the
-    * behavior in iris i915_batch_submit. An example client is VA-API.
+   /* TODO: Android, ChromeOS and other applications may need another way to
+    * allocate buffers that can be scanout to display but it should pretty
+    * easy to catch those as Xe KMD driver will print warnings in dmesg when
+    * scanning buffers allocated without proper flag set.
     */
-   if (mem->vk.export_handle_types || mem->vk.import_handle_type)
-      alloc_flags |= (ANV_BO_ALLOC_EXTERNAL | ANV_BO_ALLOC_IMPLICIT_SYNC);
+   if (wsi_info)
+      alloc_flags |= ANV_BO_ALLOC_SCANOUT;
+
+   /* Anything imported or exported is EXTERNAL */
+   if (mem->vk.export_handle_types || mem->vk.import_handle_type) {
+      alloc_flags |= ANV_BO_ALLOC_EXTERNAL;
+
+      /* wsi has its own way of synchronizing with the compositor */
+      if (!wsi_info && dedicated_info &&
+          dedicated_info->image != VK_NULL_HANDLE) {
+         ANV_FROM_HANDLE(anv_image, image, dedicated_info->image);
+
+         /* Apply implicit sync to be compatible with clients relying on
+          * implicit fencing. This matches the behavior in iris i915_batch
+          * submit. An example client is VA-API (iHD), so only dedicated
+          * image scenario has to be covered.
+          */
+         alloc_flags |= ANV_BO_ALLOC_IMPLICIT_SYNC;
+
+         /* For color attachment, apply IMPLICIT_WRITE so a client on the
+          * consumer side relying on implicit fencing can have a fence to
+          * wait for render complete.
+          */
+         if (image->vk.usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+            alloc_flags |= ANV_BO_ALLOC_IMPLICIT_WRITE;
+      }
+   }
 
    if (mem->vk.ahardware_buffer) {
       result = anv_import_ahw_memory(_device, mem);

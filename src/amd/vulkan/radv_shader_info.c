@@ -473,7 +473,7 @@ gather_shader_info_tcs(struct radv_device *device, const nir_shader *nir,
       info->tcs.num_linked_patch_outputs = util_last_bit64(nir->info.patch_outputs_written);
    }
 
-   if (!(gfx_state->dynamic_patch_control_points)) {
+   if (gfx_state->ts.patch_control_points) {
       /* Number of tessellation patches per workgroup processed by the current pipeline. */
       info->num_tess_patches =
          get_tcs_num_patches(gfx_state->ts.patch_control_points, nir->info.tess.tcs_vertices_out,
@@ -1239,6 +1239,26 @@ radv_nir_shader_info_pass(struct radv_device *device, const struct nir_shader *n
       info->cs.uses_full_subgroups = pipeline_type != RADV_PIPELINE_RAY_TRACING && !nir->info.internal &&
                                      (info->workgroup_size % info->wave_size) == 0;
       break;
+   case MESA_SHADER_VERTEX:
+      if (info->vs.as_ls) {
+         /* Set the maximum possible value by default, this will be optimized during linking if
+          * possible.
+          */
+         info->workgroup_size = 256;
+      } else {
+         info->workgroup_size = info->wave_size;
+      }
+      break;
+   case MESA_SHADER_TESS_CTRL:
+      if (gfx_state->ts.patch_control_points) {
+         info->workgroup_size = ac_compute_lshs_workgroup_size(
+            device->physical_device->rad_info.gfx_level, MESA_SHADER_TESS_CTRL, info->num_tess_patches,
+            gfx_state->ts.patch_control_points, info->tcs.tcs_vertices_out);
+      } else {
+         /* Set the maximum possible value when the workgroup size can't be determined. */
+         info->workgroup_size = 256;
+      }
+      break;
    case MESA_SHADER_MESH:
       calc_mesh_workgroup_size(device, nir, info);
       break;
@@ -1621,19 +1641,9 @@ radv_link_shaders_info(struct radv_device *device, struct radv_shader_stage *pro
       struct radv_shader_stage *vs_stage = producer;
       struct radv_shader_stage *tcs_stage = consumer;
 
-      if (gfx_state->dynamic_patch_control_points) {
-         /* Set the workgroup size to the maximum possible value to ensure that compilers don't
-          * optimize barriers.
-          */
-         vs_stage->info.workgroup_size = 256;
-         tcs_stage->info.workgroup_size = 256;
-      } else {
+      if (gfx_state->ts.patch_control_points) {
          vs_stage->info.workgroup_size = ac_compute_lshs_workgroup_size(
             device->physical_device->rad_info.gfx_level, MESA_SHADER_VERTEX, tcs_stage->info.num_tess_patches,
-            gfx_state->ts.patch_control_points, tcs_stage->info.tcs.tcs_vertices_out);
-
-         tcs_stage->info.workgroup_size = ac_compute_lshs_workgroup_size(
-            device->physical_device->rad_info.gfx_level, MESA_SHADER_TESS_CTRL, tcs_stage->info.num_tess_patches,
             gfx_state->ts.patch_control_points, tcs_stage->info.tcs.tcs_vertices_out);
 
          if (!radv_use_llvm_for_stage(device, MESA_SHADER_VERTEX)) {
@@ -1670,7 +1680,7 @@ radv_link_shaders_info(struct radv_device *device, struct radv_shader_stage *pro
       tcs_stage->info.tcs.tes_inputs_read = tes_stage->nir->info.inputs_read;
       tcs_stage->info.tcs.tes_patch_inputs_read = tes_stage->nir->info.patch_inputs_read;
 
-      if (!gfx_state->dynamic_patch_control_points)
+      if (gfx_state->ts.patch_control_points)
          tes_stage->info.num_tess_patches = tcs_stage->info.num_tess_patches;
    }
 }
@@ -1729,12 +1739,12 @@ radv_nir_shader_info_link(struct radv_device *device, const struct radv_graphics
 
    if (device->physical_device->rad_info.gfx_level >= GFX9) {
       /* Merge shader info for VS+TCS. */
-      if (stages[MESA_SHADER_TESS_CTRL].nir) {
+      if (stages[MESA_SHADER_VERTEX].nir && stages[MESA_SHADER_TESS_CTRL].nir) {
          radv_nir_shader_info_merge(&stages[MESA_SHADER_VERTEX], &stages[MESA_SHADER_TESS_CTRL]);
       }
 
       /* Merge shader info for VS+GS or TES+GS. */
-      if (stages[MESA_SHADER_GEOMETRY].nir) {
+      if ((stages[MESA_SHADER_VERTEX].nir || stages[MESA_SHADER_TESS_EVAL].nir) && stages[MESA_SHADER_GEOMETRY].nir) {
          gl_shader_stage pre_stage = stages[MESA_SHADER_TESS_EVAL].nir ? MESA_SHADER_TESS_EVAL : MESA_SHADER_VERTEX;
 
          radv_nir_shader_info_merge(&stages[pre_stage], &stages[MESA_SHADER_GEOMETRY]);

@@ -2269,6 +2269,15 @@ typedef enum nir_tex_src_type {
    /** Second backend-specific vec4 tex src argument, see nir_tex_src_backend1. */
    nir_tex_src_backend2,
 
+   /**
+    * Backend-specific parameter that combines LOD parameter and array index.
+    *
+    * If this parameter is present, then nir_tex_src_lod and nir_tex_src_bias
+    * must not be present.  Also vice versa.  Only valid if nir_tex_instr::op
+    * is nir_texop_txl or nir_texop_txb and nir_tex_instr::is_array is set.
+    */
+   nir_tex_src_combined_lod_and_array_index_intel,
+
    nir_num_tex_src_types
 } nir_tex_src_type;
 
@@ -3545,14 +3554,25 @@ typedef enum {
 } nir_divergence_options;
 
 typedef enum {
-   nir_pack_varying_interp_mode_none = (1 << 0),
-   nir_pack_varying_interp_mode_smooth = (1 << 1),
-   nir_pack_varying_interp_mode_flat = (1 << 2),
-   nir_pack_varying_interp_mode_noperspective = (1 << 3),
-   nir_pack_varying_interp_loc_sample = (1 << 16),
-   nir_pack_varying_interp_loc_centroid = (1 << 17),
-   nir_pack_varying_interp_loc_center = (1 << 18),
-} nir_pack_varying_options;
+   /**
+    * Whether a fragment shader can interpolate the same input multiple times
+    * with different modes (smooth, noperspective) and locations (pixel,
+    * centroid, sample, at_offset, at_sample), excluding the flat mode.
+    *
+    * This matches AMD GPU flexibility and limitations and is a superset of
+    * the GL4 requirement that each input can be interpolated at its specified
+    * location, and then also as centroid, at_offset, and at_sample.
+    */
+   nir_io_has_flexible_input_interpolation_except_flat = BITFIELD_BIT(0),
+
+   /* Options affecting the GLSL compiler are below. */
+
+   /**
+    * Lower load_deref/store_deref to load_input/store_output/etc. intrinsics.
+    * This is only affects GLSL compilation.
+    */
+   nir_io_glsl_lower_derefs = BITFIELD_BIT(16),
+} nir_io_options;
 
 /** An instruction filtering callback
  *
@@ -4001,22 +4021,9 @@ typedef struct nir_shader_compiler_options {
    nir_divergence_options divergence_analysis_options;
 
    /**
-    * Support pack varyings with different interpolation location
-    * (center, centroid, sample) and mode (flat, noperspective, smooth)
-    * into same slot.
-    */
-   nir_pack_varying_options pack_varying_options;
-
-   /**
-    * Lower load_deref/store_deref of inputs and outputs into
-    * load_input/store_input intrinsics. This is used by nir_lower_io_passes.
-    */
-   bool lower_io_variables;
-
-   /**
     * The masks of shader stages that support indirect indexing with
-    * load_input and store_output intrinsics. It's used when
-    * lower_io_variables is true. This is used by nir_lower_io_passes.
+    * load_input and store_output intrinsics. It's used by
+    * nir_lower_io_passes.
     */
    uint8_t support_indirect_inputs;
    uint8_t support_indirect_outputs;
@@ -4053,6 +4060,14 @@ typedef struct nir_shader_compiler_options {
 
    /** Lower VARYING_SLOT_LAYER in FS to SYSTEM_VALUE_LAYER_ID. */
    bool lower_layer_fs_input_to_sysval;
+
+   /** Options determining lowering and behavior of inputs and outputs. */
+   nir_io_options io_options;
+
+   /** Driver callback where drivers can define how to lower mediump.
+    *  Used by nir_lower_io_passes.
+    */
+   void (*lower_mediump_io)(struct nir_shader *nir);
 } nir_shader_compiler_options;
 
 typedef struct nir_shader {
@@ -5924,6 +5939,12 @@ typedef struct nir_lower_tex_options {
    bool lower_index_to_offset;
 
    /**
+    * If true, pack either the explicit LOD or LOD bias and the array index
+    * into a single (32-bit) value when 32-bit texture coordinates are used.
+    */
+   bool pack_lod_and_array_index;
+
+   /**
     * Payload data to be sent to callback / filter functions.
     */
    void *callback_data;
@@ -6225,6 +6246,7 @@ bool nir_repair_ssa(nir_shader *shader);
 void nir_convert_loop_to_lcssa(nir_loop *loop);
 bool nir_convert_to_lcssa(nir_shader *shader, bool skip_invariants, bool skip_bool_invariants);
 void nir_divergence_analysis(nir_shader *shader);
+void nir_vertex_divergence_analysis(nir_shader *shader);
 bool nir_update_instr_divergence(nir_shader *shader, nir_instr *instr);
 bool nir_has_divergent_loop(nir_shader *shader);
 

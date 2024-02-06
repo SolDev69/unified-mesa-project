@@ -98,7 +98,8 @@ radv_calibrated_timestamps_enabled(const struct radv_physical_device *pdevice)
 static bool
 radv_shader_object_enabled(const struct radv_physical_device *pdevice)
 {
-   return pdevice->rad_info.gfx_level < GFX9 && pdevice->instance->perftest_flags & RADV_PERFTEST_SHADER_OBJECT;
+   return pdevice->rad_info.gfx_level < GFX9 && !pdevice->use_llvm &&
+          pdevice->instance->perftest_flags & RADV_PERFTEST_SHADER_OBJECT;
 }
 
 bool
@@ -429,9 +430,9 @@ radv_get_binning_settings(const struct radv_physical_device *pdevice, struct rad
 
 static void
 radv_physical_device_get_supported_extensions(const struct radv_physical_device *device,
-                                              struct vk_device_extension_table *ext)
+                                              struct vk_device_extension_table *out_ext)
 {
-   *ext = (struct vk_device_extension_table){
+   const struct vk_device_extension_table ext = {
       .KHR_8bit_storage = true,
       .KHR_16bit_storage = true,
       .KHR_acceleration_structure = radv_enable_rt(device, false),
@@ -635,7 +636,7 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
       .AMD_shader_image_load_store_lod = true,
       .AMD_shader_trinary_minmax = true,
       .AMD_texture_gather_bias_lod = device->rad_info.gfx_level < GFX11,
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
       .ANDROID_external_memory_android_hardware_buffer = RADV_SUPPORT_ANDROID_HARDWARE_BUFFER,
       .ANDROID_native_buffer = true,
 #endif
@@ -653,6 +654,7 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
          device->vk.instance->app_info.engine_name && strcmp(device->vk.instance->app_info.engine_name, "vkd3d") == 0,
       .VALVE_mutable_descriptor_type = true,
    };
+   *out_ext = ext;
 }
 
 static void
@@ -1343,7 +1345,8 @@ radv_get_physical_device_properties(struct radv_physical_device *pdevice)
    p->subgroupSupportedOperations = VK_SUBGROUP_FEATURE_BASIC_BIT | VK_SUBGROUP_FEATURE_VOTE_BIT |
                                     VK_SUBGROUP_FEATURE_ARITHMETIC_BIT | VK_SUBGROUP_FEATURE_BALLOT_BIT |
                                     VK_SUBGROUP_FEATURE_CLUSTERED_BIT | VK_SUBGROUP_FEATURE_QUAD_BIT |
-                                    VK_SUBGROUP_FEATURE_SHUFFLE_BIT | VK_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT;
+                                    VK_SUBGROUP_FEATURE_SHUFFLE_BIT | VK_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT |
+                                    VK_SUBGROUP_FEATURE_ROTATE_BIT_KHR | VK_SUBGROUP_FEATURE_ROTATE_CLUSTERED_BIT_KHR;
    p->subgroupQuadOperationsInAllStages = true;
 
    p->pointClippingBehavior = VK_POINT_CLIPPING_BEHAVIOR_ALL_CLIP_PLANES;
@@ -1929,7 +1932,7 @@ radv_physical_device_try_create(struct radv_instance *instance, drmDevicePtr drm
    }
 #endif
 
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
    device->emulate_etc2 = !radv_device_supports_etc(device);
    device->emulate_astc = true;
 #else
@@ -2048,12 +2051,12 @@ radv_physical_device_try_create(struct radv_instance *instance, drmDevicePtr drm
    if ((device->instance->debug_flags & RADV_DEBUG_INFO))
       ac_print_gpu_info(&device->rad_info, stdout);
 
+   radv_init_physical_device_decoder(device);
+
    radv_physical_device_init_queue_table(device);
 
    /* We don't check the error code, but later check if it is initialized. */
    ac_init_perfcounters(&device->rad_info, false, false, &device->ac_perfcounters);
-
-   radv_init_physical_device_decoder(device);
 
    /* The WSI is structured as a layer on top of the driver, so this has
     * to be the last part of initialization (at least until we get other

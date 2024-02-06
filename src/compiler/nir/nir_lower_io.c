@@ -3190,8 +3190,7 @@ type_size_vec4(const struct glsl_type *type, bool bindless)
 void
 nir_lower_io_passes(nir_shader *nir, bool renumber_vs_inputs)
 {
-   if (!nir->options->lower_io_variables ||
-       nir->info.stage == MESA_SHADER_COMPUTE)
+   if (nir->info.stage == MESA_SHADER_COMPUTE)
       return;
 
    bool has_indirect_inputs =
@@ -3259,6 +3258,9 @@ nir_lower_io_passes(nir_shader *nir, bool renumber_vs_inputs)
 
    if (nir->xfb_info)
       NIR_PASS_V(nir, nir_io_add_intrinsic_xfb_info);
+
+   if (nir->options->lower_mediump_io)
+      nir->options->lower_mediump_io(nir);
 
    nir->info.io_lowered = true;
 }
