@@ -1,13 +1,13 @@
-name: Build UMP
+name: Build UMP (debug)
 
 on:
   push:
     branches:
-      - 'main'
-  pull_request: 
+      - 'main-devel'
 
-  workflow_dispatch: 
+  pull_request:
 
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
