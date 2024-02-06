@@ -2184,7 +2184,7 @@
         "description": "glxext: don't try zink if not enabled in mesa",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7d9ea77b4598e23d4415b529924f1cbdca6e33bd",
         "notes": null
