@@ -2,8 +2,8 @@ name: Build UMP (debug)
 
 on:
   push:
-    branches:
-      - 'main-devel'
+    branches-ignore:
+      - 'main'
 
   pull_request:
 
