@@ -91,5 +91,5 @@ jobs:
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
-          name: UMP_${{matrix.arch}}
+          name: UMP-dbg_${{matrix.arch}}
           path: /tmp/mesa/toupload
