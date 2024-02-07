@@ -2714,7 +2714,7 @@
         "description": "anv: fixup push descriptor shader analysis",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ff91c5ca42bc80aa411cb3fd8f550aa6fdd16bdc",
         "notes": null
