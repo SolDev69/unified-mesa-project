@@ -1990,17 +1990,23 @@ static void
 radv_fill_shader_info_ngg(struct radv_device *device, struct radv_shader_stage *stages,
                           VkShaderStageFlagBits active_nir_stages)
 {
-   if (device->cache_key.use_ngg) {
-      if (stages[MESA_SHADER_TESS_CTRL].nir) {
-         stages[MESA_SHADER_TESS_EVAL].info.is_ngg = true;
-      } else if (stages[MESA_SHADER_VERTEX].nir) {
-         stages[MESA_SHADER_VERTEX].info.is_ngg = true;
-      } else if (stages[MESA_SHADER_MESH].nir) {
-         stages[MESA_SHADER_MESH].info.is_ngg = true;
-      }
+   if (!device->cache_key.use_ngg)
+      return;
 
-      if (device->physical_device->rad_info.gfx_level < GFX11 && stages[MESA_SHADER_TESS_CTRL].nir &&
-          stages[MESA_SHADER_GEOMETRY].nir &&
+   if (stages[MESA_SHADER_VERTEX].nir && stages[MESA_SHADER_VERTEX].info.next_stage != MESA_SHADER_TESS_CTRL) {
+      stages[MESA_SHADER_VERTEX].info.is_ngg = true;
+   } else if (stages[MESA_SHADER_TESS_EVAL].nir) {
+      stages[MESA_SHADER_TESS_EVAL].info.is_ngg = true;
+   } else if (stages[MESA_SHADER_MESH].nir) {
+      stages[MESA_SHADER_MESH].info.is_ngg = true;
+   }
+
+   if (device->physical_device->rad_info.gfx_level >= GFX11) {
+      if (stages[MESA_SHADER_GEOMETRY].nir)
+         stages[MESA_SHADER_GEOMETRY].info.is_ngg = true;
+   } else {
+      /* GFX10/GFX10.3 can't always enable NGG due to HW bugs/limitations. */
+      if (stages[MESA_SHADER_TESS_EVAL].nir && stages[MESA_SHADER_GEOMETRY].nir &&
           stages[MESA_SHADER_GEOMETRY].nir->info.gs.invocations *
                 stages[MESA_SHADER_GEOMETRY].nir->info.gs.vertices_out >
              256) {
@@ -2020,20 +2026,16 @@ radv_fill_shader_info_ngg(struct radv_device *device, struct radv_shader_stage *
          }
       }
 
-      bool uses_xfb = last_vgt_stage && last_vgt_stage->nir->xfb_info;
-
-      if (!device->physical_device->use_ngg_streamout && uses_xfb) {
-         /* GFX11+ requires NGG. */
-         assert(device->physical_device->rad_info.gfx_level < GFX11);
-
-         if (stages[MESA_SHADER_TESS_CTRL].nir)
+      if (last_vgt_stage && last_vgt_stage->nir->xfb_info) {
+         /* Disable NGG because GFX10/GFX10.3 don't support NGG streamout. */
+         if (stages[MESA_SHADER_TESS_EVAL].nir)
             stages[MESA_SHADER_TESS_EVAL].info.is_ngg = false;
          else
             stages[MESA_SHADER_VERTEX].info.is_ngg = false;
       }
 
       if (stages[MESA_SHADER_GEOMETRY].nir) {
-         if (stages[MESA_SHADER_TESS_CTRL].nir)
+         if (stages[MESA_SHADER_TESS_EVAL].nir)
             stages[MESA_SHADER_GEOMETRY].info.is_ngg = stages[MESA_SHADER_TESS_EVAL].info.is_ngg;
          else
             stages[MESA_SHADER_GEOMETRY].info.is_ngg = stages[MESA_SHADER_VERTEX].info.is_ngg;
@@ -3116,24 +3118,37 @@ radv_emit_vertex_shader(const struct radv_device *device, struct radeon_cmdbuf *
                         const struct radv_shader *vs, const struct radv_shader *next_stage)
 {
    if (vs->info.merged_shader_compiled_separately) {
-      assert(vs->info.next_stage == MESA_SHADER_TESS_CTRL);
       const struct radv_userdata_info *loc = &vs->info.user_sgprs_locs.shader_data[AC_UD_NEXT_STAGE_PC];
       const uint32_t base_reg = vs->info.user_data_0;
 
       assert(loc->sgpr_idx != -1 && loc->num_sgprs == 1);
 
       if (!vs->info.vs.has_prolog) {
-         uint32_t rsrc1;
+         uint32_t rsrc1, rsrc2;
 
-         radv_shader_combine_cfg_vs_tcs(vs, next_stage, &rsrc1, NULL);
+         if (vs->info.next_stage == MESA_SHADER_TESS_CTRL) {
+            radv_shader_combine_cfg_vs_tcs(vs, next_stage, &rsrc1, NULL);
 
-         if (device->physical_device->rad_info.gfx_level >= GFX10) {
-            radeon_set_sh_reg(cs, R_00B520_SPI_SHADER_PGM_LO_LS, vs->va >> 8);
+            if (device->physical_device->rad_info.gfx_level >= GFX10) {
+               radeon_set_sh_reg(cs, R_00B520_SPI_SHADER_PGM_LO_LS, vs->va >> 8);
+            } else {
+               radeon_set_sh_reg(cs, R_00B410_SPI_SHADER_PGM_LO_LS, vs->va >> 8);
+            }
+
+            radeon_set_sh_reg(cs, R_00B428_SPI_SHADER_PGM_RSRC1_HS, rsrc1);
          } else {
-            radeon_set_sh_reg(cs, R_00B410_SPI_SHADER_PGM_LO_LS, vs->va >> 8);
-         }
+            radv_shader_combine_cfg_vs_gs(vs, next_stage, &rsrc1, &rsrc2);
 
-         radeon_set_sh_reg(cs, R_00B428_SPI_SHADER_PGM_RSRC1_HS, rsrc1);
+            if (device->physical_device->rad_info.gfx_level >= GFX10) {
+               radeon_set_sh_reg(cs, R_00B320_SPI_SHADER_PGM_LO_ES, vs->va >> 8);
+            } else {
+               radeon_set_sh_reg(cs, R_00B210_SPI_SHADER_PGM_LO_ES, vs->va >> 8);
+            }
+
+            radeon_set_sh_reg_seq(cs, R_00B228_SPI_SHADER_PGM_RSRC1_GS, 2);
+            radeon_emit(cs, rsrc1);
+            radeon_emit(cs, rsrc2 | S_00B22C_LDS_SIZE(next_stage->info.gs_ring_info.lds_size));
+         }
       }
 
       radv_emit_shader_pointer(device, cs, base_reg + loc->sgpr_idx * 4, next_stage->va, false);
@@ -3226,15 +3241,18 @@ radv_emit_hw_gs(const struct radv_device *device, struct radeon_cmdbuf *ctx_cs, 
    va = radv_shader_get_va(gs);
 
    if (pdevice->rad_info.gfx_level >= GFX9) {
-      if (pdevice->rad_info.gfx_level >= GFX10) {
-         radeon_set_sh_reg(cs, R_00B320_SPI_SHADER_PGM_LO_ES, va >> 8);
-      } else {
-         radeon_set_sh_reg(cs, R_00B210_SPI_SHADER_PGM_LO_ES, va >> 8);
-      }
+      if (!gs->info.merged_shader_compiled_separately) {
 
-      radeon_set_sh_reg_seq(cs, R_00B228_SPI_SHADER_PGM_RSRC1_GS, 2);
-      radeon_emit(cs, gs->config.rsrc1);
-      radeon_emit(cs, gs->config.rsrc2 | S_00B22C_LDS_SIZE(gs_state->lds_size));
+         if (pdevice->rad_info.gfx_level >= GFX10) {
+            radeon_set_sh_reg(cs, R_00B320_SPI_SHADER_PGM_LO_ES, va >> 8);
+         } else {
+            radeon_set_sh_reg(cs, R_00B210_SPI_SHADER_PGM_LO_ES, va >> 8);
+         }
+
+         radeon_set_sh_reg_seq(cs, R_00B228_SPI_SHADER_PGM_RSRC1_GS, 2);
+         radeon_emit(cs, gs->config.rsrc1);
+         radeon_emit(cs, gs->config.rsrc2 | S_00B22C_LDS_SIZE(gs_state->lds_size));
+      }
 
       radeon_set_context_reg(ctx_cs, R_028A44_VGT_GS_ONCHIP_CNTL, gs_state->vgt_gs_onchip_cntl);
       radeon_set_context_reg(ctx_cs, R_028A94_VGT_GS_MAX_PRIMS_PER_SUBGROUP, gs_state->vgt_gs_max_prims_per_subgroup);

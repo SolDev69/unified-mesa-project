@@ -211,11 +211,12 @@ enum radv_ud_index {
    AC_UD_NGG_PROVOKING_VTX = 7,
    AC_UD_NGG_CULLING_SETTINGS = 8,
    AC_UD_NGG_VIEWPORT = 9,
-   AC_UD_FORCE_VRS_RATES = 10,
-   AC_UD_TASK_RING_ENTRY = 11,
-   AC_UD_NUM_VERTS_PER_PRIM = 12,
-   AC_UD_NEXT_STAGE_PC = 13,
-   AC_UD_SHADER_START = 14,
+   AC_UD_VGT_ESGS_RING_ITEMSIZE = 10,
+   AC_UD_FORCE_VRS_RATES = 11,
+   AC_UD_TASK_RING_ENTRY = 12,
+   AC_UD_NUM_VERTS_PER_PRIM = 13,
+   AC_UD_NEXT_STAGE_PC = 14,
+   AC_UD_SHADER_START = 15,
    AC_UD_VS_VERTEX_BUFFERS = AC_UD_SHADER_START,
    AC_UD_VS_BASE_VERTEX_START_INSTANCE,
    AC_UD_VS_PROLOG_INPUTS,
@@ -236,7 +237,10 @@ enum radv_ud_index {
    AC_UD_TCS_OFFCHIP_LAYOUT = AC_UD_VS_MAX_UD,
    AC_UD_TCS_EPILOG_PC,
    AC_UD_TCS_MAX_UD,
-   AC_UD_TES_STATE = AC_UD_SHADER_START,
+   /* We might not know the previous stage when compiling a geometry shader, so we just
+    * declare both TES and VS user SGPRs.
+    */
+   AC_UD_TES_STATE = AC_UD_VS_MAX_UD,
    AC_UD_TES_MAX_UD,
    AC_UD_MAX_UD = AC_UD_CS_MAX_UD,
 };
@@ -1058,5 +1062,8 @@ void radv_nir_shader_info_link(struct radv_device *device, const struct radv_gra
 
 void radv_shader_combine_cfg_vs_tcs(const struct radv_shader *vs, const struct radv_shader *tcs, uint32_t *rsrc1_out,
                                     uint32_t *rsrc2_out);
+
+void radv_shader_combine_cfg_vs_gs(const struct radv_shader *vs, const struct radv_shader *gs, uint32_t *rsrc1_out,
+                                   uint32_t *rsrc2_out);
 
 #endif

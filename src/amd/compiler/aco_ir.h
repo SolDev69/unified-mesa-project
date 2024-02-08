@@ -1828,6 +1828,8 @@ uint32_t get_reduction_identity(ReduceOp op, unsigned idx);
 
 unsigned get_mimg_nsa_dwords(const Instruction* instr);
 
+unsigned get_vopd_opy_start(const Instruction* instr);
+
 unsigned get_operand_size(aco_ptr<Instruction>& instr, unsigned index);
 
 bool should_form_clause(const Instruction* a, const Instruction* b);
@@ -2202,10 +2204,6 @@ void select_ps_epilog(Program* program, void* pinfo, ac_shader_config* config,
 void select_tcs_epilog(Program* program, void* pinfo, ac_shader_config* config,
                        const struct aco_compiler_options* options,
                        const struct aco_shader_info* info, const struct ac_shader_args* args);
-
-void select_gl_vs_prolog(Program* program, void* pinfo, ac_shader_config* config,
-                         const struct aco_compiler_options* options,
-                         const struct aco_shader_info* info, const struct ac_shader_args* args);
 
 void select_ps_prolog(Program* program, void* pinfo, ac_shader_config* config,
                       const struct aco_compiler_options* options,

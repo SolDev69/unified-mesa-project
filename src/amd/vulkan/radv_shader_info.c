@@ -1240,7 +1240,7 @@ radv_nir_shader_info_pass(struct radv_device *device, const struct nir_shader *n
                                      (info->workgroup_size % info->wave_size) == 0;
       break;
    case MESA_SHADER_VERTEX:
-      if (info->vs.as_ls) {
+      if (info->vs.as_ls || info->vs.as_es) {
          /* Set the maximum possible value by default, this will be optimized during linking if
           * possible.
           */
@@ -1256,6 +1256,31 @@ radv_nir_shader_info_pass(struct radv_device *device, const struct nir_shader *n
             gfx_state->ts.patch_control_points, info->tcs.tcs_vertices_out);
       } else {
          /* Set the maximum possible value when the workgroup size can't be determined. */
+         info->workgroup_size = 256;
+      }
+      break;
+   case MESA_SHADER_TESS_EVAL:
+      if (info->tes.as_es) {
+         /* Set the maximum possible value by default, this will be optimized during linking if
+          * possible.
+          */
+         info->workgroup_size = 256;
+      } else {
+         info->workgroup_size = info->wave_size;
+      }
+      break;
+   case MESA_SHADER_GEOMETRY:
+      if (!info->is_ngg) {
+         unsigned es_verts_per_subgroup = G_028A44_ES_VERTS_PER_SUBGRP(info->gs_ring_info.vgt_gs_onchip_cntl);
+         unsigned gs_inst_prims_in_subgroup = G_028A44_GS_INST_PRIMS_IN_SUBGRP(info->gs_ring_info.vgt_gs_onchip_cntl);
+
+         info->workgroup_size =
+            ac_compute_esgs_workgroup_size(device->physical_device->rad_info.gfx_level, info->wave_size,
+                                           es_verts_per_subgroup, gs_inst_prims_in_subgroup);
+      } else {
+         /* Set the maximum possible value by default, this will be optimized during linking if
+          * possible.
+          */
          info->workgroup_size = 256;
       }
       break;
@@ -1625,15 +1650,8 @@ radv_link_shaders_info(struct radv_device *device, struct radv_shader_stage *pro
       } else if (consumer && consumer->stage == MESA_SHADER_GEOMETRY) {
          struct radv_shader_info *gs_info = &consumer->info;
          struct radv_shader_info *es_info = &producer->info;
-         unsigned es_verts_per_subgroup = G_028A44_ES_VERTS_PER_SUBGRP(gs_info->gs_ring_info.vgt_gs_onchip_cntl);
-         unsigned gs_inst_prims_in_subgroup =
-            G_028A44_GS_INST_PRIMS_IN_SUBGRP(gs_info->gs_ring_info.vgt_gs_onchip_cntl);
 
-         unsigned workgroup_size =
-            ac_compute_esgs_workgroup_size(device->physical_device->rad_info.gfx_level, es_info->wave_size,
-                                           es_verts_per_subgroup, gs_inst_prims_in_subgroup);
-         es_info->workgroup_size = workgroup_size;
-         gs_info->workgroup_size = workgroup_size;
+         es_info->workgroup_size = gs_info->workgroup_size;
       }
    }
 
