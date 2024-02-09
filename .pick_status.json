@@ -3864,7 +3864,7 @@
         "description": "nouveau/winsys: Add back nouveau_ws_bo_new_tiled()",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ce1cccea98d6257f2015b32b92d826e4ebc0a7f9",
         "notes": null
