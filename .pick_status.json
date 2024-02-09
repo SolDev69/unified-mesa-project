@@ -194,7 +194,7 @@
         "description": "zink: lock buffer age when chundering swapchain for readback",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c123ab213797c1d0d2a34e57c503428261324cc6",
         "notes": null
