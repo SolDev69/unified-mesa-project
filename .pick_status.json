@@ -184,7 +184,7 @@
         "description": "zink: flag acquired swapchain image as readback target on acquire, not present",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
