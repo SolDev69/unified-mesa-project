@@ -1974,7 +1974,7 @@
         "description": "aco/ra: fix GFX9- writelane",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "061b8bfd2980a5ed903febef42be288ab1eb4e40",
         "notes": null
