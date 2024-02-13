@@ -1554,7 +1554,7 @@
         "description": "nvk: Set color/Z compression based on nil_image::compressed",
         "nominated": false,
         "nomination_type": 3,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
