@@ -444,7 +444,7 @@
         "description": "anv: fix buffer marker cache flush issues on MTL",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c8e122a73805924811df97071406c59ab6aee002",
         "notes": null
