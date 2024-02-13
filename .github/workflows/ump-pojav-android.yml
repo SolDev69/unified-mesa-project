@@ -1,4 +1,4 @@
-name: Build Android
+name: Build UMP
 
 on:
   [push, pull_request, workflow_dispatch]
@@ -59,13 +59,31 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=freedreno,zink,swrast,panfrost,kmsro \
+            -Dgallium-drivers=freedreno,zink \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
-            -Dbuildtype=debug
+            -Dbuildtype=release
           ninja -C "build-android" install
+          envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
+          meson setup "build-android-turnip" \
+            --cross-file "build-crossfile-turnip" \
+            -Dbuildtype=release \
+            --prefix=/tmp/mesa \
+            -Dplatforms=android \
+            -Dplatform-sdk-version=33 \
+            -Dandroid-stub=true \
+            -Dgallium-drivers= \
+            -Dvulkan-drivers=freedreno \
+            -Dfreedreno-kmds=kgsl \
+            -Dandroid-strict=false \
+            -Db_lto=true
+          ninja -C "build-android-turnip" install
+          mkdir /tmp/mesa/toupload
+          mv /tmp/mesa/lib/libOSMesa.so.8.0.0 /tmp/mesa/lib/libvulkan_freedreno.so /tmp/mesa/toupload/
+          cd /tmp/mesa/toupload
+          mv libOSMesa.so.8.0.0 libOSMesa.so
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
-          name: libOSMesa_${{matrix.arch}}
-          path: /tmp/mesa
+          name: UMP_${{matrix.arch}}
+          path: /tmp/mesa/toupload

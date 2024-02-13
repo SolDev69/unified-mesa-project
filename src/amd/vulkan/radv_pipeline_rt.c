@@ -414,6 +414,10 @@ radv_rt_nir_to_asm(struct radv_device *device, struct vk_pipeline_cache *cache,
       temp_stage.nir = shaders[i];
       radv_nir_lower_rt_abi(temp_stage.nir, pCreateInfo, &temp_stage.args, &stage->info, stack_size, i > 0, device,
                             pipeline, monolithic);
+
+      /* Info might be out-of-date after inlining in radv_nir_lower_rt_abi(). */
+      nir_shader_gather_info(temp_stage.nir, nir_shader_get_entrypoint(temp_stage.nir));
+
       radv_optimize_nir(temp_stage.nir, pipeline_key->optimisations_disabled);
       radv_postprocess_nir(device, pipeline_key, &temp_stage);
 
@@ -732,6 +736,8 @@ compile_rt_prolog(struct radv_device *device, struct radv_ray_tracing_pipeline *
       combine_config(config, &pipeline->base.base.shaders[MESA_SHADER_INTERSECTION]->config);
 
    postprocess_rt_config(config, device->physical_device->rad_info.gfx_level, device->physical_device->rt_wave_size);
+
+   pipeline->prolog->max_waves = radv_get_max_waves(device, config, &pipeline->prolog->info);
 }
 
 static VkResult

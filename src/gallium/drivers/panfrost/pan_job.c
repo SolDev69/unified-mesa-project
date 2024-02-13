@@ -65,7 +65,7 @@ panfrost_batch_add_surface(struct panfrost_batch *batch,
 {
    if (surf) {
       struct panfrost_resource *rsrc = pan_resource(surf->texture);
-      pan_legalize_afbc_format(batch->ctx, rsrc, surf->format, true);
+      pan_legalize_afbc_format(batch->ctx, rsrc, surf->format, true, false);
       panfrost_batch_write_rsrc(batch, rsrc, PIPE_SHADER_FRAGMENT);
    }
 }
@@ -490,6 +490,19 @@ panfrost_batch_to_fb_info(const struct panfrost_batch *batch,
       }
 
       fb->rts[i].discard = !reserve && !(batch->resolve & mask);
+
+      /* Clamp the rendering area to the damage extent. The
+       * KHR_partial_update spec states that trying to render outside of
+       * the damage region is "undefined behavior", so we should be safe.
+       */
+      if (!fb->rts[i].discard) {
+         fb->extent.minx = MAX2(fb->extent.minx, prsrc->damage.extent.minx);
+         fb->extent.miny = MAX2(fb->extent.miny, prsrc->damage.extent.miny);
+         fb->extent.maxx = MIN2(fb->extent.maxx, prsrc->damage.extent.maxx - 1);
+         fb->extent.maxy = MIN2(fb->extent.maxy, prsrc->damage.extent.maxy - 1);
+         assert(fb->extent.minx <= fb->extent.maxx);
+         assert(fb->extent.miny <= fb->extent.maxy);
+      }
 
       rts[i].format = surf->format;
       rts[i].dim = MALI_TEXTURE_DIMENSION_2D;
