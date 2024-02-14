@@ -1,5 +1,175 @@
 [
     {
+        "sha": "c6e855b64b9015235462959b2b7f3e9fc34b2f1f",
+        "description": "intel/compiler: Verify SIMD16 is used for xe2 BTD/RT dispatch",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "820e04ead4e3741c9ae93ff2f9197a4edc9af765",
+        "description": "intel/compiler: Implement nir_intrinsic_load_topology_id_intel for xe2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8f880d0ad7e9227bf1e99628b611bc280c1782ba",
+        "description": "intel/dev: Update max_subslices_per_slice comment",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b533bf7361f6bbdae235904972f036dcbf979055",
+        "description": "intel/compiler: Set branch shader required-width as 16 for xe2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5022e5f4bf80b6fb5134eb165dd3891561bf0fad",
+        "description": "iris: Fix iris_batch_is_banned() check",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "665d30b5448f606d7a79afe0596c3a2264ab3e15",
+        "notes": null
+    },
+    {
+        "sha": "460d2c46a903fed295a1528c8b6273dd6b0e0d19",
+        "description": "mesa: fix off-by-one for newblock allocation in dlist_alloc",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4423454daa70b2ac01acc193a503fe4d02feb787",
+        "description": "intel/common: Implement xe_engines_is_guc_semaphore_functional()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ac941b13f147fe5c16c014e74f9fdec002645413",
+        "description": "intel: Sync xe_drm.h",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "dff96257da6ea1e2eeae1852085b8c1bfa061ac5",
+        "description": "intel/common: Implement i915_engines_is_guc_semaphore_functional()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "731121c9824b234ee88800004b75318ba4bb5fb5",
+        "description": "intel: Sync i915_drm.h",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0a129d8e1f3842ad566b13796b7e5f04fa9b1b34",
+        "description": "iris: Use intel_engines_supported_count()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "29ee85c2039a202d522051b987e129efb00d18bd",
+        "description": "anv: Use intel_engines_supported_count()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fe2982278f46aa4a802839c193cd8afc7831108c",
+        "description": "intel/common: Add intel_engines_supported_count()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ffca423472ebab901d50ef63dc1f076bbc8303a5",
+        "description": "intel: Remove circular dependency between intel/dev and intel/common",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6b5c446556b96d58d7741582872451bb355e6d48",
+        "description": "intel/common: Fix location of C++ support macro in intel_gem.h",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "398bdb46babcf6d9137ace76f1b58e35c43db60d",
+        "description": "anv: Drop include to common/i915/intel_gem.h",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e136a0629dfe7ecd7124934d3078351ba50617a9",
+        "description": "radv/gfx11+: add rtwave32 perftest option",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "90eae30bcb84d54dc871ddbb8355f729cf8fa900",
         "description": "rusticl/mem: move pipe_image_host_access into Image",
         "nominated": false,
