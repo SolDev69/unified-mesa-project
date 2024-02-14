@@ -644,7 +644,7 @@
         "description": "radv/rt: Fix raygen_imported condition",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0f87d406b58aa103ae67f3cc8a694c1343d8f8ed",
         "notes": null
