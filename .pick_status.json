@@ -3204,7 +3204,7 @@
         "description": "zink: promote gpl libs freeing during shader destroy out of prog loop",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d786f52f1ff10fba42e87530933a2a4c68de49a8",
         "notes": null
