@@ -2654,7 +2654,7 @@
         "description": "r300: fix vertex_buffer related refcnt imbalance",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8a963d122d4b67209214b0483084ba950814f42b",
         "notes": null
