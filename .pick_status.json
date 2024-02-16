@@ -2994,7 +2994,7 @@
         "description": "radv: fix pipeline stats mask",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "48aabaf225f3ebf0bada2fe820d2c0f6288a3ca5",
         "notes": null
