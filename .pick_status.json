@@ -1564,7 +1564,7 @@
         "description": "radv: fix indirect dispatches on compute queue with conditional rendering on GFX7",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5c03cdbd02a69884ce759e0cbd0cf76dc212e2d3",
         "notes": null
