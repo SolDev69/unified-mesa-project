@@ -1,14 +1,13 @@
-name: Build UMP
+name: Build UMP (debug)
 
 on:
   push:
-    branches:
+    branches-ignore:
       - 'main'
 
-  pull_request: 
+  pull_request:
 
-  workflow_dispatch: 
-
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -69,12 +68,12 @@ jobs:
             -Dgallium-drivers=freedreno,zink \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
-            -Dbuildtype=release
+            -Dbuildtype=debug
           ninja -C "build-android" install
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson setup "build-android-turnip" \
             --cross-file "build-crossfile-turnip" \
-            -Dbuildtype=release \
+            -Dbuildtype=debug \
             --prefix=/tmp/mesa \
             -Dplatforms=android \
             -Dplatform-sdk-version=33 \
@@ -86,11 +85,11 @@ jobs:
             -Db_lto=true
           ninja -C "build-android-turnip" install
           mkdir /tmp/mesa/toupload
-          mv /tmp/mesa/lib/libOSMesa.so.8.0.0 /tmp/mesa/lib/libvulkan_freedreno.so /tmp/mesa/toupload/
+          mv /tmp/mesa/lib/* /tmp/mesa/toupload/
           cd /tmp/mesa/toupload
           mv libOSMesa.so.8.0.0 libOSMesa.so
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
-          name: UMP_${{matrix.arch}}
+          name: UMP-dbg_${{matrix.arch}}
           path: /tmp/mesa/toupload
