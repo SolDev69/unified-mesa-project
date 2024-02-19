@@ -64,8 +64,9 @@ jobs:
             -Dshared-glapi=false \
             -Dbuildtype=release
           ninja -C "build-android" install
+          envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson setup "build-android-turnip" \
-            --cross-file "build-crossfile" \
+            --cross-file "build-crossfile-turnip" \
             -Dbuildtype=release \
             --prefix=/tmp/mesa \
             -Dplatforms=android \
