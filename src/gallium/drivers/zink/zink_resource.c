@@ -1181,6 +1181,10 @@ resource_object_create(struct zink_screen *screen, const struct pipe_resource *t
    mai.pNext = NULL;
    mai.allocationSize = reqs.size;
    enum zink_heap heap = zink_heap_from_domain_flags(flags, aflags);
+   if (templ->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT) {
+      if (!(vk_domain_from_heap(heap) & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
+         heap = zink_heap_from_domain_flags(flags & ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, aflags);
+   }
 
    VkMemoryDedicatedAllocateInfo ded_alloc_info = {
       .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
