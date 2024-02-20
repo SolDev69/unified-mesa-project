@@ -2314,7 +2314,7 @@
         "description": "zink: add checks/compat for low-spec descriptor buffer implementations",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b8b51d96b0146028ecb5c58703707fe994540119",
         "notes": null
