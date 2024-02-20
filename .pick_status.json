@@ -2004,7 +2004,7 @@
         "description": "anv: disable Wa_16013994831",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e6e320fc7996db60231d277bc3e28fdd01018b33",
         "notes": null
