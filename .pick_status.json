@@ -1634,7 +1634,7 @@
         "description": "zink: handle stencil_fallback in zink_clear_depth_stencil",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
