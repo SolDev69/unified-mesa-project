@@ -2044,7 +2044,7 @@
         "description": "nvk: fix dri options leak.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "edb52295387839b032d9c14bbf09994d4a3416d7",
         "notes": null
