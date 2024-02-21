@@ -1504,7 +1504,7 @@
         "description": "mesa/main: allow GL_BGRA for FBOs",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1d595c7cd4aefc7baf1942626f53bec8f6699f7f",
         "notes": null
