@@ -2934,7 +2934,7 @@
         "description": "Revert \"asahi: don't canonicalize nans/flush denorms when copying\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "ab7fb3d40072612ffe4d073ff2882102ffcb8a1c",
         "notes": null
