@@ -2084,7 +2084,7 @@
         "description": "nvk: Invalidate the texture cache before MSAA resolves",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4bd2ba31fc952a5ef2e5e238752b9a3d0f750f9c",
         "notes": null
