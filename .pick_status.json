@@ -2054,7 +2054,7 @@
         "description": "nouveau/winsys: fix bda heap leak.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b4cfac64c8a98026d3698a2231c09a21bbe5a2f4",
         "notes": null
