@@ -1114,7 +1114,7 @@
         "description": "egl/wayland: Flush after blitting to linear copy",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "58f90fd03f4aaf2ee19010e9cbd9cee2deda9711",
         "notes": null
