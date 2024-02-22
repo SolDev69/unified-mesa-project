@@ -1154,7 +1154,7 @@
         "description": "zink: lower unaligned memory accesses",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0288cb0a0c471fbef07d1dfc1cae843c5396d8e1",
         "notes": null
