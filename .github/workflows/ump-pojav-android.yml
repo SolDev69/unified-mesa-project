@@ -73,7 +73,7 @@ jobs:
             -Dplatform-sdk-version=33 \
             -Dandroid-stub=true \
             -Dgallium-drivers= \
-            -Dvulkan-drivers=freedreno \
+            -Dvulkan-drivers=freedreno,panfrost \
             -Dfreedreno-kmds=kgsl \
             -Dandroid-strict=false \
             -Db_lto=true
