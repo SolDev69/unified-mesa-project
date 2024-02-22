@@ -3254,7 +3254,7 @@
         "description": "radeonsi/vcn: Use temporal_layer_index to select temporal layer",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8d44a115080645c210e055fa410fb18accf510aa",
         "notes": null
