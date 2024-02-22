@@ -954,7 +954,7 @@
         "description": "tu: Follow pipeline compatibility rules for dynamic descriptors",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "88db736472b6e9b18d3736a42b038e2a7836b0b4",
         "notes": null
