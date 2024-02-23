@@ -1694,7 +1694,7 @@
         "description": "r300: fix r300_destroy_context() related memory leaks",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e01f86c67b0bd955758366827cb8322aa1bec263",
         "notes": null
