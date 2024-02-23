@@ -474,7 +474,7 @@
         "description": "egl/wayland: Fix EGL_EXT_present_opaque",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9aee7855d2ddf47169270d5d1e3e92ff6e5f65c2",
         "notes": null
