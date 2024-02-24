@@ -1684,7 +1684,7 @@
         "description": "r300: fix memory leaks when register allocation fails",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "54f6e72b27154219be237690453bb9c3b57cd3ec",
         "notes": null
