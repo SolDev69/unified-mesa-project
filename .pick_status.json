@@ -1764,7 +1764,7 @@
         "description": "intel/compiler: Fix SIMD lowering when instruction needs a larger SIMD",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5b8ec015f27e879438216f20198e907419ee2f13",
         "notes": null
