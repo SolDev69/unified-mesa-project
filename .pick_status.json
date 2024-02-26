@@ -1,5 +1,375 @@
 [
     {
+        "sha": "4071c399a27932ea9253eb8a65d5725504bac6f3",
+        "description": "radv: compute the total LDS usage in gfx10_get_ngg_info()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d85311b120605d1c3c6b9c0a681e8ea59323ab90",
+        "description": "radv: compute NGG scratch LDS base in gfx10_get_ngg_info()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0570d40d5b367c4d44fd8e89e68dafd2f79b7327",
+        "description": "radv: determine NGG culling info before NGG info",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e3863a22bbf3c322a4370dea6bed69bbf51028fa",
+        "description": "radv: pass radv_shader_info to gfx10_get_ngg_info()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4db0952639ec72f7784d87ccd3a6cf47e7bdb6be",
+        "description": "radv: pass gfx10_ngg_info to gfx10_get_ngg_info()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "beb2e7df6823fe291e4b4f313fbed903891beac9",
+        "description": "radv: determine NGG query info before linking shader info",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "64f46c83a34a70090de36cb6dd387f0a10f656d4",
+        "description": "radv: use so.num_outputs to determine if NGG shaders need XFB queries",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7f8a84a0246e62b30c2f8587d169c7d7ad82cb91",
+        "description": "radv: do not set gs.has_pipeline_stat_query twice for NGG GS",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6c1e82e309f2e0bbf50edfada6bb10651308aa36",
+        "description": "radv: remove unused parameter in gfx10_get_ngg_query_info()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e9169881dbd1f72eab65a68c2b8e7643f74489b7",
+        "description": "anv: add missing generated file dep",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5816b5961f5bc0c034450ab6f1779a64f31e8293",
+        "description": "zink: use new flag to determine whether swapchain readback cache is usable",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "01c9199cb8cc32ff6d6eda993c173bdc37081aed",
+        "description": "zink: only update swapchain readback cache when necessary",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8fb83c0935948c3bf0717e0a3d9ea3ba4cdf4f6c",
+        "description": "zink: only update swapchain readback cache on create if necessary",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "417a1986fb17ae3d65bd57a8fb3efea7bda90752",
+        "description": "zink: set and manage a flag indicating that swapchain readback needs updating",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "114a5da7905520ec8626beee885572dc386a383c",
+        "description": "zink: update swapchain readback cache on create",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7486aaa1c0ea8dda75ecddf631ebab9064d2b161",
+        "description": "zink: make readback attempts count towards ZINK_READBACK_THRESHOLD",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d5d5f54fe9d9065c2476e520d8007c76f38b1839",
+        "description": "zink: add a swapchain readback case for reading differently-acquired image",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ae80f9ce65d46c0680d2c5b4e60f3b9a9f879a8b",
+        "description": "zink: make kopper_swapchain_image::acquired the resource that acquired it",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d2ed77072cfa354862843789f30b7702feeb9c70",
+        "description": "zink: flag acquired swapchain image as readback target on acquire, not present",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c3a2e2f9f2e4be1e11792c01f3b9a2748dce6acb",
+        "description": "zink: lock buffer age when chundering swapchain for readback",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "c123ab213797c1d0d2a34e57c503428261324cc6",
+        "notes": null
+    },
+    {
+        "sha": "9fa2d9bd50e6d464e102111c66a14cb1b20c5e0b",
+        "description": "zink: fix swapchain readback conditional",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "50b671c1c39ebae5131723b8e4e10a6653f6c464",
+        "description": "zink: fix (dynamic rendering) execution of scissored clears during flush",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e6020355969c8f6a78e1698b2c31539055e5698e",
+        "description": "zink: clamp in_rp clears to fb size",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e032e7f6cce48acd840a6439a864b82d36851830",
+        "description": "zink: don't pre-init null fbfetch info",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5fdbb0868ac5eb73055745de57575c694ae90a46",
+        "description": "zink: start out with 256x256 sized dummy surfaces",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "aaf78eadf3734dfcc43faa5c7e6a257accaf09db",
+        "description": "zink: create/resize dummy surfaces on-demand",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1ea64063c8e4a99a34d70cfc415ed6d4663996b5",
+        "description": "zink: break out null fbfetch init for descriptor buffer",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "263d26202558a503610470209a07850c4ee54152",
+        "description": "zink: also set null fbfetch surfaces when no fb surface is bound",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f3347a4603b55e2650071765767725b77379bc0b",
+        "description": "zink: don't pre-init dummy fbfetch surface when missing nullDescriptor feature",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fe13841a99a39e8acf1e73c8495ccfcc91ffa81e",
+        "description": "zink: move flagging rp_changed in zink_update_fbfetch() to caller",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "35185ad9df8efa84981607cec3dd495c875a534b",
+        "description": "zink: assert that batch_id is valid in zink_screen_check_last_finished()",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3283415bbd9d291a20a2e02e1a76f6b1b4984eda",
+        "description": "zink: fix longstanding issue with active batch state recycling",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "16103b61e7dae3ac426fcc523a1a9b18a3c71e8e",
+        "description": "zink: only scan active batch states for free states if > 1 exist",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2179a7f4d7da3becfebe4f520e0db3471fc3ea3f",
+        "description": "Add Xilinx ZynqMP KMSRO entrypoint",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4499871e34cd316fcafe66e621828c5fd1d5488f",
+        "description": "nvk: Advertise VK+KHR_incremental_present",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b3fd66c8899a1e8946173ef805b3b427b3d60eed",
+        "description": "nvk: Only expose VK_KHR_present_id/wait when we have WSI",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "726ae2570ce27a2d417d4a5442dcb56b461c106d",
+        "description": "v3dv/ci: update expected list",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "423add61e2d5b6ab6b5505d1feec01b93609f8fc",
         "description": "gallium: lima: Don't round height when checking alignment",
         "nominated": false,
