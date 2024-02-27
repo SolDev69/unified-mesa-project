@@ -1594,7 +1594,7 @@
         "description": "radeonsi: disable binning correctly on gfx11.5",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b44a886b84c91320f170bd108213768bb47ff6a3",
         "notes": null
