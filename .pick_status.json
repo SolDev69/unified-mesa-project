@@ -1604,7 +1604,7 @@
         "description": "amd/registers: add correct gfx11.x enums for BINNING_MODE",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ced3fbbcf9354789b7aff0b99fb8df1b4f67110f",
         "notes": null
