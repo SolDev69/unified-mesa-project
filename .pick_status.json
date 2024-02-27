@@ -3374,7 +3374,7 @@
         "description": "egl/dri2: use the right egl platform enum",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0fd066a1d7f64011fed63c64a1d3e3757ba5a55b",
         "notes": null
