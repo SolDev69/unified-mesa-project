@@ -8254,7 +8254,7 @@
         "description": "glx: only print zink failure-to-load messages if explicitly requested",
         "nominated": false,
         "nomination_type": 3,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
