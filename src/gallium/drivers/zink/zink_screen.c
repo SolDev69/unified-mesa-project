@@ -3199,12 +3199,12 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
       }
    }
 
-   vk_instance_dispatch_table_load(&screen->vk.instance,
-                                   screen->vk_GetInstanceProcAddr,
-                                   screen->instance);
-   vk_physical_device_dispatch_table_load(&screen->vk.physical_device,
-                                          screen->vk_GetInstanceProcAddr,
-                                          screen->instance);
+   vk_instance_uncompacted_dispatch_table_load(&screen->vk.instance,
+                                                screen->vk_GetInstanceProcAddr,
+                                                screen->instance);
+   vk_physical_device_uncompacted_dispatch_table_load(&screen->vk.physical_device,
+                                                      screen->vk_GetInstanceProcAddr,
+                                                      screen->instance);
 
    zink_verify_instance_extensions(screen);
 
@@ -3301,9 +3301,9 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
    if (!screen->dev)
       goto fail;
 
-   vk_device_dispatch_table_load(&screen->vk.device,
-                                 screen->vk_GetDeviceProcAddr,
-                                 screen->dev);
+   vk_device_uncompacted_dispatch_table_load(&screen->vk.device,
+                                             screen->vk_GetDeviceProcAddr,
+                                             screen->dev);
 
    init_queue(screen);
 
