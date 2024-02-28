@@ -68,7 +68,6 @@ jobs:
             --prefix=/tmp/mesa \
             -Dplatforms=android \
             -Dplatform-sdk-version=33 \
-            -Dandroid-stub=true \
             -Dgallium-drivers= \
             -Dvulkan-drivers=virtio-experimental \
             -Dandroid-strict=false \
