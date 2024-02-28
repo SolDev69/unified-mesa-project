@@ -56,7 +56,7 @@ jobs:
             -Dglx=disabled \
             -Dopengl=true \
             -Dosmesa=true \
-            -Dvulkan-drivers= \
+            -Dvulkan-drivers=virtio-experimental \
             -Dgallium-drivers=zink,virgl \
             -Dshared-glapi=false \
             -Dbuildtype=release
