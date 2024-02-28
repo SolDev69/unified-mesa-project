@@ -324,7 +324,7 @@
         "description": "nouveau: call glsl_type_singleton_init_or_ref earlier",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "91029b7e87bba2a28aeb202cdf920d6ec6a70fa7",
         "notes": null
