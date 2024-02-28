@@ -1234,7 +1234,7 @@
         "description": "radeonsi/gfx10: fix main_shader_part_ngg_es memory leak",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8f72f137ad168775e6b50b69b1af2ba2754dbcfe",
         "notes": null
