@@ -264,7 +264,7 @@
         "description": "tu: fix memory leaks in tu_shader",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a03525d8db7b0295c955aee04d1694a4a1b4493f",
         "notes": null
