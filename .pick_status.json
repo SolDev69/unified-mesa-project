@@ -84,7 +84,7 @@
         "description": "intel/brw: Fix optimize_extract_to_float for i2f of unsigned extract",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "29ce110be6d0d4e4df51be635810f528f7dd7f40",
         "notes": null
