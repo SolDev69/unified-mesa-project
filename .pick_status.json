@@ -54,7 +54,7 @@
         "description": "intel/cmat: fix stride calculation in cmat load/store",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3a35f8b29bb9b6a92f98e8bb897bd444a54ca255",
         "notes": null
