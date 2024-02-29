@@ -1894,7 +1894,7 @@
         "description": "iris/xe: Consider pat_index while unbinding the bo",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "eb18a92ef94e721407527c6c66ffff324772a610",
         "notes": null
