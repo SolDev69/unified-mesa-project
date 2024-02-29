@@ -2394,7 +2394,7 @@
         "description": "anv: fix non matching image/view format attachment resolve",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
