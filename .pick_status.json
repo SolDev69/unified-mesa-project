@@ -804,7 +804,7 @@
         "description": "ir3: Add scan_clusters_macro to ir3_valid_flags()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "60413e11c2bc3d50acabe99a3fd82da6885769ae",
         "notes": null
