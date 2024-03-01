@@ -1784,7 +1784,7 @@
         "description": "intel/brw: Allow CSE on TXF_CMS_W_GFX12_LOGICAL",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "261dd6c8f894fe13926ede073669b96652da61db",
         "notes": null
