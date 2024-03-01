@@ -1514,7 +1514,7 @@
         "description": "radeonsi/gfx11: add missing DCC_RD_POLICY setting",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5acff16ce4e191e95c9640cd52d2ab6792225707",
         "notes": null
