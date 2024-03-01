@@ -1374,7 +1374,7 @@
         "description": "compiler/types: Fix glsl_dvec*_type() helpers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "90e364edb078e0568b266b8fd1e5da8ca74f7a15",
         "notes": null
