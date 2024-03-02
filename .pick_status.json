@@ -764,7 +764,7 @@
         "description": "vulkan: Fix calculation of flags in vk_graphics_pipeline_state_fill",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2b62d90158821f16a9b223a04b2b5a7641b98f34",
         "notes": null
