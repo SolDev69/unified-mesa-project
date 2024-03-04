@@ -944,7 +944,7 @@
         "description": "aco: fix nir_op_pack_32_4x8 handling",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e0d232c2fc729fd95f3c01bddeead2eebf3d4e9a",
         "notes": null
