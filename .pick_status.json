@@ -1074,7 +1074,7 @@
         "description": "zink: fix PIPE_CAP_MAX_SHADER_PATCH_VARYINGS",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
