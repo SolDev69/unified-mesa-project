@@ -60,7 +60,6 @@ jobs:
             -Dosmesa=true \
             -Dvulkan-drivers= \
             -Dgallium-drivers=zink \
-            -Dshared-glapi=false \
             -Dbuildtype=release \
             -Ddri-search-path="/vendor/lib64/egl"
           ninja -C "build-android" install
