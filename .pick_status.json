@@ -4034,7 +4034,7 @@
         "description": "intel/dev: 0x7d45 is mtl-u not mtl-h",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "48ff68820e83565154d8cfb86587c0134f0deb98",
         "notes": null
