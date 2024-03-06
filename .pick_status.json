@@ -534,7 +534,7 @@
         "description": "zink: always sync and replace separable progs even with ZINK_DEBUG=noopt",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
