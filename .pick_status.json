@@ -314,7 +314,7 @@
         "description": "nvk: Return os_page_size for minMemoryMapAlignment",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8017ac0e7973f2e4d514b05cdf843f7a640293a5",
         "notes": null
