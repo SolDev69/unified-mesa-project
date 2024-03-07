@@ -1,5 +1,465 @@
 [
     {
+        "sha": "f3fe1f2f18d7ccc8a7cf85cd88c4bdf426445702",
+        "description": "vulkan: Implement DebugMarkerSetObjectNameEXT",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d0397644103bdea3c14cb7a2d388faa54391f0fd",
+        "description": "anv, hasvk: pMutableDescriptorTypeLists can be out of range on pool creation",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0e1862a2ab4c28ff0b4afb9c040023cbf4354664",
+        "description": "panfrost: protect alpha calculation from accessing non-existent component",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a6f270c1601e37d04b0b05d54e3be67525126ad9",
+        "description": "radv: Lower mesh shader draw ID to zero when they have a task shader.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7a038cc097537dcb05f59e8090c1d6ae2a030291",
+        "description": "intel/elk: Clean up unused code in elk_compiler.h",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "be73fa1434644eca5b05d2dff4fcaa2a49d84285",
+        "description": "intel/elk: Remove multi-polygon support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fd3a815a5b2b9d5d64431177f1b9f2567138988b",
+        "description": "intel/elk: Remove remaining Gfx9+ code",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ea12b38602c29ce2e4fae95cbfafeb4d074c7855",
+        "description": "intel/elk: Remove uses of intel_device_info_is_9lp()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9f5213923e7d35274c1a9b481717be8c501653d2",
+        "description": "intel/elk: Remove Gfx9+-only passes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fb2eee2aaa763744361c38f504a0823225480eda",
+        "description": "intel/elk: Remove use_tcs_multi_patch",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "abbb7d64f566a837276428a8581f9b8a5b69c2bd",
+        "description": "intel/elk: Remove Gfx9+ from NIR auxiliary code",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "64ff9fa5ae40b5da1c09ef74d7d6bbcce82544e3",
+        "description": "intel/elk: Remove Gfx9+ from disasm",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "566e3c675eb49e0ce88f87a9896ab1fd9989e2d3",
+        "description": "intel/elk: Remove Gfx9+ from asm grammar",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "936528cda56bd33b2e072555b0d56f398a64d1af",
+        "description": "intel/elk: Remove Gfx9+ from Reg related code",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f170d8395bb6012c0d358273d2c6bc94241ecc5e",
+        "description": "intel/elk: Remove Gfx9+ from FS generator",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3d867e2fc720501985464531b5136998b979548a",
+        "description": "intel/elk: Remove coarse pixel handling",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7bce435dcaaf518d6be7e1e605a09a91afd9b8ad",
+        "description": "intel/elk: Remove Gfx9+ from EU emission",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d9e7682ccce9777a38b9e496d8b9f475ea843da7",
+        "description": "intel/elk: Remove Gfx9+ from thread payload",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "241a03b8ec4759722168d82112ea19547fcb9ed0",
+        "description": "intel/elk: Remove Gfx9+ from passes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2b6b786febefad8039d77388d6d892fbaa8904be",
+        "description": "intel/elk: Remove FB_WRITE_LOGICAL_SRC_SRC_STENCIL",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7b651ac6c3e9e5c5971ab162312acedc451a810c",
+        "description": "intel/elk: Remove Gfx9+ from compile/run functions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cb2d96af6a72102fea56491567b2d35da8b76d3b",
+        "description": "intel/elk: Remove Gfx9+ from nir conversion",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6b6de68b1cf354fc060424ef6d4ef64bf2e0c39f",
+        "description": "intel/elk: Remove validation code for Gfx9+",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9f80fc3d70ca6138dfa5e1d1ad7796005fc09dbc",
+        "description": "intel/elk: Remove unused SEND features",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2b15a90cc352fc16f257f66782db0c0f5470c0fe",
+        "description": "intel/elk: Remove unused sources from ELK_SHADER_OPCODE_SEND",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e44bacfa91f709f532a388e2ad1d3b15f410b68f",
+        "description": "intel/elk: Remove Xe2 logical sends lowering",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ff64e68ef4f77fac361429ebeeb31f84d270fcee",
+        "description": "intel/elk: Remove ex_desc and ex_mlen from elk_inst",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "75e13ac70575b7f8870c6c13ac8fa3af3e689c49",
+        "description": "intel/elk: Remove Gfx12.5 URB message",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a3f67c2d3ad1d8a0bfd8082be4bed3ed715b1deb",
+        "description": "intel/elk: Remove FB_READ opcodes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "77ba6f5dcdf2b764613ae654d874396a9ec7002d",
+        "description": "intel/elk: Remove Gfx9+ dataport messages",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "59c5c67d229c2e566add5ebb76a9be28da52c39c",
+        "description": "intel/elk: Rename symbols for A64 OWord Block R/W messages",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "05d78994a763d220f69cb9770fcc6c4e9cb40275",
+        "description": "intel/elk: Remove Gfx9+ sampler messages and modes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9b709e31cb3d2ed8e02497086714661749ca2961",
+        "description": "intel/elk: Remove Gfx12 SFIDs and related LSC code",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "43b2261ab5f6b0ca16632da417510e79727d2fad",
+        "description": "intel/elk: Remove SYNC opcode and SWSB annotations",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "37cd18e30ea671f8ba6ac4c602947d29355f1b02",
+        "description": "intel/elk: Remove encoding for Gfx9+",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "accac95c0d7c571ad9a7cd2c760188d9424ba0ca",
+        "description": "intel/elk: Remove EU compaction logic for Gfx9+",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e8c4104362ba90d55101629ab1fa90ed1b8179da",
+        "description": "intel/elk: Remove IADD3 opcode",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d1049408b5d48dbd909aa0cef64c6ca06e9b76fd",
+        "description": "intel/elk: Remove ROR and ROL opcodes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "28a7265b10a6cd80ab3ec51d1b951c40c638954a",
+        "description": "intel/elk: Remove DP4A opcode",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9e58170f84a5c1bd24d250d38bcd2dd9c4c9063f",
+        "description": "intel/elk: Remove BTD and RT opcodes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "24569b80792e8942a7961ee4efea5a54c07494e5",
+        "description": "intel/elk: Remove DPAS opcode",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7b90470ca123f7b207778d688f0df31135d05ccd",
+        "description": "intel/elk: Remove split sends",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b7d6d90dabad885c2578e2195901f60ac6ac4e7c",
+        "description": "zink/nir-to-spirv: Make sure sampleid for InterpolateAtSample is int",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "9f6be8effb43fcd4ce2fd00045bc6244ddf63529",
+        "notes": null
+    },
+    {
+        "sha": "dea8b02b03132aa7a5144b1edb4346addecca657",
+        "description": "aco: don't pass constant to is_overwritten_since()",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "def0c275c460a829470aedf89cc259ac57ebda1f",
+        "notes": null
+    },
+    {
+        "sha": "c383739cfc1cd0bace0d9ad462d8643efa9c7209",
+        "description": "radv/ci: remove dEQP-VK.robustness.* from the VANGOGH skip list",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "52be850d7f430979ec39bb71b128199bfe85b438",
+        "description": "radv/ci: remove RT tests from the VANGOGH skip list",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "7792ee1c15379d95ccb20ce34352473f2bb2bfbd",
         "description": "radv/rt: Fix frontface culling with emulated RT",
         "nominated": true,
