@@ -54,7 +54,7 @@
         "description": "v3d: fix line coords with perspective projection",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ee4d51f8b2de004b04d02c7edf66ca0608adf16f",
         "notes": null
