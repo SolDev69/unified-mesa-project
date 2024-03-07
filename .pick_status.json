@@ -474,7 +474,7 @@
         "description": "intel/brw: Fix validation of accumulator register",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "12d7aaf2b825fe49277b84a605733e8fc39e241d",
         "notes": null
