@@ -24,7 +24,7 @@
         "description": "iris: Fix tessellation evaluation shaders that use scratch",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4256f7ed5847505c30e903b6674dac88c5d03315",
         "notes": null
