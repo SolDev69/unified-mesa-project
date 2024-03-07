@@ -124,7 +124,7 @@
         "description": "util/u_debug: fix parsing of \"all\" again",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0c42c79edfb031509c9c0cf833d52a6f4c064356",
         "notes": null
