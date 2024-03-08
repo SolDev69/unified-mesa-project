@@ -364,7 +364,7 @@
         "description": "venus: fix ffb batch prepare for a corner case and avoid a memcpy UB",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "493a3b5cdaf038d757198085838819472618f76d",
         "notes": null
