@@ -374,7 +374,7 @@
         "description": "intel/tools: avoid invalid time and file bits combination",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "cc41603d6da4552f0aaf32325a8f019c44c3d9c8",
         "notes": null
