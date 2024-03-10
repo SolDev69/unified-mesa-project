@@ -634,7 +634,7 @@
         "description": "Revert \"meson/vulkan/util: allow venus to drop compiler deps\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "3923d43908fa3ac2c8535e33277229038333fe8f",
         "notes": null
