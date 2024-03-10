@@ -1,5 +1,725 @@
 [
     {
+        "sha": "e1afffe7fa7bd8e1cd1f7e58cfa2f33faf889628",
+        "description": "intel/brw: Use hstride instead of stride for accumulator",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e01266335b2d91b3945c8553710062d558eaeb31",
+        "description": "amd: update addrlib",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2cd192f8799c8cc27cd76e3acae45e807aadd926",
+        "description": "mesa: fix CopyTexImage format compatibility checks for ES",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a5010f5f03963fb8e0ab82848cd67ebd3fa42c00",
+        "description": "ci/deqp: add EGL patch for correct suite (GLES, not GL)",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "9ab02222d042d88425168fa4e8446523c5a47c4c",
+        "notes": null
+    },
+    {
+        "sha": "3b05ebaa625428ac3590a7ba1848a6234a572db4",
+        "description": "nvk: advertise shader resource residency",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "410de4bf69a0ba92a9ec56ff3d24497bb7adef10",
+        "description": "nak: wire up sparse image loads",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b17f139281b1f1419d7705d200480771fb43a958",
+        "description": "nak: Wire up sparse residency for texture ops",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "140cf8d616b1f020a8c9c9ec6f96e492044058ae",
+        "description": "nak/nir: Add sparse support to shrink_image_load()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "671c6334bfced8ea6d720f380213cc5ae1b98ee2",
+        "description": "nak: Plumb is_sparse through from NIR for texture ops",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "75390a7aebf8edbc783ec43637f1b87e323720e4",
+        "description": "nak: wire up shader resource residency intrinsics",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "09e2917ee8be49da9522051913b7b9ff4233d29b",
+        "description": "nak: Rename resident to fault",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "48803ac53db8daf26af70c9d2b68802d29e1128b",
+        "description": "nvk: enable sparse residency features",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "db45b29f5f596d02fc610429fee7a311a8aea960",
+        "description": "nvk/queue: Add support for non-opaque sparse binds",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "80b417d557316a41ffae17879192971cc3002ac4",
+        "description": "nvk: Refactor opaque image binds",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "97de81af13faefd0b7ca9e7ebe5f31d7f309d2ee",
+        "description": "nvk/queue: Add a push_bind helper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bd6940a68d40aaa23ce904478cfbeacccc751db6",
+        "description": "nvk: add sparse queries",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "23f2cfe8fb16af126aca1011fb6dd171394b22d5",
+        "description": "nil: Add support for sparse resident images",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3700e586921b5503f1dc3ca116b66d9500018c13",
+        "description": "nvk: Use \"real\" 3D image views",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e5a2a9b60e8684ff32944605d3e48569df2478e6",
+        "description": "nil: Add a concept of sliced 3D image views",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c809e858326852f095cbfcb32db6f440548aedd5",
+        "description": "nil: Add a concept of width to tile sizes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f406206fee342fec844350efdf40b8da71e9795e",
+        "description": "nil: Rework tiling calculations",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1a2f23439b4d2a83b5e823d26eadbaf6d6032c54",
+        "description": "nvk: Use row_stride_B instead of width for render and copies",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "301e707db5b8d70de92b69d56bf43f18b8f9387c",
+        "description": "nil: Expose tiling_extent_B()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7a314170f785d4965b6a5c599956fa3f3a3cb60b",
+        "description": "nil: Add helpers for conversion from pixel values to tiles",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "132516d7025afc304f9cb38d3fd5354d9755afd6",
+        "description": "nil: Add helper function to get tile size in pixels",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ad62f870451e5cab47d012af064f7a75c324cb70",
+        "description": "nil: change image_level_size() to take tiling in account",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a8f7d26c2ba3a43513351565eeae63341c989735",
+        "description": "anv: change the vm_bind-related kmd_backend vfuncs to return VkResult",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4863e12679f17a30a61a3f78ed6536f9c58ddaf6",
+        "description": "anv/sparse: don't use the bind_timeline when doing sparse binding",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8051919b3ce99b3efff0073e029da2b4b9884ccd",
+        "description": "anv/sparse: leave the semaphore waits and signals to the vm_bind ioctl",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "aa07d8a04c4b02ddd57d1a00aebb8b95134fe0a3",
+        "description": "anv/sparse: don't issue a single bind operation per vm_bind ioctl",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "dd6301935e5d88fc61f91fe94cdd908a18a04a5c",
+        "description": "ci/freedreno: update expectations comment",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c91bd82b4b069ac2674802ab102c84167c286643",
+        "notes": null
+    },
+    {
+        "sha": "9ab02222d042d88425168fa4e8446523c5a47c4c",
+        "description": "ci/deqp: backport Implement support for the EGL_EXT_config_select_group extension GL-CTS patch",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c9d3cc2615c1c146fb72765503bd0c30a0cd04a4",
+        "description": "vulkan: refactor the runtime header gen order dependency",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d857f105746cfae629edf0fb2d2cd2463e89fb05",
+        "description": "vulkan: remove header files from lib source files",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "90824e07a2ba3f99937d8570f71ce40d9e9ff65b",
+        "description": "vulkan: properly ensure wsi_entrypoints header gen order",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "872c9fabeb5c8b0aed300a860f9d4528e3013bdf",
+        "description": "vulkan: remove unused wsi_common_entrypoints include and dep",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8af267eb00ffd55419996358935fdff1616616a8",
+        "description": "venus: fix ffb batch prepare for a corner case and avoid a memcpy UB",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "493a3b5cdaf038d757198085838819472618f76d",
+        "notes": null
+    },
+    {
+        "sha": "f5532f8babeb2135db140052cbd2ffbe7e421400",
+        "description": "intel/tools: avoid invalid time and file bits combination",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "cc41603d6da4552f0aaf32325a8f019c44c3d9c8",
+        "notes": null
+    },
+    {
+        "sha": "c91bd82b4b069ac2674802ab102c84167c286643",
+        "description": "Uprev Piglit to 1e631479c0b477006dd7561c55e06269d2878d8d",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "803f7f5398fc73ed9c5229ff9f9758591739d1ad",
+        "description": "d3d12: Video Encode - Add driver workaround for rate control reconfiguration",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "830561c5757a9e844ba6bf59a753b06c577d81f6",
+        "description": "d3d12: Only check D3D12_FEATURE_DATA_PLACED_RESOURCE_SUPPORT_INFO for D3D_FEATURE_LEVEL_1_0_GENERIC",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "55e377e9652cc2063a02d850cf59234506109847",
+        "notes": null
+    },
+    {
+        "sha": "1b6d7ab80ba6cd0ba8832e253764089745168fba",
+        "description": "d3d12: Add GetDesc wrapper for ID3D12Heap",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "55e377e9652cc2063a02d850cf59234506109847",
+        "notes": null
+    },
+    {
+        "sha": "089cb522be1f400fcb2039478a138901722c9a1c",
+        "description": "docs: Update features.txt for anv, nvk and tu",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fbd32697564805cd80720ec7e1ed6a0fae3de089",
+        "description": "tu: Promote VK_EXT_line_rasterization to KHR",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "465ff8114cb9a0a42e13f2eefe834b38550d6be8",
+        "description": "tu: Promote VK_EXT_load_store_op_none to KHR",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2d3ed6853d5203e35aab58ad0403ad09e41d47f8",
+        "description": "tu: Promote VK_EXT_index_type_uint8 to KHR",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7ea5d1ed7dd883cefe3ab489740616cdfb90dcca",
+        "description": "anv: Skip cmd_buffer_emit_bt_pool_base_address() in blitter and video engines",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cccb5e36f15682670246166f0f02cdec01f135b5",
+        "description": "anv: Call flush_pipeline_select_gpgpu() for compute engines in compute code paths",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a13860e5dfd0cf28ff5292b410d5be44791ca7cc",
+        "description": "tu: add RMV support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e29677b16d979776278681adf86cf3e378e9354d",
+        "description": "vulkan/rmv: enable logging miscellaneous internal resources",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6965c569cc9923f5df34d64a5f6f707836ff989a",
+        "description": "radv/ci: mark dEQP-VK.shader_object.binding.mesh_swap_task as flake on NAVI21",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fbdf99d01b030aff46a593084cc20864bdefe64f",
+        "description": "radv/ci: enable RADV_PERFTEST=shader_object for VKCTS jobs on GFX10+",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "26da033c91e50edcd05662902466668a92136cc2",
+        "description": "intel/ds: add pipe control reasons to perfetto flushes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3f8ff988fad38f22bad89dbaeb96f421a0ef96d9",
+        "description": "radv: add a helper to emit PS/TCS epilogs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0ed6aba85a68e7de95daf71ddb625665e3b3a921",
+        "description": "radv,aco: stop duplicating PS/TCS epilog fields",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "974d1395a2ce42ff06169c37c692eadf55c9d6b8",
+        "description": "radv: allow RADV_PERFTEST=shader_object on GFX10/GFX10.3",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "86e4c56dbb0af18c2f3ca5bcf61508aeb66a2704",
+        "description": "radv: implement has_vgt_flush_ngg_legacy_bug for ESO",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "62e6132284db07aa0a1d74ba141a2100e17d2c38",
+        "description": "radv: disable NGG in more situations with ESO on GFX10/GFX10.3",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bffdd05a79961bce5439f01af811669130eceaae",
+        "description": "vulkan: fix runtime libraries' dep against generated headers",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "fe2ec50844d9c235298dc07bb733b7a86a18e4ab",
+        "notes": null
+    },
+    {
+        "sha": "c75c485d7d19d1a6d815ea157ea8a819de62c4a7",
+        "description": "dzn: Support bufferDeviceAddress",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "68f43aa3ecb08b09c8e7df9063d609069ef7790e",
+        "description": "spirv2dxil: Support buffer_device_address",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "57d914b757b0f3d33f94591b39ec538010e03985",
+        "description": "ci: Update virglrenderer and crosvm",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fe2ec50844d9c235298dc07bb733b7a86a18e4ab",
+        "description": "vulkan: allow building venus without libcompiler",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a367cd49314a993d09168e790d3090a2303a48d9",
+        "description": "Revert \"meson/vulkan/util: allow venus to drop compiler deps\"",
+        "nominated": true,
+        "nomination_type": 2,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "3923d43908fa3ac2c8535e33277229038333fe8f",
+        "notes": null
+    },
+    {
+        "sha": "12c71ef847c18fe2025f946d53009de314f13b1d",
+        "description": "radv/rt: Fix raygen_imported condition",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "0f87d406b58aa103ae67f3cc8a694c1343d8f8ed",
+        "notes": null
+    },
+    {
+        "sha": "0e8f2eca9ea1a95eb8728f97280342619ead5da9",
+        "description": "radv/rt: Inline constant information about ray flags",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b4735a944a7cc0bd25fc5a236370ad03d0eddd0b",
+        "description": "radv/rt: Inline constant trace_ray srcs into the traversal shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "843d19a995a3d50ab3acfb576ed9face32b3c189",
+        "description": "radv/rt: Avoid passing unused data to the next stage",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "eb249bb18e250dca198332def96a1ad921cfd77b",
+        "description": "aco: Only fix used variables to registers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "348d13f06ebd869ecf427ac607b3052dba81ea58",
+        "description": "radv/rt: Fixup constant args",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0597906adae811f00d78891f861075eb08287ac9",
+        "description": "radv/rt: Add radv_ray_tracing_stage_info",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a44765606ce90ad53e9c5b18318224441b0b43c1",
+        "description": "radv/rt: Implement RADV_DEBUG=shaderstats",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "f3fe1f2f18d7ccc8a7cf85cd88c4bdf426445702",
         "description": "vulkan: Implement DebugMarkerSetObjectNameEXT",
         "nominated": false,
