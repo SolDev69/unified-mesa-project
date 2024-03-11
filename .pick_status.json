@@ -1,5 +1,375 @@
 [
     {
+        "sha": "9a57b1df5395bbcaa6f48ea851860bedc7ceefb9",
+        "description": "driconf: add radv_zero_vram for Crystal Project (1637730)",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c19edbb6afc44a6a9c51ebac275683d98d1f8562",
+        "description": "zink: update nvk baseline with nvk changes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7e3056e21c00da9fa7b1475bd376f51fcaecf983",
+        "description": "zink/ci: update list of flakes for RADV jobs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e0f9cd882c33b9d1f04676d1a16298dcc7214ef2",
+        "description": "radv/ci: update list of flakes for VKCTS jobs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "91579236dc6a51838986ecd92d7c003e05a0c50e",
+        "description": "ci: use Linux kernel 6.6 for RADV",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "69fbd5cb90a6958aa86ccf35fb552920b8c8f43e",
+        "description": "v3d: fix line coords with perspective projection",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "ee4d51f8b2de004b04d02c7edf66ca0608adf16f",
+        "notes": null
+    },
+    {
+        "sha": "62e1dff256097eff9665dd68f59f51b7cb2f274d",
+        "description": "v3d: add load_fep_w_v3d intrinsic",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4e720f1fefc29d2bda3d711acf41ba417a76999f",
+        "description": "docs: delay 24.1 branchpoint by 2 weeks",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d38ff02c033a2cd0d7d926f395a0728bc7f2abf6",
+        "description": "v3dv: mark some promoted extensions as supported",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6fab8abebb321d2d16c82217713ce93e54971729",
+        "description": "vk/meta: Fix base_type selection in build_{clear,blit}_shader()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c722265c16ef3220f2473c515526598f760f873d",
+        "description": "vk/meta: Add the PUSH_DESCRIPTOR_BIT flag when creating blit pipeline layouts",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "24cedcf838f1008810ef689f35da97de0ae72a48",
+        "description": "pvr: return the OS page size for minMemoryMapAlignment",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "433a3c262a06c15c2884149d450043ad0ffdb32a",
+        "description": "util/u_debug: fix parsing of \"all\" again",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "0c42c79edfb031509c9c0cf833d52a6f4c064356",
+        "notes": null
+    },
+    {
+        "sha": "7eae0e03f1241f0ca75da50baf8cebbe1749eb80",
+        "description": "broadcom/compiler: fix SFU check for 7.1",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9b1008f3bc395c141416b00aa41f758db4b7ee4f",
+        "description": "v3d: disable Early Z for multisampled 16-bit depth buffers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "08af5f2703ae21522aca2ec353f4ff8288e1fe5e",
+        "description": "v3dv: disable Early Z for multisampled 16-bit depth buffers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "33e77c904182668f36634a18ddf8f569dd2a4a7b",
+        "description": "v3d,v3d: use new simulator",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "75a940c949d5b4d8135531e1a9c5491c008910b5",
+        "description": "radvi/ci: enable RADV_PERFTEST=shader_object for RENOIR",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "898f28f790dd56201260ec9720ac58ecdd6402c4",
+        "description": "radv: allow RADV_PERFTEST=shader_object on all GFX9 GPUs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fbe820f5a0221212a53435170f520069d8ccf3b1",
+        "description": "panfrost, pan/lib: Move pan_resource_table to panfrost",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4a4698733b1173655cf12af9ff154294940c12b4",
+        "description": "pan/bi: Lower ubo table in indices for Valhall",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "652e1c2e13946de1e6dc6ae94b8b1f4af6685732",
+        "description": "pan/bi: Rework indices for attributes on Valhall",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "27031910f788fe9f51e3f6641e6f7ad26dfb4840",
+        "description": "pan/bi: Rework indices for image on Valhall",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ce52b6d35975c82077d5d2efe8430063fa2a4abc",
+        "description": "pan/bi: Rework indices for tex on Valhall",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "181891495a3113912aa04645c85d9ae84fe24bce",
+        "description": "pan/lib: Remove variables in blitter",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "05607311feb3edf6d4997ef361057d5b69cd39c1",
+        "description": "pan/bi: assert indices when offsets are present in bi_emit_tex_valhall",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c7202751ad9c223f4fb4324141919e679b8d57de",
+        "description": "radv: fix emitting default blend state for PS without epilogs and ESO",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7ebff681dbc1986c3d6bc6d1ca15e01f182a9dba",
+        "description": "radv: re-emit RB+ state with PS epilogs only when the col format changes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c1307184d21ade30cdeaa075b842060130c79e7c",
+        "description": "radv: stop using the custom blend mode for PS epilogs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e592ab466fd9756e668aa3d127b685ce3f8ce35d",
+        "description": "anv: use workaround framework for Wa_16013000631",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "93255abe30b0a2181fd7ef844c2e74e43865f32a",
+        "description": "etnaviv: Fix how we determine the max supported number of varyings",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "84816c22e4cf782bf521a005cff6063932a11872",
+        "notes": null
+    },
+    {
+        "sha": "14e9894a19c208811fa6c67183a2778a7d6f75da",
+        "description": "glx: Remove DEBUG code in xfont.c",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cc74a819e41c0275e5e4cbf93931d7554b05f665",
+        "description": "nvk: Disable the Out Of Range Address exception",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0ed7bce8e5d2e0dfa68f98bd7fad33a7ba6051d8",
+        "description": "nvk: Always wait for the FALCON in set_priv_reg",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "df90d80d9d50bfbc3fe1ee30fd3cc17be9ba08d2",
+        "description": "nvk: Document the register name for the helper load workaround",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cbcef73668115e758fe49cec81af19af7c1ad96a",
+        "description": "nil: Fix a typo in a comment",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f8f9bceb172026bb7433a9a50157bdf95b7eb492",
+        "description": "nak: Rip out a few dead_code statements",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "e1afffe7fa7bd8e1cd1f7e58cfa2f33faf889628",
         "description": "intel/brw: Use hstride instead of stride for accumulator",
         "nominated": false,
