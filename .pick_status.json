@@ -634,7 +634,7 @@
         "description": "ac/llvm: fix SSBO bounds checking by using raw instead of struct opcodes",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6b573c00c9156297513a0783ef05a1c5601e6620",
         "notes": null
