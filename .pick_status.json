@@ -844,7 +844,7 @@
         "description": "egl/x11: disable dri3 with LIBGL_KOPPER_DRI2=1 as expected",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
