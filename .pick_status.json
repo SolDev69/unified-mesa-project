@@ -624,7 +624,7 @@
         "description": "radeonsi: fix the DMA compute shader",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6584088cd5e6fe2538428b2ae13cbafc62604de2",
         "notes": null
