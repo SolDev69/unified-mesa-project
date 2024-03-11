@@ -744,7 +744,7 @@
         "description": "zink: set the sparse format usage flags directly based on queried props",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9a412c10b7a96adf71c9a2ca44a0abca75de1c49",
         "notes": null
