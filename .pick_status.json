@@ -794,7 +794,7 @@
         "description": "nvk: Always copy conditional rendering value before compare",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8c25cd307afb5ebf4404dfa6ae1f99c5a5bd27f9",
         "notes": null
