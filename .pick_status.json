@@ -1304,7 +1304,7 @@
         "description": "rusticl/kernel: assign sampler locations before DCEing variables",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "25b8a34b48fce99164f1cb853bcde86d1cf6cba5",
         "notes": null
