@@ -2454,7 +2454,7 @@
         "description": "nir-to-spirv: Cast SSBO input pointer when needed",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9f6be8effb43fcd4ce2fd00045bc6244ddf63529",
         "notes": null
