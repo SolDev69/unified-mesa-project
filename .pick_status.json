@@ -34,7 +34,7 @@
         "description": "r300: port scanout pitch alignment from the DDX to fix DRI3",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d779a5d16ae6a17b3fc0c097f4eb477a80e54566",
         "notes": null
