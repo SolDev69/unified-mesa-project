@@ -784,7 +784,7 @@
         "description": "zink: iterate all the modes when doing separate shader fixups",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0a12cedec91514cfbd1d584705c4debc6a3abd40",
         "notes": null
