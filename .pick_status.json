@@ -1434,7 +1434,7 @@
         "description": "panvk: Disable global offset on varying and non-VS attribute descriptors",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c0d65398279db02f68b5acc23c3afbf1c34a5204",
         "notes": null
