@@ -1404,7 +1404,7 @@
         "description": "aco/cssa: reset equal_anc_out if merging fails",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "18ba93e6732a328a8e982f4d18bf7943171b4eb4",
         "notes": null
