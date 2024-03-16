@@ -1934,7 +1934,7 @@
         "description": "etnaviv: fix fixpoint conversion of negative values",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8bce68edf553c079ed8451ecf24dd2831f409c25",
         "notes": null
