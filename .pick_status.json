@@ -1664,7 +1664,7 @@
         "description": "nir/builder: Correctly handle decl_reg or undef as the first instruction",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1be4c61c957d656d0d874b82779b4016a8bb03fd",
         "notes": null
