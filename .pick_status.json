@@ -4444,7 +4444,7 @@
         "description": "zink: don't use set_foreach_remove with dmabuf_exports",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7b7a581a52db21ed8826d6f2986ea6dfc208fb2a",
         "notes": null
