@@ -2194,7 +2194,7 @@
         "description": "winsys/radeon: pass priv instead NULL to radeon_bo_can_reclaim",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4a078e693e913921d11e30988dc6e923e7cc27b7",
         "notes": null
