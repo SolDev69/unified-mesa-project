@@ -1594,7 +1594,7 @@
         "description": "nir/gather_types: Support unstructured control-flow",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "260a9167db54de8ec6cd687aab2225751fb2dda6",
         "notes": null
