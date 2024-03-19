@@ -32,6 +32,7 @@ jobs:
             --prefix=/tmp/drm-static \
             --cross-file "../build-crossfile-drm" \
             -Ddefault_library=static \
+            -Dandroid-libbacktrace=disabled \
             -Dintel=disabled \
             -Dradeon=disabled \
             -Damdgpu=disabled \
@@ -51,7 +52,6 @@ jobs:
             -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
             -Dandroid-libbacktrace=disabled \
-            -Dandroid-strict=false \
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
@@ -75,7 +75,6 @@ jobs:
             -Dgallium-drivers= \
             -Dvulkan-drivers=freedreno \
             -Dfreedreno-kmds=kgsl \
-            -Dandroid-strict=false \
             -Db_lto=true
           ninja -C "build-android-turnip" install
           mkdir /tmp/mesa/toupload
@@ -85,5 +84,5 @@ jobs:
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
-          name: UMP_${{matrix.arch}}
+          name: ClassicMesa_${{matrix.arch}}
           path: /tmp/mesa/toupload

@@ -35,7 +35,7 @@
 #include "zink_screen.h"
 #include "util/u_hash_table.h"
 
-#if !defined(__APPLE__) && !defined(_WIN32)
+#if !defined(__APPLE__) && !defined(_WIN32) && !defined(__ANDROID__)
 #define ZINK_USE_DMABUF
 #include <xf86drm.h>
 #endif
