@@ -25,8 +25,6 @@
 
 #if WITH_LIBBACKTRACE
 
-#include <backtrace/Backtrace.h>
-
 #include "util/simple_mtx.h"
 #include "util/u_debug.h"
 #include "util/hash_table.h"
@@ -55,56 +53,12 @@ debug_backtrace_capture(debug_stack_frame *backtrace,
                         unsigned start_frame,
                         unsigned nr_frames)
 {
-   Backtrace *bt;
-
-   if (!nr_frames)
-      return;
-
-   bt = Backtrace::Create(BACKTRACE_CURRENT_PROCESS,
-                          BACKTRACE_CURRENT_THREAD);
-   if (bt == NULL) {
-      for (unsigned i = 0; i < nr_frames; i++)
-         backtrace[i].procname = NULL;
-      return;
-   }
-
-   /* Add one to exclude this call. Unwind already ignores itself. */
-   bt->Unwind(start_frame + 1);
-
-   simple_mtx_lock(&table_mutex);
-
-   for (unsigned i = 0; i < nr_frames; i++) {
-      const backtrace_frame_data_t* frame = bt->GetFrame(i);
-      if (frame) {
-         backtrace[i].procname = intern_symbol(frame->func_name.c_str());
-         backtrace[i].start_ip = frame->pc;
-         backtrace[i].off = frame->func_offset;
-         backtrace[i].map = intern_symbol(frame->map.Name().c_str());
-         backtrace[i].map_off = frame->rel_pc;
-      } else {
-         backtrace[i].procname = NULL;
-      }
-   }
-
-   simple_mtx_unlock(&table_mutex);
-
-   delete bt;
 }
 
 void
 debug_backtrace_dump(const debug_stack_frame *backtrace,
                      unsigned nr_frames)
 {
-   for (unsigned i = 0; i < nr_frames; i++) {
-      if (backtrace[i].procname)
-         debug_printf(
-            "%s(+0x%x)\t%012" PRIx64 ": %s+0x%x\n",
-            backtrace[i].map,
-            backtrace[i].map_off,
-            backtrace[i].start_ip,
-            backtrace[i].procname,
-            backtrace[i].off);
-   }
 }
 
 void
@@ -112,16 +66,6 @@ debug_backtrace_print(FILE *f,
                       const debug_stack_frame *backtrace,
                       unsigned nr_frames)
 {
-   for (unsigned i = 0; i < nr_frames; i++) {
-      if (backtrace[i].procname)
-         fprintf(f,
-                 "%s(+0x%x)\t%012" PRIx64 ": %s+0x%x\n",
-                 backtrace[i].map,
-                 backtrace[i].map_off,
-                 backtrace[i].start_ip,
-                 backtrace[i].procname,
-                 backtrace[i].off);
-   }
 }
 
 #else
