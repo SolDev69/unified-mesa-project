@@ -1114,7 +1114,7 @@
         "description": "ac/llvm,radeonsi: fix memory leaks triggered by ac_nir_translate() errors",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d92d35c9db6da78e1e49e9a851a6c3227a93305c",
         "notes": null
