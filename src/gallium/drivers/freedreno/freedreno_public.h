@@ -35,7 +35,7 @@ struct renderonly;
 struct pipe_screen *
 fd_screen_create(int fd,
                  const struct pipe_screen_config *config,
-                 struct renderonly *ro)
+                 struct renderonly *ro);
 
 #ifdef __cplusplus
 }
