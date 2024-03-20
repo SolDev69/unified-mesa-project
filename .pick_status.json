@@ -1904,7 +1904,7 @@
         "description": "anv: Create protected engine context when i915 supports vm control",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fd40134487c3f3ae2c0c108651041ff98bfea7da",
         "notes": null
