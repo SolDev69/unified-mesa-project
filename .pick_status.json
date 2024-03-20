@@ -594,7 +594,7 @@
         "description": "radeonsi: preserve alpha if needed in kill_ps_outputs_cb",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6d2a7f53acfb219910fde175a4233bd5157937f0",
         "notes": null
