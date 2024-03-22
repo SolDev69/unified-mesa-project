@@ -2074,7 +2074,7 @@
         "description": "radv: invalidate L2 metadata for VK_ACCESS_2_MEMORY_READ_BIT",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
