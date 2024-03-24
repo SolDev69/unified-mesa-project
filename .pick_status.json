@@ -704,7 +704,7 @@
         "description": "{vulkan,radv,anv}/video: fix issue in H264 scaling lists derivation",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8daa329634e049b377c61eb3ada9f291584c971b",
         "notes": null
