@@ -3994,7 +3994,7 @@
         "description": "zink: don't clobber indirect array reads with missing components",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "459b49a1749ecdee1726a793d1ca62534ad95932",
         "notes": null
