@@ -174,7 +174,7 @@
         "description": "r600: add license info to the r600_opcodes.h",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a3a94554f5a12f0626d9712ddcdc81b1e21d36c2",
         "notes": null
