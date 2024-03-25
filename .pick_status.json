@@ -114,7 +114,7 @@
         "description": "r300: add missing copyright header",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "024491f60fdc6747b33de63fb2bef9e18267e9a9",
         "notes": null
