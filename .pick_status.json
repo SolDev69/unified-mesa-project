@@ -184,7 +184,7 @@
         "description": "r600: add license header to r600_formats.h",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "82114ac02a2d5a764ce69711fc0a71f559ee9137",
         "notes": null
