@@ -2084,7 +2084,7 @@
         "description": "radv/video: fix h265 decode with unaligned w/h",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "db62c38091a3b244b1d720a6aa47bf1d1855db55",
         "notes": null
