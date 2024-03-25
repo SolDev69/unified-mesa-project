@@ -3714,7 +3714,7 @@
         "description": "freedreno/a7xx: Add CP_CCHE_INVALIDATE",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "95104707f189b2e1b06c855b563c1203b33da354",
         "notes": null
