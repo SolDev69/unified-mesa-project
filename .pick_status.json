@@ -1694,7 +1694,7 @@
         "description": "intel/brw: Clear write_accumulator flag when changing the destination",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "efa4e4bc5fc39cccc6d7103e9f15b795de3ee07c",
         "notes": null
