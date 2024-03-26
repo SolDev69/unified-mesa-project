@@ -2564,7 +2564,7 @@
         "description": "etnaviv: fix depth writes without testing",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b29fe26d43874c90df60edbffda70fca67b98e4a",
         "notes": null
