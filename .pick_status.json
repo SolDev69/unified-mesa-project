@@ -2524,7 +2524,7 @@
         "description": "vulkan/wsi/x11: Explicitly discard errors from xcb_present_pixmap.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2b885b233f7a6300ae88732c179888c02788493d",
         "notes": null
