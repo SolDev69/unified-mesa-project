@@ -1994,7 +1994,7 @@
         "description": "Revert \"zink: store last pipeline directly for zink_gfx_program::last_pipeline\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "be8b7980e66f3526d7c1eb9b137772fb6fc90a96",
         "notes": null
