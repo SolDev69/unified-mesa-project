@@ -3734,7 +3734,7 @@
         "description": "r300: fix r300_draw_elements() behavior",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "330d0607ed60fd3edca192e54b4246310f06652f",
         "notes": null
