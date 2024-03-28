@@ -5134,7 +5134,7 @@
         "description": "anv/xe: don't leak xe_syncs during trtt submission",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "18bd00c024fc0f11a36da5b025b89a26ebd635e1",
         "notes": null
