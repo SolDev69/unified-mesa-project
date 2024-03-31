@@ -104,7 +104,7 @@
         "description": "mesa/st: don't use base shader serialization when uniforms are not packed",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5eb0136a3c561e25d3f274e33a86812cfb2af589",
         "notes": null
