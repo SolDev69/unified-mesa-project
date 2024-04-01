@@ -1,5 +1,95 @@
 [
     {
+        "sha": "fcb568a5d5a52db75fa2f6d04579bb404ca7f597",
+        "description": "docs: add alpha-to-one features for RADV",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f46390198375e398dd78ae3eda4282311efb2c52",
+        "description": "radv: advertise extendedDynamicState3AlphaToOneEnable with ACO",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "850605eba1ae8b17b84fd97e90725f0ed9fdf922",
+        "description": "radv: advertise alphaToOne",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e7206bcdb2aaa714637d7324486f02f5851d5f62",
+        "description": "radv: implement alpha-to-one",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a5f1f39bf7d1cc84ac6c8a73feec20130d00bda6",
+        "description": "docs/egl: various wording improvements",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "57ceedfc3ee42b9169993a728660091efa9d5ac9",
+        "description": "docs: mesa also implements gles 3.0+",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "28a1cdf7e0450815cf19cbbd2bd3fbaf1d32062d",
+        "description": "docs: we support EGL 1.5 for a long time",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9fad2922fb4e1b7fc5e657980fdbdcd0baec106d",
+        "description": "broadcom/compiler: fix workaround for GFXH-1602",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ad647e2c90fb76e3a7c5e8d21c3f68a78bc474fc",
+        "description": "v3d: implement fix for GFXH-1602",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "3d68dd78d07b30cefe90d76af681075f4ed6b33d",
         "description": "intel/eu/validate: Allow SIMD16 for mixed mode float operations on xe2+",
         "nominated": false,
