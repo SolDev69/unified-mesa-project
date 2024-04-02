@@ -224,7 +224,7 @@
         "description": "spirv: Handle constant cooperative matrices in OpCompositeExtract",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b98f87612bc14fe88184dc099d9d4f8e6b3b23cb",
         "notes": null
