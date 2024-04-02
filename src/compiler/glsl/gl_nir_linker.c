@@ -1162,6 +1162,8 @@ gl_nir_link_spirv(const struct gl_constants *consts,
    if (!prelink_lowering(consts, exts, prog, linked_shader, num_shaders))
       return false;
 
+   gl_nir_link_assign_xfb_resources(consts, prog);
+
    /* Linking the stages in the opposite order (from fragment to vertex)
     * ensures that inter-shader outputs written to in an earlier stage
     * are eliminated if they are (transitively) not used in a later
@@ -1191,7 +1193,6 @@ gl_nir_link_spirv(const struct gl_constants *consts,
       return false;
 
    gl_nir_link_assign_atomic_counter_resources(consts, prog);
-   gl_nir_link_assign_xfb_resources(consts, prog);
 
    return true;
 }
