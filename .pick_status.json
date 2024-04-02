@@ -4424,7 +4424,7 @@
         "description": "zink: fix shaderdb pipeline compile",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0ebd6f52a20aaa57f2815b3ad2e8052153689f18",
         "notes": null
