@@ -4644,7 +4644,7 @@
         "description": "aco: use v1 definition for v_interp_p1lv_f16",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1647e098e94d6aab0b4c454ccdd5300afd1d0079",
         "notes": null
