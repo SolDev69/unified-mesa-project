@@ -4404,7 +4404,7 @@
         "description": "r300: fix constants_remap_table memory leak related to the dummy shader path",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "29df85788a7f122cabce776c38dc6eee79ee0511",
         "notes": null
