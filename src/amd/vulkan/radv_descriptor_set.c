@@ -780,10 +780,8 @@ radv_destroy_descriptor_pool(struct radv_device *device, const VkAllocationCallb
       }
    }
 
-   if (pool->bo) {
-      radv_rmv_log_bo_destroy(device, pool->bo);
-      device->ws->buffer_destroy(device->ws, pool->bo);
-   }
+   if (pool->bo)
+      radv_bo_destroy(device, pool->bo);
    if (pool->host_bo)
       vk_free2(&device->vk.alloc, pAllocator, pool->host_bo);
 
@@ -792,10 +790,9 @@ radv_destroy_descriptor_pool(struct radv_device *device, const VkAllocationCallb
    vk_free2(&device->vk.alloc, pAllocator, pool);
 }
 
-VkResult
+static VkResult
 radv_create_descriptor_pool(struct radv_device *device, const VkDescriptorPoolCreateInfo *pCreateInfo,
-                            const VkAllocationCallbacks *pAllocator, VkDescriptorPool *pDescriptorPool,
-                            bool is_internal)
+                            const VkAllocationCallbacks *pAllocator, VkDescriptorPool *pDescriptorPool)
 {
    struct radv_descriptor_pool *pool;
    uint64_t size = sizeof(struct radv_descriptor_pool);
@@ -910,19 +907,22 @@ radv_create_descriptor_pool(struct radv_device *device, const VkDescriptorPoolCr
    }
 
    if (bo_size) {
+      const struct radv_physical_device *pdev = radv_device_physical(device);
+      const struct radv_instance *instance = radv_physical_device_instance(pdev);
+
       if (!(pCreateInfo->flags & VK_DESCRIPTOR_POOL_CREATE_HOST_ONLY_BIT_EXT)) {
          enum radeon_bo_flag flags = RADEON_FLAG_NO_INTERPROCESS_SHARING | RADEON_FLAG_READ_ONLY | RADEON_FLAG_32BIT;
 
-         if (device->instance->drirc.zero_vram)
+         if (instance->drirc.zero_vram)
             flags |= RADEON_FLAG_ZERO_VRAM;
 
-         VkResult result = device->ws->buffer_create(device->ws, bo_size, 32, RADEON_DOMAIN_VRAM, flags,
-                                                     RADV_BO_PRIORITY_DESCRIPTOR, 0, &pool->bo);
+         VkResult result = radv_bo_create(device, bo_size, 32, RADEON_DOMAIN_VRAM, flags, RADV_BO_PRIORITY_DESCRIPTOR,
+                                          0, false, &pool->bo);
          if (result != VK_SUCCESS) {
             radv_destroy_descriptor_pool(device, pAllocator, pool);
             return vk_error(device, result);
          }
-         pool->mapped_ptr = (uint8_t *)device->ws->buffer_map(pool->bo);
+         pool->mapped_ptr = (uint8_t *)radv_buffer_map(device->ws, pool->bo);
          if (!pool->mapped_ptr) {
             radv_destroy_descriptor_pool(device, pAllocator, pool);
             return vk_error(device, VK_ERROR_OUT_OF_DEVICE_MEMORY);
@@ -940,7 +940,7 @@ radv_create_descriptor_pool(struct radv_device *device, const VkDescriptorPoolCr
    pool->max_entry_count = pCreateInfo->maxSets;
 
    *pDescriptorPool = radv_descriptor_pool_to_handle(pool);
-   radv_rmv_log_descriptor_pool_create(device, pCreateInfo, *pDescriptorPool, is_internal);
+   radv_rmv_log_descriptor_pool_create(device, pCreateInfo, *pDescriptorPool);
    return VK_SUCCESS;
 }
 
@@ -949,7 +949,7 @@ radv_CreateDescriptorPool(VkDevice _device, const VkDescriptorPoolCreateInfo *pC
                           const VkAllocationCallbacks *pAllocator, VkDescriptorPool *pDescriptorPool)
 {
    RADV_FROM_HANDLE(radv_device, device, _device);
-   return radv_create_descriptor_pool(device, pCreateInfo, pAllocator, pDescriptorPool, false);
+   return radv_create_descriptor_pool(device, pCreateInfo, pAllocator, pDescriptorPool);
 }
 
 VKAPI_ATTR void VKAPI_CALL
@@ -1077,6 +1077,8 @@ write_texel_buffer_descriptor(struct radv_device *device, struct radv_cmd_buffer
 static ALWAYS_INLINE void
 write_buffer_descriptor(struct radv_device *device, unsigned *dst, uint64_t va, uint64_t range)
 {
+   const struct radv_physical_device *pdev = radv_device_physical(device);
+
    if (!va) {
       memset(dst, 0, 4 * 4);
       return;
@@ -1085,9 +1087,9 @@ write_buffer_descriptor(struct radv_device *device, unsigned *dst, uint64_t va, 
    uint32_t rsrc_word3 = S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) | S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
                          S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) | S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W);
 
-   if (device->physical_device->rad_info.gfx_level >= GFX11) {
+   if (pdev->info.gfx_level >= GFX11) {
       rsrc_word3 |= S_008F0C_FORMAT(V_008F0C_GFX11_FORMAT_32_FLOAT) | S_008F0C_OOB_SELECT(V_008F0C_OOB_SELECT_RAW);
-   } else if (device->physical_device->rad_info.gfx_level >= GFX10) {
+   } else if (pdev->info.gfx_level >= GFX10) {
       rsrc_word3 |= S_008F0C_FORMAT(V_008F0C_GFX10_FORMAT_32_FLOAT) | S_008F0C_OOB_SELECT(V_008F0C_OOB_SELECT_RAW) |
                     S_008F0C_RESOURCE_LEVEL(1);
    } else {

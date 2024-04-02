@@ -123,7 +123,7 @@ isl_device_setup_mocs(struct isl_device *dev)
       dev->mocs.blitter_dst = 1 << 1;
       dev->mocs.blitter_src = 1 << 1;
    } else if (dev->info->ver >= 12) {
-      if (intel_device_info_is_mtl(dev->info)) {
+      if (intel_device_info_is_mtl_or_arl(dev->info)) {
          /* Cached L3+L4; BSpec: 45101 */
          dev->mocs.internal = 1 << 1;
          /* Displayables cached to L3+L4:WT */
@@ -276,7 +276,7 @@ isl_mocs(const struct isl_device *dev, isl_surf_usage_flags_t usage,
    if (external)
       return dev->mocs.external | mask;
 
-   if (intel_device_info_is_mtl(dev->info) &&
+   if (intel_device_info_is_mtl_or_arl(dev->info) &&
        (usage & ISL_SURF_USAGE_STREAM_OUT_BIT))
       return dev->mocs.uncached | mask;
 
@@ -568,6 +568,8 @@ tiling_max_mip_tail(enum isl_tiling tiling,
 {
    /* In theory, miptails work for multisampled images, but we don't support
     * mipmapped multisampling.
+    *
+    * BSpec 58770: Xe2 does not support miptails on multisampled images.
     */
    if (samples > 1)
       return 0;
@@ -616,6 +618,7 @@ tiling_max_mip_tail(enum isl_tiling tiling,
       break;
 
    case ISL_TILING_64:
+   case ISL_TILING_64_XE2:
       /* ATS-M PRMS, Volume 5: Memory Data Formats :
        *
        *    - Tiling and Mip Tail for 1D Surfaces :
@@ -853,6 +856,85 @@ isl_tiling_get_info(enum isl_tiling tiling,
       phys_B.h = 64 * 1024 / phys_B.w;
       break;
 
+   case ISL_TILING_64_XE2:
+      /* The tables below are taken from BSpec 58767 which are formulated in
+       * terms of the Cv and Cu constants. This is different from the tables in
+       * the "Tile64 Format" page which should be equivalent but are usually in
+       * terms of pixels.
+       *
+       * Also note that Cv and Cu are HxW order to match the Bspec table, not
+       * WxH order like you might expect.
+       */
+#define tile_extent2d(bs, cv, cu, a) \
+      isl_extent4d((1 << cu) / bs, 1 << cv, 1, a)
+#define tile_extent3d(bs, cr, cv, cu) \
+      isl_extent4d((1 << cu) / bs, 1 << cv, 1 << cr, 1)
+
+      if (dim == ISL_SURF_DIM_3D) {
+          switch (format_bpb) {
+          case 128: logical_el = tile_extent3d(bs, 4, 4, 8); break;
+          case  64: logical_el = tile_extent3d(bs, 4, 4, 8); break;
+          case  32: logical_el = tile_extent3d(bs, 4, 5, 7); break;
+          case  16: logical_el = tile_extent3d(bs, 5, 5, 6); break;
+          case   8: logical_el = tile_extent3d(bs, 5, 5, 6); break;
+          default: unreachable("Unsupported format size for 3D");
+          }
+      } else {
+          if (samples == 1 || msaa_layout == ISL_MSAA_LAYOUT_INTERLEAVED) {
+              switch (format_bpb) {
+              case 128: logical_el = tile_extent2d(bs, 6, 10, 1); break;
+              case  64: logical_el = tile_extent2d(bs, 6, 10, 1); break;
+              case  32: logical_el = tile_extent2d(bs, 7,  9, 1); break;
+              case  16: logical_el = tile_extent2d(bs, 7,  9, 1); break;
+              case   8: logical_el = tile_extent2d(bs, 8,  8, 1); break;
+              default: unreachable("Unsupported format size.");
+              }
+          } else if (samples == 2) {
+              switch (format_bpb) {
+              case 128: logical_el = tile_extent2d(bs, 5, 10, 2); break;
+              case  64: logical_el = tile_extent2d(bs, 6,  9, 2); break;
+              case  32: logical_el = tile_extent2d(bs, 7,  8, 2); break;
+              case  16: logical_el = tile_extent2d(bs, 7,  8, 2); break;
+              case   8: logical_el = tile_extent2d(bs, 8,  7, 2); break;
+              default: unreachable("Unsupported format size.");
+              }
+          } else if (samples == 4) {
+              switch (format_bpb) {
+              case 128: logical_el = tile_extent2d(bs, 5,  9, 4); break;
+              case  64: logical_el = tile_extent2d(bs, 5,  9, 4); break;
+              case  32: logical_el = tile_extent2d(bs, 6,  8, 4); break;
+              case  16: logical_el = tile_extent2d(bs, 6,  8, 4); break;
+              case   8: logical_el = tile_extent2d(bs, 7,  7, 4); break;
+              default: unreachable("Unsupported format size.");
+              }
+          } else if (samples == 8) {
+              switch (format_bpb) {
+              case 128: logical_el = tile_extent2d(bs, 5,  8, 8); break;
+              case  64: logical_el = tile_extent2d(bs, 5,  8, 8); break;
+              case  32: logical_el = tile_extent2d(bs, 5,  8, 8); break;
+              case  16: logical_el = tile_extent2d(bs, 6,  7, 8); break;
+              case   8: logical_el = tile_extent2d(bs, 6,  7, 8); break;
+              default: unreachable("Unsupported format size.");
+              }
+          } else if (samples == 16) {
+              switch (format_bpb) {
+              case 128: logical_el = tile_extent2d(bs, 4,  8, 16); break;
+              case  64: logical_el = tile_extent2d(bs, 5,  7, 16); break;
+              case  32: logical_el = tile_extent2d(bs, 5,  7, 16); break;
+              case  16: logical_el = tile_extent2d(bs, 5,  7, 16); break;
+              case   8: logical_el = tile_extent2d(bs, 6,  6, 16); break;
+              default: unreachable("Unsupported format size.");
+              }
+          }
+      }
+
+#undef tile_extent2d
+#undef tile_extent3d
+
+      phys_B.w = logical_el.w * bs;
+      phys_B.h = 64 * 1024 / phys_B.w;
+      break;
+
    case ISL_TILING_HIZ:
       /* HiZ buffers are required to have a 128bpb HiZ format. The tiling has
        * the same physical dimensions as Y-tiling but actually has two HiZ
@@ -1032,7 +1114,7 @@ isl_surf_choose_tiling(const struct isl_device *dev,
     * shapes.
     */
    if (info->usage & ISL_SURF_USAGE_SPARSE_BIT) {
-      CHOOSE(ISL_TILING_64);
+      CHOOSE(ISL_GFX_VER(dev) >= 20 ? ISL_TILING_64_XE2 : ISL_TILING_64);
       CHOOSE(ISL_TILING_ICL_Ys);
       CHOOSE(ISL_TILING_SKL_Ys);
    }
@@ -1059,7 +1141,7 @@ isl_surf_choose_tiling(const struct isl_device *dev,
    CHOOSE(ISL_TILING_ICL_Yf);
    CHOOSE(ISL_TILING_SKL_Ys);
    CHOOSE(ISL_TILING_ICL_Ys);
-   CHOOSE(ISL_TILING_64);
+   CHOOSE(ISL_GFX_VER(dev) >= 20 ? ISL_TILING_64_XE2 : ISL_TILING_64);
 
    CHOOSE(ISL_TILING_X);
    CHOOSE(ISL_TILING_W);
@@ -1538,6 +1620,7 @@ isl_get_miptail_level_offset_el(enum isl_tiling tiling,
    case ISL_SURF_DIM_2D:
       switch (tiling) {
       case ISL_TILING_64:
+      case ISL_TILING_64_XE2:
       case ISL_TILING_ICL_Yf:
       case ISL_TILING_ICL_Ys:
          assert(row < ARRAY_SIZE(icl_std_y_2d_miptail_offset_el));
@@ -1561,6 +1644,7 @@ isl_get_miptail_level_offset_el(enum isl_tiling tiling,
    case ISL_SURF_DIM_3D:
       switch (tiling) {
       case ISL_TILING_64:
+      case ISL_TILING_64_XE2:
          assert(row < ARRAY_SIZE(acm_tile64_3d_miptail_offset_el));
          assert(col < ARRAY_SIZE(acm_tile64_3d_miptail_offset_el[0]));
          *x_offset_el = acm_tile64_3d_miptail_offset_el[row][col][0];
@@ -1618,7 +1702,8 @@ isl_choose_miptail_start_level(const struct isl_device *dev,
    if (ISL_GFX_VER(dev) == 12 && isl_format_is_yuv(info->format))
       return 15;
 
-   assert(tile_info->tiling == ISL_TILING_64 || isl_tiling_is_std_y(tile_info->tiling));
+   assert(isl_tiling_is_64(tile_info->tiling) ||
+          isl_tiling_is_std_y(tile_info->tiling));
    assert(info->samples == 1);
 
    uint32_t max_miptail_levels = tile_info->max_miptail_levels;
@@ -1840,7 +1925,7 @@ isl_calc_phys_slice0_extent_sa_gfx4_2d(
 
       if (l >= miptail_start_level) {
          assert(l == miptail_start_level);
-         assert(tile_info->tiling == ISL_TILING_64 ||
+         assert(isl_tiling_is_64(tile_info->tiling) ||
                 isl_tiling_is_std_y(tile_info->tiling));
          assert(w == tile_info->logical_extent_el.w * fmtl->bw);
          assert(h == tile_info->logical_extent_el.h * fmtl->bh);
@@ -1883,7 +1968,7 @@ isl_calc_phys_total_extent_el_gfx4_2d(
                                            array_pitch_span,
                                            &phys_slice0_sa);
 
-   if (tile_info->tiling == ISL_TILING_64 ||
+   if (isl_tiling_is_64(tile_info->tiling) ||
        isl_tiling_is_std_y(tile_info->tiling)) {
       *phys_total_el = (struct isl_extent4d) {
          .w = isl_align_div_npot(phys_slice0_sa.w, fmtl->bw),
@@ -2259,8 +2344,8 @@ isl_calc_min_row_pitch(const struct isl_device *dev,
 }
 
 /**
- * Is `pitch` in the valid range for a hardware bitfield, if the bitfield's
- * size is `bits` bits?
+ * Is ``pitch`` in the valid range for a hardware bitfield, if the bitfield's
+ * size is ``bits`` bits?
  *
  * Hardware pitch fields are offset by 1. For example, if the size of
  * RENDER_SURFACE_STATE::SurfacePitch is B bits, then the range of valid
@@ -2295,7 +2380,7 @@ _isl_notify_failure(const struct isl_surf_init_info *surf_info,
 
    snprintf(msg + ret, sizeof(msg) - ret,
             " extent=%ux%ux%u dim=%s msaa=%ux levels=%u rpitch=%u fmt=%s "
-            "usages=%s%s%s%s%s%s%s%s%s%s%s%s%s%s "
+            "usages=%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s "
             "tiling_flags=%s%s%s%s%s%s%s%s%s%s%s%s%s",
             surf_info->width, surf_info->height,
             surf_info->dim == ISL_SURF_DIM_3D ?
@@ -2306,20 +2391,22 @@ _isl_notify_failure(const struct isl_surf_init_info *surf_info,
             surf_info->row_pitch_B,
             isl_format_get_name(surf_info->format) + strlen("ISL_FORMAT_"),
 
-            PRINT_USAGE(RENDER_TARGET,   "rt"),
-            PRINT_USAGE(DEPTH,           "depth"),
-            PRINT_USAGE(STENCIL,         "stenc"),
-            PRINT_USAGE(TEXTURE,         "tex"),
-            PRINT_USAGE(CUBE,            "cube"),
-            PRINT_USAGE(DISABLE_AUX,     "noaux"),
-            PRINT_USAGE(DISPLAY,         "disp"),
-            PRINT_USAGE(HIZ,             "hiz"),
-            PRINT_USAGE(MCS,             "mcs"),
-            PRINT_USAGE(CCS,             "ccs"),
-            PRINT_USAGE(VERTEX_BUFFER,   "vb"),
-            PRINT_USAGE(INDEX_BUFFER,    "ib"),
-            PRINT_USAGE(CONSTANT_BUFFER, "const"),
-            PRINT_USAGE(STAGING,         "stage"),
+            PRINT_USAGE(RENDER_TARGET,       "rt"),
+            PRINT_USAGE(DEPTH,               "depth"),
+            PRINT_USAGE(STENCIL,             "stenc"),
+            PRINT_USAGE(TEXTURE,             "tex"),
+            PRINT_USAGE(CUBE,                "cube"),
+            PRINT_USAGE(DISABLE_AUX,         "noaux"),
+            PRINT_USAGE(DISPLAY,             "disp"),
+            PRINT_USAGE(HIZ,                 "hiz"),
+            PRINT_USAGE(MCS,                 "mcs"),
+            PRINT_USAGE(CCS,                 "ccs"),
+            PRINT_USAGE(VERTEX_BUFFER,       "vb"),
+            PRINT_USAGE(INDEX_BUFFER,        "ib"),
+            PRINT_USAGE(CONSTANT_BUFFER,     "const"),
+            PRINT_USAGE(STAGING,             "stage"),
+            PRINT_USAGE(SPARSE,              "sparse"),
+            PRINT_USAGE(NO_AUX_TT_ALIGNMENT, "no-aux-align"),
 
             PRINT_TILING(LINEAR,         "linear"),
             PRINT_TILING(W,              "W"),
@@ -2610,8 +2697,10 @@ isl_calc_base_alignment(const struct isl_device *dev,
           * is that we haven't enable CCS on linear images yet so we can avoid
           * the extra alignment there.
           */
-         base_alignment_B = MAX(base_alignment_B, dev->info->verx10 >= 125 ?
-                                1024 * 1024 : 64 * 1024);
+         if (!(info->usage & ISL_SURF_USAGE_NO_AUX_TT_ALIGNMENT_BIT)) {
+            base_alignment_B = MAX(base_alignment_B, dev->info->verx10 >= 125 ?
+                                   1024 * 1024 : 64 * 1024);
+         }
       }
    }
 
@@ -2909,7 +2998,8 @@ isl_surf_supports_ccs(const struct isl_device *dev,
    if (surf->miptail_start_level < surf->levels) {
       const uint32_t miptail_levels = surf->levels - surf->miptail_start_level;
       if (miptail_levels + isl_get_miptail_base_row(surf->tiling) > 11) {
-         assert(surf->tiling == ISL_TILING_64 || isl_tiling_is_std_y(surf->tiling));
+         assert(isl_tiling_is_64(surf->tiling) ||
+                isl_tiling_is_std_y(surf->tiling));
          return false;
       }
    }
@@ -2943,6 +3033,12 @@ isl_surf_supports_ccs(const struct isl_device *dev,
       return false;
 
    if (ISL_GFX_VER(dev) >= 12) {
+      /* Wa_1406738321: 3D textures need a blit to a new surface in order to
+       * perform a resolve. For now, just disable CCS on TGL.
+       */
+      if (dev->info->verx10 == 120 && surf->dim == ISL_SURF_DIM_3D)
+         return false;
+
       if (isl_surf_usage_is_stencil(surf->usage)) {
          /* HiZ and MCS aren't allowed with stencil */
          assert(hiz_or_mcs_surf == NULL || hiz_or_mcs_surf->size_B == 0);
@@ -2950,11 +3046,41 @@ isl_surf_supports_ccs(const struct isl_device *dev,
          /* Multi-sampled stencil cannot have CCS */
          if (surf->samples > 1)
             return false;
+
+         /* No CCS support for 3D Depth/Stencil values
+          *
+          * According to HSD 22015614752, there are issues with multiple engines
+          * accessing the same CCS cacheline in parallel. For 2D depth/stencil,
+          * we can upgrade to Tile64 to avoid any issues,
+          * but we can't do the same for 3D depth/stencil.
+          *
+          * For that case, we can't use Tile64 because the depth/stencil
+          * hardware can't actually output 3D Tile64 data.
+          *
+          * Let's just disable CCS instead.
+          */
+         if (surf->dim == ISL_SURF_DIM_3D)
+            return false;
       } else if (isl_surf_usage_is_depth(surf->usage)) {
          const struct isl_surf *hiz_surf = hiz_or_mcs_surf;
 
          /* With depth surfaces, HIZ is required for CCS. */
          if (hiz_surf == NULL || hiz_surf->size_B == 0)
+            return false;
+
+         /* No CCS support for 3D Depth/Stencil values
+          *
+          * According to HSD 22015614752, there are issues with multiple engines
+          * accessing the same CCS cacheline in parallel. For 2D depth/stencil,
+          * we can upgrade to Tile64 to avoid any issues,
+          * but we can't do the same for 3D depth/stencil.
+          *
+          * For that case, we can't use Tile64 because the depth/stencil
+          * hardware can't actually output 3D Tile64 data.
+          *
+          * Let's just disable CCS instead.
+          */
+         if (surf->dim == ISL_SURF_DIM_3D)
             return false;
 
          assert(hiz_surf->usage & ISL_SURF_USAGE_HIZ_BIT);
@@ -2980,12 +3106,6 @@ isl_surf_supports_ccs(const struct isl_device *dev,
       if (surf->row_pitch_B % 512 != 0)
          return false;
 
-      /* TODO: According to Wa_1406738321, 3D textures need a blit to a new
-       * surface in order to perform a resolve. For now, just disable CCS.
-       */
-      if (surf->dim == ISL_SURF_DIM_3D)
-         return false;
-
       /* BSpec 44930: (Gfx12, Gfx12.5)
        *
        *    "Compression of 3D Ys surfaces with 64 or 128 bpp is not supported
@@ -2999,17 +3119,18 @@ isl_surf_supports_ccs(const struct isl_device *dev,
       if (ISL_GFX_VER(dev) == 12 &&
           surf->dim == ISL_SURF_DIM_3D &&
           (surf->tiling == ISL_TILING_ICL_Ys ||
-           surf->tiling == ISL_TILING_64) &&
+           isl_tiling_is_64(surf->tiling)) &&
           (format_bpb == 64 || format_bpb == 128))
          return false;
 
       /* TODO: Handle the other tiling formats */
-      if (surf->tiling != ISL_TILING_Y0 && surf->tiling != ISL_TILING_4 &&
-          surf->tiling != ISL_TILING_64)
+      if (surf->tiling != ISL_TILING_Y0 &&
+          surf->tiling != ISL_TILING_4 &&
+          !isl_tiling_is_64(surf->tiling))
          return false;
 
       /* TODO: Handle single-sampled Tile64. */
-      if (surf->samples == 1 && surf->tiling == ISL_TILING_64)
+      if (surf->samples == 1 && isl_tiling_is_64(surf->tiling))
          return false;
    } else {
       /* ISL_GFX_VER(dev) < 12 */
@@ -3213,7 +3334,8 @@ get_image_offset_sa_gfx4_2d(const struct isl_surf *surf,
       (surf->msaa_layout == ISL_MSAA_LAYOUT_ARRAY ? surf->samples : 1);
 
    uint32_t x = 0, y;
-   if (isl_tiling_is_std_y(surf->tiling) || surf->tiling == ISL_TILING_64) {
+   if (isl_tiling_is_std_y(surf->tiling) ||
+       isl_tiling_is_64(surf->tiling)) {
       y = 0;
       if (surf->dim == ISL_SURF_DIM_3D) {
          *z_offset_sa = logical_array_layer;
@@ -3727,7 +3849,8 @@ isl_surf_get_uncompressed_surf(const struct isl_device *dev,
    /* If we ever enable 3D block formats, we'll need to re-think this */
    assert(fmtl->bd == 1);
 
-   if (isl_tiling_is_std_y(surf->tiling) || surf->tiling == ISL_TILING_64) {
+   if (isl_tiling_is_std_y(surf->tiling) ||
+       isl_tiling_is_64(surf->tiling)) {
       /* If the requested level is not part of the miptail, we just offset to
        * the requested level. Because we're using standard tilings and aren't
        * in the miptail, arrays and 3D textures should just work so long as we
@@ -4413,4 +4536,40 @@ isl_tiling_to_name(enum isl_tiling tiling)
    };
    assert(tiling < ARRAY_SIZE(names));
    return names[tiling];
+}
+
+const char *
+isl_aux_usage_to_name(enum isl_aux_usage usage)
+{
+   static const char *names[] = {
+      [ISL_AUX_USAGE_NONE]       = "none",
+      [ISL_AUX_USAGE_HIZ]        = "hiz",
+      [ISL_AUX_USAGE_MCS]        = "mcs",
+      [ISL_AUX_USAGE_CCS_D]      = "ccs-d",
+      [ISL_AUX_USAGE_CCS_E]      = "ccs-e",
+      [ISL_AUX_USAGE_FCV_CCS_E]  = "fcv-ccs-e",
+      [ISL_AUX_USAGE_MC]         = "mc",
+      [ISL_AUX_USAGE_HIZ_CCS_WT] = "hiz-ccs-wt",
+      [ISL_AUX_USAGE_HIZ_CCS]    = "hiz-ccs",
+      [ISL_AUX_USAGE_MCS_CCS]    = "mcs-ccs",
+      [ISL_AUX_USAGE_STC_CCS]    = "stc-ccs",
+   };
+   assert(usage < ARRAY_SIZE(names));
+   return names[usage];
+}
+
+const char *
+isl_aux_state_to_name(enum isl_aux_state state)
+{
+   static const char *names[] = {
+      [ISL_AUX_STATE_CLEAR]               = "clear",
+      [ISL_AUX_STATE_PARTIAL_CLEAR]       = "partial_clear",
+      [ISL_AUX_STATE_COMPRESSED_CLEAR]    = "compressed_clear",
+      [ISL_AUX_STATE_COMPRESSED_NO_CLEAR] = "compressed_no_clear",
+      [ISL_AUX_STATE_RESOLVED]            = "resolved",
+      [ISL_AUX_STATE_PASS_THROUGH]        = "pass-through",
+      [ISL_AUX_STATE_AUX_INVALID]         = "invalid",
+   };
+   assert(state < ARRAY_SIZE(names));
+   return names[state];
 }

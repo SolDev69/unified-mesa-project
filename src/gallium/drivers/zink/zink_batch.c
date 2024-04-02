@@ -178,8 +178,8 @@ zink_reset_batch_state(struct zink_context *ctx, struct zink_batch_state *bs)
       zink_fence_reference(screen, mfence, NULL);
    util_dynarray_clear(&bs->fences);
 
-   bs->unordered_write_access = 0;
-   bs->unordered_write_stages = 0;
+   bs->unordered_write_access = VK_ACCESS_NONE;
+   bs->unordered_write_stages = VK_PIPELINE_STAGE_NONE;
 
    /* only increment batch generation if previously in-use to avoid false detection of batch completion */
    if (bs->fence.submitted)
@@ -717,9 +717,10 @@ submit_queue(void *data, void *gdata, int thread_index)
          mb.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
          mb.pNext = NULL;
          mb.srcAccessMask = bs->unordered_write_access;
-         mb.dstAccessMask = 0;
+         mb.dstAccessMask = VK_ACCESS_NONE;
          VKSCR(CmdPipelineBarrier)(bs->reordered_cmdbuf,
-                                   bs->unordered_write_stages, 0,
+                                   bs->unordered_write_stages,
+                                   screen->info.have_KHR_synchronization2 ? VK_PIPELINE_STAGE_NONE : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                                    0, 1, &mb, 0, NULL, 0, NULL);
       }
       VRAM_ALLOC_LOOP(result,
@@ -899,11 +900,11 @@ static int
 batch_find_resource(struct zink_batch_state *bs, struct zink_resource_object *obj, struct zink_batch_obj_list *list)
 {
    unsigned hash = obj->bo->unique_id & (BUFFER_HASHLIST_SIZE-1);
-   int i = bs->buffer_indices_hashlist[hash];
+   int buffer_index = bs->buffer_indices_hashlist[hash];
 
    /* not found or found */
-   if (i < 0 || (i < list->num_buffers && list->objs[i] == obj))
-      return i;
+   if (buffer_index < 0 || (buffer_index < list->num_buffers && list->objs[buffer_index] == obj))
+      return buffer_index;
 
    /* Hash collision, look for the BO in the list of list->objs linearly. */
    for (int i = list->num_buffers - 1; i >= 0; i--) {

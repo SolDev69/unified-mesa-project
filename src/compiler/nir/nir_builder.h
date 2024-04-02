@@ -1003,7 +1003,7 @@ nir_udiv_imm(nir_builder *build, nir_def *x, uint64_t y)
 
    if (y == 1) {
       return x;
-   } else if (util_is_power_of_two_nonzero(y)) {
+   } else if (util_is_power_of_two_nonzero64(y)) {
       return nir_ushr_imm(build, x, ffsll(y) - 1);
    } else {
       return nir_udiv(build, x, nir_imm_intN_t(build, y, x->bit_size));
@@ -1015,7 +1015,7 @@ nir_umod_imm(nir_builder *build, nir_def *x, uint64_t y)
 {
    assert(y > 0 && y <= u_uintN_max(x->bit_size));
 
-   if (util_is_power_of_two_nonzero(y)) {
+   if (util_is_power_of_two_nonzero64(y)) {
       return nir_iand_imm(build, x, y - 1);
    } else {
       return nir_umod(build, x, nir_imm_intN_t(build, y, x->bit_size));
@@ -1600,6 +1600,16 @@ nir_build_deref_follower(nir_builder *b, nir_deref_instr *parent,
                                                  leader->cast.ptr_stride,
                                                  leader->cast.align_mul,
                                                  leader->cast.align_offset);
+
+   case nir_deref_type_ptr_as_array: {
+      assert(parent->deref_type == nir_deref_type_array ||
+             parent->deref_type == nir_deref_type_ptr_as_array ||
+             parent->deref_type == nir_deref_type_cast);
+      nir_def *index = nir_i2iN(b, leader->arr.index.ssa,
+                                parent->def.bit_size);
+      return nir_build_deref_ptr_as_array(b, parent, index);
+   }
+
    default:
       unreachable("Invalid deref instruction type");
    }
@@ -2030,12 +2040,12 @@ nir_goto(nir_builder *build, struct nir_block *target)
 }
 
 static inline void
-nir_goto_if(nir_builder *build, struct nir_block *target, nir_src cond,
+nir_goto_if(nir_builder *build, struct nir_block *target, nir_def *cond,
             struct nir_block *else_target)
 {
    assert(!build->impl->structured);
    nir_jump_instr *jump = nir_jump_instr_create(build->shader, nir_jump_goto_if);
-   jump->condition = cond;
+   jump->condition = nir_src_for_ssa(cond);
    jump->target = target;
    jump->else_target = else_target;
    nir_builder_instr_insert(build, &jump->instr);

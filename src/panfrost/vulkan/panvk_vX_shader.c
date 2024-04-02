@@ -29,7 +29,12 @@
 
 #include "genxml/gen_macros.h"
 
-#include "panvk_private.h"
+#include "panvk_device.h"
+#include "panvk_instance.h"
+#include "panvk_physical_device.h"
+#include "panvk_pipeline.h"
+#include "panvk_pipeline_layout.h"
+#include "panvk_shader.h"
 
 #include "spirv/nir_spirv.h"
 #include "util/mesa-sha1.h"
@@ -121,7 +126,7 @@ panvk_lower_sysvals(nir_builder *b, nir_instr *instr, void *data)
 }
 
 static void
-panvk_lower_blend(struct panfrost_device *pdev, nir_shader *nir,
+panvk_lower_blend(struct panvk_device *dev, nir_shader *nir,
                   struct panfrost_compile_inputs *inputs,
                   struct pan_blend_state *blend_state)
 {
@@ -135,7 +140,7 @@ panvk_lower_blend(struct panfrost_device *pdev, nir_shader *nir,
    for (unsigned rt = 0; rt < blend_state->rt_count; rt++) {
       struct pan_blend_rt_state *rt_state = &blend_state->rts[rt];
 
-      if (!panvk_per_arch(blend_needs_lowering)(pdev, blend_state, rt))
+      if (!panvk_per_arch(blend_needs_lowering)(dev, blend_state, rt))
          continue;
 
       enum pipe_format fmt = rt_state->format;
@@ -218,7 +223,10 @@ panvk_per_arch(shader_create)(struct panvk_device *dev, gl_shader_stage stage,
                               const VkAllocationCallbacks *alloc)
 {
    VK_FROM_HANDLE(vk_shader_module, module, stage_info->module);
-   struct panfrost_device *pdev = &dev->physical_device->pdev;
+   struct panvk_physical_device *phys_dev =
+      to_panvk_physical_device(dev->vk.physical);
+   struct panvk_instance *instance =
+      to_panvk_instance(dev->vk.physical->instance);
    struct panvk_shader *shader;
 
    shader = vk_zalloc2(&dev->vk.alloc, alloc, sizeof(*shader), 8,
@@ -254,7 +262,7 @@ panvk_per_arch(shader_create)(struct panvk_device *dev, gl_shader_stage stage,
               true, true);
 
    struct panfrost_compile_inputs inputs = {
-      .gpu_id = panfrost_device_gpu_id(pdev),
+      .gpu_id = phys_dev->kmod.props.gpu_prod_id,
       .no_ubo_to_push = true,
       .no_idvs = true, /* TODO */
    };
@@ -338,8 +346,7 @@ panvk_per_arch(shader_create)(struct panvk_device *dev, gl_shader_stage stage,
    NIR_PASS_V(nir, nir_lower_global_vars_to_local);
 
    nir_shader_gather_info(nir, nir_shader_get_entrypoint(nir));
-   if (unlikely(dev->physical_device->instance->debug_flags &
-                PANVK_DEBUG_NIR)) {
+   if (unlikely(instance->debug_flags & PANVK_DEBUG_NIR)) {
       fprintf(stderr, "translated nir:\n");
       nir_print_shader(nir, stderr);
    }
@@ -347,8 +354,12 @@ panvk_per_arch(shader_create)(struct panvk_device *dev, gl_shader_stage stage,
    pan_shader_preprocess(nir, inputs.gpu_id);
 
    if (stage == MESA_SHADER_FRAGMENT) {
-      panvk_lower_blend(pdev, nir, &inputs, blend_state);
+      panvk_lower_blend(dev, nir, &inputs, blend_state);
    }
+
+   if (stage == MESA_SHADER_VERTEX)
+      NIR_PASS_V(nir, pan_lower_image_index,
+                 util_bitcount64(nir->info.inputs_read));
 
    struct sysval_options sysval_options = {
       .static_blend_constants =
@@ -365,7 +376,7 @@ panvk_per_arch(shader_create)(struct panvk_device *dev, gl_shader_stage stage,
       for (unsigned rt = 0; rt < MAX_RTS; ++rt)
          rt_formats[rt] = blend_state->rts[rt].format;
 
-      NIR_PASS_V(nir, GENX(pan_inline_rt_conversion), pdev, rt_formats);
+      NIR_PASS_V(nir, GENX(pan_inline_rt_conversion), rt_formats);
    }
 
    GENX(pan_shader_compile)(nir, &inputs, &shader->binary, &shader->info);
@@ -386,4 +397,45 @@ panvk_per_arch(shader_create)(struct panvk_device *dev, gl_shader_stage stage,
    ralloc_free(nir);
 
    return shader;
+}
+
+void
+panvk_per_arch(shader_destroy)(struct panvk_device *dev,
+                               struct panvk_shader *shader,
+                               const VkAllocationCallbacks *alloc)
+{
+   util_dynarray_fini(&shader->binary);
+   vk_free2(&dev->vk.alloc, alloc, shader);
+}
+
+bool
+panvk_per_arch(blend_needs_lowering)(const struct panvk_device *dev,
+                                     const struct pan_blend_state *state,
+                                     unsigned rt)
+{
+   /* LogicOp requires a blend shader */
+   if (state->logicop_enable)
+      return true;
+
+   /* Not all formats can be blended by fixed-function hardware */
+   if (!panfrost_blendable_formats_v7[state->rts[rt].format].internal)
+      return true;
+
+   unsigned constant_mask = pan_blend_constant_mask(state->rts[rt].equation);
+
+   /* v6 doesn't support blend constants in FF blend equations.
+    * v7 only uses the constant from RT 0 (TODO: what if it's the same
+    * constant? or a constant is shared?)
+    */
+   if (constant_mask && (PAN_ARCH == 6 || (PAN_ARCH == 7 && rt > 0)))
+      return true;
+
+   if (!pan_blend_is_homogenous_constant(constant_mask, state->constants))
+      return true;
+
+   struct panvk_physical_device *phys_dev =
+      to_panvk_physical_device(dev->vk.physical);
+   unsigned arch = pan_arch(phys_dev->kmod.props.gpu_prod_id);
+   bool supports_2src = pan_blend_supports_2src(arch);
+   return !pan_blend_can_fixed_function(state->rts[rt].equation, supports_2src);
 }

@@ -47,8 +47,10 @@ static const struct debug_named_value shader_debug_options[] = {
    {"nocache",    IR3_DBG_NOCACHE,    "Disable shader cache"},
    {"spillall",   IR3_DBG_SPILLALL,   "Spill as much as possible to test the spiller"},
    {"nopreamble", IR3_DBG_NOPREAMBLE, "Disable the preamble pass"},
-#ifdef DEBUG
-   /* DEBUG-only options: */
+   {"fullsync",   IR3_DBG_FULLSYNC,   "Add (sy) + (ss) after each cat5/cat6"},
+   {"fullnop",    IR3_DBG_FULLNOP,    "Add nops before each instruction"},
+#if MESA_DEBUG
+   /* MESA_DEBUG-only options: */
    {"schedmsgs",  IR3_DBG_SCHEDMSGS,  "Enable scheduler debug messages"},
    {"ramsgs",     IR3_DBG_RAMSGS,     "Enable register-allocation debug messages"},
 #endif
@@ -154,6 +156,10 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
 
    compiler->local_mem_size = dev_info->cs_shared_mem_size;
 
+   compiler->num_predicates = 1;
+   compiler->bitops_can_write_predicates = false;
+   compiler->has_branch_and_or = false;
+
    if (compiler->gen >= 6) {
       compiler->samgq_workaround = true;
       /* a6xx split the pipeline state into geometry and fragment state, in
@@ -208,6 +214,11 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
 
       compiler->has_fs_tex_prefetch = dev_info->a6xx.has_fs_tex_prefetch;
       compiler->stsc_duplication_quirk = dev_info->a7xx.stsc_duplication_quirk;
+      compiler->load_shader_consts_via_preamble = dev_info->a7xx.load_shader_consts_via_preamble;
+      compiler->load_inline_uniforms_via_preamble_ldgk = dev_info->a7xx.load_inline_uniforms_via_preamble_ldgk;
+      compiler->num_predicates = 4;
+      compiler->bitops_can_write_predicates = true;
+      compiler->has_branch_and_or = true;
    } else {
       compiler->max_const_pipeline = 512;
       compiler->max_const_geom = 512;

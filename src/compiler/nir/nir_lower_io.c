@@ -340,6 +340,11 @@ emit_load(struct lower_io_state *state,
          var->data.precision == GLSL_PRECISION_MEDIUM ||
          var->data.precision == GLSL_PRECISION_LOW;
       semantics.high_dvec2 = high_dvec2;
+      /* "per_vertex" is misnamed. It means "explicit interpolation with
+       * the original vertex order", which is a stricter version of
+       * INTERP_MODE_EXPLICIT.
+       */
+      semantics.interp_explicit_strict = var->data.per_vertex;
       nir_intrinsic_set_io_semantics(load, semantics);
    }
 
@@ -2719,6 +2724,7 @@ nir_get_io_offset_src_number(const nir_intrinsic_instr *instr)
    case nir_intrinsic_load_shared:
    case nir_intrinsic_load_task_payload:
    case nir_intrinsic_load_uniform:
+   case nir_intrinsic_load_push_constant:
    case nir_intrinsic_load_kernel_input:
    case nir_intrinsic_load_global:
    case nir_intrinsic_load_global_2x32:
@@ -2731,6 +2737,7 @@ nir_get_io_offset_src_number(const nir_intrinsic_instr *instr)
    case nir_intrinsic_task_payload_atomic_swap:
    case nir_intrinsic_global_atomic:
    case nir_intrinsic_global_atomic_swap:
+   case nir_intrinsic_load_coefficients_agx:
       return 0;
    case nir_intrinsic_load_ubo:
    case nir_intrinsic_load_ssbo:
@@ -3190,8 +3197,7 @@ type_size_vec4(const struct glsl_type *type, bool bindless)
 void
 nir_lower_io_passes(nir_shader *nir, bool renumber_vs_inputs)
 {
-   if (!nir->options->lower_io_variables ||
-       nir->info.stage == MESA_SHADER_COMPUTE)
+   if (nir->info.stage == MESA_SHADER_COMPUTE)
       return;
 
    bool has_indirect_inputs =
@@ -3228,8 +3234,14 @@ nir_lower_io_passes(nir_shader *nir, bool renumber_vs_inputs)
       NIR_PASS_V(nir, nir_lower_global_vars_to_local);
    }
 
+   /* The correct lower_64bit_to_32 flag is required by st/mesa depending
+    * on whether the GLSL linker lowers IO or not. Setting the wrong flag
+    * would break 64-bit vertex attribs for GLSL.
+    */
    NIR_PASS_V(nir, nir_lower_io, nir_var_shader_out | nir_var_shader_in,
-              type_size_vec4, nir_lower_io_lower_64bit_to_32);
+              type_size_vec4,
+              renumber_vs_inputs ? nir_lower_io_lower_64bit_to_32_new :
+                                   nir_lower_io_lower_64bit_to_32);
 
    /* nir_io_add_const_offset_to_base needs actual constants. */
    NIR_PASS_V(nir, nir_opt_constant_folding);
@@ -3259,6 +3271,9 @@ nir_lower_io_passes(nir_shader *nir, bool renumber_vs_inputs)
 
    if (nir->xfb_info)
       NIR_PASS_V(nir, nir_io_add_intrinsic_xfb_info);
+
+   if (nir->options->lower_mediump_io)
+      nir->options->lower_mediump_io(nir);
 
    nir->info.io_lowered = true;
 }

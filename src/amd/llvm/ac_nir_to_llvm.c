@@ -3037,6 +3037,7 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
 
    switch (instr->intrinsic) {
    case nir_intrinsic_ballot:
+   case nir_intrinsic_ballot_relaxed:
       result = ac_build_ballot(&ctx->ac, get_src(ctx, instr->src[0]));
       if (instr->def.bit_size > ctx->ac.wave_size) {
          LLVMTypeRef dest_type = LLVMIntTypeInContext(ctx->ac.context, instr->def.bit_size);
@@ -3057,6 +3058,7 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
          ac_build_readlane(&ctx->ac, get_src(ctx, instr->src[0]), get_src(ctx, instr->src[1]));
       break;
    case nir_intrinsic_read_first_invocation:
+   case nir_intrinsic_as_uniform:
       result = ac_build_readlane(&ctx->ac, get_src(ctx, instr->src[0]), NULL);
       break;
    case nir_intrinsic_load_subgroup_invocation:
@@ -3072,9 +3074,21 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
       result = ac_build_gather_values(&ctx->ac, values, 3);
       break;
    }
+   case nir_intrinsic_load_tess_rel_patch_id_amd:
+      switch (ctx->stage) {
+      case MESA_SHADER_TESS_CTRL:
+         result = ac_unpack_param(&ctx->ac, ac_get_arg(&ctx->ac, ctx->args->tcs_rel_ids), 0, 8);
+         break;
+      case MESA_SHADER_TESS_EVAL:
+         result = ctx->abi->tes_rel_patch_id_replaced ? ctx->abi->tes_rel_patch_id_replaced :
+                  ac_get_arg(&ctx->ac, ctx->args->tes_rel_patch_id);
+         break;
+      default:
+         unreachable("invalid stage");
+      }
+      break;
    case nir_intrinsic_load_base_vertex:
    case nir_intrinsic_load_first_vertex:
-   case nir_intrinsic_load_tess_rel_patch_id_amd:
    case nir_intrinsic_load_ring_attr_amd:
    case nir_intrinsic_load_lds_ngg_scratch_base_amd:
    case nir_intrinsic_load_lds_ngg_gs_out_vertex_base_amd:
@@ -3643,27 +3657,17 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
       LLVMSetMetadata(result, ctx->ac.invariant_load_md_kind, ctx->ac.empty_md);
       break;
    }
-   case nir_intrinsic_ordered_xfb_counter_add_amd: {
-      /* must be called in a single lane of a workgroup. */
-      LLVMTypeRef gdsptr = LLVMPointerType(ctx->ac.i32, AC_ADDR_SPACE_GDS);
-
+   case nir_intrinsic_ordered_xfb_counter_add_gfx11_amd: {
       /* Gfx11 GDS instructions only operate on the first active lane. All other lanes are
        * ignored. So are their EXEC bits. This uses the mutex feature of ds_ordered_count
        * to emulate a multi-dword atomic.
        *
        * This is the expected code:
        *    ds_ordered_count release=0 done=0   // lock mutex
-       *    if (gfx_level >= GFX11) {
-       *       ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_0
-       *       ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_1
-       *       ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_2
-       *       ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_3
-       *    } else {
-       *       ds_add_rtn_u32 dwords_written0
-       *       ds_add_rtn_u32 dwords_written1
-       *       ds_add_rtn_u32 dwords_written2
-       *       ds_add_rtn_u32 dwords_written3
-       *    }
+       *    ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_0
+       *    ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_1
+       *    ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_2
+       *    ds_add_gs_reg_rtn GDS_STRMOUT_DWORDS_WRITTEN_3
        *    ds_ordered_count release=1 done=1   // unlock mutex
        *
        * GDS_STRMOUT_DWORDS_WRITTEN_n are just general-purpose global registers. We use them
@@ -3671,7 +3675,8 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
        * save and restore GDS memory.
        */
       LLVMValueRef args[8] = {
-         LLVMBuildIntToPtr(ctx->ac.builder, get_src(ctx, instr->src[0]), gdsptr, ""),
+         LLVMBuildIntToPtr(ctx->ac.builder, get_src(ctx, instr->src[0]),
+                           LLVMPointerType(ctx->ac.i32, AC_ADDR_SPACE_GDS), ""),
          ctx->ac.i32_0,                             /* value to add */
          ctx->ac.i32_0,                             /* ordering */
          ctx->ac.i32_0,                             /* scope */
@@ -3713,7 +3718,7 @@ static bool visit_intrinsic(struct ac_nir_context *ctx, nir_intrinsic_instr *ins
       result = ac_build_gather_values(&ctx->ac, global_count, instr->num_components);
       break;
    }
-   case nir_intrinsic_xfb_counter_sub_amd: {
+   case nir_intrinsic_xfb_counter_sub_gfx11_amd: {
       /* must be called in a single lane of a workgroup. */
       LLVMValueRef sub_vec = get_src(ctx, instr->src[0]);
       unsigned write_mask = nir_intrinsic_write_mask(instr);

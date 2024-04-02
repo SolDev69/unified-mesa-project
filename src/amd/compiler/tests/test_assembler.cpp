@@ -79,7 +79,7 @@ BEGIN_TEST(assembler.long_jump.unconditional_forwards)
    //! s_nop 0                                                     ; bf800000
    //!(then repeated 32767 times)
    for (unsigned i = 0; i < INT16_MAX + 1; i++)
-      bld.sopp(aco_opcode::s_nop, -1, 0);
+      bld.sopp(aco_opcode::s_nop, 0);
 
    //! BB2:
    //! s_endpgm                                                    ; bf810000
@@ -110,7 +110,7 @@ BEGIN_TEST(assembler.long_jump.conditional_forwards)
    //! s_nop 0 ; bf800000
    //!(then repeated 32767 times)
    for (unsigned i = 0; i < INT16_MAX + 1; i++)
-      bld.sopp(aco_opcode::s_nop, -1, 0);
+      bld.sopp(aco_opcode::s_nop, 0);
 
    //! BB2:
    //! s_endpgm                                                    ; bf810000
@@ -131,7 +131,7 @@ BEGIN_TEST(assembler.long_jump.unconditional_backwards)
    //! s_nop 0                                                     ; bf800000
    //!(then repeated 32767 times)
    for (unsigned i = 0; i < INT16_MAX + 1; i++)
-      bld.sopp(aco_opcode::s_nop, -1, 0);
+      bld.sopp(aco_opcode::s_nop, 0);
 
    //! s_getpc_b64 s[0:1]                                          ; be801f00
    //! s_addc_u32 s0, s0, 0xfffdfffc                               ; 8200ff00 fffdfffc
@@ -158,7 +158,7 @@ BEGIN_TEST(assembler.long_jump.conditional_backwards)
    //! s_nop 0                                                     ; bf800000
    //!(then repeated 32767 times)
    for (unsigned i = 0; i < INT16_MAX + 1; i++)
-      bld.sopp(aco_opcode::s_nop, -1, 0);
+      bld.sopp(aco_opcode::s_nop, 0);
 
    //! s_cbranch_execz BB1                                         ; bf880006
    //! s_getpc_b64 s[0:1]                                          ; be801f00
@@ -213,7 +213,7 @@ BEGIN_TEST(assembler.long_jump.constaddr)
    bld.reset(program->create_and_insert_block());
 
    for (unsigned i = 0; i < INT16_MAX + 1; i++)
-      bld.sopp(aco_opcode::s_nop, -1, 0);
+      bld.sopp(aco_opcode::s_nop, 0);
 
    bld.reset(program->create_and_insert_block());
 
@@ -249,7 +249,7 @@ BEGIN_TEST(assembler.long_jump.discard_early_exit)
    //!(then repeated 32766 times)
    //! s_endpgm                                                    ; bf810000
    for (unsigned i = 0; i < INT16_MAX; i++)
-      bld.sopp(aco_opcode::s_nop, -1, 1);
+      bld.sopp(aco_opcode::s_nop, 1);
 
    //! BB2:
    //! s_endpgm                                                    ; bf810000
@@ -269,8 +269,7 @@ BEGIN_TEST(assembler.v_add3)
 
       //~gfx9>> v_add3_u32 v0, 0, 0, 0 ; d1ff0000 02010080
       //~gfx10>> v_add3_u32 v0, 0, 0, 0 ; d76d0000 02010080
-      aco_ptr<VALU_instruction> add3{
-         create_instruction<VALU_instruction>(aco_opcode::v_add3_u32, Format::VOP3, 3, 1)};
+      aco_ptr<Instruction> add3{create_instruction(aco_opcode::v_add3_u32, Format::VOP3, 3, 1)};
       add3->operands[0] = Operand::zero();
       add3->operands[1] = Operand::zero();
       add3->operands[2] = Operand::zero();
@@ -288,13 +287,12 @@ BEGIN_TEST(assembler.v_add3_clamp)
 
       //~gfx9>> integer addition + clamp ; d1ff8000 02010080
       //~gfx10>> integer addition + clamp ; d76d8000 02010080
-      aco_ptr<VALU_instruction> add3{
-         create_instruction<VALU_instruction>(aco_opcode::v_add3_u32, Format::VOP3, 3, 1)};
+      aco_ptr<Instruction> add3{create_instruction(aco_opcode::v_add3_u32, Format::VOP3, 3, 1)};
       add3->operands[0] = Operand::zero();
       add3->operands[1] = Operand::zero();
       add3->operands[2] = Operand::zero();
       add3->definitions[0] = Definition(PhysReg(0), v1);
-      add3->clamp = 1;
+      add3->valu().clamp = 1;
       bld.insert(std::move(add3));
 
       finish_assembler_test();
@@ -1055,6 +1053,65 @@ BEGIN_TEST(assembler.vop3_dpp)
 
    //! v_cmp_lt_f32_e64_dpp s[4:5], |v1|, v2 dpp8:[0,0,0,0,0,0,0,0] fi:1 ; d4110104 000204ea 00000001
    bld.vopc_e64_dpp8(aco_opcode::v_cmp_lt_f32, dst_non_vcc, op_v1, op_v2)->valu().abs = 0x1;
+
+   finish_assembler_test();
+END_TEST
+
+BEGIN_TEST(assembler.vopd)
+   if (!setup_cs(NULL, GFX11))
+      return;
+
+   Definition dst_v0 = bld.def(v1);
+   dst_v0.setFixed(PhysReg(256));
+
+   Definition dst_v1 = bld.def(v1);
+   dst_v1.setFixed(PhysReg(256 + 1));
+
+   Operand op_v0(bld.tmp(v1));
+   op_v0.setFixed(PhysReg(256 + 0));
+
+   Operand op_v1(bld.tmp(v1));
+   op_v1.setFixed(PhysReg(256 + 1));
+
+   Operand op_v2(bld.tmp(v1));
+   op_v2.setFixed(PhysReg(256 + 2));
+
+   Operand op_v3(bld.tmp(v1));
+   op_v3.setFixed(PhysReg(256 + 3));
+
+   Operand op_s0(bld.tmp(s1));
+   op_s0.setFixed(PhysReg(0));
+
+   Operand op_vcc(bld.tmp(s1));
+   op_vcc.setFixed(vcc);
+
+   //>> BB0:
+   //! v_dual_mov_b32 v0, v0 :: v_dual_mov_b32 v1, v1 ; ca100100 00000101
+   bld.vopd(aco_opcode::v_dual_mov_b32, dst_v0, dst_v1, op_v0, op_v1, aco_opcode::v_dual_mov_b32);
+
+   //! v_dual_mov_b32 v0, 0x60 :: v_dual_mov_b32 v1, s0 ; ca1000ff 00000000 00000060
+   bld.vopd(aco_opcode::v_dual_mov_b32, dst_v0, dst_v1, Operand::c32(96), op_s0,
+            aco_opcode::v_dual_mov_b32);
+
+   //! v_dual_mov_b32 v0, s0 :: v_dual_mov_b32 v1, 0x60 ; ca100000 000000ff 00000060
+   bld.vopd(aco_opcode::v_dual_mov_b32, dst_v0, dst_v1, op_s0, Operand::c32(96),
+            aco_opcode::v_dual_mov_b32);
+
+   //! v_dual_mul_f32 v0, v0, v1 :: v_dual_mov_b32 v1, v2 ; c8d00300 00000102
+   bld.vopd(aco_opcode::v_dual_mul_f32, dst_v0, dst_v1, op_v0, op_v1, op_v2,
+            aco_opcode::v_dual_mov_b32);
+
+   //! v_dual_fmac_f32 v0, v1, v2 :: v_dual_mov_b32 v1, v3 ; c8100501 00000103
+   bld.vopd(aco_opcode::v_dual_fmac_f32, dst_v0, dst_v1, op_v1, op_v2, op_v0, op_v3,
+            aco_opcode::v_dual_mov_b32);
+
+   //! v_dual_mov_b32 v0, v0 :: v_dual_and_b32 v1, v1, v2 ; ca240100 00000501
+   bld.vopd(aco_opcode::v_dual_mov_b32, dst_v0, dst_v1, op_v0, op_v1, op_v2,
+            aco_opcode::v_dual_and_b32);
+
+   //! v_dual_cndmask_b32 v0, v0, v1 :: v_dual_cndmask_b32 v1, v2, v3 ; ca520300 00000702
+   bld.vopd(aco_opcode::v_dual_cndmask_b32, dst_v0, dst_v1, op_v0, op_v1, op_vcc, op_v2, op_v3,
+            op_vcc, aco_opcode::v_dual_cndmask_b32);
 
    finish_assembler_test();
 END_TEST

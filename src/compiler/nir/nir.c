@@ -2263,8 +2263,6 @@ nir_intrinsic_from_system_value(gl_system_value val)
       return nir_intrinsic_load_ray_launch_id;
    case SYSTEM_VALUE_RAY_LAUNCH_SIZE:
       return nir_intrinsic_load_ray_launch_size;
-   case SYSTEM_VALUE_RAY_LAUNCH_SIZE_ADDR_AMD:
-      return nir_intrinsic_load_ray_launch_size_addr_amd;
    case SYSTEM_VALUE_RAY_WORLD_ORIGIN:
       return nir_intrinsic_load_ray_world_origin;
    case SYSTEM_VALUE_RAY_WORLD_DIRECTION:
@@ -2307,6 +2305,14 @@ nir_intrinsic_from_system_value(gl_system_value val)
       return nir_intrinsic_load_shader_index;
    case SYSTEM_VALUE_COALESCED_INPUT_COUNT:
       return nir_intrinsic_load_coalesced_input_count;
+   case SYSTEM_VALUE_WARPS_PER_SM_NV:
+      return nir_intrinsic_load_warps_per_sm_nv;
+   case SYSTEM_VALUE_SM_COUNT_NV:
+      return nir_intrinsic_load_sm_count_nv;
+   case SYSTEM_VALUE_WARP_ID_NV:
+      return nir_intrinsic_load_warp_id_nv;
+   case SYSTEM_VALUE_SM_ID_NV:
+      return nir_intrinsic_load_sm_id_nv;
    default:
       unreachable("system value does not directly correspond to intrinsic");
    }
@@ -2425,8 +2431,6 @@ nir_system_value_from_intrinsic(nir_intrinsic_op intrin)
       return SYSTEM_VALUE_RAY_LAUNCH_ID;
    case nir_intrinsic_load_ray_launch_size:
       return SYSTEM_VALUE_RAY_LAUNCH_SIZE;
-   case nir_intrinsic_load_ray_launch_size_addr_amd:
-      return SYSTEM_VALUE_RAY_LAUNCH_SIZE_ADDR_AMD;
    case nir_intrinsic_load_ray_world_origin:
       return SYSTEM_VALUE_RAY_WORLD_ORIGIN;
    case nir_intrinsic_load_ray_world_direction:
@@ -2469,6 +2473,14 @@ nir_system_value_from_intrinsic(nir_intrinsic_op intrin)
       return SYSTEM_VALUE_SHADER_INDEX;
    case nir_intrinsic_load_coalesced_input_count:
       return SYSTEM_VALUE_COALESCED_INPUT_COUNT;
+   case nir_intrinsic_load_warps_per_sm_nv:
+      return SYSTEM_VALUE_WARPS_PER_SM_NV;
+   case nir_intrinsic_load_sm_count_nv:
+      return SYSTEM_VALUE_SM_COUNT_NV;
+   case nir_intrinsic_load_warp_id_nv:
+      return SYSTEM_VALUE_WARP_ID_NV;
+   case nir_intrinsic_load_sm_id_nv:
+      return SYSTEM_VALUE_SM_ID_NV;
    default:
       unreachable("intrinsic doesn't produce a system value");
    }

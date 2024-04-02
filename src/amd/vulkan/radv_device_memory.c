@@ -54,8 +54,6 @@ radv_free_memory(struct radv_device *device, const VkAllocationCallbacks *pAlloc
 #endif
 
    if (mem->bo) {
-      radv_rmv_log_bo_destroy(device, mem->bo);
-
       if (device->overallocation_disallowed) {
          mtx_lock(&device->overallocation_mutex);
          device->allocated_memory_size[mem->heap_index] -= mem->alloc_size;
@@ -64,7 +62,7 @@ radv_free_memory(struct radv_device *device, const VkAllocationCallbacks *pAlloc
 
       if (device->use_global_bo_list)
          device->ws->buffer_make_resident(device->ws, mem->bo, false);
-      device->ws->buffer_destroy(device->ws, mem->bo);
+      radv_bo_destroy(device, mem->bo);
       mem->bo = NULL;
    }
 
@@ -183,7 +181,7 @@ radv_alloc_memory(struct radv_device *device, const VkMemoryAllocateInfo *pAlloc
           * spec and can be removed after we support modifiers. */
          result = radv_image_create_layout(device, create_info, NULL, NULL, mem->image);
          if (result != VK_SUCCESS) {
-            device->ws->buffer_destroy(device->ws, mem->bo);
+            radv_bo_destroy(device, mem->bo);
             goto fail;
          }
       }
@@ -197,12 +195,14 @@ radv_alloc_memory(struct radv_device *device, const VkMemoryAllocateInfo *pAlloc
          mem->user_ptr = host_ptr_info->pHostPointer;
       }
    } else {
+      const struct radv_physical_device *pdev = radv_device_physical(device);
+      const struct radv_instance *instance = radv_physical_device_instance(pdev);
       uint64_t alloc_size = align_u64(pAllocateInfo->allocationSize, 4096);
       uint32_t heap_index;
 
-      heap_index = device->physical_device->memory_properties.memoryTypes[pAllocateInfo->memoryTypeIndex].heapIndex;
-      domain = device->physical_device->memory_domains[pAllocateInfo->memoryTypeIndex];
-      flags |= device->physical_device->memory_flags[pAllocateInfo->memoryTypeIndex];
+      heap_index = pdev->memory_properties.memoryTypes[pAllocateInfo->memoryTypeIndex].heapIndex;
+      domain = pdev->memory_domains[pAllocateInfo->memoryTypeIndex];
+      flags |= pdev->memory_flags[pAllocateInfo->memoryTypeIndex];
 
       if (export_info && export_info->handleTypes) {
          /* Setting RADEON_FLAG_GTT_WC in case the bo is spilled to GTT.  This is important when the
@@ -224,11 +224,11 @@ radv_alloc_memory(struct radv_device *device, const VkMemoryAllocateInfo *pAlloc
       if (flags_info && flags_info->flags & VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT)
          flags |= RADEON_FLAG_REPLAYABLE;
 
-      if (device->instance->drirc.zero_vram)
+      if (instance->drirc.zero_vram)
          flags |= RADEON_FLAG_ZERO_VRAM;
 
       if (device->overallocation_disallowed) {
-         uint64_t total_size = device->physical_device->memory_properties.memoryHeaps[heap_index].size;
+         uint64_t total_size = pdev->memory_properties.memoryHeaps[heap_index].size;
 
          mtx_lock(&device->overallocation_mutex);
          if (device->allocated_memory_size[heap_index] + alloc_size > total_size) {
@@ -240,8 +240,8 @@ radv_alloc_memory(struct radv_device *device, const VkMemoryAllocateInfo *pAlloc
          mtx_unlock(&device->overallocation_mutex);
       }
 
-      result = device->ws->buffer_create(device->ws, alloc_size, device->physical_device->rad_info.max_alignment,
-                                         domain, flags, priority, replay_address, &mem->bo);
+      result = radv_bo_create(device, alloc_size, pdev->info.max_alignment, domain, flags, priority, replay_address,
+                              is_internal, &mem->bo);
 
       if (result != VK_SUCCESS) {
          if (device->overallocation_disallowed) {
@@ -296,11 +296,22 @@ radv_MapMemory2KHR(VkDevice _device, const VkMemoryMapInfoKHR *pMemoryMapInfo, v
 {
    RADV_FROM_HANDLE(radv_device, device, _device);
    RADV_FROM_HANDLE(radv_device_memory, mem, pMemoryMapInfo->memory);
+   void *fixed_address = NULL;
+   bool use_fixed_address = false;
+
+   if (pMemoryMapInfo->flags & VK_MEMORY_MAP_PLACED_BIT_EXT) {
+      const VkMemoryMapPlacedInfoEXT *placed_info =
+         vk_find_struct_const(pMemoryMapInfo->pNext, MEMORY_MAP_PLACED_INFO_EXT);
+      if (placed_info) {
+         fixed_address = placed_info->pPlacedAddress;
+         use_fixed_address = true;
+      }
+   }
 
    if (mem->user_ptr)
       *ppData = mem->user_ptr;
    else
-      *ppData = device->ws->buffer_map(mem->bo);
+      *ppData = device->ws->buffer_map(device->ws, mem->bo, use_fixed_address, fixed_address);
 
    if (*ppData) {
       vk_rmv_log_cpu_map(&device->vk, mem->bo->va, false);
@@ -319,7 +330,7 @@ radv_UnmapMemory2KHR(VkDevice _device, const VkMemoryUnmapInfoKHR *pMemoryUnmapI
 
    vk_rmv_log_cpu_map(&device->vk, mem->bo->va, true);
    if (mem->user_ptr == NULL)
-      device->ws->buffer_unmap(mem->bo);
+      device->ws->buffer_unmap(device->ws, mem->bo, (pMemoryUnmapInfo->flags & VK_MEMORY_UNMAP_RESERVE_BIT_EXT));
 
    return VK_SUCCESS;
 }

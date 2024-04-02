@@ -123,15 +123,13 @@ void
 ac_nir_lower_hs_outputs_to_mem(nir_shader *shader,
                                ac_nir_map_io_driver_location map,
                                enum amd_gfx_level gfx_level,
-                               bool tes_reads_tessfactors,
                                uint64_t tes_inputs_read,
                                uint64_t tes_patch_inputs_read,
                                unsigned num_reserved_tcs_outputs,
                                unsigned num_reserved_tcs_patch_outputs,
                                unsigned wave_size,
                                bool no_inputs_in_lds,
-                               bool pass_tessfactors_by_reg,
-                               bool emit_tess_factor_write);
+                               bool pass_tessfactors_by_reg);
 
 void
 ac_nir_lower_tes_inputs_to_mem(nir_shader *shader,
@@ -159,13 +157,15 @@ typedef struct {
 
    unsigned max_workgroup_size;
    unsigned wave_size;
-   uint32_t clipdist_enable_mask;
+   uint8_t clip_cull_dist_mask;
    const uint8_t *vs_output_param_offset; /* GFX11+ */
    bool has_param_exports;
    bool can_cull;
    bool disable_streamout;
    bool has_gen_prim_query;
    bool has_xfb_prim_query;
+   bool has_gs_invocations_query;
+   bool has_gs_primitives_query;
    bool kill_pointsize;
    bool kill_layer;
    bool force_vrs;
@@ -268,7 +268,8 @@ ac_nir_lower_legacy_vs(nir_shader *nir,
 bool
 ac_nir_gs_shader_query(nir_builder *b,
                        bool has_gen_prim_query,
-                       bool has_pipeline_stats_query,
+                       bool has_gs_invocations_query,
+                       bool has_gs_primitives_query,
                        unsigned num_vertices_per_primitive,
                        unsigned wave_size,
                        nir_def *vertex_count[4],
@@ -348,6 +349,9 @@ typedef struct {
 
 bool
 ac_nir_lower_tex(nir_shader *nir, const ac_nir_lower_tex_options *options);
+
+void
+ac_nir_store_debug_log_amd(nir_builder *b, nir_def *uvec4);
 
 #ifdef __cplusplus
 }

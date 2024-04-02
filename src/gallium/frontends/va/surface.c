@@ -99,8 +99,8 @@ vlVaDestroySurfaces(VADriverContextP ctx, VASurfaceID *surface_list, int num_sur
    return VA_STATUS_SUCCESS;
 }
 
-VAStatus
-vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
+static VAStatus
+_vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target, uint64_t timeout_ns)
 {
    vlVaDriver *drv;
    vlVaContext *context;
@@ -152,8 +152,7 @@ vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
 
       if (context->decoder->get_processor_fence)
          ret = context->decoder->get_processor_fence(context->decoder,
-                                                     surf->fence,
-                                                     PIPE_DEFAULT_DECODER_FEEDBACK_TIMEOUT_NS);
+                                                     surf->fence, timeout_ns);
 
       mtx_unlock(&drv->mutex);
       // Assume that the GPU has hung otherwise.
@@ -163,8 +162,7 @@ vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
 
       if (context->decoder->get_decoder_fence)
          ret = context->decoder->get_decoder_fence(context->decoder,
-                                                   surf->fence,
-                                                   PIPE_DEFAULT_DECODER_FEEDBACK_TIMEOUT_NS);
+                                                   surf->fence, timeout_ns);
 
       mtx_unlock(&drv->mutex);
       // Assume that the GPU has hung otherwise.
@@ -196,6 +194,20 @@ vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
    mtx_unlock(&drv->mutex);
    return VA_STATUS_SUCCESS;
 }
+
+VAStatus
+vlVaSyncSurface(VADriverContextP ctx, VASurfaceID render_target)
+{
+   return _vlVaSyncSurface(ctx, render_target, VA_TIMEOUT_INFINITE);
+}
+
+#if VA_CHECK_VERSION(1, 15, 0)
+VAStatus
+vlVaSyncSurface2(VADriverContextP ctx, VASurfaceID surface, uint64_t timeout_ns)
+{
+   return _vlVaSyncSurface(ctx, surface, timeout_ns);
+}
+#endif
 
 VAStatus
 vlVaQuerySurfaceStatus(VADriverContextP ctx, VASurfaceID render_target, VASurfaceStatus *status)
@@ -487,7 +499,7 @@ vlVaPutSurface(VADriverContextP ctx, VASurfaceID surface_id, void* draw, short s
    drv->pipe->flush(drv->pipe, NULL, 0);
 
    screen->flush_frontbuffer(screen, drv->pipe, tex, 0, 0,
-                             vscreen->get_private(vscreen), NULL);
+                             vscreen->get_private(vscreen), 0, NULL);
 
 
    pipe_resource_reference(&tex, NULL);
@@ -1027,21 +1039,23 @@ vlVaHandleSurfaceAllocate(vlVaDriver *drv, vlVaSurface *surface,
       return VA_STATUS_ERROR_ALLOCATION_FAILED;
 
    surfaces = surface->buffer->get_surfaces(surface->buffer);
-   for (i = 0; i < VL_MAX_SURFACES; ++i) {
-      union pipe_color_union c;
-      memset(&c, 0, sizeof(c));
+   if (surfaces) {
+      for (i = 0; i < VL_MAX_SURFACES; ++i) {
+         union pipe_color_union c;
+         memset(&c, 0, sizeof(c));
 
-      if (!surfaces[i])
-         continue;
+         if (!surfaces[i])
+            continue;
 
-      if (i > !!surface->buffer->interlaced)
-         c.f[0] = c.f[1] = c.f[2] = c.f[3] = 0.5f;
+         if (i > !!surface->buffer->interlaced)
+            c.f[0] = c.f[1] = c.f[2] = c.f[3] = 0.5f;
 
-      drv->pipe->clear_render_target(drv->pipe, surfaces[i], &c, 0, 0,
-				     surfaces[i]->width, surfaces[i]->height,
-				     false);
+         drv->pipe->clear_render_target(drv->pipe, surfaces[i], &c, 0, 0,
+                  surfaces[i]->width, surfaces[i]->height,
+                  false);
+      }
+      drv->pipe->flush(drv->pipe, NULL, 0);
    }
-   drv->pipe->flush(drv->pipe, NULL, 0);
 
    return VA_STATUS_SUCCESS;
 }

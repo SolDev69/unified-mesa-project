@@ -45,7 +45,7 @@ radv_nir_lower_io_to_scalar_early(nir_shader *nir, nir_variable_mode mask)
    if (progress) {
       /* Optimize the new vector code and then remove dead vars */
       NIR_PASS(_, nir, nir_copy_prop);
-      NIR_PASS(_, nir, nir_opt_shrink_vectors);
+      NIR_PASS(_, nir, nir_opt_shrink_vectors, true);
 
       if (mask & nir_var_shader_out) {
          /* Optimize swizzled movs of load_const for nir_link_opt_varyings's constant propagation. */
@@ -72,6 +72,8 @@ radv_nir_lower_io_to_scalar_early(nir_shader *nir, nir_variable_mode mask)
 void
 radv_nir_lower_io(struct radv_device *device, nir_shader *nir)
 {
+   const struct radv_physical_device *pdev = radv_device_physical(device);
+
    if (nir->info.stage == MESA_SHADER_FRAGMENT) {
       nir_assign_io_var_locations(nir, nir_var_shader_in, &nir->num_inputs, MESA_SHADER_FRAGMENT);
    }
@@ -89,7 +91,7 @@ radv_nir_lower_io(struct radv_device *device, nir_shader *nir)
 
    NIR_PASS(_, nir, nir_io_add_const_offset_to_base, nir_var_shader_in | nir_var_shader_out);
 
-   if (device->physical_device->use_ngg_streamout && nir->xfb_info) {
+   if (pdev->use_ngg_streamout && nir->xfb_info) {
       NIR_PASS_V(nir, nir_io_add_intrinsic_xfb_info);
 
       /* The total number of shader outputs is required for computing the pervertex LDS size for
@@ -108,7 +110,7 @@ enum {
    RADV_IO_SLOT_VAR0, /* 0..31 */
 };
 
-static unsigned
+unsigned
 radv_map_io_driver_location(unsigned semantic)
 {
    if ((semantic >= VARYING_SLOT_PATCH0 && semantic < VARYING_SLOT_TESS_MAX) ||
@@ -133,6 +135,7 @@ radv_map_io_driver_location(unsigned semantic)
 bool
 radv_nir_lower_io_to_mem(struct radv_device *device, struct radv_shader_stage *stage)
 {
+   const struct radv_physical_device *pdev = radv_device_physical(device);
    const struct radv_shader_info *info = &stage->info;
    ac_nir_map_io_driver_location map_input = info->inputs_linked ? NULL : radv_map_io_driver_location;
    ac_nir_map_io_driver_location map_output = info->outputs_linked ? NULL : radv_map_io_driver_location;
@@ -144,38 +147,56 @@ radv_nir_lower_io_to_mem(struct radv_device *device, struct radv_shader_stage *s
                     info->vs.tcs_temp_only_input_mask);
          return true;
       } else if (info->vs.as_es) {
-         NIR_PASS_V(nir, ac_nir_lower_es_outputs_to_mem, map_output, device->physical_device->rad_info.gfx_level,
-                    info->esgs_itemsize);
+         NIR_PASS_V(nir, ac_nir_lower_es_outputs_to_mem, map_output, pdev->info.gfx_level, info->esgs_itemsize);
          return true;
       }
    } else if (nir->info.stage == MESA_SHADER_TESS_CTRL) {
       NIR_PASS_V(nir, ac_nir_lower_hs_inputs_to_mem, map_input, info->vs.tcs_in_out_eq);
-      NIR_PASS_V(nir, ac_nir_lower_hs_outputs_to_mem, map_output, device->physical_device->rad_info.gfx_level,
-                 info->tcs.tes_reads_tess_factors, info->tcs.tes_inputs_read, info->tcs.tes_patch_inputs_read,
-                 info->tcs.num_linked_outputs, info->tcs.num_linked_patch_outputs, info->wave_size, false, false,
-                 !info->has_epilog);
+      NIR_PASS_V(nir, ac_nir_lower_hs_outputs_to_mem, map_output, pdev->info.gfx_level, info->tcs.tes_inputs_read,
+                 info->tcs.tes_patch_inputs_read, info->tcs.num_linked_outputs, info->tcs.num_linked_patch_outputs,
+                 info->wave_size, false, false);
 
       return true;
    } else if (nir->info.stage == MESA_SHADER_TESS_EVAL) {
       NIR_PASS_V(nir, ac_nir_lower_tes_inputs_to_mem, map_input);
 
       if (info->tes.as_es) {
-         NIR_PASS_V(nir, ac_nir_lower_es_outputs_to_mem, map_output, device->physical_device->rad_info.gfx_level,
-                    info->esgs_itemsize);
+         NIR_PASS_V(nir, ac_nir_lower_es_outputs_to_mem, map_output, pdev->info.gfx_level, info->esgs_itemsize);
       }
 
       return true;
    } else if (nir->info.stage == MESA_SHADER_GEOMETRY) {
-      NIR_PASS_V(nir, ac_nir_lower_gs_inputs_to_mem, map_input, device->physical_device->rad_info.gfx_level, false);
+      NIR_PASS_V(nir, ac_nir_lower_gs_inputs_to_mem, map_input, pdev->info.gfx_level, false);
       return true;
    } else if (nir->info.stage == MESA_SHADER_TASK) {
-      ac_nir_lower_task_outputs_to_mem(nir, AC_TASK_PAYLOAD_ENTRY_BYTES, device->physical_device->task_info.num_entries,
+      ac_nir_lower_task_outputs_to_mem(nir, AC_TASK_PAYLOAD_ENTRY_BYTES, pdev->task_info.num_entries,
                                        info->cs.has_query);
       return true;
    } else if (nir->info.stage == MESA_SHADER_MESH) {
-      ac_nir_lower_mesh_inputs_to_mem(nir, AC_TASK_PAYLOAD_ENTRY_BYTES, device->physical_device->task_info.num_entries);
+      ac_nir_lower_mesh_inputs_to_mem(nir, AC_TASK_PAYLOAD_ENTRY_BYTES, pdev->task_info.num_entries);
       return true;
    }
 
    return false;
+}
+
+static bool
+radv_nir_lower_draw_id_to_zero_callback(struct nir_builder *b, nir_intrinsic_instr *intrin, UNUSED void *state)
+{
+   if (intrin->intrinsic != nir_intrinsic_load_draw_id)
+      return false;
+
+   nir_def *replacement = nir_imm_zero(b, intrin->def.num_components, intrin->def.bit_size);
+   nir_def_rewrite_uses(&intrin->def, replacement);
+   nir_instr_remove(&intrin->instr);
+   nir_instr_free(&intrin->instr);
+
+   return true;
+}
+
+bool
+radv_nir_lower_draw_id_to_zero(nir_shader *shader)
+{
+   return nir_shader_intrinsics_pass(shader, radv_nir_lower_draw_id_to_zero_callback,
+                                     nir_metadata_block_index | nir_metadata_dominance, NULL);
 }

@@ -714,7 +714,7 @@ remove_culling_shader_output(nir_builder *b, nir_instr *instr, void *state)
       base += component;
 
       /* valid clipdist component mask */
-      unsigned mask = (s->options->clipdist_enable_mask >> base) & writemask;
+      unsigned mask = (s->options->clip_cull_dist_mask >> base) & writemask;
       u_foreach_bit(i, mask) {
          add_clipdist_bit(b, nir_channel(b, store_val, i), base + i,
                           s->clipdist_neg_mask_var);
@@ -1464,7 +1464,7 @@ add_deferred_attribute_culling(nir_builder *b, nir_cf_list *original_extracted_c
    /* Relative patch ID is a special case because it doesn't need an extra dword, repack separately. */
    s->repacked_rel_patch_id = nir_local_variable_create(impl, glsl_uint_type(), "repacked_rel_patch_id");
 
-   if (s->options->clipdist_enable_mask ||
+   if (s->options->clip_cull_dist_mask ||
        s->options->user_clip_plane_enable_mask) {
       s->clip_vertex_var =
          nir_local_variable_create(impl, glsl_vec4_type(), "clip_vertex");
@@ -1885,9 +1885,10 @@ ngg_build_streamout_buffer_info(nir_builder *b,
        * ordered_id; Each buffer info is in a channel of a vec4.
        */
       nir_def *buffer_offsets =
-         nir_ordered_xfb_counter_add_amd(b, ordered_id, nir_vec(b, workgroup_buffer_sizes, 4),
-                                         /* mask of buffers to update */
-                                         .write_mask = info->buffers_written);
+         nir_ordered_xfb_counter_add_gfx11_amd(b, ordered_id,
+                                               nir_vec(b, workgroup_buffer_sizes, 4),
+                                               /* mask of buffers to update */
+                                               .write_mask = info->buffers_written);
 
       nir_def *emit_prim[4];
       memcpy(emit_prim, gen_prim, 4 * sizeof(nir_def *));
@@ -1933,9 +1934,9 @@ ngg_build_streamout_buffer_info(nir_builder *b,
        */
       nir_if *if_any_overflow = nir_push_if(b, any_overflow);
       {
-         nir_xfb_counter_sub_amd(b, nir_vec(b, overflow_amount, 4),
-                                 /* mask of buffers to update */
-                                 .write_mask = info->buffers_written);
+         nir_xfb_counter_sub_gfx11_amd(b, nir_vec(b, overflow_amount, 4),
+                                       /* mask of buffers to update */
+                                       .write_mask = info->buffers_written);
       }
       nir_pop_if(b, if_any_overflow);
 
@@ -2376,7 +2377,7 @@ export_pos0_wait_attr_ring(nir_builder *b, nir_if *if_es_thread, nir_def *output
       memcpy(pos_output_array[VARYING_SLOT_POS], pos_output.chan, sizeof(pos_output.chan));
 
       ac_nir_export_position(b, options->gfx_level,
-                             options->clipdist_enable_mask,
+                             options->clip_cull_dist_mask,
                              !options->has_param_exports,
                              options->force_vrs, true,
                              VARYING_BIT_POS, pos_output_array, NULL);
@@ -2631,7 +2632,7 @@ ac_nir_lower_ngg_nogs(nir_shader *shader, const ac_nir_lower_ngg_options *option
    b->cursor = nir_after_cf_list(&if_es_thread->then_list);
 
    ac_nir_export_position(b, options->gfx_level,
-                          options->clipdist_enable_mask,
+                          options->clip_cull_dist_mask,
                           !options->has_param_exports,
                           options->force_vrs, !wait_attr_ring,
                           export_outputs, state.outputs, NULL);
@@ -3142,7 +3143,7 @@ ngg_gs_export_vertices(nir_builder *b, nir_def *max_num_out_vtx, nir_def *tid_in
       export_outputs &= ~VARYING_BIT_POS;
 
    ac_nir_export_position(b, s->options->gfx_level,
-                          s->options->clipdist_enable_mask,
+                          s->options->clip_cull_dist_mask,
                           !s->options->has_param_exports,
                           s->options->force_vrs, !wait_attr_ring,
                           export_outputs, s->outputs, NULL);
@@ -3583,7 +3584,8 @@ ac_nir_lower_ngg_gs(nir_shader *shader, const ac_nir_lower_ngg_options *options)
    b->cursor = nir_after_cf_list(&if_gs_thread->then_list);
    ac_nir_gs_shader_query(b,
                           state.options->has_gen_prim_query,
-                          state.options->gfx_level < GFX11,
+                          state.options->has_gs_invocations_query,
+                          state.options->has_gs_primitives_query,
                           state.num_vertices_per_primitive,
                           state.options->wave_size,
                           state.vertex_count,

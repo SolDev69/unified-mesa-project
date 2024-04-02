@@ -413,10 +413,6 @@ vn_DestroyDescriptorPool(VkDevice device,
 
    alloc = pAllocator ? pAllocator : &pool->allocator;
 
-   /* We must emit vkDestroyDescriptorPool before freeing the sets in
-    * pool->descriptor_sets.  Otherwise, another thread might reuse their
-    * object ids while they still refer to the sets in the renderer.
-    */
    vn_async_vkDestroyDescriptorPool(dev->primary_ring, device, descriptorPool,
                                     NULL);
 
@@ -623,7 +619,6 @@ vn_AllocateDescriptorSets(VkDevice device,
                           const VkDescriptorSetAllocateInfo *pAllocateInfo,
                           VkDescriptorSet *pDescriptorSets)
 {
-   VN_TRACE_FUNC();
    struct vn_device *dev = vn_device_from_handle(device);
    struct vn_descriptor_pool *pool =
       vn_descriptor_pool_from_handle(pAllocateInfo->descriptorPool);
@@ -742,7 +737,6 @@ vn_FreeDescriptorSets(VkDevice device,
                       uint32_t descriptorSetCount,
                       const VkDescriptorSet *pDescriptorSets)
 {
-   VN_TRACE_FUNC();
    struct vn_device *dev = vn_device_from_handle(device);
    struct vn_descriptor_pool *pool =
       vn_descriptor_pool_from_handle(descriptorPool);
@@ -997,7 +991,6 @@ vn_UpdateDescriptorSets(VkDevice device,
                         uint32_t descriptorCopyCount,
                         const VkCopyDescriptorSet *pDescriptorCopies)
 {
-   VN_TRACE_FUNC();
    struct vn_device *dev = vn_device_from_handle(device);
    const VkAllocationCallbacks *alloc = &dev->base.base.alloc;
 
@@ -1301,7 +1294,6 @@ vn_UpdateDescriptorSetWithTemplate(
    VkDescriptorUpdateTemplate descriptorUpdateTemplate,
    const void *pData)
 {
-   VN_TRACE_FUNC();
    struct vn_device *dev = vn_device_from_handle(device);
    struct vn_descriptor_update_template *templ =
       vn_descriptor_update_template_from_handle(descriptorUpdateTemplate);

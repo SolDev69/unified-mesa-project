@@ -113,12 +113,15 @@ static void
 panfrost_batch_cleanup(struct panfrost_context *ctx,
                        struct panfrost_batch *batch)
 {
+   struct panfrost_screen *screen = pan_screen(ctx->base.screen);
    struct panfrost_device *dev = pan_device(ctx->base.screen);
 
    assert(batch->seqnum);
 
    if (ctx->batch == batch)
       ctx->batch = NULL;
+
+   screen->vtbl.cleanup_batch(batch);
 
    unsigned batch_idx = panfrost_batch_idx(batch);
 
@@ -300,7 +303,7 @@ panfrost_batch_uses_resource(struct panfrost_batch *batch,
                              struct panfrost_resource *rsrc)
 {
    /* A resource is used iff its current BO is used */
-   uint32_t handle = panfrost_bo_handle(rsrc->image.data.bo);
+   uint32_t handle = panfrost_bo_handle(rsrc->bo);
    unsigned size = util_dynarray_num_elements(&batch->bos, pan_bo_access);
 
    /* If out of bounds, certainly not used */
@@ -364,11 +367,10 @@ panfrost_batch_read_rsrc(struct panfrost_batch *batch,
 {
    uint32_t access = PAN_BO_ACCESS_READ | panfrost_access_for_stage(stage);
 
-   panfrost_batch_add_bo_old(batch, rsrc->image.data.bo, access);
+   panfrost_batch_add_bo_old(batch, rsrc->bo, access);
 
    if (rsrc->separate_stencil)
-      panfrost_batch_add_bo_old(batch, rsrc->separate_stencil->image.data.bo,
-                                access);
+      panfrost_batch_add_bo_old(batch, rsrc->separate_stencil->bo, access);
 
    panfrost_batch_update_access(batch, rsrc, false);
 }
@@ -380,11 +382,10 @@ panfrost_batch_write_rsrc(struct panfrost_batch *batch,
 {
    uint32_t access = PAN_BO_ACCESS_WRITE | panfrost_access_for_stage(stage);
 
-   panfrost_batch_add_bo_old(batch, rsrc->image.data.bo, access);
+   panfrost_batch_add_bo_old(batch, rsrc->bo, access);
 
    if (rsrc->separate_stencil)
-      panfrost_batch_add_bo_old(batch, rsrc->separate_stencil->image.data.bo,
-                                access);
+      panfrost_batch_add_bo_old(batch, rsrc->separate_stencil->bo, access);
 
    panfrost_batch_update_access(batch, rsrc, true);
 }
@@ -451,11 +452,14 @@ panfrost_batch_to_fb_info(const struct panfrost_batch *batch,
                           struct pan_image_view *zs, struct pan_image_view *s,
                           bool reserve)
 {
+   struct panfrost_device *dev = pan_device(batch->ctx->base.screen);
+
    memset(fb, 0, sizeof(*fb));
    memset(rts, 0, sizeof(*rts) * 8);
    memset(zs, 0, sizeof(*zs));
    memset(s, 0, sizeof(*s));
 
+   fb->tile_buf_budget = dev->optimal_tib_size;
    fb->width = batch->key.width;
    fb->height = batch->key.height;
    fb->extent.minx = batch->minx;
@@ -463,6 +467,7 @@ panfrost_batch_to_fb_info(const struct panfrost_batch *batch,
    fb->extent.maxx = batch->maxx - 1;
    fb->extent.maxy = batch->maxy - 1;
    fb->nr_samples = util_framebuffer_get_num_samples(&batch->key);
+   fb->force_samples = pan_tristate_get(batch->line_smoothing) ? 16 : 0;
    fb->rt_count = batch->key.nr_cbufs;
    fb->sprite_coord_origin = pan_tristate_get(batch->sprite_coord_origin);
    fb->first_provoking_vertex = pan_tristate_get(batch->first_provoking_vertex);

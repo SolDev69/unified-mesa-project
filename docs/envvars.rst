@@ -222,7 +222,7 @@ Core Mesa environment variables
    referencing both the cache DB and its index file. E.g.
    ``MESA_DISK_CACHE_SINGLE_FILE=filename1`` refers to ``filename1.foz``
    and ``filename1_idx.foz``. A limit of 8 DBs can be loaded and this limit
-   is shared with :envvar:`MESA_DISK_CACHE_READ_ONLY_FOZ_DBS_DYNAMIC_LIST.`
+   is shared with :envvar:`MESA_DISK_CACHE_READ_ONLY_FOZ_DBS_DYNAMIC_LIST`.
 
 .. envvar:: MESA_DISK_CACHE_DATABASE
 
@@ -348,6 +348,9 @@ Core Mesa environment variables
         - ``RADV``
       * - ``rra``
         - Radeon Raytracing Analyzer
+        - ``RADV``
+      * - ``ctxroll``
+        - Context rolls
         - ``RADV``
 
    - Creating RMV captures requires the ``scripts/setup.sh`` script in the
@@ -1064,6 +1067,7 @@ Rusticl environment variables
    - ``clc`` dumps all OpenCL C source being compiled
    - ``program`` dumps compilation logs to stderr
    - ``sync`` waits on the GPU to complete after every event
+   - ``validate`` validates any internally generated SPIR-Vs, e.g. through compiling OpenCL C code
 
 .. _clc-env-var:
 
@@ -1265,18 +1269,20 @@ RADV driver environment variables
       disable FMASK compression on MSAA images (GFX6-GFX10.3)
    ``nogpl``
       disable VK_EXT_graphics_pipeline_library
+   ``nogsfastlaunch2``
+      disable GS_FAST_LAUNCH=2 for Mesh shaders (GFX11 only)
    ``nohiz``
       disable HIZ for depthstencil images
    ``noibs``
       disable directly recording command buffers in GPU-visible memory
-   ``nomemorycache``
-      disable memory shaders cache
    ``nomeshshader``
       disable mesh shader support on GFX10.3+
    ``nongg``
       disable NGG for GFX10 and GFX10.3
    ``nonggc``
-      disable NGG culling on GPUs where it's enabled by default (GFX10.3+ only).
+      disable NGG culling on GPUs where it's enabled by default (GFX10.3 only).
+   ``nongg_gs``
+      disable NGG GS for GFX10 and GFX10.3
    ``nort``
       skip executing vkCmdTraceRays and ray queries (RT extensions will still be
       advertised)
@@ -1342,22 +1348,26 @@ RADV driver environment variables
       enable wave32 for vertex/tess/geometry shaders (GFX10+)
    ``localbos``
       enable local BOs
+   ``nggc``
+      enable NGG culling on GPUs where it's not enabled by default (GFX10.1 only).
+   ``nircache``
+      cache per-stage NIR for graphics pipelines
    ``nosam``
       disable optimizations that get enabled when all VRAM is CPU visible.
    ``pswave32``
       enable wave32 for pixel shaders (GFX10+)
-   ``nggc``
-      enable NGG culling on GPUs where it's not enabled by default (GFX10.1 only).
+   ``rtwave32``
+      enable wave32 for ray tracing shaders (GFX11+)
+   ``rtwave64``
+      enable wave64 for ray tracing shaders (GFX10-10.3)
    ``sam``
       enable optimizations to move more driver internal objects to VRAM.
-   ``rtwave64``
-      enable wave64 for ray tracing shaders (GFX10+)
+   ``shader_object``
+      enable experimental implementation of VK_EXT_shader_object
    ``transfer_queue``
       enable experimental transfer queue support (GFX9+, not yet spec compliant)
    ``video_decode``
       enable experimental video decoding support
-   ``gsfastlaunch2``
-      use GS_FAST_LAUNCH=2 for Mesh shaders (GFX11+ dGPUs only)
 
 .. envvar:: RADV_TEX_ANISO
 
@@ -1384,6 +1394,16 @@ RADV driver environment variables
 
    enable validation of captured acceleration structures. Can be
    useful if RRA crashes upon opening a trace.
+
+.. envvar:: RADV_RRA_TRACE_HISTORY_SIZE
+
+   set the ray history buffer size when capturing RRA traces (default value is 100MiB,
+   small buffers may result in incomplete traces)
+
+.. envvar:: RADV_RRA_TRACE_RESOLUTION_SCALE
+
+   decrease the resolution used for dumping the ray history resolution when capturing
+   RRA traces. This allows for dumping every Nth invocation along each dispatch dimension.
 
 .. envvar:: ACO_DEBUG
 
@@ -1767,7 +1787,7 @@ PowerVR driver environment variables
 
 .. envvar:: PVR_DEBUG
 
-   A comma-separated list of debug options. Use `PVR_DEBUG=help` to
+   A comma-separated list of debug options. Use ``PVR_DEBUG=help`` to
    print a list of available options.
 
 .. envvar:: ROGUE_DEBUG

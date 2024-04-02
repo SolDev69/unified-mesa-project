@@ -118,6 +118,9 @@ struct radv_ray_traversal_vars {
    /* Information about the current instance used for culling. */
    nir_deref_instr *instance_addr;
    nir_deref_instr *sbt_offset_and_flags;
+
+   /* Statistics. Iteration count in the low 16 bits, candidate instance counts in the high 16 bits. */
+   nir_deref_instr *iteration_instance_count;
 };
 
 struct radv_ray_traversal_args {
@@ -135,6 +138,9 @@ struct radv_ray_traversal_args {
    uint32_t stack_stride;
    uint32_t stack_entries;
    uint32_t stack_base;
+
+   uint32_t set_flags;
+   uint32_t unset_flags;
 
    bool ignore_cull_mask;
 
