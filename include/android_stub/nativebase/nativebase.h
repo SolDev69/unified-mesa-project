@@ -92,7 +92,6 @@ typedef struct ANativeWindowBuffer
 
     void* reserved[1];
 
-    const native_handle_t* handle;
     uint64_t usage;
 
     // we needed extra space for storing the 64-bits usage flags
