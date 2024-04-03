@@ -921,6 +921,8 @@ gl_nir_add_point_size(nir_shader *nir)
       nir_deref_instr *deref = nir_build_deref_var(&b, psiz);
       nir_store_deref(&b, deref, nir_imm_float(&b, 1.0), BITFIELD_BIT(0));
    }
+
+   nir->info.outputs_written |= VARYING_BIT_PSIZ;
 }
 
 static void
