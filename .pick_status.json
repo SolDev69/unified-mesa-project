@@ -1084,7 +1084,7 @@
         "description": "gallium: handle copy_image of depth textures",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5027b5aa28fb9395b1acff57336d2862753bba17",
         "notes": null
