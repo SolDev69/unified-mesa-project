@@ -1984,7 +1984,7 @@
         "description": "radv: make sure the heap budget is less than or equal to the heap size",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
