@@ -2194,7 +2194,7 @@
         "description": "drisw: fix build without dri3",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1887368df4166ae854245c0306d43661ef120e42",
         "notes": null
