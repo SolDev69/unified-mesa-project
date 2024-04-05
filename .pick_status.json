@@ -924,7 +924,7 @@
         "description": "etnaviv: rs: take src dimensions into account when increasing height alignment",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "797454edfcc4d2a6d0c21db451e9a0ea6e0a8023",
         "notes": null
