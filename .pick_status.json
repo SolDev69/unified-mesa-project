@@ -604,7 +604,7 @@
         "description": "anv, iris: add missing CS_STALL bit for GPGPU texture invalidation",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "397e728ef4f1247c0c2d11bf8516763b2a3088ff",
         "notes": null
