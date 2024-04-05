@@ -1424,7 +1424,7 @@
         "description": "ci/amd: drop old PIGLIT_REPLAY_DESCRIPTION_FILE surpassed by PIGLIT_TRACES_FILE",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "16af090908e8eb4fff552151dbb130120e11c1f9",
         "notes": null
