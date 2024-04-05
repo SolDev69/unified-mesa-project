@@ -74,7 +74,7 @@
         "description": "panfrost: Add the BO containing fragment program descriptor to the batch",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "087b63cb07717e83ea606648f2551fc9586b9165",
         "notes": null
