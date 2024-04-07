@@ -52,8 +52,7 @@ jobs:
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
-            -Dglx=disabled \
-            -Dbuild_
+            -Dglx=disabled
         ninja -C build/ install
 
     - name: Upload meson logs
