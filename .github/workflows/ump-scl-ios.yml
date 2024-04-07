@@ -4,7 +4,7 @@ on:
   [push, pull_request, workflow_dispatch]
 
 jobs:
-  extract:
+  build:
     runs-on: macos-latest
 
     strategy:
@@ -38,8 +38,8 @@ jobs:
 
     - name: Build Mesa
       run: |
-        meson setup build -Dgallium-drivers=zink -Dvulkan-drivers= --prefix=~/mesa-drivers
-        ninja -C build/
+        meson setup build -Dgallium-drivers=zink -Dvulkan-drivers= --prefix=`pwd`/export
+        ninja -C build/ install
 
     - name: Upload meson logs
       if: ${{ failure() }}
@@ -52,4 +52,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.directory }}-built
-        path: build/
+        path: export/
