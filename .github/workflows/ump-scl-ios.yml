@@ -39,7 +39,7 @@ jobs:
     - name: Build Mesa
       run: |
         git clone --depth 1 https://github.com/KhronosGroup/MoltenVK
-        meson setup build -Dgallium-drivers=zink -Dvulkan-drivers= -Dmoltenvk-dir=moltenvk --prefix=`pwd`/export
+        meson setup build -Dgallium-drivers=zink -Dvulkan-drivers= -Dmoltenvk-dir=MoltenVK --prefix=`pwd`/export
         ninja -C build/ install
 
     - name: Upload meson logs
