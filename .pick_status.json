@@ -1014,7 +1014,7 @@
         "description": "anv: mark descriptors & pipeline dirty after blorp compute",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "37fca614b8642b633b94b829f7ca8fd4872a9f76",
         "notes": null
