@@ -1,0 +1,55 @@
+name: Build iOS
+
+on:
+  [push, pull_request, workflow_dispatch]
+
+jobs:
+  extract:
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        brew install pkg-config
+        brew install bison
+        brew install llvm
+        brew install meson
+        brew install libclc
+        brew uninstall cmake || true
+        brew install xorgproto libxfixes
+        brew install vulkan-tools
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Mako with Python
+      run: |
+           python -m pip install --upgrade pip
+           pip install mako
+
+    - name: Build Mesa
+      run: |
+        meson setup build -Dgallium-drivers=zink -Dvulkan-drivers= --prefix=~/mesa-drivers
+        ninja -C build/
+
+    - name: Upload meson logs
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: meson-logs-${{ matrix.directory }}
+        path: ${{ matrix.directory }}/build/meson-logs/meson-log.txt
+
+    - name: "Upload built mesa, ready to be ninja -C build/ install'ed"
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.directory }}-built
+        path: build/
