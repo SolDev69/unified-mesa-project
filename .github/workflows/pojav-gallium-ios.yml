@@ -38,7 +38,6 @@ jobs:
 
     - name: Build Mesa
       run: |
-        cd ${{ matrix.directory }}
         meson setup build -Dgallium-drivers=zink -Dvulkan-drivers= --prefix=~/mesa-drivers
         ninja -C build/
 
