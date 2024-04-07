@@ -1074,7 +1074,7 @@
         "description": "nvk: Add a _pad field to nvk_fs_key",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ae171458827bb8fceb232b3a13f61920e87a0d3a",
         "notes": null
