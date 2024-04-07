@@ -22,7 +22,6 @@ jobs:
         brew install llvm
         brew install meson
         brew install libclc
-        brew uninstall cmake || true
         brew install xorgproto libxfixes
         brew install vulkan-tools
 
@@ -39,7 +38,13 @@ jobs:
     - name: Build Mesa
       run: |
         git clone --depth 1 https://github.com/KhronosGroup/MoltenVK
-        meson setup build -Dgallium-drivers=zink -Dvulkan-drivers= -Dmoltenvk-dir=../../../../MoltenVK/MoltenVK --prefix=`pwd`/export
+        meson setup build -Dgallium-drivers=zink,asahi -Dvulkan-drivers= -Dmoltenvk-dir=../../../../MoltenVK/MoltenVK --prefix=`pwd`/export \
+            -Dopengl=true \
+            -Dosmesa=true \
+            -Dxlib-lease=disabled \
+            -Degl=disabled \
+            -Dgbm=disabled \
+            -Dglx=disabled
         ninja -C build/ install
 
     - name: Upload meson logs
