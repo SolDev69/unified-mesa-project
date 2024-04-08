@@ -4454,7 +4454,7 @@
         "description": "intel/dev: update DG2 device names",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "98f3d072b428f93d799d17ab4e56f963206c9a2f",
         "notes": null
