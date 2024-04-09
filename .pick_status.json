@@ -3834,7 +3834,7 @@
         "description": "anv: Use appropriate argument format for indirect draw",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6d4f43f0d6f58edb5bf236ddf1ce6f798afa851b",
         "notes": null
