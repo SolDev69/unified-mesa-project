@@ -1,5 +1,35 @@
 [
     {
+        "sha": "2c1cb65949933a05eedb2eacc15cd893ecaef8aa",
+        "description": "d3d12: Include <shlobj.h> with lowercase name",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "05b66efb43b8ae10af56f5c2cda386383d808009",
+        "notes": null
+    },
+    {
+        "sha": "1fb74672a91b28cc62f2bcb881047135f0258a8c",
+        "description": "nak: Use undef for unset FSOut components",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fdfccfa8fa2c7bea8c72a5a5f2a1a488bb0bd40d",
+        "description": "nak: Set fewer bits in writes_color",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "078fe5454e97d073feb18bcdcf7ed1874e8b4835",
         "description": "nak: Fix ldg/stg/atomg encoding to use globalmem",
         "nominated": false,
