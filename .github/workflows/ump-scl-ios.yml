@@ -19,6 +19,7 @@ jobs:
       run: |
         brew install pkg-config
         brew install bison
+        brew install llvm
         brew install meson
         brew install libclc
         brew install xorgproto libxfixes
@@ -51,8 +52,7 @@ jobs:
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
-            -Dglx=disabled \
-            -Dllvm=disabled
+            -Dglx=disabled
         ninja -C build/ install
 
     - name: Upload meson logs
