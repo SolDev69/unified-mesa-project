@@ -3684,7 +3684,7 @@
         "description": "llvmpipe: clamp 32bit query results to low 32 bits rather than MIN",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
