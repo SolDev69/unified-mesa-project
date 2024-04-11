@@ -2904,7 +2904,7 @@
         "description": "lavapipe: Handle multiple planes in GetDescriptorEXT",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a13a07d166ff8886d22991a230b0dec228d69dd5",
         "notes": null
