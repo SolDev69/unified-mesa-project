@@ -2354,7 +2354,7 @@
         "description": "anv/sparse: replace device->using_sparse with device->num_sparse_resources",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6368c1445f44e3c05b399d9e279d36a79a1a6bcc",
         "notes": null
