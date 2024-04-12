@@ -3634,7 +3634,7 @@
         "description": "egl/dri2: don't bind dri2 for zink",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "12a47b84b7386e1aac6c4b0d36ad198705432378",
         "notes": null
