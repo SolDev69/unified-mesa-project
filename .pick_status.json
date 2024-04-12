@@ -2714,7 +2714,7 @@
         "description": "radv: add missing SQTT markers when an indirect indexed draw is used with DGC",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e59a16bbb8fb770bc11bbacfa2254d6a958c7cb8",
         "notes": null
