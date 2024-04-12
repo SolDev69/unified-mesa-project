@@ -5659,6 +5659,7 @@ zink_shader_create(struct zink_screen *screen, struct nir_shader *nir)
    }
    zink_shader_serialize_blob(nir, &ret->blob);
    memcpy(&ret->info, &nir->info, sizeof(nir->info));
+   ret->info.name = ralloc_strdup(ret, nir->info.name);
 
    ret->can_inline = true;
 
