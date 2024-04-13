@@ -279,7 +279,7 @@ disk_cache_init(struct zink_screen *screen)
    /* Hash in the zink driver build. */
    const struct build_id_note *note =
        build_id_find_nhdr_for_addr(disk_cache_init);
-   if (note != null)
+   if (note != NULL)
    {
       unsigned build_id_len = build_id_length(note);
       assert(note && build_id_len == 20); /* sha1 */
