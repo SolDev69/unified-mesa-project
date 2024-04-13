@@ -26,7 +26,7 @@ rnn_install_path = get_option('datadir') + '/freedreno/registers'
 rnn_path = rnn_src_path + ':' + get_option('prefix') + '/' + rnn_install_path
 
 dep_lua = dependency('lua54', 'lua53', 'lua52', 'lua', required: false,
-                     allow_fallback: true, version: '>=5.2')
+                     allow_fallback: false, version: '>=5.2')
 
 dep_libarchive = dependency('libarchive', allow_fallback: false, required: false)
 dep_libxml2 = dependency('libxml-2.0', allow_fallback: false, required: false)
