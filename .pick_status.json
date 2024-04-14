@@ -44,7 +44,7 @@
         "description": "r600/sfn: Add array element parent also to array",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ddb167e81a18c09bd3a4c519e8728e2842d827f1",
         "notes": null
