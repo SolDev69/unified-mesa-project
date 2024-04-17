@@ -334,7 +334,7 @@
         "description": "intel/brw: Fix handling of cmat_signed_mask",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6b14da33ad3aa8a30ed5e479eace8bc6470095a7",
         "notes": null
