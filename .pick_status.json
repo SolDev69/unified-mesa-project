@@ -1464,7 +1464,7 @@
         "description": "broadcom/compiler: enable perquad with uses_wide_subgroup_intrinsics",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "97f5721bfc4bbbce5c3a39cf48eeb6ad1fb9cf97",
         "notes": null
