@@ -674,7 +674,7 @@
         "description": "radv: fix waiting for occlusion queries on GFX6-8",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d44651bfc3c8f6cb6aba8914f5bd21e440d69a4c",
         "notes": null
