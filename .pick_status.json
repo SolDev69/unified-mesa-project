@@ -34,7 +34,7 @@
         "description": "r600/sfn: Use dependecies to order barriers and LDS/RAT instructions",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fe881bf0976cf5799afba52911cdf6df45e8641f",
         "notes": null
