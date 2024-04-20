@@ -544,7 +544,7 @@
         "description": "nir/lower_blend: Fix nir_blend_logicop() for 8/16-bit integer formats",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f3de2bd6c2dd4c6b4bdbd63e7e5d47f326d2f494",
         "notes": null
