@@ -524,7 +524,7 @@
         "description": "nvk: Don't use a descriptor cbuf if it's too large",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f1c909edd5c9159609ab27e7b6a7374796cceab3",
         "notes": null
