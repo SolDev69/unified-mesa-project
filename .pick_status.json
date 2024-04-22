@@ -1014,7 +1014,7 @@
         "description": "panfrost: do not deref potentially null pointer",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f94889d0797f6dc66b7875e68ae7d44c0f018131",
         "notes": null
