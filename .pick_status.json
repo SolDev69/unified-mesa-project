@@ -1254,7 +1254,7 @@
         "description": "panfrost: correct first-tracking for signature",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4da88060d0a3662a579a26748d7e3458c1b4800d",
         "notes": null
