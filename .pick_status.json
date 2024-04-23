@@ -334,7 +334,7 @@
         "description": "wsi/wayland: Dispatch event queue in wsi_wl_swapchain_queue_present",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5f7a5a27ef1b630bd1aea0cc0b1256fadee9de8e",
         "notes": null
