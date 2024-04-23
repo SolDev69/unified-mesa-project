@@ -194,7 +194,7 @@
         "description": "isl: add ISL_TILING_64_XE2 to isl_tiling_to_name()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c69650a95e26193652b93bb229c82b77cfac6b3c",
         "notes": null
