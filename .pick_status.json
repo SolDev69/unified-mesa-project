@@ -224,7 +224,7 @@
         "description": "nir/print: Do not access invalid indices of load_uniform",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a83fd26d0effc8e65ff601c2ad3314058b98f107",
         "notes": null
