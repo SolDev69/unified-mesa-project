@@ -364,7 +364,7 @@
         "description": "isl: Set MOCS to uncached for Gfx12.0 blitter sources/destinations",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "194afe841635e43d55c4f71f4122c6048f585450",
         "notes": null
