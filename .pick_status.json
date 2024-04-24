@@ -1284,7 +1284,7 @@
         "description": "venus: reclaim signal semaphore feedback resources for wasteful clients",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d63432012d9189d5f1d8eb8025acfae2463fd449",
         "notes": null
