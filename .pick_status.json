@@ -64,7 +64,7 @@
         "description": "pan/kmod: Fix a syncobj leak in the panthor backend",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "97f6a62f7ef82b909f62ca78788d4f24416fbd31",
         "notes": null
