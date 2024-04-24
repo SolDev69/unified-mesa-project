@@ -244,7 +244,7 @@
         "description": "kopper: don't set drawable buffer age",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2a8c6cf7ac4cb88149ca8e99ba163fcecc055032",
         "notes": null
