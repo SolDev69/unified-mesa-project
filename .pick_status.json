@@ -1,5 +1,345 @@
 [
     {
+        "sha": "cd5c9870ea1d7e73d05f125b229f34e5749c8345",
+        "description": "rusticl/program: handle -cl-no-subgroup-ifp",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ca861e8f754125f8880229bdcc6e278cd15003b0",
+        "description": "ci: Add zink-venus-lvp job",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e9dacca3f7f73a266443c25dc7cace3f29597c8e",
+        "description": "ci: Allow to pass LIBGL_ALWAYS_SOFTWARE to the guest environment",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "708a635902720194d6d686955f927b612736ad5b",
+        "description": "broadcom/ci: document external causes for some CTS 1.3.8 failures",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1de805e9860f4a0d23140cac6ba713707b60f707",
+        "description": "nouveau: Fixes error: unused import: `crate::nvh_classes_cl906f::*`",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4fc3f1154595636897de8de8701a0432552174fe",
+        "description": "venus: fix VkDeviceGroupSubmitInfo::deviceMask for feedback cmds",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "80f532a63664c0c37cef5e261be38ebb5dbf5be2",
+        "notes": null
+    },
+    {
+        "sha": "46e4354940cce54e3b7ed2080bf67b03ee57e240",
+        "description": "intel/compiler: Disassemble mlen/rlen/ex_mlen in units of registers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ff89e83178ac6fde49b6f0f1c5d0bacf285cbf19",
+        "description": "intel/brw: Lower VGRFs to FIXED_GRFs earlier",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5b3d4c757dd00bfaf57a1aeef318d8625edcd54d",
+        "description": "intel/brw: Support FIXED_GRF when generating code for CLUSTER_BROADCAST",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b926cd3dd9bd20745b4e0492c32c7ac202d71390",
+        "description": "radv: don't use python 3.9 feature in radv_annotate_layer_gen.py",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "27a3880adae1e7650ba2338bb57545124c1587dd",
+        "description": "aco: don't use python 3.7+ feature in aco_opcodes.py",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fe4f6dd18ffa924846c5aa4d992201a9a8d4adc4",
+        "description": "isl: Update shader channel select for missing components",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2d8686ccd55b9df3396be1feb967bc9026f38b15",
+        "description": "isl: Update isl_swizzle_supports_rendering comment",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3a868970a20944b77988b3bed28cb9af2d02620a",
+        "description": "zink: disable command reordering for compute-only contexts",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ffb082f8111a91a29a5e6394831ecc099afaeeba",
+        "description": "zink: make NOREORDER mode context-based",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ef0c9231a75e78fcf49436d2cfa20dbfb9968e85",
+        "description": "mesa/st: don't use serialized_nir for cached shaders",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "5eb0136a3c561e25d3f274e33a86812cfb2af589",
+        "notes": null
+    },
+    {
+        "sha": "dc85832c35d1c347d1d57aefcdb780b9050fda0f",
+        "description": "ac/gpu_info: Fix broken UVD firmware query",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c34cfc1a3b9ccdd0f81f7852891394df252e73c8",
+        "notes": null
+    },
+    {
+        "sha": "f0ddba819fb108c34082eab074894640e4d64561",
+        "description": "freedreno/drm-shim: remove duplicate entry for a630",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1ffae320a8435eb981fdf112934e54bac578da2c",
+        "description": "freedreno/drm-shim: add a730, a740, and a750",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "39088571f08ae0b8dee1cf51bf590df5c23962bf",
+        "description": "ir3: add support for predication",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bbc78e92ff4b436d8ce69f7880f37af589c08da6",
+        "description": "ir3: add support for precolored sources in predicate RA",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2288ef916cfad6d65a55f66cde057f83da2b2692",
+        "description": "ir3: model predt/predf without sources",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d56f1abd7245fdfee621c66719cd1e001e5e9c5a",
+        "description": "ir3: remove unnecessary tessellation epilogue",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "44b080af07f0ba516f0d5519bba86eb7c1ea7da2",
+        "description": "meson: implement split-debug",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9d5af353185763c70ac165abc84de3956b65fb5b",
+        "description": "nir/lower_clip: update inputs/ouputs read/written bitmask",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2e79234f9d5dce5b7b1c5d46ae4a8267e4eeeb2a",
+        "description": "ac: allow to use 64K of LDS for tessellation on GFX9+",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fb323ae46b497a7d41fe510092dd6cfa0cfd04cc",
+        "description": "radv: rework the number of tess patches computation",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "758e6d9005b030ea49783f32b3d71dca5b95e157",
+        "description": "ac,radeonsi: add helpers to compute the number of tess patches/lds size",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8b8d194bfb7bf2d732f95aaa49345205cee9438d",
+        "description": "radv: advertise VK_EXT_nested_command_buffer",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7de95e7742797538b12a69a7b1c946779f01e6f5",
+        "description": "radv: track if nested command buffers uses indirect draws",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0d18a2f4fbb5331dc342c30baf6541a9c03184b2",
+        "description": "radv/amdgpu: do not use IB2 for nested command buffers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1763d1aab18b491ac584474a957ab455e4772306",
+        "description": "iris: Avoid allocation of not needed iris_bucket_cache",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c473a156dcc94f7f83c51ae416647c8d0fed577a",
+        "description": "iris: Avoid creation of slabs and cache buckets of lmem heaps in integrated gpus",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a51c64ac5c2ec09611c5f0802b370b5fbc72046d",
+        "description": "iris: Add comments to BO_ALLOC flags",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "7a1779edc7fb82c891e584074b95d1a4801c1782",
         "description": "ir3: Don't pack FS inlocs",
         "nominated": false,
