@@ -1464,7 +1464,7 @@
         "description": "zink: fully wait on all program fences during ctx destroy",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
