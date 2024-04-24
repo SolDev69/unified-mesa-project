@@ -244,7 +244,7 @@
         "description": "meson: simplify `-gsplit-dwarf` compiler argument check",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "44b080af07f0ba516f0d5519bba86eb7c1ea7da2",
         "notes": null
