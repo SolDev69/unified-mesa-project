@@ -1684,7 +1684,7 @@
         "description": "etnaviv/nn: Make parallel jobs disabled by default",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d6473ce28ee0f36890e24b3832cd53d3ed5e98e7",
         "notes": null
