@@ -1,0 +1,552 @@
+[
+    {
+        "sha": "4660ee1deaace6457bf5fbf3fc8810e4a2453cb5",
+        "description": "glthread: check for invalid primitive modes in DrawElementsBaseVertex",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f153f945fc6ee4239e15c536bdff67ca7eeba664",
+        "description": "pan/bi: clean up tex coord lowering",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3139f8f62384901b02d1fdc516ff3989f8a1f339",
+        "description": "pan/bi: fix 1D array tex coord lowering",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0fbaf8703a1b778bfe68994730cf340e4a012356",
+        "description": "anv: enable VK_KHR_shader_float_controls2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "22fa29ac2f3d669f942f9e3b0f54d6f04fc06005",
+        "description": "vtn: support float controls2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7f97fa6df01bc3d707d4e39885e4d6b577537ad5",
+        "description": "nir/algebraic: move float control conditions to be per instruction",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8c4cd3e74e6e005be3bf29f5364342411363d547",
+        "description": "nir/algebraic: support float controls conditions per instruction",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "08df0c7dde33722f34f5036f43b3fe3b64b0aac6",
+        "description": "nir: check inf/nan/sz preserve per-instruction",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "750bd9757eb9d2f4245bc633919495363ecfa232",
+        "description": "spirv: gather some float controls bits per instruction",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "666647acaedb1b4112f19192b992b05547975dfa",
+        "description": "nir: track some float controls bits per instruction",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "829ea357146683f74d93b66de86fcf2c88b1ff57",
+        "description": "compiler: reorder FLOAT_CONTROLS enums",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "df6cfb4dd0460430a49a4e9f6b7b5654c0819d88",
+        "description": "intel/brw: Rename brw_reg_type_to_hw_type to brw_type_encode",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9205f6ff513b7d644b3a845b768a5a93fc6b7c0a",
+        "description": "intel/brw: Combine a1/a16 3src type decoding functions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "28034aac34dba480d94991fa3c19916daa163785",
+        "description": "intel/brw: Combine a1/a16 3src type encoding functions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "545bb8fb6f738b44e6430a333eba46401e247320",
+        "description": "intel/brw: Replace type_sz and brw_reg_type_to_size with brw_type_size_*",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c22f44ff07983cf28b238bebc50654f84b5cabb7",
+        "description": "intel/brw: Replace brw_reg_type_from_bit_size by brw_type_with_size",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "007d8912393344c270dadf0d2cc7076f694789ab",
+        "description": "intel/brw: Use newer brw_type_is_* shorter names",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f523bfcf90128a4759a76d0c6cebe017f4767440",
+        "description": "intel/brw: Reindent after shortening BRW_REGISTER_TYPE_* to BRW_TYPE_*",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "873fcdff38ffbc7af81fd4aacb19577a88b2f81f",
+        "description": "intel/brw: Stop using long BRW_REGISTER_TYPE enum names",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9d8f2c442120c98532dac8e5055c06efe0942c5f",
+        "description": "intel/brw: Rework BRW_REGISTER_TYPE's representation semantics",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c45e235df5dba1387c6e31f993272c1c553378a9",
+        "description": "intel/brw: Drop NF type support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1c6f863fc7d42ce17d771a7ac83d0e707ca82619",
+        "description": "intel/brw: Delete gfx10 table for align1 3src type encoding",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "40422927dcb1249cdb1444557aca671387140428",
+        "description": "nak: Pass has_mod to all form of src2 requiring it",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "bad23ddb4849908a648d503a615a5a9b15e9768a",
+        "notes": null
+    },
+    {
+        "sha": "46598758e7a2ce0b81610db612cb2beeb5c49a8d",
+        "description": "radv: Trace indirect dispatch sizes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2b2f67aa2b01204d92ba9178667dbf8aba8d3288",
+        "description": "radv: Use a struct for the trace_bo layout",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "575565af5819367ada69c8bbed367ab7215d3b7c",
+        "description": "ac/debug,radv: Read UMR wave dumps into memory before parsing",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9a43987780a17e763ab47844ba6989552d1c8198",
+        "description": "docs: Add an alternative way to debug GPU hangs with RADV",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bb719640b5514c2148293d6e288a44e2cfda7436",
+        "description": "docs: Add documentation about debugging GPU hangs on RADV",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f6143d3f48fe23d26af49a582c475a542c195c63",
+        "description": "aco/tests: validate before and after post-ra tests",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "47d824a64416b2cf662237cd8d32594cd6d806a5",
+        "description": "aco/lower_to_hw: fix 16bit p_insert on gfx8",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bb80ac7a70975e7f5d6fe587836775b2ef8b8c32",
+        "description": "aco/lower_to_hw: fix v_cvt_pk_u16_u32 instruction format",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "619470732f89e95729f927fce8400a4b07008e23",
+        "description": "aco/tests/post_ra: fix various validation errors",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f85e6c82a64ad3adf0eecb75d4d0e78b6d0caf13",
+        "description": "aco/tests: don't use undef for descriptors",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "68dfe17abcca6299951734df3f9758c401286b57",
+        "description": "anv: disable dual source blending state if not used in shader",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e6fb3ba03798fc2550bdb5ec6651690a34ac3509",
+        "description": "isl: Set MOCS to uncached for Gfx12.0 blitter sources/destinations",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "194afe841635e43d55c4f71f4122c6048f585450",
+        "notes": null
+    },
+    {
+        "sha": "0666a715c7210558017ce717f6b0b947c679a68e",
+        "description": "ci: fix container rules on release branches and tags",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "2487e18d4e25c56a70630ccf5faf5d2081fbee2f",
+        "notes": null
+    },
+    {
+        "sha": "e8d94536d21a6f2087b21eecc9f15dcac0a362e8",
+        "description": "radv: fix image format properties with fragment shading rate usage",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ce1bbd241eb1ff69254000232a42a840893206dc",
+        "description": "venus: extend image cache to vkGetDeviceImageMemoryRequirements",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f4f8f2ecbba978233a139c90b7142d7a466b8272",
+        "description": "venus: refactor out image requirements helpers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b06e2108eb0e1badb4c0f2d37e45f98f179a0624",
+        "description": "docs: update calendar for 24.1.0-rc1",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d95248ee0b6cc79e85bbaffdd34f6b858fbb3f01",
+        "description": "docs: add sha256sum for 24.0.6",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d4f23331bda0d0b1170460a2825d86f3b06cdb62",
+        "description": "docs: add an extra 24.0.x release",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c6ff1f0ca52c511599d7e3e56761d593ef611955",
+        "description": "docs: update calendar for 24.0.6",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5ee4523a75a24abf35ff9decc4991d96e4a1bc20",
+        "description": "docs: add release notes for 24.0.6",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5e1a98800324082d1018ba5582d5db5c5a0e7757",
+        "description": "nir: document base_global_invocation_id and base_workgroup_id",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d22f936019f84191072a5686826f53b93d755419",
+        "description": "nir: remove workgroup_id_zero_base",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3217838fef80a1085c2ca090c0ff1d9e4c76c637",
+        "description": "nir: remove global_invocation_id_zero_base",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a2c96b8e7f3fc3a6ee7b3df610bce9ce625b943d",
+        "description": "mesa/st: lower base invoc and workgroup id",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e040a08e5e988703008c412bd31d7c9bbf0c7b20",
+        "description": "lavapipe: lower base_workgroup_id to zero",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a62fb368d62fe9a8ddfbcece3193ffa4990f2463",
+        "description": "v3d: call nir_lower_compute_system_values to get rid of base intrinsics",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "51f54cdec440226678a7f7a006106eec63aa5b5f",
+        "description": "intel/compiler: lower workgoup id to index only for mesh shaders",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3625a44dcc61d261b4167363bb7a8a4b152d59ce",
+        "description": "nir/divergence_analysis: handle load_base_global_invocation_id",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "25d697ef259e0a5c8c02910eb45ad69a22f62dc6",
+        "description": "nir: add SYSTEM_VALUE_BASE_WORKGROUP_ID",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "07685ea89b0e7269e4029e889fffd18734ea7136",
+        "description": "docs: reset new_features.txt",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8fff01e9d0cee30c7adf901a61810660f957ab69",
+        "description": "VERSION: bump to 20.2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    }
+]
