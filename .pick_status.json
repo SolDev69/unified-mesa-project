@@ -274,7 +274,7 @@
         "description": "meson: Fix invalid kwarg name",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "44b080af07f0ba516f0d5519bba86eb7c1ea7da2",
         "notes": null
