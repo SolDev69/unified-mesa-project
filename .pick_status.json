@@ -344,7 +344,7 @@
         "description": "intel: Build float64 shader only for Vulkan",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b52e25d3a8eee702ff5d21e4cdb9a4dc0736282a",
         "notes": null
