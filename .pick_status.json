@@ -1974,7 +1974,7 @@
         "description": "anv: formatting fix when printing pipe controls",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "abc4111d19761d51599330a1b13be718d0255600",
         "notes": null
