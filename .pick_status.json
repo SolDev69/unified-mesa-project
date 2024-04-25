@@ -1534,7 +1534,7 @@
         "description": "ci: pass MESA_VK_ABORT_ON_DEVICE_LOSS through to the DUT",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "9bbbe90f060914448910d17a38d815ac24db6030",
         "notes": null
