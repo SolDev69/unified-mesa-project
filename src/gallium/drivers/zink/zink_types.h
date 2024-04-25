@@ -242,6 +242,7 @@ enum zink_debug {
    ZINK_DEBUG_MEM = (1<<18),
    ZINK_DEBUG_QUIET = (1<<19),
    ZINK_DEBUG_IOOPT = (1<<20),
+   ZINK_DEBUG_NOPC = (1<<21),
 };
 
 enum zink_pv_emulation_primitive {
@@ -1414,6 +1415,7 @@ struct zink_screen {
    bool is_cpu;
    bool abort_on_hang;
    bool frame_marker_emitted;
+   bool implicitly_loaded;
    uint64_t curr_batch; //the current batch id
    uint32_t last_finished;
    VkSemaphore sem;
@@ -1816,6 +1818,7 @@ struct zink_context {
    bool oom_flush;
    bool oom_stall;
    bool track_renderpasses;
+   bool no_reorder;
    struct zink_batch batch;
 
    unsigned shader_has_inlinable_uniforms_mask;

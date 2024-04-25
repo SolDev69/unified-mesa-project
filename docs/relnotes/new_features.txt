@@ -1,5 +1,5 @@
 VK_EXT_map_memory_placed on RADV, ANV and NVK
-VK_KHR_shader_subgroup_rotate on RADV and ANV
+VK_KHR_shader_subgroup_rotate on RADV and ANV and NVK
 VK_KHR_load_store_op_none on RADV, ANV, NVK and Turnip
 VK_KHR_line_rasterization on RADV, ANV, NVK and Turnip
 VK_KHR_index_type_uint8 on RADV, ANV, NVK and Turnip
@@ -16,3 +16,4 @@ VK_EXT_device_address_binding_report on RADV
 VK_EXT_external_memory_dma_buf for lavapipe
 VK_EXT_queue_family_foreign for lavapipe
 VK_EXT_shader_object on RADV
+VK_EXT_nested_command_buffer on NVK and RADV

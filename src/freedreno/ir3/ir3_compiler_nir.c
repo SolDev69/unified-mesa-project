@@ -2276,15 +2276,6 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
       ir3_split_dest(b, dst, ctx->tess_coord, 0, 2);
       break;
 
-   case nir_intrinsic_end_patch_ir3:
-      assert(ctx->so->type == MESA_SHADER_TESS_CTRL);
-      struct ir3_instruction *end = ir3_PREDE(b);
-      array_insert(b, b->keeps, end);
-
-      end->barrier_class = IR3_BARRIER_EVERYTHING;
-      end->barrier_conflict = IR3_BARRIER_EVERYTHING;
-      break;
-
    case nir_intrinsic_store_global_ir3:
       ctx->funcs->emit_intrinsic_store_global_ir3(ctx, intr);
       break;
@@ -2625,30 +2616,6 @@ emit_intrinsic(struct ir3_context *ctx, nir_intrinsic_instr *intr)
       array_insert(b, b->keeps, kill);
       ctx->so->has_kill = true;
 
-      break;
-   }
-
-   case nir_intrinsic_cond_end_ir3: {
-      struct ir3_instruction *cond, *kill;
-
-      src = ir3_get_src(ctx, &intr->src[0]);
-      cond = src[0];
-
-      /* NOTE: only cmps.*.* can write p0.x: */
-      struct ir3_instruction *zero =
-            create_immed_typed(b, 0, is_half(cond) ? TYPE_U16 : TYPE_U32);
-      cond = ir3_CMPS_S(b, cond, 0, zero, 0);
-      cond->cat2.condition = IR3_COND_NE;
-
-      /* condition always goes in predicate register: */
-      cond->dsts[0]->flags |= IR3_REG_PREDICATE;
-
-      kill = ir3_PREDT(b, cond, IR3_REG_PREDICATE);
-
-      kill->barrier_class = IR3_BARRIER_EVERYTHING;
-      kill->barrier_conflict = IR3_BARRIER_EVERYTHING;
-
-      array_insert(b, b->keeps, kill);
       break;
    }
 
@@ -3798,8 +3765,10 @@ emit_block(struct ir3_context *ctx, nir_block *nblock)
    /* Emit unconditional branch if we only have one successor. Conditional
     * branches are emitted in emit_if.
     */
-   if (ctx->block->successors[0] && !ctx->block->successors[1])
-      ir3_JUMP(ctx->block);
+   if (ctx->block->successors[0] && !ctx->block->successors[1]) {
+      if (!ir3_block_get_terminator(ctx->block))
+         ir3_JUMP(ctx->block);
+   }
 
    _mesa_hash_table_clear(ctx->sel_cond_conversions, NULL);
 }
@@ -3876,12 +3845,152 @@ fold_conditional_branch(struct ir3_context *ctx, struct nir_src *nir_cond)
    return branch;
 }
 
-static struct ir3_instruction *
-emit_conditional_branch(struct ir3_context *ctx, struct nir_src *nir_cond)
+static bool
+instr_can_be_predicated(nir_instr *instr)
 {
+   /* Anything that doesn't expand to control-flow can be predicated. */
+   switch (instr->type) {
+   case nir_instr_type_alu:
+   case nir_instr_type_deref:
+   case nir_instr_type_tex:
+   case nir_instr_type_load_const:
+   case nir_instr_type_undef:
+   case nir_instr_type_phi:
+   case nir_instr_type_parallel_copy:
+      return true;
+   case nir_instr_type_call:
+   case nir_instr_type_jump:
+      return false;
+   case nir_instr_type_intrinsic: {
+      nir_intrinsic_instr *intrin = nir_instr_as_intrinsic(instr);
+      switch (intrin->intrinsic) {
+      case nir_intrinsic_reduce:
+      case nir_intrinsic_inclusive_scan:
+      case nir_intrinsic_exclusive_scan:
+      case nir_intrinsic_reduce_clusters_ir3:
+      case nir_intrinsic_inclusive_scan_clusters_ir3:
+      case nir_intrinsic_exclusive_scan_clusters_ir3:
+      case nir_intrinsic_brcst_active_ir3:
+      case nir_intrinsic_ballot:
+      case nir_intrinsic_elect:
+      case nir_intrinsic_read_invocation_cond_ir3:
+      case nir_intrinsic_discard_if:
+      case nir_intrinsic_discard:
+      case nir_intrinsic_demote:
+      case nir_intrinsic_demote_if:
+      case nir_intrinsic_terminate:
+      case nir_intrinsic_terminate_if:
+         return false;
+      default:
+         return true;
+      }
+   }
+   }
+
+   unreachable("Checked all cases");
+}
+
+static bool
+nif_can_be_predicated(nir_if *nif)
+{
+   /* For non-divergent branches, predication is more expensive than a branch
+    * because the latter can potentially skip all instructions.
+    */
+   if (!nir_src_is_divergent(nif->condition))
+      return false;
+
+   /* Although it could potentially be possible to allow a limited form of
+    * nested predication (e.g., by resetting the predication mask after a nested
+    * branch), let's avoid this for now and only use predication for leaf
+    * branches. That is, for ifs that contain exactly one block in both branches
+    * (note that they always contain at least one block).
+    */
+   if (!exec_list_is_singular(&nif->then_list) ||
+       !exec_list_is_singular(&nif->else_list)) {
+      return false;
+   }
+
+   nir_foreach_instr (instr, nir_if_first_then_block(nif)) {
+      if (!instr_can_be_predicated(instr))
+         return false;
+   }
+
+   nir_foreach_instr (instr, nir_if_first_else_block(nif)) {
+      if (!instr_can_be_predicated(instr))
+         return false;
+   }
+
+   return true;
+}
+
+/* A typical if-else block like this:
+ * if (cond) {
+ *     tblock;
+ * } else {
+ *     fblock;
+ * }
+ * Will be emitted as:
+ *        |-- i --|
+ *        | ...   |
+ *        | predt |
+ *        |-------|
+ *    succ0 /   \ succ1
+ * |-- i+1 --| |-- i+2 --|
+ * | tblock  | | fblock  |
+ * | predf   | | jump    |
+ * |---------| |---------|
+ *    succ0 \   / succ0
+ *        |-- j --|
+ *        |  ...  |
+ *        |-------|
+ * Where the numbers at the top of blocks are their indices. That is, the true
+ * block and false block are laid-out contiguously after the current block. This
+ * layout is verified during legalization in prede_sched which also inserts the
+ * final prede instruction. Note that we don't insert prede right away to allow
+ * opt_jump to optimize the jump in the false block.
+ */
+static struct ir3_instruction *
+emit_predicated_branch(struct ir3_context *ctx, nir_if *nif)
+{
+   if (!ctx->compiler->has_predication)
+      return NULL;
+   if (!nif_can_be_predicated(nif))
+      return NULL;
+
+   struct ir3_block *then_block = get_block(ctx, nir_if_first_then_block(nif));
+   struct ir3_block *else_block = get_block(ctx, nir_if_first_else_block(nif));
+   assert(list_is_empty(&then_block->instr_list) &&
+          list_is_empty(&else_block->instr_list));
+
+   bool inv;
+   struct ir3_instruction *condition =
+      get_branch_condition(ctx, &nif->condition, &inv);
+   struct ir3_instruction *pred, *pred_inv;
+
+   if (!inv) {
+      pred = ir3_PREDT(ctx->block, condition, IR3_REG_PREDICATE);
+      pred_inv = ir3_PREDF(then_block, condition, IR3_REG_PREDICATE);
+   } else {
+      pred = ir3_PREDF(ctx->block, condition, IR3_REG_PREDICATE);
+      pred_inv = ir3_PREDT(then_block, condition, IR3_REG_PREDICATE);
+   }
+
+   pred->srcs[0]->num = REG_P0_X;
+   pred_inv->srcs[0]->num = REG_P0_X;
+   return pred;
+}
+
+static struct ir3_instruction *
+emit_conditional_branch(struct ir3_context *ctx, nir_if *nif)
+{
+   nir_src *nir_cond = &nif->condition;
    struct ir3_instruction *folded = fold_conditional_branch(ctx, nir_cond);
    if (folded)
       return folded;
+
+   struct ir3_instruction *predicated = emit_predicated_branch(ctx, nif);
+   if (predicated)
+      return predicated;
 
    bool inv1;
    struct ir3_instruction *cond1 = get_branch_condition(ctx, nir_cond, &inv1);
@@ -3914,7 +4023,7 @@ emit_if(struct ir3_context *ctx, nir_if *nif)
        */
       ir3_SHPS(ctx->block);
    } else {
-      emit_conditional_branch(ctx, &nif->condition);
+      emit_conditional_branch(ctx, nif);
    }
 
    ctx->block->divergent_condition = nif->condition.ssa->divergent;
@@ -4155,16 +4264,28 @@ setup_input(struct ir3_context *ctx, nir_intrinsic_instr *intr)
    unsigned ncomp = nir_intrinsic_dest_components(intr);
    unsigned n = nir_intrinsic_base(intr) + offset;
    unsigned slot = nir_intrinsic_io_semantics(intr).location + offset;
-   unsigned compmask;
+   unsigned compmask = BITFIELD_MASK(ncomp + frac);
 
    /* Inputs are loaded using ldlw or ldg for other stages. */
    compile_assert(ctx, ctx->so->type == MESA_SHADER_FRAGMENT ||
                           ctx->so->type == MESA_SHADER_VERTEX);
 
-   if (ctx->so->type == MESA_SHADER_FRAGMENT)
-      compmask = BITFIELD_MASK(ncomp) << frac;
-   else
-      compmask = BITFIELD_MASK(ncomp + frac);
+   /* for clip+cull distances, unused components can't be eliminated because
+    * they're read by fixed-function, even if there's a hole.  Note that
+    * clip/cull distance arrays must be declared in the FS, so we can just
+    * use the NIR clip/cull distances to avoid reading ucp_enables in the
+    * shader key.
+    */
+   if (ctx->so->type == MESA_SHADER_FRAGMENT &&
+       (slot == VARYING_SLOT_CLIP_DIST0 ||
+        slot == VARYING_SLOT_CLIP_DIST1)) {
+      unsigned clip_cull_mask = so->clip_mask | so->cull_mask;
+
+      if (slot == VARYING_SLOT_CLIP_DIST0)
+         compmask = clip_cull_mask & 0xf;
+      else
+         compmask = clip_cull_mask >> 4;
+   }
 
    /* for a4xx+ rasterflat */
    if (so->inputs[n].rasterflat && ctx->so->key.rasterflat)
@@ -4190,6 +4311,9 @@ setup_input(struct ir3_context *ctx, nir_intrinsic_instr *intr)
 
       if (slot == VARYING_SLOT_PRIMITIVE_ID)
          so->reads_primid = true;
+
+      so->inputs[n].inloc = 4 * n;
+      so->varying_in = MAX2(so->varying_in, 4 * n + 4);
    } else {
       struct ir3_instruction *input = NULL;
 
@@ -4286,6 +4410,8 @@ pack_inlocs(struct ir3_context *ctx)
     * shader key.
     */
    unsigned clip_cull_mask = so->clip_mask | so->cull_mask;
+
+   so->varying_in = 0;
 
    for (unsigned i = 0; i < so->inputs_count; i++) {
       unsigned compmask = 0, maxcomp = 0;
@@ -5156,7 +5282,12 @@ ir3_compile_shader_nir(struct ir3_compiler *compiler,
    IR3_PASS(ir, ir3_legalize_relative);
    IR3_PASS(ir, ir3_lower_subgroups);
 
-   if (so->type == MESA_SHADER_FRAGMENT)
+   /* This isn't valid to do when transform feedback is done in HW, which is
+    * a4xx onward, because the VS may use components not read by the FS for
+    * transform feedback. Ideally we'd delete this, but a5xx and earlier seem to
+    * be broken without it.
+    */
+   if (so->type == MESA_SHADER_FRAGMENT && ctx->compiler->gen < 6)
       pack_inlocs(ctx);
 
    /*

@@ -268,7 +268,7 @@ panfrost_get_blend_shaders(struct panfrost_batch *batch,
    }
 
    if (shader_bo)
-      perf_debug_ctx(batch->ctx, "Blend shader use");
+      perf_debug(batch->ctx, "Blend shader use");
 }
 
 #if PAN_ARCH >= 5
@@ -2546,6 +2546,8 @@ panfrost_initialize_surface(struct panfrost_batch *batch,
    if (surf) {
       struct panfrost_resource *rsrc = pan_resource(surf->texture);
       BITSET_SET(rsrc->valid.data, surf->u.tex.level);
+      if (rsrc->separate_stencil)
+         BITSET_SET(rsrc->separate_stencil->valid.data, surf->u.tex.level);
    }
 }
 
@@ -2760,7 +2762,7 @@ panfrost_launch_xfb(struct panfrost_batch *batch,
    if (count == 0)
       return;
 
-   perf_debug_ctx(batch->ctx, "Emulating transform feedback");
+   perf_debug(batch->ctx, "Emulating transform feedback");
 
    struct panfrost_uncompiled_shader *vs_uncompiled =
       ctx->uncompiled[PIPE_SHADER_VERTEX];
@@ -2982,7 +2984,7 @@ panfrost_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info,
    if (indirect && indirect->buffer) {
       assert(num_draws == 1);
       util_draw_indirect(pipe, info, indirect);
-      perf_debug(dev, "Emulating indirect draw on the CPU");
+      perf_debug(ctx, "Emulating indirect draw on the CPU");
       return;
    }
 

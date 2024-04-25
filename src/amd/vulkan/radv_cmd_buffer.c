@@ -339,7 +339,8 @@ radv_destroy_cmd_buffer(struct vk_command_buffer *vk_cmd_buffer)
 }
 
 static VkResult
-radv_create_cmd_buffer(struct vk_command_pool *pool, struct vk_command_buffer **cmd_buffer_out)
+radv_create_cmd_buffer(struct vk_command_pool *pool, VkCommandBufferLevel level,
+                       struct vk_command_buffer **cmd_buffer_out)
 {
    struct radv_device *device = container_of(pool->base.device, struct radv_device, vk);
    const struct radv_physical_device *pdev = radv_device_physical(device);
@@ -349,7 +350,7 @@ radv_create_cmd_buffer(struct vk_command_pool *pool, struct vk_command_buffer **
    if (cmd_buffer == NULL)
       return vk_error(device, VK_ERROR_OUT_OF_HOST_MEMORY);
 
-   VkResult result = vk_command_buffer_init(pool, &cmd_buffer->vk, &radv_cmd_buffer_ops, 0);
+   VkResult result = vk_command_buffer_init(pool, &cmd_buffer->vk, &radv_cmd_buffer_ops, level);
    if (result != VK_SUCCESS) {
       vk_free(&cmd_buffer->vk.pool->alloc, cmd_buffer);
       return result;
@@ -1876,7 +1877,7 @@ radv_emit_ps_epilog_state(struct radv_cmd_buffer *cmd_buffer, struct radv_shader
    if (cmd_buffer->state.emitted_ps_epilog == ps_epilog)
       return;
 
-   uint32_t col_format = radv_compact_spi_shader_col_format(ps_shader, ps_epilog->spi_shader_col_format);
+   uint32_t col_format = radv_compact_spi_shader_col_format(ps_epilog->spi_shader_col_format);
 
    bool need_null_export_workaround = radv_needs_null_export_workaround(device, ps_shader, 0);
    if (need_null_export_workaround && !col_format)
@@ -2646,16 +2647,16 @@ radv_emit_patch_control_points(struct radv_cmd_buffer *cmd_buffer)
     */
    if (cmd_buffer->state.uses_dynamic_patch_control_points) {
       /* Compute the number of patches. */
-      cmd_buffer->state.tess_num_patches = get_tcs_num_patches(
-         d->vk.ts.patch_control_points, tcs->info.tcs.tcs_vertices_out, vs->info.vs.num_linked_outputs,
+      cmd_buffer->state.tess_num_patches = radv_get_tcs_num_patches(
+         pdev, d->vk.ts.patch_control_points, tcs->info.tcs.tcs_vertices_out, vs->info.vs.num_linked_outputs,
          tcs->info.tcs.num_lds_per_vertex_outputs, tcs->info.tcs.num_lds_per_patch_outputs,
-         pdev->hs.tess_offchip_block_dw_size, pdev->info.gfx_level, pdev->info.family);
+         tcs->info.tcs.num_linked_outputs, tcs->info.tcs.num_linked_patch_outputs);
 
       /* Compute the LDS size. */
       cmd_buffer->state.tess_lds_size =
-         calculate_tess_lds_size(pdev->info.gfx_level, d->vk.ts.patch_control_points, tcs->info.tcs.tcs_vertices_out,
-                                 vs->info.vs.num_linked_outputs, cmd_buffer->state.tess_num_patches,
-                                 tcs->info.tcs.num_lds_per_vertex_outputs, tcs->info.tcs.num_lds_per_patch_outputs);
+         radv_get_tess_lds_size(pdev, d->vk.ts.patch_control_points, tcs->info.tcs.tcs_vertices_out,
+                                vs->info.vs.num_linked_outputs, cmd_buffer->state.tess_num_patches,
+                                tcs->info.tcs.num_lds_per_vertex_outputs, tcs->info.tcs.num_lds_per_patch_outputs);
    }
 
    ls_hs_config = S_028B58_NUM_PATCHES(cmd_buffer->state.tess_num_patches) |
@@ -8076,6 +8077,8 @@ radv_CmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCou
       primary->state.last_db_shader_control = secondary->state.last_db_shader_control;
 
       primary->state.rb_noncoherent_dirty |= secondary->state.rb_noncoherent_dirty;
+
+      primary->state.uses_draw_indirect |= secondary->state.uses_draw_indirect;
    }
 
    /* After executing commands from secondary buffers we have to dirty

@@ -961,6 +961,22 @@ endif
 # otherwise define MESA_DEBUG to 0
 pre_args += '-DMESA_DEBUG=' + (with_mesa_debug ? '1' : '0')
 
+with_split_debug = get_option('split-debug') \
+  .disable_if(not cc.compiles('''#include<stdio.h>
+                                 int main() {
+                                 printf("\n");
+                                 };''',
+                    args : '-gsplit-dwarf',
+                    name : 'split-dwarf support'),
+    error_message : 'split-debug requires compiler -gsplit-dwarf support') \
+  .disable_if(not cc.has_link_argument('-Wl,--gdb-index'),
+    error_message : 'split-debug requires the linker argument -Wl,--gdb-index')
+
+if with_split_debug.allowed() and get_option('debug')
+  add_project_arguments('-gsplit-dwarf', langauge : ['c', 'cpp'])
+  add_project_link_arguments('-Wl,--gdb-index', language : ['c', 'cpp'])
+endif
+
 with_shader_cache = get_option('shader-cache') \
   .require(host_machine.system() != 'windows', error_message : 'Shader Cache does not currently work on Windows') \
   .allowed()
@@ -1373,7 +1389,7 @@ if not ['linux'].contains(host_machine.system())
 endif
 
 foreach h : ['xlocale.h', 'linux/futex.h', 'endian.h', 'dlfcn.h', 'sys/shm.h',
-             'cet.h', 'pthread_np.h', 'renderdoc_app.h', 'sys/inotify.h']
+             'cet.h', 'pthread_np.h', 'renderdoc_app.h', 'sys/inotify.h', 'linux/udmabuf.h']
   if cc.check_header(h)
     pre_args += '-DHAVE_@0@'.format(h.to_upper().underscorify())
   endif
@@ -2066,6 +2082,7 @@ if host_machine.cpu_family() == 'x86_64' and cc.get_id() == 'gcc'
 endif
 
 with_dri3_modifiers = false
+with_dri3_explicit_sync = false
 with_xcb_keysyms = false
 if with_platform_x11
   if with_glx == 'xlib'
@@ -2109,6 +2126,10 @@ if with_platform_x11
           dep_xcb_present.version().version_compare('>= 1.13'))
         with_dri3_modifiers = true
       endif
+      if (dep_xcb_dri3.version().version_compare('>= 1.17') and
+          dep_xcb_present.version().version_compare('>= 1.17'))
+        with_dri3_explicit_sync = true
+      endif
       dep_xcb_shm = dependency('xcb-shm')
       dep_xcb_sync = dependency('xcb-sync')
       dep_xshmfence = dependency('xshmfence', version : '>= 1.1')
@@ -2150,6 +2171,9 @@ if with_dri3
 endif
 if with_dri3_modifiers
   pre_args += '-DHAVE_DRI3_MODIFIERS'
+endif
+if with_dri3_explicit_sync
+  pre_args += '-DHAVE_DRI3_EXPLICIT_SYNC'
 endif
 if with_gallium_drisw_kms
   pre_args += '-DHAVE_DRISW_KMS'

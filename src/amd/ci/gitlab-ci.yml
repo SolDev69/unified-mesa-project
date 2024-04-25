@@ -231,7 +231,7 @@ vkcts-navi10-valve:
 
 vkcts-navi21-valve:
   timeout: 35m
-  parallel: 4
+  parallel: 3
   extends:
     - .vkcts-test-valve
     - .navi21-test-valve
@@ -263,8 +263,8 @@ vkcts-vangogh-valve:
 
 glcts-vangogh-valve:
   extends:
-    - .b2c-test-gl
-    - .deqp-test-valve
+    - .b2c-x86_64-test-gl
+    - .b2c-deqp-test
     - .vangogh-test-valve
     - .radeonsi-valve-manual-rules
   timeout: 40m

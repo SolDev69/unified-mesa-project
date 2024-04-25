@@ -569,7 +569,7 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
       .KHR_uniform_buffer_standard_layout = true,
       .KHR_variable_pointers = true,
       .KHR_vertex_attribute_divisor = true,
-      .KHR_video_queue = !!(instance->perftest_flags & RADV_PERFTEST_VIDEO_DECODE),
+      .KHR_video_queue = !!(instance->perftest_flags & RADV_PERFTEST_VIDEO_DECODE) || pdev->video_encode_enabled,
       .KHR_video_decode_av1 = (pdev->info.vcn_ip_version >= VCN_3_0_0 && pdev->info.vcn_ip_version != VCN_3_0_33 &&
                                VIDEO_CODEC_AV1DEC && !!(instance->perftest_flags & RADV_PERFTEST_VIDEO_DECODE)),
       .KHR_video_decode_queue = !!(instance->perftest_flags & RADV_PERFTEST_VIDEO_DECODE),
@@ -633,6 +633,7 @@ radv_physical_device_get_supported_extensions(const struct radv_physical_device 
       .EXT_mesh_shader = radv_taskmesh_enabled(pdev),
       .EXT_multi_draw = true,
       .EXT_mutable_descriptor_type = true, /* Trivial promotion from VALVE. */
+      .EXT_nested_command_buffer = true,
       .EXT_non_seamless_cube_map = true,
       .EXT_pci_bus_info = true,
 #ifndef _WIN32
@@ -1205,6 +1206,11 @@ radv_physical_device_get_features(const struct radv_physical_device *pdev, struc
 
       /* VK_EXT_address_binding_report */
       .reportAddressBinding = true,
+
+      /* VK_EXT_nested_command_buffer */
+      .nestedCommandBuffer = true,
+      .nestedCommandBufferRendering = true,
+      .nestedCommandBufferSimultaneousUse = true,
    };
 }
 
@@ -1898,6 +1904,9 @@ radv_get_physical_device_properties(struct radv_physical_device *pdev)
    uint64_t os_page_size = 4096;
    os_get_page_size(&os_page_size);
    p->minPlacedMemoryMapAlignment = os_page_size;
+
+   /* VK_EXT_nested_command_buffer */
+   p->maxCommandBufferNestingLevel = UINT32_MAX;
 }
 
 static VkResult

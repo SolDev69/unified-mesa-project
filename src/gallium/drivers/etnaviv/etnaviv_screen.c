@@ -74,7 +74,7 @@ static const struct debug_named_value etna_debug_options[] = {
    {"deqp",           ETNA_DBG_DEQP, "Hacks to run dEQP GLES3 tests"}, /* needs MESA_GLES_VERSION_OVERRIDE=3.0 */
    {"nocache",        ETNA_DBG_NOCACHE,    "Disable shader cache"},
    {"linear_pe",      ETNA_DBG_LINEAR_PE, "Enable linear PE"},
-   {"msaa",           ETNA_DBG_MSAA, "Enable MSAA support"},
+   {"no_msaa",        ETNA_DBG_NO_MSAA, "Disable MSAA support"},
    {"shared_ts",      ETNA_DBG_SHARED_TS, "Enable TS sharing"},
    {"perf",           ETNA_DBG_PERF, "Enable performance warnings"},
    {"npu_no_parallel",ETNA_DBG_NPU_NO_PARALLEL, "Disable parallelism inside NPU batches"},
@@ -513,8 +513,8 @@ gpu_supports_render_format(struct etna_screen *screen, enum pipe_format format,
       return false;
 
    if (sample_count > 1) {
-      /* Explicitly enabled. */
-      if (!DBG_ENABLED(ETNA_DBG_MSAA))
+      /* Explicitly disabled. */
+      if (DBG_ENABLED(ETNA_DBG_NO_MSAA))
          return false;
 
       /* The hardware supports it. */
@@ -858,6 +858,14 @@ etna_get_specs(struct etna_screen *screen)
       screen->specs.tp_core_count = info->npu.tp_core_count;
       screen->specs.on_chip_sram_size = info->npu.on_chip_sram_size;
       screen->specs.axi_sram_size = info->npu.axi_sram_size;
+      screen->specs.nn_zrl_bits = info->npu.nn_zrl_bits;
+
+      if (etna_core_has_feature(info, ETNA_FEATURE_NN_XYDP0))
+         screen->specs.nn_core_version = 8;
+      else if (etna_core_has_feature(info, ETNA_FEATURE_VIP_V7))
+         screen->specs.nn_core_version = 7;
+      else
+         screen->specs.nn_core_version = 6;
    }
 
    /* Figure out gross GPU architecture. See rnndb/common.xml for a specific
@@ -1077,13 +1085,6 @@ etna_screen_create(struct etna_device *dev, struct etna_gpu *gpu,
       goto fail;
    }
 
-   etna_get_specs(screen);
-
-   if (screen->specs.halti >= 5 && !etnaviv_device_softpin_capable(dev)) {
-      DBG("halti5 requires softpin");
-      goto fail;
-   }
-
    /* apply debug options that disable individual features */
    if (DBG_ENABLED(ETNA_DBG_NO_EARLY_Z))
       etna_core_disable_feature(screen->info, ETNA_FEATURE_NO_EARLY_Z);
@@ -1092,11 +1093,18 @@ etna_screen_create(struct etna_device *dev, struct etna_gpu *gpu,
    if (DBG_ENABLED(ETNA_DBG_NO_AUTODISABLE))
       etna_core_disable_feature(screen->info, ETNA_FEATURE_AUTO_DISABLE);
    if (DBG_ENABLED(ETNA_DBG_NO_SUPERTILE))
-      screen->specs.can_supertile = 0;
+      etna_core_disable_feature(screen->info, ETNA_FEATURE_SUPER_TILED);
    if (DBG_ENABLED(ETNA_DBG_NO_SINGLEBUF))
-      screen->specs.single_buffer = 0;
+      etna_core_disable_feature(screen->info, ETNA_FEATURE_SINGLE_BUFFER);
    if (!DBG_ENABLED(ETNA_DBG_LINEAR_PE))
       etna_core_disable_feature(screen->info, ETNA_FEATURE_LINEAR_PE);
+
+   etna_get_specs(screen);
+
+   if (screen->specs.halti >= 5 && !etnaviv_device_softpin_capable(dev)) {
+      DBG("halti5 requires softpin");
+      goto fail;
+   }
 
    pscreen->destroy = etna_screen_destroy;
    pscreen->get_screen_fd = etna_screen_get_fd;

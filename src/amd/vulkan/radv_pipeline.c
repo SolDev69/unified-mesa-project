@@ -8,6 +8,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include "radv_pipeline.h"
 #include "meta/radv_meta.h"
 #include "nir/nir.h"
 #include "nir/nir_builder.h"
@@ -15,7 +16,6 @@
 #include "nir/radv_nir.h"
 #include "spirv/nir_spirv.h"
 #include "util/disk_cache.h"
-#include "util/mesa-sha1.h"
 #include "util/os_time.h"
 #include "util/u_atomic.h"
 #include "radv_cs.h"
@@ -710,6 +710,14 @@ radv_postprocess_nir(struct radv_device *device, const struct radv_graphics_stat
 
    /* cleanup passes */
    NIR_PASS(_, stage->nir, nir_lower_alu_width, opt_vectorize_callback, device);
+
+   /* This pass changes the global float control mode to RTZ, so can't be used
+    * with LLVM, which only supports RTNE, or RT, where the mode needs to match
+    * across separately compiled stages.
+    */
+   if (!radv_use_llvm_for_stage(pdev, stage->stage) && !gl_shader_stage_is_rt(stage->stage))
+      NIR_PASS(_, stage->nir, ac_nir_opt_pack_half, gfx_level);
+
    NIR_PASS(_, stage->nir, nir_lower_load_const_to_scalar);
    NIR_PASS(_, stage->nir, nir_copy_prop);
    NIR_PASS(_, stage->nir, nir_opt_dce);

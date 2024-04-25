@@ -150,6 +150,7 @@ nvk_get_device_extensions(const struct nvk_instance *instance,
       .KHR_shader_maximal_reconvergence = true,
       .KHR_shader_non_semantic_info = true,
       .KHR_shader_subgroup_extended_types = true,
+      .KHR_shader_subgroup_rotate = nvk_use_nak(info),
       .KHR_shader_subgroup_uniform_control_flow = nvk_use_nak(info),
       .KHR_shader_terminate_invocation =
          (nvk_nak_stages(info) & VK_SHADER_STAGE_FRAGMENT_BIT) != 0,
@@ -201,6 +202,7 @@ nvk_get_device_extensions(const struct nvk_instance *instance,
       .EXT_memory_budget = true,
       .EXT_multi_draw = true,
       .EXT_mutable_descriptor_type = true,
+      .EXT_nested_command_buffer = true,
       .EXT_non_seamless_cube_map = true,
       .EXT_pci_bus_info = info->type == NV_DEVICE_TYPE_DIS,
       .EXT_pipeline_creation_cache_control = true,
@@ -325,7 +327,10 @@ nvk_get_device_features(const struct nv_device_info *info,
       .shaderBufferInt64Atomics = info->cls_eng3d >= MAXWELL_A &&
                                   nvk_use_nak(info),
       .shaderSharedInt64Atomics = false, /* TODO */
-      .shaderFloat16 = info->sm >= 70 && nvk_use_nak(info),
+      /* TODO: Fp16 is currently busted on Turing and Volta due to instruction
+       * scheduling issues.  Re-enable it once those are sorted.
+       */
+      .shaderFloat16 = info->sm >= 80 && nvk_use_nak(info),
       .shaderInt8 = true,
       .descriptorIndexing = true,
       .shaderInputAttachmentArrayDynamicIndexing = true,
@@ -421,6 +426,10 @@ nvk_get_device_features(const struct nv_device_info *info,
 
       /* VK_KHR_shader_maximal_reconvergence */
       .shaderMaximalReconvergence = true,
+
+      /* VK_KHR_shader_subgroup_rotate */
+      .shaderSubgroupRotate = nvk_use_nak(info),
+      .shaderSubgroupRotateClustered = nvk_use_nak(info),
 
       /* VK_KHR_vertex_attribute_divisor */
       .vertexAttributeInstanceRateDivisor = true,
@@ -541,6 +550,11 @@ nvk_get_device_features(const struct nv_device_info *info,
 
       /* VK_EXT_mutable_descriptor_type */
       .mutableDescriptorType = true,
+
+      /* VK_EXT_nested_command_buffer */
+      .nestedCommandBuffer = true,
+      .nestedCommandBufferRendering = true,
+      .nestedCommandBufferSimultaneousUse = true,
 
       /* VK_EXT_non_seamless_cube_map */
       .nonSeamlessCubeMap = true,
@@ -739,7 +753,7 @@ nvk_get_device_properties(const struct nvk_instance *instance,
 
       /* Vulkan 1.0 sparse properties */
       .sparseResidencyNonResidentStrict = true,
-      .sparseResidencyAlignedMipSize = true,
+      .sparseResidencyAlignedMipSize = info->cls_eng3d < MAXWELL_B, /* DXVK/vkd3d-proton requires this to be advertised as VK_FALSE for FL12 */
       .sparseResidencyStandard2DBlockShape = true,
       .sparseResidencyStandard2DMultisampleBlockShape = true,
       .sparseResidencyStandard3DBlockShape = true,
@@ -752,6 +766,8 @@ nvk_get_device_properties(const struct nvk_instance *instance,
                                      VK_SUBGROUP_FEATURE_BASIC_BIT |
                                      VK_SUBGROUP_FEATURE_CLUSTERED_BIT |
                                      VK_SUBGROUP_FEATURE_QUAD_BIT |
+                                     VK_SUBGROUP_FEATURE_ROTATE_BIT_KHR |
+                                     VK_SUBGROUP_FEATURE_ROTATE_CLUSTERED_BIT_KHR |
                                      VK_SUBGROUP_FEATURE_SHUFFLE_BIT |
                                      VK_SUBGROUP_FEATURE_SHUFFLE_RELATIVE_BIT |
                                      VK_SUBGROUP_FEATURE_VOTE_BIT,
@@ -878,6 +894,9 @@ nvk_get_device_properties(const struct nvk_instance *instance,
 
       /* VK_EXT_multi_draw */
       .maxMultiDrawCount = UINT32_MAX,
+
+      /* VK_EXT_nested_command_buffer */
+      .maxCommandBufferNestingLevel = UINT32_MAX,
 
       /* VK_EXT_pci_bus_info */
       .pciDomain   = info->pci.domain,
@@ -1117,12 +1136,6 @@ nvk_create_drm_physical_device(struct vk_instance *_instance,
    if (!ws_dev->has_vm_bind) {
       result = vk_errorf(instance, VK_ERROR_INCOMPATIBLE_DRIVER,
                          "NVK Requires a Linux kernel version 6.6 or later");
-      goto fail_ws_dev;
-   }
-
-   if (!(drm_device->available_nodes & (1 << DRM_NODE_RENDER))) {
-      result = vk_errorf(instance, VK_ERROR_INITIALIZATION_FAILED,
-                         "NVK requires a render node");
       goto fail_ws_dev;
    }
 

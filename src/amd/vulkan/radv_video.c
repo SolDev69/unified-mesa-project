@@ -664,7 +664,8 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
          pCapabilities->pNext, VIDEO_ENCODE_H264_CAPABILITIES_KHR);
       pCapabilities->maxDpbSlots = NUM_H2645_REFS;
       pCapabilities->maxActiveReferencePictures = NUM_H2645_REFS;
-      ext->flags = VK_VIDEO_ENCODE_H264_CAPABILITY_HRD_COMPLIANCE_BIT_KHR;
+      ext->flags = VK_VIDEO_ENCODE_H264_CAPABILITY_HRD_COMPLIANCE_BIT_KHR |
+                   VK_VIDEO_ENCODE_H264_CAPABILITY_PER_PICTURE_TYPE_MIN_MAX_QP_BIT_KHR;
       ext->maxLevelIdc = cap ? cap->max_level : 0;
       ext->maxSliceCount = 128;
       ext->maxPPictureL0ReferenceCount = 1;
@@ -689,7 +690,7 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
    case VK_VIDEO_CODEC_OPERATION_ENCODE_H265_BIT_KHR: {
       struct VkVideoEncodeH265CapabilitiesKHR *ext = (struct VkVideoEncodeH265CapabilitiesKHR *)vk_find_struct(
          pCapabilities->pNext, VIDEO_ENCODE_H265_CAPABILITIES_KHR);
-      ext->flags = 0;
+      ext->flags = VK_VIDEO_ENCODE_H265_CAPABILITY_PER_PICTURE_TYPE_MIN_MAX_QP_BIT_KHR;
       pCapabilities->maxDpbSlots = NUM_H2645_REFS;
       pCapabilities->maxActiveReferencePictures = NUM_H2645_REFS;
       ext->maxLevelIdc = cap ? cap->max_level : 0;
@@ -703,7 +704,7 @@ radv_GetPhysicalDeviceVideoCapabilitiesKHR(VkPhysicalDevice physicalDevice, cons
       ext->maxPPictureL0ReferenceCount = 1;
       ext->maxBPictureL0ReferenceCount = 0;
       ext->maxL1ReferenceCount = 0;
-      ext->maxSubLayerCount = 1;
+      ext->maxSubLayerCount = 4;
       ext->expectDyadicTemporalSubLayerPattern = false;
       ext->minQp = 0;
       ext->maxQp = 51;
@@ -780,11 +781,16 @@ radv_GetPhysicalDeviceVideoFormatPropertiesKHR(VkPhysicalDevice physicalDevice,
       vk_outarray_append_typed(VkVideoFormatPropertiesKHR, &out, p)
       {
          p->format = VK_FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16;
+         p->componentMapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->componentMapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->componentMapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->componentMapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->imageCreateFlags = 0;
+         if (pVideoFormatInfo->imageUsage & VK_IMAGE_USAGE_VIDEO_ENCODE_SRC_BIT_KHR)
+            p->imageCreateFlags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT;
          p->imageType = VK_IMAGE_TYPE_2D;
          p->imageTiling = VK_IMAGE_TILING_OPTIMAL;
          p->imageUsageFlags = pVideoFormatInfo->imageUsage;
-         if (pVideoFormatInfo->imageUsage & VK_IMAGE_USAGE_VIDEO_ENCODE_SRC_BIT_KHR)
-            p->imageCreateFlags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT;
       }
 
       if (pVideoFormatInfo->imageUsage & (VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR))
@@ -795,11 +801,16 @@ radv_GetPhysicalDeviceVideoFormatPropertiesKHR(VkPhysicalDevice physicalDevice,
       vk_outarray_append_typed(VkVideoFormatPropertiesKHR, &out, p)
       {
          p->format = VK_FORMAT_G8_B8R8_2PLANE_420_UNORM;
+         p->componentMapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->componentMapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->componentMapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->componentMapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+         p->imageCreateFlags = 0;
+         if (pVideoFormatInfo->imageUsage & VK_IMAGE_USAGE_VIDEO_ENCODE_SRC_BIT_KHR)
+            p->imageCreateFlags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT;
          p->imageType = VK_IMAGE_TYPE_2D;
          p->imageTiling = VK_IMAGE_TILING_OPTIMAL;
          p->imageUsageFlags = pVideoFormatInfo->imageUsage;
-         if (pVideoFormatInfo->imageUsage & VK_IMAGE_USAGE_VIDEO_ENCODE_SRC_BIT_KHR)
-            p->imageCreateFlags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT;
       }
    }
 

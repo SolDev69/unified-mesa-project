@@ -1930,9 +1930,6 @@ zink_set_shader_images(struct pipe_context *pctx,
                   /* ref already added by create */
                   a->buffer_view = bv;
                }
-               if (zink_resource_access_is_write(access))
-                  res->obj->unordered_write = false;
-               res->obj->unordered_read = false;
             } else {
                /* image rebind: get updated surface and unref old one */
                struct zink_surface *surface = create_image_surface(ctx, b, is_compute);
@@ -1952,6 +1949,9 @@ zink_set_shader_images(struct pipe_context *pctx,
                                          res->gfx_barrier);
             zink_batch_resource_usage_set(&ctx->batch, res,
                                           zink_resource_access_is_write(access), true);
+            if (zink_resource_access_is_write(access))
+               res->obj->unordered_write = false;
+            res->obj->unordered_read = false;
          } else {
             finalize_image_bind(ctx, res, is_compute);
             zink_batch_resource_usage_set(&ctx->batch, res,
@@ -4522,7 +4522,7 @@ zink_copy_buffer(struct zink_context *ctx, struct zink_resource *dst, struct zin
    bool unordered_src = !valid_write && !zink_check_unordered_transfer_access(src, 0, &box);
    zink_screen(ctx->base.screen)->buffer_barrier(ctx, src, VK_ACCESS_TRANSFER_READ_BIT, 0);
    bool unordered_dst = zink_resource_buffer_transfer_dst_barrier(ctx, dst, dst_offset, size);
-   bool can_unorder = unordered_dst && unordered_src && !(zink_debug & ZINK_DEBUG_NOREORDER);
+   bool can_unorder = unordered_dst && unordered_src && !ctx->no_reorder;
    VkCommandBuffer cmdbuf = can_unorder ? ctx->batch.state->reordered_cmdbuf : zink_get_cmdbuf(ctx, src, dst);
    ctx->batch.state->has_barriers |= can_unorder;
    zink_batch_reference_resource_rw(batch, src, false);
@@ -5631,6 +5631,9 @@ zink_context_create(struct pipe_screen *pscreen, void *priv, unsigned flags)
 
       zink_batch_rp(ctx);
    }
+
+   if (!is_compute_only && zink_debug & ZINK_DEBUG_NOREORDER)
+      ctx->no_reorder = true;
 
    if (!(flags & PIPE_CONTEXT_PREFER_THREADED) || flags & PIPE_CONTEXT_COMPUTE_ONLY) {
       return &ctx->base;
