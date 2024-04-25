@@ -1,5 +1,25 @@
 [
     {
+        "sha": "84632dce93f44e8d88cda47648cfd4cc0958918f",
+        "description": "v3d: Move spec@!opengl 1.1@getteximage-formats, Fail in broadcom-rpi4-fails",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d20295363962a2f121d10fb141e7f0b1c8bcc121",
+        "description": "v3d: Move spec@arb_texture_view@rendering-formats, Crash in broadcom-rpi4-fails",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "4660ee1deaace6457bf5fbf3fc8810e4a2453cb5",
         "description": "glthread: check for invalid primitive modes in DrawElementsBaseVertex",
         "nominated": true,
