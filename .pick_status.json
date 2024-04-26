@@ -1024,7 +1024,7 @@
         "description": "panfrost: do not write outside num_wg_sysval",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "500616706148d2e340bbdfecad45204b515ae9b5",
         "notes": null
