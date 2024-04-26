@@ -17,7 +17,6 @@ spec@!opengl 1.0@gl-1.0-edgeflag,Fail
 spec@!opengl 1.0@gl-1.0-edgeflag-quads,Fail
 spec@!opengl 1.0@gl-1.0-no-op-paths,Fail
 spec@!opengl 1.0@gl-1.0-user-clip-all-planes,Fail
-spec@!opengl 1.1@getteximage-formats,Fail
 spec@!opengl 1.1@point-line-no-cull,Fail
 spec@!opengl 1.1@teximage-colors gl_alpha16@Exact upload-download of GL_ALPHA16,Fail
 spec@!opengl 1.1@texwrap formats bordercolor,Fail
@@ -236,7 +235,6 @@ spec@arb_texture_rg@texwrap formats-float,Fail
 spec@arb_texture_rg@texwrap formats-float@GL_R32F- NPOT,Fail
 spec@arb_texture_rg@texwrap formats-float@GL_RG32F- NPOT,Fail
 spec@arb_texture_storage@texture-storage@cube array texture,Fail
-spec@arb_texture_view@rendering-formats,Crash
 spec@egl 1.4@eglterminate then unbind context,Fail
 spec@egl_khr_gl_image@egl_khr_gl_renderbuffer_image-clear-shared-image gl_depth_component24,Fail
 spec@egl_khr_gl_image@egl_khr_gl_renderbuffer_image-clear-shared-image gl_rgba,Fail
@@ -441,6 +439,10 @@ spec@!opengl 1.1@polygon-mode-offset@config 6: Expected white pixel on top edge,
 # rendering
 spec@!opengl 3.0@required-texture-attachment-formats,Fail
 spec@!opengl 3.1@required-texture-attachment-formats,Fail
+spec@arb_texture_view@rendering-formats,Crash
+
+# V3D does not support blending for GL_R{GBA}32F
+spec@!opengl 1.1@getteximage-formats,Fail
 
 # OpenGL 3.x requires 8 RT (MAX_DRAW_BUFFERS)/ color attachments (MAX_COLOR_ATTACHMENTS)
 spec@!opengl 3.0@bindfragdata-link-error,Fail
