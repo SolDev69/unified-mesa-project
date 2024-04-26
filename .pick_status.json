@@ -114,7 +114,7 @@
         "description": "radv: remove bogus VkShaderCreateInfoEXT::flags being 0 assert for compute",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "37d7c2172b2a9dbf9b0469fdff40b33b92cc99a5",
         "notes": null
