@@ -204,7 +204,7 @@
         "description": "v3dv: fix VK_KHR_vertex_attribute_divisor",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d38ff02c033a2cd0d7d926f395a0728bc7f2abf6",
         "notes": null
