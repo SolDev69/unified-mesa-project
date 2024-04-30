@@ -4,7 +4,7 @@
         "description": "meson: move tsan-blacklist.txt to build-support with the other build support files",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0d46e0e88bdeb8bfff3b30c65002cc34d3b7ba4e",
         "notes": null
