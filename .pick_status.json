@@ -1224,7 +1224,7 @@
         "description": "Revert \"iris: slow clear higher miplevels on single sampled 8bpp resources that have TILE64\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8670fd6ac4611ca29468830a8d59d99bbe872651",
         "notes": null
