@@ -2524,7 +2524,7 @@
         "description": "ci: fix container rules on release branches and tags",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "2487e18d4e25c56a70630ccf5faf5d2081fbee2f",
         "notes": null
