@@ -1004,7 +1004,7 @@
         "description": "anv: skip gfx push constants alloc optimization on gfx9/11",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "62d96a65464317326cdc2686aa34eb30f8c21952",
         "notes": null
