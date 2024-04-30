@@ -54,7 +54,7 @@
         "description": "pan/kmod: Make default allocator thread-safe",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d95ec56f8c6884e0ae975b683fe7249fab9e740d",
         "notes": null
