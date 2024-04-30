@@ -1,5 +1,285 @@
 [
     {
+        "sha": "86281ef15fca378ef48bcb072a762168e537820d",
+        "description": "radv: add shaders BO to the cmdbuf BO list at bind time",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "42554e81b97d9769dd54c775f1667ce1ebbfdb68",
+        "description": "radv: add RT prolog BO to the cmdbuf BO list at bind time",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "42dc4b463b57a26e6c97d490a162bd4b3a82a0e2",
+        "description": "radv: add GS copy shader BO to the cmdbuf BO list at bind time",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2664e058de34cb2b2ed3cfe6b31c722db20912f5",
+        "description": "radv: use the bound GS copy shader when emitting shader objects",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "be98fe27244ec65c117a408378d49b05f229c74e",
+        "description": "radv: pre-compute VGT_TF_PARAM.DISTRIBUTION_MODE",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d7679c0370890a019e367eaa6a5b8ecaa1d3e5f0",
+        "description": "radv: remove useless DB_Z_INFO.NUM_SAMPLES when emitting the MSAA state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4dd682e227ff6925288aeefa23b692398ec300ae",
+        "description": "radv: inline radv_get_pa_su_sc_mode_cntl() in radv_emit_culling()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e651a2c856407c263db644aea94e608aa7d8cd51",
+        "description": "radv: simplify radv_emit_primitive_restart_enable()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d1e5b13359751f4bbe0402b7bc99a9dd6490949d",
+        "description": "mr-label-maker: Add teflon marker",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8416ba9c25467b027411527bd04ee199601d587c",
+        "description": "amd/ci: 17 piglit failures are fixed for raven",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "98e976dcdb086f729946f2163ae05272728d68ad",
+        "description": "radeonsi: check for FMASK correctly in gfx10_get_bin_sizes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1a3c5cf17b0a074a51a7852127a2600932513b24",
+        "description": "radeonsi: enable DCC for MSAA on gfx10-10.3",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "eb7d7476517072ca6432a9ee624b1d400f20e686",
+        "description": "radeonsi: add workarounds for DCC MSAA for gfx9-10",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1929bb0d8d88a63f2cdaedef41c7bc44c4b8e008",
+        "description": "radeonsi: validate IO semantics in scan_io_usage",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cfe197e61cc5bc15552482fde462b0fb290d34fb",
+        "description": "radeonsi: fix KHR-GL46.texture_lod_bias.texture_lod_bias_all on gfx10-11",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6f09751548831c6e296d379cd45c7a2ae1564014",
+        "description": "radeonsi: don't invalidate L2 for internal compute without DCC stores",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c87ce78d1013a52a78a05470ca33fd8597d3f289",
+        "description": "ac/surface: enable thick tiling for 3D textures for better perf on gfx6-8",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "33f642aa09a82a3a7ba9b6b583d615bfa28f78c4",
+        "description": "ac/surface: disable DCC for 3D textures on gfx9 to improve performance",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e05aec3fcd86613abcb7b0618f1b5f49b8ce0f4e",
+        "description": "ac/gpu_info: set tcc_rb_non_coherent only if number of TCCs != number of RBs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "027c01bd8f6d1551e856c4d0771147d1212aac28",
+        "description": "v3d,v3dv: stop hard-coding max attrib divisor",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e8f96dd0b01df9c7e9e48b68eb846d93bd5036a9",
+        "description": "v3dv: fix VK_KHR_vertex_attribute_divisor",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "d38ff02c033a2cd0d7d926f395a0728bc7f2abf6",
+        "notes": null
+    },
+    {
+        "sha": "fe8fdc58db9cc364e7215b70f229cac3001a4676",
+        "description": "gallium/auxiliary/vl: fix typo which negatively impacts the src_stride initialization",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "76725452239e9e7740c0edd6a5f3663ab897c343",
+        "notes": null
+    },
+    {
+        "sha": "3daee9b677ba5cbb50bbd01278e817e3c8bb117b",
+        "description": "svga: update timespan in copyright message",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "901269955dd133aa20c86b0e75c8b5f2c8c9c689",
+        "description": "svga: convert license block to SPDX",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ad39355e837829a9d3ed36c3e60cce55a131d0b6",
+        "description": "kopper: don't set drawable buffer age",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "2a8c6cf7ac4cb88149ca8e99ba163fcecc055032",
+        "notes": null
+    },
+    {
+        "sha": "19e8df39b62a26ae55273de7b4866c24d1657dda",
+        "description": "zink: slightly better swapinterval failure handling",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a50c17802ab1f60d2fc707f05552f73f4b2d284a",
+        "description": "kopper: fix bufferage/swapinterval handling for non-window swapchains",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7352f948bee551f205476eeff2aec7cb657daf50",
+        "description": "meson: Fix invalid kwarg name",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "44b080af07f0ba516f0d5519bba86eb7c1ea7da2",
+        "notes": null
+    },
+    {
         "sha": "8248cc0bf45d0d7558cc3d77a63dcd078a96aa66",
         "description": "docs/panfrost: move details to separate articles",
         "nominated": false,
