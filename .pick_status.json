@@ -754,7 +754,7 @@
         "description": "anv: allocate space for generated indirect draw id's using the temporary allocation helper",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "82d772fa9b3a5eb7809921ca448b6e796a3d92b3",
         "notes": null
