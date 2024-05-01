@@ -174,7 +174,7 @@
         "description": "anv: fixup alloc failure handling in reserved_array_pool",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "806281f61fe1be3c52e6a1aa77bb22e98161b3cd",
         "notes": null
