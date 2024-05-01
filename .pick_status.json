@@ -164,7 +164,7 @@
         "description": "anv: fix leak of custom border colors",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4dad2a4a6fd76d8bc889d655c812a6f0ba757ed7",
         "notes": null
