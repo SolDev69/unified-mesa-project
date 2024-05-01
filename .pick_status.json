@@ -1,5 +1,285 @@
 [
     {
+        "sha": "47f6e24ad5dfcb59dd1511800aee8c56b4f8fee4",
+        "description": "meson: move tsan-blacklist.txt to build-support with the other build support files",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "0d46e0e88bdeb8bfff3b30c65002cc34d3b7ba4e",
+        "notes": null
+    },
+    {
+        "sha": "84139470a5606b64f3c31b02a1fe22445dd4d604",
+        "description": "intel/brw: Use VEC for emit_unzip()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1b54b4fad5650f2204d36974d6daaab1d01fd1c5",
+        "description": "intel/brw: Use VEC for NIR vec*() sources",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d4563747d9229359982ba40b5645f813e5980a78",
+        "description": "intel/brw: Use VEC for output stores",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f0c29c9b716fd3fd072fc94cc1108c92a44d1c78",
+        "description": "intel/brw: Use VEC for FS outputs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cbe7a13f2b438cf2b5d385de4f96a73808138814",
+        "description": "intel/brw: Use VEC for TCS/TES/GS input/output loads",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a94e1bd0ac42a5ff7d5c5a75f1f091c7fc4cfc72",
+        "description": "intel/brw: Use VEC for gl_FragCoord",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d0a24496fdbe9487b7bb8576a1e76542b2bbcf89",
+        "description": "intel/brw: Use VEC for load_const",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3c867bf2c7a52737c519eaf0734e76dc30353bcd",
+        "description": "intel/brw: Add a new VEC() helper.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c194df565a4331a76871d3c7dc603687b8003f38",
+        "description": "intel/brw: Don't include unnecessary undefined values in texture results",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e42914529a4e4906f98edb898217ad3c4d982b4b",
+        "description": "intel/brw: Support CSE on more ops",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ed3e4c16dce6d14cc6540d221708c9e734cf251a",
+        "description": "intel/brw: Do not create empty basic blocks when removing instructions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "391da3610c09cbb72609377c9778b19adade9a93",
+        "description": "intel/brw: Print W/UW immediates correctly",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "72ed71877c31eb40b3c6850c076f7bb03f450d2e",
+        "description": "glapi: fix param type in TexGenxOES",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "54258c1ee187e3eb092c096ba5ed58ce8302f859",
+        "description": "lavapipe/ci: skip another test that goes over the timeout",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0b739f7db86b721cc12ff9ce11cbfa72ac3d0863",
+        "description": "lavapipe/ci: add the rest of the failures introduced by the 1.3.8.2 uprev",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c7d4b7a59c205aa14c1de6984c144d8c976df11b",
+        "description": "lavapipe/ci: drop fixed test from failures",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a963c67298e9433b8832e08edd827b7818600bc5",
+        "description": "meson: use bool.to_int() instead of manually converting",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f9d78f110cb42947852f4977bb602a3e653078e4",
+        "description": "nir: add sleep intrinsics for AMD",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b06a71b3cd65957b8f8706ae69dc64a014e8e89e",
+        "description": "nir: add streamout intrinsics for AMD GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1a791c130378288fc40a76c549f93deda81e7a6b",
+        "description": "nir: add nir_atomic_op_ordered_add_gfx12_amd",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d4cfcbdde8fdc350d778ca1020038b1ff33c444b",
+        "description": "nir: add ACCESS_CP_GE_COHERENT_AMD",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7187373ec2259d2ade1f3a5741f58de6a57c132e",
+        "description": "meson: always set USE_LIBGLVND",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "21b527632ec23038cde9cbc83ce40bebc15931e5",
+        "description": "egl+glx: fix two #ifdef that should be #if like the rest",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "11b060f41acf8fb297b64757f49b7cf0a8f8401c",
+        "description": "meson: simplify `-gsplit-dwarf` compiler argument check",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "44b080af07f0ba516f0d5519bba86eb7c1ea7da2",
+        "notes": null
+    },
+    {
+        "sha": "dd3ee08b0507859b173feb072104220cd43d45c9",
+        "description": "docs/panfrost: link to conformant products",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fe4ebace7902e2686a9ab888725c9fa64e17ee3c",
+        "description": "ir3: Don't manually scalarize SSBO loads",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cd15dec66e05cbdc9a07394f32d3848f71457146",
+        "description": "ir3: Don't scalarize all SSBO instructions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "86281ef15fca378ef48bcb072a762168e537820d",
         "description": "radv: add shaders BO to the cmdbuf BO list at bind time",
         "nominated": false,
