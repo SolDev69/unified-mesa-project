@@ -39,8 +39,7 @@ jobs:
             -Dvmwgfx=disabled \
             -Dfreedreno=enabled \
             -Dvc4=disabled \
-            -Detnaviv=disabled \
-            -Dfreedreno-kgsl=true
+            -Detnaviv=disabled
           ninja -C "build-android" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
