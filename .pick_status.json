@@ -574,7 +574,7 @@
         "description": "anv: Fix descriptor sampler offsets assignment",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7c76125db25db9bdf5521baf7c848ccd4bd37b5f",
         "notes": null
