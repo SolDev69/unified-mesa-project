@@ -194,7 +194,7 @@
         "description": "clc: Always use spir for 32 bit",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "22fa315ee0622b73956cebf8375497f3ccb8d456",
         "notes": null
