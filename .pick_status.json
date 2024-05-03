@@ -1574,7 +1574,7 @@
         "description": "nil: Use the right PTE kind for Z32 pre-Turing",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "426553d61d164a04ecf540d933f72e16dcbf9e33",
         "notes": null
