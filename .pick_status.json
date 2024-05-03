@@ -1544,7 +1544,7 @@
         "description": "nil: Default to NV_MMU_PTE_KIND_GENERIC_MEMORY on Turing+",
         "nominated": false,
         "nomination_type": 3,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
