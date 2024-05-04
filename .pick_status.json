@@ -264,7 +264,7 @@
         "description": "egl/wayland: Fix sRGB format look up for config",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6a084e2b081882ff027e426e8faddbe1f5497614",
         "notes": null
