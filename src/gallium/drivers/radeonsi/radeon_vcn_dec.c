@@ -1829,6 +1829,7 @@ static unsigned rvcn_dec_dynamic_dpb_t2_message(struct radeon_decoder *dec, rvcn
       size = size * 3 / 2;
 
    list_for_each_entry_safe(struct rvcn_dec_dynamic_dpb_t2, d, &dec->dpb_ref_list, list) {
+      bool found = false;
       for (i = 0; i < dec->ref_codec.ref_size; ++i) {
          if (((dec->ref_codec.ref_list[i] & 0x7f) != 0x7f) && (d->index == (dec->ref_codec.ref_list[i] & 0x7f))) {
             if (!dummy)
@@ -1842,10 +1843,10 @@ static unsigned rvcn_dec_dynamic_dpb_t2_message(struct radeon_decoder *dec, rvcn
             dynamic_dpb_t2->dpbAddrLo[i] = addr;
             dynamic_dpb_t2->dpbAddrHi[i] = addr >> 32;
             ++dynamic_dpb_t2->dpbArraySize;
-            break;
+            found = true;
          }
       }
-      if (i == dec->ref_codec.ref_size) {
+      if (!found) {
          if (d->dpb.res->b.b.width0 * d->dpb.res->b.b.height0 != size) {
             list_del(&d->list);
             list_addtail(&d->list, &dec->dpb_unref_list);
