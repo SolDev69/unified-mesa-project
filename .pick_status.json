@@ -24,7 +24,7 @@
         "description": "clover: fix pipe_box update regression",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "651191801a8751c9ac1bc09327a50c19a9927392",
         "notes": null
