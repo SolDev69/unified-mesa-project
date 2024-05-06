@@ -1024,7 +1024,7 @@
         "description": "tu: Fix a6xx lineWidthGranularity",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "48da361eb7b355f6ce79983d661dd0422e278967",
         "notes": null
