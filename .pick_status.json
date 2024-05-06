@@ -434,7 +434,7 @@
         "description": "nir: fix nir_shader_get_function_for_name for functions without names.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2aa9eb497d0f670136b5c2a50b962f4ce0faa917",
         "notes": null
