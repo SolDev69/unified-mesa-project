@@ -14,7 +14,7 @@
         "description": "zink: clean up accidental debug print",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "19e8df39b62a26ae55273de7b4866c24d1657dda",
         "notes": null
