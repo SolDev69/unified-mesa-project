@@ -1934,7 +1934,7 @@
         "description": "turnip: msm: fix racy gem close for re-imported dma-buf",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "63904240f21b192a5fb1e79046a2c351fbd98ace",
         "notes": null
