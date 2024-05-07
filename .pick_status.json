@@ -114,7 +114,7 @@
         "description": "rusticl: use stream uploader for cb0 if prefered",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5ff33f99058b5338fa83689da3d3c34d7079f4f7",
         "notes": null
