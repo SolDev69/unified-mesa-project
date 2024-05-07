@@ -1,5 +1,435 @@
 [
     {
+        "sha": "9666756f603f0285d8a93ef93db1c7ec702b671f",
+        "description": "tu: Handle non-overlapping WaW hazard with buffer copy/fill/update",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4cefb5ece8208be8c8aacc9be75045f40cb2e820",
+        "description": "docs/android: Fix example meson cross file again",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "57abef5af1f316bc1e9c6baefe986950e65b516b",
+        "notes": null
+    },
+    {
+        "sha": "59192b851f36fbd4f4066df573ebdba05c1b92b2",
+        "description": "freedreno: Update HLSQ_*_CMD registers for a7xx",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "13fdde0c7d265f0e577a8e9fb3b53e044b8f941d",
+        "description": "freedreno/crashdec: Initial a7xx support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "81f42d82edef8b3617cc504bfc1bbfc381e52f3b",
+        "description": "panfrost: report correct MAX_VARYINGS",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4c74d1473054ca3cc609bae6e31028063bd531bf",
+        "description": "pan/kmod: Make default allocator thread-safe",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "d95ec56f8c6884e0ae975b683fe7249fab9e740d",
+        "notes": null
+    },
+    {
+        "sha": "068d111884a588f4972e27477b1cb2cf4f52d0e3",
+        "description": "pan/kmod: Fix a syncobj leak in the panthor backend",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "97f6a62f7ef82b909f62ca78788d4f24416fbd31",
+        "notes": null
+    },
+    {
+        "sha": "2cc317763ccc2f33bbff0920bb0833d09300f60c",
+        "description": "panfrost: Add the BO containing fragment program descriptor to the batch",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "087b63cb07717e83ea606648f2551fc9586b9165",
+        "notes": null
+    },
+    {
+        "sha": "31b039d8b735d91e899123a69b87cba2608499d2",
+        "description": "radv: advertise VK_KHR_dynamic_rendering_local_read",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c533a79878f1e0561e62a2f4788f6a1bcfeadec5",
+        "description": "radv: implement VK_KHR_dynamic_rendering_local_read",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "53a142ad23bc7617396e498cae3a6196a42413c3",
+        "description": "aco: add support for remapping color attachments",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "39379e30dbf69111d798e54b3afd73c9ed55066b",
+        "description": "mr-label-maker: specialize CI labels",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a30e6b9afce87ca41f286caa4e3ec190c2d524b1",
+        "description": "ci: backport fix for gl_PointSize bug in CTS",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cbe2630f19e86638229f65fb1ee1992f71889c2a",
+        "description": "iris: change stream uploader default size to 2MB",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "0b6693a3a14029c31db2ee8576baa78fc914b9e5",
+        "notes": null
+    },
+    {
+        "sha": "2d575034f23038163d502e744b957b184334a74b",
+        "description": "hasvk: switch to use runtime physical device properties infrastructure",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "55967a411d40f534b03afa237c2848fd65a53bab",
+        "description": "anv: Move completely over to common runtime GetPhysicalDeviceProperties2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c0fcc0a2fd8708511cd6593e743770535f1e89ac",
+        "description": "docs: update anv features",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8c1cc405d37143eb819e1272e8e2befdf26fcce8",
+        "description": "anv: VK_EXT_legacy_vertex_attributes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3d20245f43bcc34afbfc62b4be1c59529ae438cb",
+        "description": "glsl: wrap nir_opt_loop in NIR_PASS()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d2e5ff058583fda6d917cfcf1fb1579831dca826",
+        "description": "nouveau/headers: Clean up the meson a bit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a6036033f0d523f42a38baa4731cfae56fefb8a3",
+        "description": "nouveau/headers: Make nvk_cl**** turn to nv_push_cl****",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8a0afd127602023ee74c0d901303f3366b62ae06",
+        "description": "nvk: Advertise VK_EXT_pipeline_robustness",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cda0d6331bacf81a1a94787fb55981e5e6ca8688",
+        "description": "nouveau/class_parser.py: Fix the docs for --out-rs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e32828f5fc4d8fac717fab113ab5c837ea2e2bc6",
+        "description": "intel/compiler: Fix destination type for CMP/CMPN",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6c5acc6db7ac56d27c22b0143bcac29e31354ac6",
+        "description": "etnaviv: Zero init all srcs passed to etna_emit_alu(..)",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "5aede1a157b7aa99052282a6960646da81b0a399",
+        "notes": null
+    },
+    {
+        "sha": "1cc48123986e38cb5608b159e080408b737954be",
+        "description": "ci/lima: expect fail of window_8888_colorspace_srgb on wayland",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "066fc39f45181c30b9b3ee93c17f52763a8e4356",
+        "description": "egl/wayland: Fix sRGB format look up for config",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "6a084e2b081882ff027e426e8faddbe1f5497614",
+        "notes": null
+    },
+    {
+        "sha": "c26fc237bbdb9663040a4a6c722c746d9cc556db",
+        "description": "lavapipe/ci: skip two more timing out ray query tests",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d17e9994e40b4ac25613afb7e2df39d1dc713cc3",
+        "description": "freedreno: add a7xx perfcounter support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5fb8ab62d277e7e8ec009bc3be9c6220029a2439",
+        "description": "fdperf: simplify counter value output",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bc6cee935eda5b157bd49d4506b9c56b88523f62",
+        "description": "fdperf: improve reads of counter values",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9a45487708b41f608135ad1e4a2ec068749de95d",
+        "description": "fdperf: prettify logic around the reserved CP counter",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "547f20773c043ddc966e8749666eadeb80428e56",
+        "description": "fdperf: select_counter() should work with a countable value",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "704cceab30412a3e4c0de2334c03cba2e992084b",
+        "description": "fdperf: use snprintf instead of asprintf",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "17fcb86a26ba4a0cde282c276d6608a0050965c5",
+        "description": "vulkan: Update XML and headers to 1.3.284",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c9162034bce014d7e00758c12c5fcd243607c834",
+        "description": "radv: precompute DB_SHADER_CONTROL for fragment shaders later",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c658ed5136119d78842f818b33bed5dd1cd3d8ac",
+        "description": "radv: precompute vertex shader register values",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4b53d36f0d4b44d661126615809c2a1656d9c239",
+        "description": "radv: precompute legacy GS register values",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fa9b0ee86cff1e5128e021136dbfe6742ca80135",
+        "description": "radv: precompute mesh shader register values",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7f7ef10bea7de974e9ccf367bb8bddd7bce0ea2d",
+        "description": "radv: precompute fragment shader register values",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e5bc4d85bbd19264be9c2d8e9529c497576e724b",
+        "description": "radv: precompute existing legacy GS register values later",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "88dfe04b08d5a1279dbde042b2e79ca2e7a530a6",
+        "description": "Revert \"radeonsi/vcn: AV1 skip the redundant bs resize\"",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6746d4df6eac83d048e88c2d54aa19e7c1a0a696",
+        "description": "frontends/va: Fix AV1 slice_data_offset with multiple slice data buffers",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "569c2fcf952a3ec13ddf77c0058e769bf68f3aaf",
         "description": "nir: fix nir_shader_get_function_for_name for functions without names.",
         "nominated": true,
