@@ -14,7 +14,7 @@
         "description": "docs/android: Fix example meson cross file again",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "57abef5af1f316bc1e9c6baefe986950e65b516b",
         "notes": null
