@@ -2224,7 +2224,7 @@
         "description": "turnip: virtio: fix error path in virtio_bo_init",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f17c5297d7a01eb37815f96bbf3a87667a2f3261",
         "notes": null
