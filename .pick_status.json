@@ -4454,7 +4454,7 @@
         "description": "clover: fix memory leak related to optimize",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2d4fe5f229791fde52846b3f583c12508b5109d6",
         "notes": null
