@@ -1944,7 +1944,7 @@
         "description": "turnip: msm: clean up iova on error path",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e23c4fbd9b6b95537ab00d19a034eaffe5fe86b0",
         "notes": null
