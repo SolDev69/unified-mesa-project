@@ -654,7 +654,7 @@
         "description": "turnip: virtio: fix racy gem close for re-imported dma-buf",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f17c5297d7a01eb37815f96bbf3a87667a2f3261",
         "notes": null
