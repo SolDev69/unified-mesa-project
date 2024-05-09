@@ -594,7 +594,7 @@
         "description": "r600: fix vertex state update clover regression",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "659b7eb2799bccfff817961518d0ff2ab9e65bca",
         "notes": null
