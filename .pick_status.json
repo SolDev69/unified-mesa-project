@@ -2234,7 +2234,7 @@
         "description": "frontends/va: Only increment slice offset after first slice parameters",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "6746d4df6eac83d048e88c2d54aa19e7c1a0a696",
         "notes": null
