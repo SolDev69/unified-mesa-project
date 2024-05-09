@@ -1404,7 +1404,7 @@
         "description": "zink: Set workarounds.can_do_invalid_linear_modifier for NVK",
         "nominated": false,
         "nomination_type": 3,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
