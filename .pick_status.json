@@ -1604,7 +1604,7 @@
         "description": "nouveau/winsys: Take a reference to BOs found in the cache",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c370260a8f15e9be2f43a7d237f438592a09cccd",
         "notes": null
