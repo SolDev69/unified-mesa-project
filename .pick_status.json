@@ -394,7 +394,7 @@
         "description": "rusticl/icd: remove CLObject",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7f77f91929c9cdaddde78a59e532657d024d7731",
         "notes": null
