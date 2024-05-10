@@ -404,7 +404,7 @@
         "description": "nvk: Re-emit sample locations when rasterization samples changes",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "41d094c2cc1da09444830dca866d2be7f03ae5b4",
         "notes": null
