@@ -484,7 +484,7 @@
         "description": "nvk/meta: Restore set_sizes[0]",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "af3e7ba1057e122c9ccd6d0f09b233ca8278af28",
         "notes": null
