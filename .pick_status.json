@@ -34,7 +34,7 @@
         "description": "radv: Remove radv_queue::device again",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0fb19b8331f53b03d51f026acefa07bf97cbfe5b",
         "notes": null
