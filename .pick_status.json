@@ -1,5 +1,785 @@
 [
     {
+        "sha": "406dda70e7c9baa59c975eb64025e7c3b210c3bc",
+        "description": "radv: Zero initialize capture replay group handles",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "df82221bb32c73f111d60e02655339846136e2de",
+        "description": "radv: Remove arenas from capture_replay_arena_vas",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e050abc961d2d063f9d7cf419f43aaf17ba0b039",
+        "description": "radv: Fix radv_shader_arena_block list corruption",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e21ea25de916b88cc6075b267874fc3085e598a7",
+        "description": "radv: Remove radv_queue::device again",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "0fb19b8331f53b03d51f026acefa07bf97cbfe5b",
+        "notes": null
+    },
+    {
+        "sha": "79cb8842753e6dc7c10d6c5af1f1cf7ece5ecc75",
+        "description": "radv: Use zerovram for Enshrouded.",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e28195bf4b0e928ae16fe09f6a076bef4c719c60",
+        "description": "radeonsi/vcn: enable decoding in vcn5.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f9441cdb8e6f91d95979f7d6a0477ba066355654",
+        "description": "radeonsi/vcn: add hevc support for vcn5",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "04d6b46d2ddf5562a011493dfbdb4a9e2e56d44a",
+        "description": "radeonsi/vcn: add vcn5.0 for h264 enc only",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "52f0d5b96d51840718868640a43aafb7e88d3637",
+        "description": "radeonsi/vcn: add vcn5 encoding interface change",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f703dfd1bb8c22b6791dd95c7de270e176452b4b",
+        "description": "radeonsi: add gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c8ad0f07155d79ac28748f6d47483634b46d8953",
+        "description": "ac/surface/tests: add gfx12 tests",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d22564d29cc6d1d1d7d9370eeeb71f21e2d1fbbc",
+        "description": "ac/surface: add gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "686e5a03f52f0e805a59d3affd098cca98a603fe",
+        "description": "ac/llvm: add a workaround for nir_intrinsic_load_constant for LLVM on gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "546465e1ba750a80febd78a06422b0e65e4af2a2",
+        "description": "ac/llvm: implement nir_intrinsic_ordered_xfb_counter_add_gfx12_amd",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5d94ec9ec435970e3b55c0314866233ce9d4c5c0",
+        "description": "ac/llvm: handle nir_atomic_op_ordered_add_gfx12_amd",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2a7302f6011d35a6ea6a3ef088f4a8ef616c4bcb",
+        "description": "ac/nir: add gfx12 streamout NIR code",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "542c7ee75f2b5dbeae0952444f65d881867009a1",
+        "description": "ac/nir: add ac_nir_sleep and handle the intrinsics",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "af9f04ad59fb39da4e0cd35320c30912fdb7ebf7",
+        "description": "ac/llvm: update inline assembly for buffer_load_format_xyzw with TFE for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9d33e66ad6a2568f88ebed3fa68b6653605d1260",
+        "description": "ac/llvm: add CS SGPR changes for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0356209543fd716e6f676444f75eeac2ab292340",
+        "description": "ac/llvm: add new cache flags for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a6c46509ccb10b3836fe273f740b521b3bdfe7d6",
+        "description": "ac/llvm: use new s_wait instructions and split the existing ones for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "12bca6123a80a771f812b499b6543b02ee1e3441",
+        "description": "ac/nir,llvm: add GS VGPR changes for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4e1abe5d8cec2270b55b86b872f8b259f1be442c",
+        "description": "ac/nir: update ac_nir_lower_resinfo for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2adc66e586a3f9f90bdee52dd3976d4480b39a20",
+        "description": "amd: add initial common code for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "58a5de5c346b78211500a26d338b4c0dc64fe760",
+        "description": "amd: add gfx12 register definitions into the register header generator",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "724b6d667c6d805ea60808c4cea4a7bcdada1ad2",
+        "description": "amd: add gfx12 register definitions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ff47395757001f8bb299948ce4822958b72dc6f0",
+        "description": "amd: import gfx12 addrlib",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3d8addb0733cd17fb1f0b7f21b8e64d115106195",
+        "description": "drm-uapi: update amdgpu_drm.h and drm_fourcc.h for gfx12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "74ea0d006ef7a3faf037c8ce1c2c669f4bfd06a3",
+        "description": "mailmap: add Freya Gentz entry",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8a02ca1b2eb9dc100a5c7a6089e515485e50fecc",
+        "description": "egl/x11: Allow all RGB visuals to match 32-bit RGBA EGLConfigs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9bdab38424543061ea9e76bc420e07b8ddd8be03",
+        "description": "egl: Implement EGL_MESA_x11_native_visual_id",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3736c9997c6efb3ef6b63923bbddada3d003e632",
+        "description": "egl/x11: Move RGBA visuals in the second config selection group",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0d90415625c12f534aae7767ca801b310dc3f376",
+        "description": "egl: Implement EGL_EXT_config_select_group",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8b6b327d1b9bc6f6e2053d30911c9d7888e4848d",
+        "description": "treewide: Cleanup unused structs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9f42a34625bdd0f246afd47a5fa126788a40321e",
+        "description": "ci/deqp: correct EGL_EXT_config_select_group detection",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "671c646a0ded70299aaf93ea189587a2cdc96981",
+        "description": "Revert \"ci: mark microsoft farm as offline\"",
+        "nominated": false,
+        "nomination_type": 2,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "45edd99b6bee4c15a71a9faf7d8fde7d2333b34c",
+        "notes": null
+    },
+    {
+        "sha": "4842bbb200cab04c5548074b609dcbf2e44bf0a9",
+        "description": "nouveau/headers: Add a bool for whether or not to dump offsets",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "99b0117243e233f7dcdbaa346220389b5fdb36c9",
+        "description": "nvk: Don't rely on push_dirty for which push sets exist",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "53737b9d5b9e5c8a4949dc4ee42d9b7cbe790a33",
+        "description": "nvk: Get rid of sets_dirty",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c834644c4e4b39d65003b455e3be5e129767200d",
+        "description": "nvk/meta: Restore set_sizes[0]",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "af3e7ba1057e122c9ccd6d0f09b233ca8278af28",
+        "notes": null
+    },
+    {
+        "sha": "a160c2a14e71bb36d420929b0cb408f6346d845d",
+        "description": "nvk: Re-emit sample locations when rasterization samples changes",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "41d094c2cc1da09444830dca866d2be7f03ae5b4",
+        "notes": null
+    },
+    {
+        "sha": "bc15c95c7afe56cc0408aa2ba02a5a21f766547b",
+        "description": "frontends/dri: always init opencl_func_mutex in InitScreen hooks",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a1225e81c9d0d2b6ada9e6af51be710d2ae2d4dc",
+        "description": "frontends/dri: only release pipe when screen init fails",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b8dbd64267cc8dc2543a1e235d751b61947f1ed7",
+        "description": "intel/brw: Fix commas when dumping instructions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c9fe20fdf1a9d5670cb14279dbc1f014219872c5",
+        "description": "intel/brw: Use `vNN` instead of `vgrfNN` when printing instructions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3a081106b0fb8dd0c4fdde1f8666489b50f350e5",
+        "description": "intel/brw: Hide register pressure information in dumps",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "866b1245e9e99bce7932fb6828de28c8fcf8ad0d",
+        "description": "intel/brw: Don't print IP as part of the dump",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fd47f90d37b9d29283f92713b479d9886f1f03f9",
+        "description": "brw: drop dependency on libintel_common",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "36c043e2ebc3c5fbabaef54d64e867b7dd915b5c",
+        "description": "intel: move debug identifier out of libintel_dev",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4882f49e6baa6e4cbe6277a2a5702b17d52176d0",
+        "description": "zink: don't submit main cmdbuf if has_work is not set",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0a24b8f9a342a59ba155692b437b3998eb15172f",
+        "description": "zink: stop flagging has_work on batch tracking",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "74f572b28fce085f780f3c25673b97f4553de668",
+        "description": "zink: flag has_work in a few more places",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8f687f2a46529206737385bce46b4b0507b2b42c",
+        "description": "zink: rely on zink_get_cmdbuf() to set has_work flags",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b9ec12d4392b7de6c026881d8e01b5d2658a6136",
+        "description": "zink: check all has_work flags for flushes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "06abe4399d242a84abefb06c1de24dacc228904b",
+        "description": "zink: reset all the has_work flags in the same place",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e4c516bece592e7a664fd7238259ce9b66ac42ad",
+        "description": "zink: zink_batch_state::has_barriers -> has_reordered_work",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ac07fefdda145025a0a3b89d812b1f969ab09381",
+        "description": "zink: delete zink_batch",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "40f595b30c14ac2c042660018f96a9d548ad9e17",
+        "description": "zink: remove all zink_batch usage from zink_context.c",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "91969dfa5a743c76b3514f9f1f48a780d2367406",
+        "description": "zink: remove all zink_batch usage from zink_render_pass.c",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "05ba13ed18a6f7e421302654c4719371c7c85c8f",
+        "description": "zink: remove all zink_batch usage from zink_draw.cpp",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bdb4860c107c03d58c2513225e0c19abc4d9f11a",
+        "description": "zink: remove all zink_batch usage from zink_resource.h",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0d8d90d5776d5b1ccbe4abca6e31e01794a48a60",
+        "description": "zink: remove all uses of zink_batch from zink_batch.c",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4adfb03f5b122c22b4e07f6f16bda68586b88f1e",
+        "description": "zink: remove zink_batch usage from zink_clear.c",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "efa8ce29a4a9e59e838c2307f602bcdcf9ada28e",
+        "description": "zink: delete all zink_batch uses from zink_query.c",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e27018dc79181af1d84aea396e4efb56309dea53",
+        "description": "zink: rename zink_batch::state -> zink_batch::bs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "107bf9ec7c9887cc6e13d5601560543d78f9a077",
+        "description": "zink: move swapchain from zink_batch to zink_context",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2837cf9dde54d2c7791675e57a46de23e5adf2e9",
+        "description": "zink: move work_count from zink_batch to zink_context",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8eacafaccc669f16fce509c3b4c5df7dd15e7872",
+        "description": "zink: move last_work_was_compute from zink_batch to zink_context",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fb6828a9a1619664f7d59f942f9aec697e904d4e",
+        "description": "zink: rename last_was_compute -> last_work_was_compute",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d157b89bee9574b57b6ec674821dbaec3e4bd6da",
+        "description": "zink: move has_work from zink_batch to zink_batch_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c8026f01bc5a944ca21e3438b6f869ecd90e2f8f",
+        "description": "zink: move ref_lock from zink_batch to zink_batch_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f8876a0533d1cdee08fd1f19295d1113030ada96",
+        "description": "zink: move in_rp to zink_context",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c85fc875d961a28c5c18e080e258a65128490e4e",
+        "description": "zink: delete unused zink_batch struct member",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ae8fbe220ae67ffdce662c26bc4a634d475c0389",
+        "description": "freedreno/replay: use inttypes format string for 64bit",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "654ef356357e8df618e82c9ed19619fbe4d4524d",
+        "description": "zink: avoid designated initializers as they are not supported in C++ < 20",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "7bdaf6e95f79d3c159ae6418ac403c0aba550ed4",
+        "notes": null
+    },
+    {
+        "sha": "320c0b44f480f517a9ea7a5af3ec78ed32c3a96a",
+        "description": "radv/ci: add navi21 flakes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "32f2b5d245fcaadc540cbac9f4780cc199b1ae0d",
+        "description": "llvmpipe: wrap the push/pull in the ifdef as well",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c7634c25e4fe78cf993de65dd184d7155564eca2",
+        "notes": null
+    },
+    {
+        "sha": "860b262f4487977fcab0d7efe89187dcaf202ee6",
+        "description": "microsoft/clc: fix incorrect changes that got through while the Windows CI was down",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "e80d52223e13f02ab9a3c56452f39e4fff326c1e",
+        "notes": null
+    },
+    {
         "sha": "18c53157318d6c8e572062f6bb768dfb621a55fd",
         "description": "meson: Update proc_macro2 meson.build patch",
         "nominated": false,
