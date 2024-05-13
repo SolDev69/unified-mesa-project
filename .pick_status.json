@@ -824,7 +824,7 @@
         "description": "freedreno/replay: use inttypes format string for 64bit",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": null,
         "notes": null
