@@ -224,7 +224,7 @@
         "description": "egl/dri2: fix error returns on dri2_initialize_x11_dri3 fail",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "62f65f4bfdae169de7842f2577dca5f8160616f4",
         "notes": null
