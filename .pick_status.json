@@ -1654,7 +1654,7 @@
         "description": "nvk/upload_queue: Only upload one line of data",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2074e28a0d6aa65d2a979ba6bae9012797dd3352",
         "notes": null
