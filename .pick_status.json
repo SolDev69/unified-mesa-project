@@ -74,7 +74,7 @@
         "description": "util/format: add missing null check in util_format_is_srgb()",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ff6cf60cb80c3bc31d9a4307c32185f65054bc58",
         "notes": null
