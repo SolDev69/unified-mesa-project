@@ -124,7 +124,7 @@
         "description": "aco/tests: Insert p_logical_start/end in reduce_temp tests",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
