@@ -2614,7 +2614,7 @@
         "description": "util: shift the mask in BITSET_TEST_RANGE_INSIDE_WORD to be relative to b",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fb994f44d91a4b94738ea4ebb83aab1a257ef123",
         "notes": null
