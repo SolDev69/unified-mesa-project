@@ -1,5 +1,245 @@
 [
     {
+        "sha": "d516721cd0cb16d0b601c42c01de0fdcc4ae887b",
+        "description": "tu: Support VkExternalFormatANDROID",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "29f5a78d1655777605fc542a997932d60a863e92",
+        "description": "tu: Skip YUV conversion for RGB formats",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "99753001f35ae5791b64d72efe5278795004899f",
+        "description": "turnip: Support AHardwareBuffer",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4b024a15f2660886f868c33470ba83677edd24c4",
+        "description": "turnip: Split tu_image_init to use layout setting logic separately",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ecd9ece9c1389128c756a7fc773b547a67f66697",
+        "description": "turnip: Convert tu_device_memory to use vk_device_memory",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1373b0966cbd329e25fa9732330afdb6881482a7",
+        "description": "turnip/android: Migrate to common ANB code",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e047d75a5731e59a82a54cb95e5c4dd98580448e",
+        "description": "turnip: Change tu_image to use common initialization helpers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "270ee656678d4cf48e34847ab41b5ec3d4d7c825",
+        "description": "vulkan: Add helper to resolve Android external format",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "12092d1ac726a80dc2d95bbc781340bbcb776bdc",
+        "description": "vulkan: Don't request Ycbcr conversion for rgb",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b9bbeb77c76314cf3c3206a7e1bbd54e00aae1c5",
+        "description": "vulkan/android: Add helper to probe AHB support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "be0a893a2e0126e1ed1cae60820333e8686d3593",
+        "description": "rusticl/spirv: enable more caps",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "ba11b12a82a1e7de5d29ae89abe24f3c52ffc38c",
+        "notes": null
+    },
+    {
+        "sha": "590ea76104899edd6883fe50d9590f919b9e97d5",
+        "description": "aco/spill: Insert p_start_linear_vgpr right after p_logical_end",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "84c1870b655d4987da722f03b315d41da57d13ec",
+        "description": "aco/tests: Insert p_logical_start/end in reduce_temp tests",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "02efe52aab6b544b57c29c9f4345de1a4a64bcb7",
+        "description": "panvk: Only clear UBOs descriptors when set isn't present",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "9c553bda9c182763d7f3cf8c9d5b583fbb4923e8",
+        "notes": null
+    },
+    {
+        "sha": "1f0f76dbdccf7226a46b64d0c4db6f569f0ba303",
+        "description": "radv/ci: Document recent flakes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9db41dfec5f3e4ecfcd8297f670cdd855eb0f920",
+        "description": "radv/ci: Add back pipeline library flakes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cb81ec7a61fb41dd51bc3e1a22efffb4c1492086",
+        "description": "aco: don't count certain pseudo towards VMEM_STORE_CLAUSE_MAX_GRAB_DIST",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "34844deb3ed50c3cdda1cc00239e291f5e4773ef",
+        "description": "ci: fix section_end in debian-build-testing",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "d428cc1116fd5cec4b397bfaca87e59570f178da",
+        "notes": null
+    },
+    {
+        "sha": "d0c364a24b139ef22f49c4fff40f3197a60d23c2",
+        "description": "ci: drop unused piglit-test and integrate it into piglit-traces-test",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a40345aaebeec561b1a2ab70762b0bffa11591fa",
+        "description": "ci: reuse dead .vkd3d-proton-test to make vkd3d less radv-specific",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "68c09a00c8cee182a12e57a2ba76375c4d27e62e",
+        "description": "mr-label-maker: mark *-vkd3d.txt files as CI results expectations files",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9af82fc98f9e80e78beeb412dd549c4b83718019",
+        "description": "amd/ci: track changes to VKD3D_PROTON_RESULTS files",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7dd2b9e11ae860607a533b0fbf71c51496063089",
+        "description": "ci: hardcode `-vkd3d` namespace for VKD3D_PROTON_RESULTS",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c50f3d62b9a316e50d200c5f666232708123e277",
+        "description": "ci: drop default VKD3D_PROTON_RESULTS file name",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "5502ecd7716045e76f13f007a4aa5f5653c80ecd",
         "description": "util: shift the mask in BITSET_TEST_RANGE_INSIDE_WORD to be relative to b",
         "nominated": true,
