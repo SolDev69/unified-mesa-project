@@ -637,7 +637,7 @@ radv_emit_graphics_scratch(struct radv_device *device, struct radeon_cmdbuf *cs,
       uint64_t va = radv_buffer_get_va(scratch_bo);
 
       /* WAVES is per SE for SPI_TMPRING_SIZE. */
-      waves /= info->num_se;
+      waves /= info->max_se;
 
       radeon_set_context_reg_seq(cs, R_0286E8_SPI_TMPRING_SIZE, 3);
       radeon_emit(cs, S_0286E8_WAVES(waves) | S_0286E8_WAVESIZE(DIV_ROUND_UP(size_per_wave, 256)));
@@ -675,7 +675,7 @@ radv_emit_compute_scratch(struct radv_device *device, struct radeon_cmdbuf *cs, 
       radeon_emit(cs, scratch_va >> 8);
       radeon_emit(cs, scratch_va >> 40);
 
-      waves /= info->num_se;
+      waves /= info->max_se;
    }
 
    radeon_set_sh_reg_seq(cs, R_00B900_COMPUTE_USER_DATA_0, 2);
