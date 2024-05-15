@@ -124,7 +124,7 @@
         "description": "freedreno/ir3: Fix ldg/stg offset",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "60686d4146cd3856dd2066f6e49560b1dd76bd66",
         "notes": null
