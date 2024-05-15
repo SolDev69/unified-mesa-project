@@ -524,7 +524,7 @@
         "description": "nir/lower_cl_images: set binding also for samplers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "31ed24cec7c63fc3906e7629edf235e333c94ffe",
         "notes": null
