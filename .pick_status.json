@@ -84,7 +84,7 @@
         "description": "nvk/meta: Save and restore set_dynamic_buffer_start",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e0d907f56fd84c119af22d6b4d14c52d99fd7b0c",
         "notes": null
