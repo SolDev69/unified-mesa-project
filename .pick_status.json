@@ -504,7 +504,7 @@
         "description": "radv: only set ALPHA_IS_ON_MSB if the image has DCC on GFX6-9",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
