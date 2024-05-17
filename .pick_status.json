@@ -2394,7 +2394,7 @@
         "description": "wsi: Guard DRM-dependent function implementations with HAVE_LIBDRM",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "59813ae468dc727623b9e701d06b14f5b959973d",
         "notes": null
