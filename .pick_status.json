@@ -194,7 +194,7 @@
         "description": "Revert \"egl/wayland: Remove EGL_WL_create_wayland_buffer_from_image\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "a3418105b9169b8f72745c9901db37cd545ac583",
         "notes": null
