@@ -119,7 +119,7 @@ radv_set_mutable_tex_desc_fields(struct radv_device *device, struct radv_image *
    } else
       va += (uint64_t)base_level_info->offset_256B * 256;
 
-   if (!pdev->info.has_image_opcodes) {
+   if (!device->physical_device->rad_info.has_image_opcodes) {
       /* Set it as a buffer descriptor. */
       state[0] = va;
       state[1] |= S_008F04_BASE_ADDRESS_HI(va >> 32);
@@ -448,7 +448,7 @@ gfx6_make_texture_descriptor(struct radv_device *device, struct radv_image *imag
       num_format = 0;
    }
 
-   data_format = radv_translate_tex_dataformat(vk_format, desc, first_non_void);
+   data_format = radv_translate_tex_dataformat(device->physical_device, vk_format, desc, first_non_void);
    if (data_format == ~0) {
       data_format = 0;
    }
