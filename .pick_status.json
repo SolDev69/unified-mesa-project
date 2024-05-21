@@ -1,5 +1,445 @@
 [
     {
+        "sha": "471ac97a4af751226bc51076130deae252bb481e",
+        "description": "drm-shim: Stub syncobj reset ioctl",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cc404d45ff4fa7947cffdc75da0d2b773902a1e4",
+        "description": "aco: remove perfwarn",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ea3e5bcc995cc4c1d902ee05aaebb24975375cb8",
+        "description": "aco/optimizer: remove ineffective undef opt",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bd699b5d88500b7ff7b4f1a82b17549d11db8fae",
+        "description": "aco/optimizer: remove ineffective vcc opt",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "eefe34127f8e8ae2ba91a7837b9dfef999dc3f87",
+        "description": "panfrost: add a barrier when launching xfb jobs in CSF",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "69ceb5dab9ada6d8b54c03d27f6db78713208455",
+        "description": "v3d: remove handled cases for devices <= 42",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cbcfb34cf78245ce130077b6928f830487dbf613",
+        "description": "v3d: use BITSET for the masks",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "924c5ad2ac9077f7bc4bd1e19ca86946fbd97c3f",
+        "description": "egl/android: Fix sRGB visuals",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "273e54391af7e0a89daec778980c3f8a800bcd7b",
+        "notes": null
+    },
+    {
+        "sha": "97962f2a347dcc0c536af629d3d0082c8e49fb99",
+        "description": "radv: mark some formats as unsupported on GFX8/CARRIZO",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e384b28805e477f43246fa073fbd6540c7911dfc",
+        "description": "radeonsi: reject some texture formats but only on GFX8/CARRIZO",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "95122a1cf7a8e5748b9d40fdb9c541947c413d96",
+        "description": "ac,radv,radeonsi: introduce a helper to build a FMASK descriptor",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e1b4b399ce07266a2b04fe5c7c1df9e1c9649642",
+        "description": "zink: disable cpu_storage for PIPE_USAGE_STREAM",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "01bac643f6c088f7537edf18f2d4094881c1ecda",
+        "description": "freedreno/ir3: Fix ldg/stg offset",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "60686d4146cd3856dd2066f6e49560b1dd76bd66",
+        "notes": null
+    },
+    {
+        "sha": "23488790c146b52a543e0210a12e076a3fb8fa89",
+        "description": "zink: remove dgc debug mode",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e09310711540f44315871c3ffcb5059f8c3bec76",
+        "description": "lavapipe: lvp_indirect_command_layout -> lvp_indirect_command_layout_nv",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "aaa3f37ae5917fdabcf95d106b91c747228bec52",
+        "description": "lavapipe: plumb print_cmds through NV DGC",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "42e3d580cc75b1bd86a57ed364d802bcaf00714c",
+        "description": "lavapipe: split out DGC into separate file",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3be436830e823a9941587bdb00a381a8dd255d2a",
+        "description": "ac/llvm: Remove global access ops handling",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d2e80e57a3c3a9e35e22edc07e13427cc68779b8",
+        "description": "radeonsi,aco: Run ac_nir_lower_global_access pass",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "46644ba371e817d8f33ad7b46ce2ba7775e6d2cc",
+        "description": "meson: use glslang --depfile argument when possible",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "32e43fe77cc6c76df621ecbb8869755967cf4ff7",
+        "description": "ac,radv,radeonsi: add helper to know if a format is supported by DB",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d2234adf59a19340b2564e9270a78e434a5de87f",
+        "description": "ac,radv,radeonsi: add helper to know if a format is supported by CB",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c62f86587f47719177e088867ac8a82a4a61fb51",
+        "description": "amd/common: move some format related helpers to ac_formats.c",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "473559001f21218febaaf069441bb3d4afc4ab5c",
+        "description": "radv: add radv_is_colorbuffer_format_blendable()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8f39e3a0f3aff238e3e4cd9960f957ce78da1580",
+        "description": "radv: stop checking the return value of ac_get_cb_number_type()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e227f2cc721de0c915df065b772a3d89dec79167",
+        "description": "radv: remove redundant check for VK_FORMAT_E5B9G9R9_UFLOAT_PACK32 on GFX6-10",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "58ca4cee9ec156bcd26abb11cbc7d772239c1354",
+        "description": "d3d12: Video Encode - Fix inputs for older OS support query cap",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d8eb9fc9b45c17b1117e272548d59d68525fe09e",
+        "description": "nir: Mark variable as ASSERTED to fix unused variable warning treated as error",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "07080c5fc52966cce7dbca9c1b6b6ad21df92a15",
+        "description": "radv: simplify creating gfx10 texture descriptors for sliced 3d/2d view of 3d",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "16952a179bb0d54b131eafc525148fdad9c284d3",
+        "description": "radv: allow 3d views with VK_IMAGE_CREATE_2D_VIEW_COMPATIBLE_BIT_EXT",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "96a9625866b31b3cb11a4ea7c267f8efcfb2aa4a",
+        "description": "ac,radv,radeonsi: add a function to get the color format endian swap",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "35c6b9c066ce583648b3f833b94055537a949d12",
+        "description": "ac,radv,radeonsi: add a function to translate db format",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "934fc47822d0fe2f87a83c81bf648e0e92887ce5",
+        "description": "radv: use PIPE_FORMAT in radv_translate_dbformat()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7f0430bb361899ec6f1dde412ce99e76ea844502",
+        "description": "ac,radv,radeonsi: add a function to translate colorswap",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "40428bd497b96fd0ff5c47273ac369c5c8b4c42b",
+        "description": "radv: use PIPE_FORMAT in radv_translate_colorswap()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "255e76b41935ba2bfaf81d0fd893f72eea271084",
+        "description": "ac,radv,radeonsi: add a function to translate tex numformat",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6030c876d0254251db4d5b18406a01dc4b591a1e",
+        "description": "radv: use PIPE_FORMAT in radv_translate_tex_numformat()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2fef95f901e8561cdc9644d63dd74e43a04d10c2",
+        "description": "radv: stop checking the output value of radv_translate_tex_numformat",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "418fed1805a6fa4a5b12d384b74b726f956f9146",
+        "description": "aco: update VS prolog waitcnt for GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f01cac835f95bcc65b2ca0afeed4f29a6bbb64f0",
+        "description": "aco/stats: support GFX12 in collect_preasm_stats()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9e9cabd2fa168690ffde09bed5675c1940b13dc5",
+        "description": "aco/waitcnt: support GFX12 in waitcnt pass",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cadce0f3b731d2a93f4e3bc3ff3b44f7d90f0fef",
+        "description": "aco: add GFX12 wait counters",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c5e13af73cd2d3b58934cef82ae22cb00736ff08",
+        "description": "ci: lima farm maintenance",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a31996ce5a6b7eb3b324b71eb9e9c45173953c50",
+        "description": "anv: switch to vk_device::mem_cache field for default cache",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "b2282e3a571f18b48b8b717ec32da1d0ed93f1b5",
         "description": "v3dv/meta_clear: use v3dv_renderpass used as parameter",
         "nominated": false,
