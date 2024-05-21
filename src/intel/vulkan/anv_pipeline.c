@@ -2781,20 +2781,12 @@ VkResult anv_CreateComputePipelines(
                                                  &pCreateInfos[i],
                                                  pAllocator, &pPipelines[i]);
 
-      if (res == VK_SUCCESS)
-         continue;
-
-      /* Bail out on the first error != VK_PIPELINE_COMPILE_REQUIRED as it
-       * is not obvious what error should be report upon 2 different failures.
-       * */
-      result = res;
-      if (res != VK_PIPELINE_COMPILE_REQUIRED)
-         break;
-
-      pPipelines[i] = VK_NULL_HANDLE;
-
-      if (flags & VK_PIPELINE_CREATE_2_EARLY_RETURN_ON_FAILURE_BIT_KHR)
-         break;
+      if (res != VK_SUCCESS) {
+         result = res;
+         if (flags & VK_PIPELINE_CREATE_2_EARLY_RETURN_ON_FAILURE_BIT_KHR)
+            break;
+         pPipelines[i] = VK_NULL_HANDLE;
+      }
    }
 
    for (; i < count; i++)
@@ -3317,20 +3309,12 @@ VkResult anv_CreateGraphicsPipelines(
                                             pAllocator, &pPipelines[i]);
       }
 
-      if (res == VK_SUCCESS)
-         continue;
-
-      /* Bail out on the first error != VK_PIPELINE_COMPILE_REQUIRED as it
-       * is not obvious what error should be report upon 2 different failures.
-       * */
-      result = res;
-      if (res != VK_PIPELINE_COMPILE_REQUIRED)
-         break;
-
-      pPipelines[i] = VK_NULL_HANDLE;
-
-      if (flags & VK_PIPELINE_CREATE_2_EARLY_RETURN_ON_FAILURE_BIT_KHR)
-         break;
+      if (res != VK_SUCCESS) {
+         result = res;
+         if (flags & VK_PIPELINE_CREATE_2_EARLY_RETURN_ON_FAILURE_BIT_KHR)
+            break;
+         pPipelines[i] = VK_NULL_HANDLE;
+      }
    }
 
    for (; i < count; i++)
@@ -4154,19 +4138,12 @@ anv_CreateRayTracingPipelinesKHR(
                                                      &pCreateInfos[i],
                                                      pAllocator, &pPipelines[i]);
 
-      if (res == VK_SUCCESS)
-         continue;
-
-      /* Bail out on the first error as it is not obvious what error should be
-       * report upon 2 different failures. */
-      result = res;
-      if (result != VK_PIPELINE_COMPILE_REQUIRED)
-         break;
-
-      pPipelines[i] = VK_NULL_HANDLE;
-
-      if (flags & VK_PIPELINE_CREATE_2_EARLY_RETURN_ON_FAILURE_BIT_KHR)
-         break;
+      if (res != VK_SUCCESS) {
+         result = res;
+         if (flags & VK_PIPELINE_CREATE_2_EARLY_RETURN_ON_FAILURE_BIT_KHR)
+            break;
+         pPipelines[i] = VK_NULL_HANDLE;
+      }
    }
 
    for (; i < createInfoCount; i++)
