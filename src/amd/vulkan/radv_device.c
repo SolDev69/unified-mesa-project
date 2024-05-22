@@ -1777,7 +1777,7 @@ radv_initialise_color_surface(struct radv_device *device, struct radv_color_buff
        *
        * We set the pitch in MIP0_WIDTH.
        */
-      if (device->physical_device->rad_info.gfx_level && iview->image->vk.image_type == VK_IMAGE_TYPE_2D &&
+      if (device->physical_device->rad_info.gfx_level >= GFX10_3 && iview->image->vk.image_type == VK_IMAGE_TYPE_2D &&
           iview->image->vk.array_layers == 1 && plane->surface.is_linear) {
          assert((plane->surface.u.gfx9.surf_pitch * plane->surface.bpe) % 256 == 0);
 
