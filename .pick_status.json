@@ -1584,7 +1584,7 @@
         "description": "anv: check cmd_buffer is on a transfer queue more properly",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "17b8b2cffdb07eaf06a309fabcd933886f6e7070",
         "notes": null
