@@ -14,7 +14,7 @@
         "description": "radv: Fix TCS -> TES I/O linking typo of VARYING_SLOT vs. BIT.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "0e481a4adcd8006256c27d100a0a0f0c01a94171",
         "notes": null
