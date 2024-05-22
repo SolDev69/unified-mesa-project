@@ -1,5 +1,505 @@
 [
     {
+        "sha": "3584fc64828ad2ad4d486572ec915aab8321aadd",
+        "description": "anv: use weak_ref mode for global pipeline caches",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3963e4b53aa73ef032709769585bdb1e3b6a8099",
+        "description": "radv: Fix TCS -> TES I/O linking typo of VARYING_SLOT vs. BIT.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "0e481a4adcd8006256c27d100a0a0f0c01a94171",
+        "notes": null
+    },
+    {
+        "sha": "4b6f7613c0bd161548f1bd45d42b65b4841a278a",
+        "description": "panvk: Emit the fragment shader RSD dynamically",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4335560bb748a578dcfeaad34f6d75e101db1f67",
+        "description": "panvk: Move fs_rsd fields to an fs sub-struct",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c6e0761d0dcfc88e1802e69a43ff248f7c671cc5",
+        "description": "panvk: Replace the stages array in panvk_draw_info by vs/fs fields",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0471a30fcc0f8c71260e1b85a91e695ea8911f6c",
+        "description": "panvk: Fix/simplify the shader linking logic",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "dfbec67cb080ab6695248e37798f5e9e00eef3eb",
+        "description": "panvk: Simplify shader initialization in the pipeline logic",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e7a9bd1cbe973792b444d166286db3f3142e9716",
+        "description": "panvk: Don't pass the stage to shader_create()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6724ee761909da31d23baf31a4a0f26fe109ca52",
+        "description": "panvk: Add a blend library to deal blend shaders/descriptors",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5406a65955a90c4a90de1243cdf5fd33ef3af94c",
+        "description": "pan/blend: Expose pan_blend_create_shader()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "92136c70629f65cb7d9a0cfc48a50201fdca2345",
+        "description": "pan/blend: Move constant inlining out of pan_blend_create_shader()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "214761bdfe9a0ed04f00835c8ce41e3b84ff82c0",
+        "description": "panvk: Fully transition to vk_vertex_binding_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bd71c586cb608df8c0036315324649eb9b33c11f",
+        "description": "panvk: Leave holes in the attribute locations used by a shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3683aaeb02ffa50e355110802d4d5b84adf21351",
+        "description": "panvk: Emit VS-accessible image attributes at a fixed offset",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "497c43f1612555c931fa11e5f22164c264269653",
+        "description": "panvk: Move VS attribute/buffer state to panvk_cmd_graphics_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9c6b922fe1b63774036dfa3996a57cb31b090401",
+        "description": "panvk: Prevent re-emission of image attributes used in vertex shaders",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "936ebd3370f1285265ae0d0b33c47fabce398f26",
+        "description": "panvk: Rename non_vs_attribs into img_attribs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5a37a62bed352e1fcc82f3ca4c0f8bdc76bf9ae3",
+        "description": "panvk: Set unused attribute buffers descriptors to zero",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a195486e6f07a70aa9609375663c2d99c8785874",
+        "description": "panvk: Fully transition to vk_multisample_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a3e024a59e0f1a8aa957533e1a28115bf4c76e1b",
+        "description": "panvk: Fully transition to vk_depth_stencil_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a58171fb3c5c89772fad6e473383a58de24cc30a",
+        "description": "panvk: Use vk_color_blend_state to fill our blend constant",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bbcf505a0823c75e046d662696225131482fdd89",
+        "description": "panvk: Fully transition to vk_input_assembly_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "07afc7e3ed21a2be22d4486b3d85033cdc3b3d93",
+        "description": "panvk: Fully transition to vk_rasterization_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f4ce783f0e9d352af3098019fa8aac46e9bed297",
+        "description": "panvk: Fully transition to vk_viewport_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6b1a8226fac4908cc82488409c37bee2e54258ff",
+        "description": "panvk: Transition the graphics pipeline logic to vk_graphics_pipeline_state",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "160db68bd783685ce078565a2792e4e4f0c1bf3f",
+        "description": "panvk: Kill the panvk_pipeline_builder object",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2e0081d44c9336be6008f41f5af49392f599c5d6",
+        "description": "panvk: Use memory pools to store pipeline shaders/descriptors",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bd6e32ef9c059ec913f07dfae17ce3f12421bd5c",
+        "description": "panvk: Split compute/graphics pipeline objects",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "513e0bd46b55f4e3fa972e527957169db6546357",
+        "description": "panvk: Split the graphics and compute state at the cmd_buffer level",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5196aeacf68ab5f82d9970bdaaa69e30382a2930",
+        "description": "panvk: Get rid of special attribute support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "04b20157f8f2210847b6dc7175e522b14b4d8206",
+        "description": "panvk: Kill unused dynamic state bits",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "94e28d350d0d242ed4dc50275c0318b053078b61",
+        "description": "panvk: Move panvk_cmd_state::batch to panvk_cmd_buffer::cur_batch",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "330a75b9f3559336a381a2f866cd75b010a2060e",
+        "description": "panvk: Get rid of panvk_descriptor_state::dirty",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a3fb990a866bc3cb7eac44804ef94bb8691ed6e2",
+        "description": "panvk: Kill panvk_queue_get_device()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f57af8fe1c6af6f1e609708b3d8062b1a1c992c1",
+        "description": "panvk: clang-format fixups",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "90f8be9bda9b3841c41f48414897d89ebbceb43b",
+        "description": "ci: define SNMP base interface on runner",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "18c736bcfc55b8fa309ede02332b9c7a2ca22e78",
+        "description": "radeonsi: Use max_se instead of num_se where appropriate",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "db564a40b3bd936053e5e14d1f0df6b96e305a08",
+        "description": "radv: Use max_se instead of num_se where appropriate",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1966b6c887ac6f557f6427ee4443f04b6c36c364",
+        "description": "zink+nvk/ci: update expected failures",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "acd395f1f8aa47496c1a0e0e581f60fa0b0752ba",
+        "description": "zink+nvk/ci: document flakes seen during stress-testing",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fc1db264edc60cc4f14d1a63966e583e53867a9a",
+        "description": "zink+nvk/ci: skip more tests that times out",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0bd551f6ec4ba7cb30de7df61f7c44ca5269f9b5",
+        "description": "zink+nvk/ci: skip timing out test",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "393cd1ffdff5c32f7dd5ca2a4cf67c3b493c606d",
+        "description": "zink+nvk/ci: skip glx piglit tests as they all fail",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5a6ffd1420cecb9d060f386120b94d9b5eafc22e",
+        "description": "zink/ci: add zink+nvk glcts+piglit job on a GA106 (RTX 3060)",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "94c82cd938ff5a0f7426aec33bca1bc4f540a634",
+        "description": "nvk/ci: add nvk job on a GA106 (RTX 3060)",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3d6957268b24a74519adda1a93d3653df55d4961",
+        "description": "aco: use new common helpers for building buffer descriptors",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "074f3cfe73b06ba1e02ebf69fc5b6a13fb313c44",
+        "description": "radv: use new common helpers for building buffer descriptor",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d3b01fd95e70118453c459fe728be507e38dd115",
+        "description": "amd/common: add new helpers to build buffer descriptors",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3224fd706c57c6b4f8157c467bb7f052a5971240",
+        "description": "amd/common: only pass gfx_level to ac_get_gfx10_format_table()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "64fefc11793a60ad9800eb2943d9334e223288ba",
+        "description": "ac,radv,radeonsi: add a common helper for translating swizzle",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "2487a875527f636565a7b39036690fbf7c5d46db",
         "description": "ac,radv,radeonsi: add function to determine if alpha should be on MSB",
         "nominated": false,
