@@ -1,5 +1,375 @@
 [
     {
+        "sha": "2487a875527f636565a7b39036690fbf7c5d46db",
+        "description": "ac,radv,radeonsi: add function to determine if alpha should be on MSB",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "179f4ed414b4c84fb0cb5dc0f03be084a9c2b2ff",
+        "description": "radv: adjust determining if alpha should be on MSB",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "68c4d26691769f83e471c85c0775b8c584061e86",
+        "description": "radv: only set ALPHA_IS_ON_MSB if the image has DCC on GFX6-9",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3e8b2fe053a7686df54c62acdd92382a088fda70",
+        "description": "broadcom/simulator: Add DRM_IOCTL_V3D_GET_COUNTER to simulator",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e630812b436877a430dabf17d5985bfb4cd7775b",
+        "description": "broadcom/simulator: Add DRM_V3D_PARAM_MAX_PERF_COUNTERS parameter support",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "017dde0d1caa981560c5e6c54491337e4e06d497",
+        "description": "v3d: Use DRM_IOCTL_V3D_GET_COUNTER to get perfcnt information",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c5b2d943ad4a56abaf7141a3d46ee3eda80cb3a2",
+        "description": "v3dv: Use DRM_IOCTL_V3D_GET_COUNTER to get perfcnt information",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "273ba51d7fa6bd5f503d7145b0a809969b25894e",
+        "description": "broadcom/common: Add maximum number of perf counters to v3d_device_info",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ce7bca176f50d3df85893213255956bbe66d9d59",
+        "description": "drm-uapi: Update v3d_drm.h",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4b3e286d333a9be223e6295c21c84d127b5c1323",
+        "description": "venus: add missing sTypes for vk_set_physical_device_properties_struct",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b99c48b011e4f4d087cb9c7aa2e0f71048de677c",
+        "description": "aco/lower_phis: don't create boolean loop header phis in some situations",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4ae8a558b2fd5877e44d470cf5526cf5aa36c8c1",
+        "description": "aco: remove nir_to_aco",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b1964f03e7461e1c243b0e932516f66aefcc0627",
+        "description": "aco: use scalar phi lowering for lcssa workaround",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bbe46524307e5e834d5b3d593763b72120d6a3ee",
+        "description": "aco: create lcssa phis for continue_or_break loops when necessary",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3fc7207f5007c42829b3c8eb9b3e87676d92e982",
+        "description": "aco/lower_phis: create loop header phis for non-boolean loop exit phis",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "175d2d680aa8f06fa1b4e8e54e95733802b3d1dd",
+        "description": "wsi/wayland: Fix use after free from improperly stored VkAllocationCallbacks",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "57c03fe49c7017f44ef22e4fd706ad87c5c2cec2",
+        "notes": null
+    },
+    {
+        "sha": "0e0c2574d1d3ea8184fc9f5403f693d40d48da3d",
+        "description": "radv: Add shader stats for inputs and outputs.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "590fff6906eeac7fb07c5eff466a5350b815cc68",
+        "description": "radv: Add TES num_linked_patch_inputs.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4a6d7e79ad71b7a06989925bb55ed1b640a86514",
+        "description": "subprojects: uprev perfetto to v45.0",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0d59fe21ce51b0c50fc5c4662a2219b5eab77ce0",
+        "description": "panvk: remove descriptor pool counters",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bb09fac65981353a88d972fee06758fa1f822a01",
+        "description": "ac,radv,radeonsi: add a function for getting border color swizzle",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "25a206b9ac22eab54bdd17022736bfa6fb1d1869",
+        "description": "tu: Don't advertise AHB handle time on non-android",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "99753001f35ae5791b64d72efe5278795004899f",
+        "notes": null
+    },
+    {
+        "sha": "b71f3f1314c733e8159201f34ffbf4d1b6a72d1b",
+        "description": "docs/features: Add missing AHB for tu",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "eef5e4221f03c0844ca117cc9590397a70d37126",
+        "description": "radeonsi: vectorize load/stores and shrink stores",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8cb254e0b8eaaca3ed13ea37e3bf8527efe51e63",
+        "description": "radeonsi: call nir_lower_int64 later to fix ACO failure with Tomb Raider",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5a115b10556e23232708ef7d8f951ab2ab36d381",
+        "description": "ac/llvm: global stores should have no holes in the writemask",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7952e4fc7acac2f8c5c91a8aeafe4a56ef366c65",
+        "description": "ac: move radv_mem_vectorize_callback to common code",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "26cd3a1718c7e8f55fa8605f20fb001b2954d6b4",
+        "description": "ac,radv,radeonsi: add a helper to set mutable tex desc fields",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7523c1ec575beba51fe8f553f9b3574b023683e6",
+        "description": "radv: stop clearing unnecessary bitfields in radv_set_mutable_tex_desc_fields()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d09afbdebc151e7b4cbb64c520125a6ca05b52f3",
+        "description": "radv: set ITERATE_256 for GFX10+ in radv_set_mutable_tex_desc_fields()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fb37ea092d0717d8d4b0cbc2bb4f02e0ca029cc0",
+        "description": "radv: tidy up meta_va in radv_set_mutable_tex_desc_fields()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8adb326f592ed10eb0039e067b411c6b278d20f3",
+        "description": "radv: tidy up custom pitch for gfx10.3 in radv_set_mutable_tex_desc_fields()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d1fa5ffab04b84bb24a13d4511fc579b75cea446",
+        "description": "radv: tidy up swizzle in radv_set_mutable_tex_desc_fields()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "81e927ea05057fe59e2eb61dd350780906f24153",
+        "description": "ac,radv,radeonsi: add a helper to get the tile mode index",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "72485fe592636505f9964e07b8147dc178320eaf",
+        "description": "radv: set image view descriptors as buffer for non-graphics GPU",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c1d38b0b3749d890b31878b679282212cdbf1ad1",
+        "description": "nir: Add nir_opt_load_store_update_alignments.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0b582449f0eca5f71437d798de7805fdccf86f70",
+        "description": "nir/lower_point_size: support lowered i/o",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "471ac97a4af751226bc51076130deae252bb481e",
         "description": "drm-shim: Stub syncobj reset ioctl",
         "nominated": false,
