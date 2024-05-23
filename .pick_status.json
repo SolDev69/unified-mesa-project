@@ -3484,7 +3484,7 @@
         "description": "Revert \"zink: use a slab allocator for zink_kopper_present_info\"",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "738fbddca8a1d8343e2ae322299de22a9ae108ae",
         "notes": null
