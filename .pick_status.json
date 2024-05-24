@@ -1404,7 +1404,7 @@
         "description": "zink: add atomic image ops to the ms deleting pass",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "90cf8d14d619967b2da7471d04bb20aa0665a482",
         "notes": null
