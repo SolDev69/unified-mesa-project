@@ -2794,7 +2794,7 @@
         "description": "nir/opt_varyings: reduce stack usage",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "c66967b5cb7aa69c3c2efb12730b7b570483e01b",
         "notes": null
