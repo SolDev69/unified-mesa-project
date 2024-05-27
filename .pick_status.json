@@ -2104,7 +2104,7 @@
         "description": "nouveau: import nvif/ioctl.h file from libdrm_nouveau",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "821f4c8d99a3068758db834a5c219082a9609b3c",
         "notes": null
