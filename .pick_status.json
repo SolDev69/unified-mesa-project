@@ -1984,7 +1984,7 @@
         "description": "v3dv: Emit stencil draw clear if needed for GFXH-1461",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1e81bb05aeb8bf070652b3c7406dfd1ac61a8c99",
         "notes": null
