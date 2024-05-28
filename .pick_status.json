@@ -204,7 +204,7 @@
         "description": "brw: use a single virtual opcode to read ARF registers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2c65d90bc8500bb8ad0b9204798905e4d79fb283",
         "notes": null
