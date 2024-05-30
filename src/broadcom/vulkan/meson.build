@@ -34,6 +34,7 @@ v3dv_entrypoints = custom_target(
 
 libv3dv_files = files(
   'v3dv_bo.c',
+  'v3dv_cl.c',
   'v3dv_cmd_buffer.c',
   'v3dv_debug.c',
   'v3dv_debug.h',
@@ -56,7 +57,6 @@ libv3dv_files = files(
 ) + [v3d_xml_pack, vk_common_entrypoints[0], wsi_entrypoints[0]]
 
 files_per_version = files(
-  'v3dvx_cl.c',
   'v3dvx_cmd_buffer.c',
   'v3dvx_descriptor_set.c',
   'v3dvx_device.c',
