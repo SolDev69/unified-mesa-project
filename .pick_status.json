@@ -44,7 +44,7 @@
         "description": "v3d: really fix CLE MMU errors on 7.1HW Rpi5",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "11dce2ac8154237b74ee3c4bd2aaec685739f0cc",
         "notes": null
