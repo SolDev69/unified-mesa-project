@@ -394,7 +394,7 @@
         "description": "mesa/main: do not allow RGBA_INTEGER et al in gles3",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "b5a370dc250d4e5de1a2a598acfcae522e0e2bdf",
         "notes": null
