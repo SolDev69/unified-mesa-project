@@ -424,7 +424,7 @@
         "description": "mesa/main: remove stale prototype",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "8e581747d2342950ff44488064eef53768b3ae82",
         "notes": null
