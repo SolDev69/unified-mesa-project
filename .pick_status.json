@@ -494,7 +494,7 @@
         "description": "v3dv: add missing bounds check in VK_EXT_4444_formats",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fbe4d7ccf49ccfeed08531680232dcaa28a66479",
         "notes": null
