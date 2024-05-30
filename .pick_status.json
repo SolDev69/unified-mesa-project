@@ -224,7 +224,7 @@
         "description": "android: Fix zink build failure",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "cfa955ed78bef56ba025a64468e8b841149fab18",
         "notes": null
