@@ -34,7 +34,7 @@
         "description": "intel: fix HW generated local-id with indirect compute walker",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "5e7f4ff97fb871376a828146ab3a276c1d3c4fcf",
         "notes": null
