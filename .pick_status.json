@@ -1474,7 +1474,7 @@
         "description": "Revert \"anv: Disable Ray Tracing on xe2 until our compiler supports Xe2 RT\"",
         "nominated": true,
         "nomination_type": 2,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "65684b0c7f852d8acaced018e0684da981cf6211",
         "notes": null
