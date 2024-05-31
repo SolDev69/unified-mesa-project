@@ -1,5 +1,205 @@
 [
     {
+        "sha": "f32a258503b40e8e19a1498998b0d4f8b8abb488",
+        "description": "v3d: really fix CLE MMU errors on 7.1HW Rpi5",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "11dce2ac8154237b74ee3c4bd2aaec685739f0cc",
+        "notes": null
+    },
+    {
+        "sha": "07d3d557832a223c574aa205db3f4acfb04161ad",
+        "description": "v3dv: really fix CLE MMU errors on 7.1HW Rpi5",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "bb77ac983e4f8a265141855e60ad2a5637c9b74d",
+        "notes": null
+    },
+    {
+        "sha": "dcab408a6c5793fbafa0ae2a7bdc478ee91d29c9",
+        "description": "nir: remove unpack_half_flush_to_zero",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a1ea0956b46778d0331e4ef60ebd2be057fd0e9f",
+        "description": "intel: fix HW generated local-id with indirect compute walker",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "5e7f4ff97fb871376a828146ab3a276c1d3c4fcf",
+        "notes": null
+    },
+    {
+        "sha": "d4b37eca5f2bc5841a9f7b1e58594045548a87e2",
+        "description": "radv: do not set DX10_CLAMP on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "407cbd8c877038203407e3b3f60b831c40e73a03",
+        "description": "radv: update configuring GS_VGPR_COMP_CNT on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "671329a9345a252e4f444517a51a80ee09fc9174",
+        "description": "radv: configure SPI_SHADER_GS_OUT_CONFIG_PS on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "00361d1eceae642ae454e4f81a4aac381239f5f1",
+        "description": "radv: configure PA_SC_HISZ_CONTROL on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1f078f02d1ab8a005df303ec71884365757a4c88",
+        "description": "radv: update configuring SPI_PS_IN_CONTROL on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "640613f5a36b9a1b19c8a1a56936e84c9e7f2538",
+        "description": "radv: update configuring GE_CNTL.PRIM_GRP_SIZE_GFX11 on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0412b8c02b11b0e22be454a9103ebaca65899308",
+        "description": "radv: update configuring SPI_SHADER_PGM_RSRC4_{HS,GS,PS} on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "50df855fbaaa6b0dee715553da9dd5839327fb19",
+        "description": "radv: update configuring SPI_SHADER_PGM_LO_ES on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4f77fde475ebc02fab80df386f5e949d4b87408a",
+        "description": "radv: update configuring SPI_SHADER_PGM_LO_LS on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8dbd35360682c504e36ed53aecad7698f2228f68",
+        "description": "radv: mark all images coherent with TC L2 on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2786928ce8d6803cabed6914e9f1a44d68e3b1d6",
+        "description": "radv: do not flush L2 metadata on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b795685da242370c270fca0747e2f59e97d58313",
+        "description": "radv: update configuring the attribute ring on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e080ce9004b0594204e63fe16438cfd5b2ae780c",
+        "description": "radv: do not enable MEM_ORDERED on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9a551981869b1fb2a80d1eb9b7a32bd96de1c96b",
+        "description": "radv: configure DB_RENDER_CONTROL to zero on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b1abbfb893a58a922359d9b04cb6b748b154f0c1",
+        "description": "radv: configure DB_Z_INFO.NUM_SAMPLES on GFX12",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1e0b838c7b4e4401ab1be324584b67656e264c3b",
+        "description": "anv: use os_get_option instead of getenv",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "ce43d7eb7f97bdde61b184a99940c4b03c2f0929",
         "description": "lima: drop unrequired opt from standalone compiler",
         "nominated": false,
