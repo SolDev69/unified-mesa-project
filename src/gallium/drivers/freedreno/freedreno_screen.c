@@ -245,7 +245,6 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_BARRIER:
    case PIPE_CAP_INVALIDATE_BUFFER:
    case PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS:
-   case PIPE_CAP_NIR_COMPACT_ARRAYS:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP_TO_EDGE:
    case PIPE_CAP_GL_SPIRV:
    case PIPE_CAP_FBFETCH_COHERENT:
@@ -1174,6 +1173,20 @@ fd_screen_create(int fd,
 
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
+<<<<<<< HEAD
+=======
+   /* parse driconf configuration now for device specific overrides: */
+   driParseConfigFiles(config->options, config->options_info, 0, "msm",
+                       NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
+
+   screen->driconf.conservative_lrz =
+         !driQueryOptionb(config->options, "disable_conservative_lrz");
+   screen->driconf.enable_throttling =
+         !driQueryOptionb(config->options, "disable_throttling");
+   screen->driconf.dual_color_blend_by_location =
+         driQueryOptionb(config->options, "dual_color_blend_by_location");
+
+>>>>>>> upstream/24.1
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;

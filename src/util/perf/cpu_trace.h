@@ -9,6 +9,7 @@
 #include "u_perfetto.h"
 #include "u_gpuvis.h"
 
+#include "util/detect_os.h"
 #include "util/macros.h"
 
 #if defined(HAVE_PERFETTO)

@@ -552,7 +552,8 @@ impl PipeContext {
         unsafe { self.pipe.as_ref().sampler_view_destroy.unwrap()(self.pipe.as_ptr(), view) }
     }
 
-    pub fn set_shader_images(&self, images: &[pipe_image_view]) {
+    pub fn set_shader_images(&self, images: &[PipeImageView]) {
+        let images = PipeImageView::slice_to_pipe(images);
         unsafe {
             self.pipe.as_ref().set_shader_images.unwrap()(
                 self.pipe.as_ptr(),
@@ -635,7 +636,7 @@ impl PipeContext {
 
     pub fn svm_migrate(
         &self,
-        ptrs: &[*const c_void],
+        ptrs: &[usize],
         sizes: &[usize],
         to_device: bool,
         content_undefined: bool,
@@ -646,7 +647,7 @@ impl PipeContext {
                 cb(
                     self.pipe.as_ptr(),
                     ptrs.len() as u32,
-                    ptrs.as_ptr(),
+                    ptrs.as_ptr().cast(),
                     sizes.as_ptr(),
                     to_device,
                     content_undefined,
@@ -658,6 +659,7 @@ impl PipeContext {
 
 impl Drop for PipeContext {
     fn drop(&mut self) {
+        self.flush().wait();
         unsafe {
             self.pipe.as_ref().destroy.unwrap()(self.pipe.as_ptr());
         }

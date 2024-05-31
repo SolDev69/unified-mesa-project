@@ -651,12 +651,12 @@ handleVAEncMiscParameterTypeMaxSliceSize(vlVaContext *context, VAEncMiscParamete
    switch (u_reduce_video_profile(context->templat.profile)) {
       case PIPE_VIDEO_FORMAT_MPEG4_AVC:
       {
-         context->desc.h264enc.slice_mode = PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SICE;
+         context->desc.h264enc.slice_mode = PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SIZE;
          context->desc.h264enc.max_slice_bytes = max_slice_size_buffer->max_slice_size;
       } break;
       case PIPE_VIDEO_FORMAT_HEVC:
       {
-         context->desc.h265enc.slice_mode = PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SICE;
+         context->desc.h265enc.slice_mode = PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SIZE;
          context->desc.h265enc.max_slice_bytes = max_slice_size_buffer->max_slice_size;
       } break;
       default:
@@ -1033,7 +1033,8 @@ vlVaRenderPicture(VADriverContextP ctx, VAContextID context_id, VABufferID *buff
 
       case VASliceDataBufferType:
          vaStatus = handleVASliceDataBufferType(context, buf);
-         slice_offset += buf->size;
+         if (slice_idx)
+            slice_offset += buf->size;
          break;
 
       case VAProcPipelineParameterBufferType:

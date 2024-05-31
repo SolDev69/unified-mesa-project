@@ -23,6 +23,7 @@
 #include "tu_device.h"
 #include "tu_dynamic_rendering.h"
 #include "tu_knl_drm.h"
+#include "tu_rmv.h"
 #include "redump.h"
 
 struct tu_queue_submit
@@ -321,43 +322,67 @@ tu_free_zombie_vma_locked(struct tu_device *dev, bool wait)
          last_signaled_fence = vma->fence;
       }
 
-      /* Ensure that internal kernel's vma is freed. */
-      struct drm_msm_gem_info req = {
-         .handle = vma->gem_handle,
-         .info = MSM_INFO_SET_IOVA,
-         .value = 0,
-      };
+      if (vma->gem_handle) {
+         /* Ensure that internal kernel's vma is freed. */
+         struct drm_msm_gem_info req = {
+            .handle = vma->gem_handle,
+            .info = MSM_INFO_SET_IOVA,
+            .value = 0,
+         };
 
-      int ret =
-         drmCommandWriteRead(dev->fd, DRM_MSM_GEM_INFO, &req, sizeof(req));
-      if (ret < 0) {
-         mesa_loge("MSM_INFO_SET_IOVA(0) failed! %d (%s)", ret,
-                   strerror(errno));
-         return VK_ERROR_UNKNOWN;
+         int ret =
+            drmCommandWriteRead(dev->fd, DRM_MSM_GEM_INFO, &req, sizeof(req));
+         if (ret < 0) {
+            mesa_loge("MSM_INFO_SET_IOVA(0) failed! %d (%s)", ret,
+                      strerror(errno));
+            return VK_ERROR_UNKNOWN;
+         }
+
+         tu_gem_close(dev, vma->gem_handle);
+
+         util_vma_heap_free(&dev->vma, vma->iova, vma->size);
       }
 
-      tu_gem_close(dev, vma->gem_handle);
-
-      util_vma_heap_free(&dev->vma, vma->iova, vma->size);
       u_vector_remove(&dev->zombie_vmas);
    }
 
    return VK_SUCCESS;
 }
 
+static bool
+tu_restore_from_zombie_vma_locked(struct tu_device *dev,
+                                  uint32_t gem_handle,
+                                  uint64_t *iova)
+{
+   struct tu_zombie_vma *vma;
+   u_vector_foreach (vma, &dev->zombie_vmas) {
+      if (vma->gem_handle == gem_handle) {
+         *iova = vma->iova;
+
+         /* mark to skip later gem and iova cleanup */
+         vma->gem_handle = 0;
+         return true;
+      }
+   }
+
+   return false;
+}
+
 static VkResult
-msm_allocate_userspace_iova(struct tu_device *dev,
-                            uint32_t gem_handle,
-                            uint64_t size,
-                            uint64_t client_iova,
-                            enum tu_bo_alloc_flags flags,
-                            uint64_t *iova)
+msm_allocate_userspace_iova_locked(struct tu_device *dev,
+                                   uint32_t gem_handle,
+                                   uint64_t size,
+                                   uint64_t client_iova,
+                                   enum tu_bo_alloc_flags flags,
+                                   uint64_t *iova)
 {
    VkResult result;
 
-   mtx_lock(&dev->vma_mutex);
-
    *iova = 0;
+
+   if ((flags & TU_BO_ALLOC_DMABUF) &&
+       tu_restore_from_zombie_vma_locked(dev, gem_handle, iova))
+      return VK_SUCCESS;
 
    tu_free_zombie_vma_locked(dev, false);
 
@@ -372,8 +397,6 @@ msm_allocate_userspace_iova(struct tu_device *dev,
       result = tu_allocate_userspace_iova(dev, size, client_iova, flags, iova);
    }
 
-   mtx_unlock(&dev->vma_mutex);
-
    if (result != VK_SUCCESS)
       return result;
 
@@ -386,6 +409,7 @@ msm_allocate_userspace_iova(struct tu_device *dev,
    int ret =
       drmCommandWriteRead(dev->fd, DRM_MSM_GEM_INFO, &req, sizeof(req));
    if (ret < 0) {
+      util_vma_heap_free(&dev->vma, *iova, size);
       mesa_loge("MSM_INFO_SET_IOVA failed! %d (%s)", ret, strerror(errno));
       return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
@@ -420,8 +444,8 @@ tu_bo_init(struct tu_device *dev,
    assert(!client_iova || dev->physical_device->has_set_iova);
 
    if (dev->physical_device->has_set_iova) {
-      result = msm_allocate_userspace_iova(dev, gem_handle, size, client_iova,
-                                           flags, &iova);
+      result = msm_allocate_userspace_iova_locked(dev, gem_handle, size,
+                                                  client_iova, flags, &iova);
    } else {
       result = tu_allocate_kernel_iova(dev, gem_handle, &iova);
    }
@@ -445,6 +469,8 @@ tu_bo_init(struct tu_device *dev,
       if (!new_ptr) {
          dev->bo_count--;
          mtx_unlock(&dev->bo_mutex);
+         if (dev->physical_device->has_set_iova)
+            util_vma_heap_free(&dev->vma, iova, size);
          tu_gem_close(dev, gem_handle);
          return VK_ERROR_OUT_OF_HOST_MEMORY;
       }
@@ -472,6 +498,8 @@ tu_bo_init(struct tu_device *dev,
 
    mtx_unlock(&dev->bo_mutex);
 
+   TU_RMV(bo_allocate, dev, bo);
+
    return VK_SUCCESS;
 }
 
@@ -486,7 +514,7 @@ static void
 tu_bo_set_kernel_name(struct tu_device *dev, struct tu_bo *bo, const char *name)
 {
    bool kernel_bo_names = dev->bo_sizes != NULL;
-#ifdef DEBUG
+#if MESA_DEBUG
    kernel_bo_names = true;
 #endif
    if (!kernel_bo_names)
@@ -504,6 +532,20 @@ tu_bo_set_kernel_name(struct tu_device *dev, struct tu_bo *bo, const char *name)
       mesa_logw_once("Failed to set BO name with DRM_MSM_GEM_INFO: %d",
                      ret);
    }
+}
+
+static inline void
+msm_vma_lock(struct tu_device *dev)
+{
+   if (dev->physical_device->has_set_iova)
+      mtx_lock(&dev->vma_mutex);
+}
+
+static inline void
+msm_vma_unlock(struct tu_device *dev)
+{
+   if (dev->physical_device->has_set_iova)
+      mtx_unlock(&dev->vma_mutex);
 }
 
 static VkResult
@@ -541,13 +583,23 @@ msm_bo_init(struct tu_device *dev,
    struct tu_bo* bo = tu_device_lookup_bo(dev, req.handle);
    assert(bo && bo->gem_handle == 0);
 
+   assert(!(flags & TU_BO_ALLOC_DMABUF));
+
+   msm_vma_lock(dev);
+
    VkResult result =
       tu_bo_init(dev, bo, req.handle, size, client_iova, flags, name);
 
-   if (result != VK_SUCCESS)
-      memset(bo, 0, sizeof(*bo));
-   else
+   msm_vma_unlock(dev);
+
+   if (result == VK_SUCCESS) {
       *out_bo = bo;
+      if (flags & TU_BO_ALLOC_INTERNAL_RESOURCE) {
+         TU_RMV(internal_resource_create, dev, bo);
+         TU_RMV(resource_name, dev, bo, name);
+      }
+   } else
+      memset(bo, 0, sizeof(*bo));
 
    /* We don't use bo->name here because for the !TU_DEBUG=bo case bo->name is NULL. */
    tu_bo_set_kernel_name(dev, bo, name);
@@ -591,11 +643,13 @@ msm_bo_init_dmabuf(struct tu_device *dev,
     * to happen in parallel.
     */
    u_rwlock_wrlock(&dev->dma_bo_lock);
+   msm_vma_lock(dev);
 
    uint32_t gem_handle;
    int ret = drmPrimeFDToHandle(dev->fd, prime_fd,
                                 &gem_handle);
    if (ret) {
+      msm_vma_unlock(dev);
       u_rwlock_wrunlock(&dev->dma_bo_lock);
       return vk_error(dev, VK_ERROR_INVALID_EXTERNAL_HANDLE);
    }
@@ -604,6 +658,7 @@ msm_bo_init_dmabuf(struct tu_device *dev,
 
    if (bo->refcnt != 0) {
       p_atomic_inc(&bo->refcnt);
+      msm_vma_unlock(dev);
       u_rwlock_wrunlock(&dev->dma_bo_lock);
 
       *out_bo = bo;
@@ -611,13 +666,14 @@ msm_bo_init_dmabuf(struct tu_device *dev,
    }
 
    VkResult result =
-      tu_bo_init(dev, bo, gem_handle, size, 0, TU_BO_ALLOC_NO_FLAGS, "dmabuf");
+      tu_bo_init(dev, bo, gem_handle, size, 0, TU_BO_ALLOC_DMABUF, "dmabuf");
 
    if (result != VK_SUCCESS)
       memset(bo, 0, sizeof(*bo));
    else
       *out_bo = bo;
 
+   msm_vma_unlock(dev);
    u_rwlock_wrunlock(&dev->dma_bo_lock);
 
    return result;
@@ -640,6 +696,8 @@ msm_bo_map(struct tu_device *dev, struct tu_bo *bo)
       return vk_error(dev, VK_ERROR_MEMORY_MAP_FAILED);
 
    bo->map = map;
+   TU_RMV(bo_map, dev, bo);
+
    return VK_SUCCESS;
 }
 
@@ -867,7 +925,7 @@ tu_queue_build_msm_gem_submit_cmds(struct tu_queue *queue,
 static VkResult
 tu_queue_submit_locked(struct tu_queue *queue, struct tu_queue_submit *submit)
 {
-   queue->device->submit_count++;
+   uint32_t submit_idx = queue->device->submit_count++;
 
    struct tu_cs *autotune_cs = NULL;
    if (submit->autotune_fence) {
@@ -910,39 +968,43 @@ tu_queue_submit_locked(struct tu_queue *queue, struct tu_queue_submit *submit)
       .syncobj_stride = sizeof(struct drm_msm_gem_submit_syncobj),
    };
 
-   if (TU_DEBUG(RD)) {
+   if (FD_RD_DUMP(ENABLE) && fd_rd_output_begin(&queue->device->rd_output, submit_idx)) {
       struct tu_device *device = queue->device;
-      static uint32_t submit_idx;
-      char path[32];
-      sprintf(path, "%.5d.rd", p_atomic_inc_return(&submit_idx));
-      int rd = open(path, O_CLOEXEC | O_WRONLY | O_CREAT | O_TRUNC, 0777);
-      if (rd >= 0) {
-         rd_write_section(rd, RD_CHIP_ID, &device->physical_device->dev_id.chip_id, 4);
+      struct fd_rd_output *rd_output = &device->rd_output;
 
-         rd_write_section(rd, RD_CMD, "tu-dump", 8);
-
-         for (unsigned i = 0; i < device->bo_count; i++) {
-            struct drm_msm_gem_submit_bo bo = device->bo_list[i];
-            struct tu_bo *tu_bo = tu_device_lookup_bo(device, bo.handle);
-            uint64_t iova = bo.presumed;
-
-            uint32_t buf[3] = { iova, tu_bo->size, iova >> 32 };
-            rd_write_section(rd, RD_GPUADDR, buf, 12);
-            if (bo.flags & MSM_SUBMIT_BO_DUMP) {
-               msm_bo_map(device, tu_bo); /* note: this would need locking to be safe */
-               rd_write_section(rd, RD_BUFFER_CONTENTS, tu_bo->map, tu_bo->size);
-            }
+      if (FD_RD_DUMP(FULL)) {
+         VkResult result = tu_wait_fence(device, queue->msm_queue_id, queue->fence, ~0);
+         if (result != VK_SUCCESS) {
+            mesa_loge("FD_RD_DUMP_FULL: wait on previous submission for device %u and queue %d failed: %u",
+                      device->device_idx, queue->msm_queue_id, 0);
          }
-
-         for (unsigned i = 0; i < req.nr_cmds; i++) {
-            struct drm_msm_gem_submit_cmd *cmd = &submit->cmds[i];
-            uint64_t iova = device->bo_list[cmd->submit_idx].presumed + cmd->submit_offset;
-            uint32_t size = cmd->size >> 2;
-            uint32_t buf[3] = { iova, size, iova >> 32 };
-            rd_write_section(rd, RD_CMDSTREAM_ADDR, buf, 12);
-         }
-         close(rd);
       }
+
+      fd_rd_output_write_section(rd_output, RD_CHIP_ID, &device->physical_device->dev_id.chip_id, 8);
+      fd_rd_output_write_section(rd_output, RD_CMD, "tu-dump", 8);
+
+      for (unsigned i = 0; i < device->bo_count; i++) {
+         struct drm_msm_gem_submit_bo bo = device->bo_list[i];
+         struct tu_bo *tu_bo = tu_device_lookup_bo(device, bo.handle);
+         uint64_t iova = bo.presumed;
+
+         uint32_t buf[3] = { iova, tu_bo->size, iova >> 32 };
+         fd_rd_output_write_section(rd_output, RD_GPUADDR, buf, 12);
+         if (bo.flags & MSM_SUBMIT_BO_DUMP || FD_RD_DUMP(FULL)) {
+            msm_bo_map(device, tu_bo); /* note: this would need locking to be safe */
+            fd_rd_output_write_section(rd_output, RD_BUFFER_CONTENTS, tu_bo->map, tu_bo->size);
+         }
+      }
+
+      for (unsigned i = 0; i < req.nr_cmds; i++) {
+         struct drm_msm_gem_submit_cmd *cmd = &submit->cmds[i];
+         uint64_t iova = device->bo_list[cmd->submit_idx].presumed + cmd->submit_offset;
+         uint32_t size = cmd->size >> 2;
+         uint32_t buf[3] = { iova, size, iova >> 32 };
+         fd_rd_output_write_section(rd_output, RD_CMDSTREAM_ADDR, buf, 12);
+      }
+
+      fd_rd_output_end(rd_output);
    }
 
    int ret = drmCommandWriteRead(queue->device->fd,

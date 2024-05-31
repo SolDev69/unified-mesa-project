@@ -102,6 +102,7 @@ struct _egl_extensions {
    EGLBoolean CHROMIUM_sync_control;
 
    EGLBoolean EXT_buffer_age;
+   EGLBoolean EXT_config_select_group;
    EGLBoolean EXT_create_context_robustness;
    EGLBoolean EXT_image_dma_buf_import;
    EGLBoolean EXT_image_dma_buf_import_modifiers;
@@ -145,6 +146,7 @@ struct _egl_extensions {
    EGLBoolean MESA_gl_interop;
    EGLBoolean MESA_image_dma_buf_export;
    EGLBoolean MESA_query_driver;
+   EGLBoolean MESA_x11_native_visual_id;
 
    EGLBoolean NOK_swap_region;
    EGLBoolean NOK_texture_from_pixmap;
@@ -208,6 +210,7 @@ struct _egl_display {
    EGLint Version;            /**< EGL version major*10+minor */
    EGLint ClientAPIs;         /**< Bitmask of APIs supported (EGL_xxx_BIT) */
    _EGLExtensions Extensions; /**< Extensions supported */
+   EGLBoolean RobustBufferAccess; /**< Supports robust buffer access behavior */
 
    /* these fields are derived from above */
    char VersionString[100];                        /**< EGL_VERSION */

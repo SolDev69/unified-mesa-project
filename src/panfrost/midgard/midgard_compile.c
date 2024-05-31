@@ -388,6 +388,9 @@ midgard_preprocess_nir(nir_shader *nir, unsigned gpu_id)
    if (quirks & MIDGARD_BROKEN_LOD)
       NIR_PASS_V(nir, midgard_nir_lod_errata);
 
+   /* lower MSAA image operations to 3D load before coordinate lowering */
+   NIR_PASS_V(nir, pan_nir_lower_image_ms);
+
    /* Midgard image ops coordinates are 16-bit instead of 32-bit */
    NIR_PASS_V(nir, midgard_nir_lower_image_bitsize);
 
@@ -1263,12 +1266,32 @@ emit_varying_read(compiler_context *ctx, unsigned dest, unsigned offset,
    ins.load_store.arg_reg = REGISTER_LDST_ZERO;
    ins.load_store.index_format = midgard_index_address_u32;
 
-   /* For flat shading, we always use .u32 and require 32-bit mode. For
-    * smooth shading, we use the appropriate floating-point type.
+   /* For flat shading, for GPUs supporting auto32, we always use .u32 and
+    * require 32-bit mode. For smooth shading, we use the appropriate
+    * floating-point type.
     *
     * This could be optimized, but it makes it easy to check correctness.
     */
-   if (flat) {
+   if (ctx->quirks & MIDGARD_NO_AUTO32) {
+      switch (type) {
+      case nir_type_uint32:
+      case nir_type_bool32:
+         ins.op = midgard_op_ld_vary_32u;
+         break;
+      case nir_type_int32:
+         ins.op = midgard_op_ld_vary_32i;
+         break;
+      case nir_type_float32:
+         ins.op = midgard_op_ld_vary_32;
+         break;
+      case nir_type_float16:
+         ins.op = midgard_op_ld_vary_16;
+         break;
+      default:
+         unreachable("Attempted to load unknown type");
+         break;
+      }
+   } else if (flat) {
       assert(nir_alu_type_get_type_size(type) == 32);
       ins.op = midgard_op_ld_vary_32u;
    } else {
@@ -1285,15 +1308,11 @@ static midgard_instruction
 emit_image_op(compiler_context *ctx, nir_intrinsic_instr *instr)
 {
    enum glsl_sampler_dim dim = nir_intrinsic_image_dim(instr);
-   unsigned nr_attr = ctx->stage == MESA_SHADER_VERTEX
-                         ? util_bitcount64(ctx->nir->info.inputs_read)
-                         : 0;
    unsigned nr_dim = glsl_get_sampler_dim_coordinate_components(dim);
    bool is_array = nir_intrinsic_image_array(instr);
    bool is_store = instr->intrinsic == nir_intrinsic_image_store;
 
-   /* TODO: MSAA */
-   assert(dim != GLSL_SAMPLER_DIM_MS && "MSAA'd images not supported");
+   assert(dim != GLSL_SAMPLER_DIM_MS && "MSAA'd image not lowered");
 
    unsigned coord_reg = nir_src_index(ctx, &instr->src[1]);
    emit_explicit_constant(ctx, coord_reg);
@@ -1303,9 +1322,7 @@ emit_image_op(compiler_context *ctx, nir_intrinsic_instr *instr)
 
    /* For image opcodes, address is used as an index into the attribute
     * descriptor */
-   unsigned address = nr_attr;
-   if (is_direct)
-      address += nir_src_as_uint(*index);
+   unsigned address = is_direct ? nir_src_as_uint(*index) : 0;
 
    midgard_instruction ins;
    if (is_store) { /* emit st_image_* */
@@ -2896,6 +2913,7 @@ midgard_compile_shader_nir(nir_shader *nir,
    ctx->ssa_constants = _mesa_hash_table_u64_create(ctx);
 
    /* Collect varyings after lowering I/O */
+   info->quirk_no_auto32 = (ctx->quirks & MIDGARD_NO_AUTO32);
    pan_nir_collect_varyings(nir, info);
 
    /* Optimisation passes */
