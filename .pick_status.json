@@ -104,7 +104,7 @@
         "description": "iris: fix PIPE_RESOURCE_PARAM_STRIDE for buffers",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "831703157e7b272fcd1d36de2b3bcc8d5ec7d500",
         "notes": null
