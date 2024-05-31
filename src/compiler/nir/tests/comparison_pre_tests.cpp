@@ -593,13 +593,10 @@ TEST_F(comparison_pre_test, multi_comps_load)
     *    vec1 32 ssa_4 = fadd ssa_0, ssa_3
     * } else {
     * }
-<<<<<<< HEAD
-=======
     *
     * After:
     *
     * No change.
->>>>>>> upstream/24.1
     */
    nir_def *ssa_0 = nir_load_ubo(&bld, 1, 32,
                                  nir_imm_int(&bld, 0),
@@ -646,13 +643,10 @@ TEST_F(comparison_pre_test, multi_comps_load2)
     *    vec1 32 ssa_4 = fadd ssa_0, ssa_3
     * } else {
     * }
-<<<<<<< HEAD
-=======
     *
     * After:
     *
     * No change.
->>>>>>> upstream/24.1
     */
    nir_def *ssa_0 = nir_load_ubo(&bld, 1, 32,
                                  nir_imm_int(&bld, 0),

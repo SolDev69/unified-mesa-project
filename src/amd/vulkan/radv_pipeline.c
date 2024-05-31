@@ -692,16 +692,6 @@ radv_postprocess_nir(struct radv_device *device, const struct radv_graphics_stat
             .src_types = (1 << nir_tex_src_ddx) | (1 << nir_tex_src_ddy),
          },
       };
-<<<<<<< HEAD
-      struct nir_fold_16bit_tex_image_options fold_16bit_options = {
-         .rounding_mode = nir_rounding_mode_undef,
-         .fold_tex_dest_types = nir_type_float,
-         .fold_image_dest_types = nir_type_float,
-         .fold_image_store_data = true,
-         .fold_image_srcs = !radv_use_llvm_for_stage(device, stage->stage),
-         .fold_srcs_options_count = separate_g16 ? 2 : 1,
-         .fold_srcs_options = fold_srcs_options,
-=======
       struct nir_opt_16bit_tex_image_options opt_16bit_options = {
          .rounding_mode = nir_rounding_mode_undef,
          .opt_tex_dest_types = nir_type_float,
@@ -710,7 +700,6 @@ radv_postprocess_nir(struct radv_device *device, const struct radv_graphics_stat
          .opt_image_srcs = true,
          .opt_srcs_options_count = separate_g16 ? 2 : 1,
          .opt_srcs_options = opt_srcs_options,
->>>>>>> upstream/24.1
       };
       NIR_PASS(_, stage->nir, nir_opt_16bit_tex_image, &opt_16bit_options);
 

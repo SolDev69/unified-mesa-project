@@ -330,8 +330,6 @@ BEGIN_TEST(regalloc.writelane)
 
    finish_ra_test(ra_test_policy());
 END_TEST
-<<<<<<< HEAD
-=======
 
 static void
 end_linear_vgpr(Temp tmp)
@@ -661,4 +659,3 @@ BEGIN_TEST(regalloc.linear_vgpr.compact_for_future_phis)
       finish_ra_test(ra_test_policy());
    }
 END_TEST
->>>>>>> upstream/24.1

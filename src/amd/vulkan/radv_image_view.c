@@ -670,11 +670,7 @@ radv_image_view_make_descriptor(struct radv_image_view *iview, struct radv_devic
    assert(plane->surface.blk_w % vk_format_get_blockwidth(plane->format) == 0);
    blk_w = plane->surface.blk_w / vk_format_get_blockwidth(plane->format) * vk_format_get_blockwidth(vk_format);
 
-<<<<<<< HEAD
-   if (device->physical_device->rad_info.gfx_level >= GFX9) {
-=======
    if (pdev->info.gfx_level >= GFX9) {
->>>>>>> upstream/24.1
       if (nbc_view->valid) {
          hw_level = nbc_view->level;
          iview->extent.width = nbc_view->width;
@@ -765,11 +761,7 @@ radv_image_view_init(struct radv_image_view *iview, struct radv_device *device,
    vk_image_view_init(&device->vk, &iview->vk, !from_client, pCreateInfo);
 
    bool force_zero_base_mip = true;
-<<<<<<< HEAD
-   if (device->physical_device->rad_info.gfx_level <= GFX8 && min_lod) {
-=======
    if (pdev->info.gfx_level <= GFX8 && min_lod) {
->>>>>>> upstream/24.1
       /* Do not force the base level to zero to workaround a spurious bug with mipmaps and min LOD. */
       force_zero_base_mip = false;
    }
@@ -822,11 +814,7 @@ radv_image_view_init(struct radv_image_view *iview, struct radv_device *device,
       plane_count = 1;
    }
 
-<<<<<<< HEAD
-   if (!force_zero_base_mip || device->physical_device->rad_info.gfx_level >= GFX9) {
-=======
    if (!force_zero_base_mip || pdev->info.gfx_level >= GFX9) {
->>>>>>> upstream/24.1
       iview->extent = (VkExtent3D){
          .width = image->vk.extent.width,
          .height = image->vk.extent.height,

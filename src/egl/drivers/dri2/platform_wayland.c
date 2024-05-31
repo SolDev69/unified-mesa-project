@@ -72,39 +72,11 @@ static const struct dri2_wl_visual {
     * The code checks if alt_pipe_format can be used as a fallback for a
     * pipe_format for a given wl-server implementation.
     */
-<<<<<<< HEAD
-   int alt_dri_image_format;
-   int bpp;
-   int opaque_wl_drm_format;
-   int rgba_shifts[4];
-   unsigned int rgba_sizes[4];
-=======
    int alt_pipe_format;
    int opaque_wl_drm_format;
->>>>>>> upstream/24.1
 } dri2_wl_visuals[] = {
    {
       WL_DRM_FORMAT_ABGR16F,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_ABGR16161616F,
-      __DRI_IMAGE_FORMAT_ABGR16161616F,
-      0,
-      64,
-      WL_DRM_FORMAT_XBGR16F,
-      {0, 16, 32, 48},
-      {16, 16, 16, 16},
-   },
-   {
-      "XBGR16F",
-      WL_DRM_FORMAT_XBGR16F,
-      WL_SHM_FORMAT_XBGR16161616F,
-      __DRI_IMAGE_FORMAT_XBGR16161616F,
-      0,
-      64,
-      WL_DRM_FORMAT_XBGR16F,
-      {0, 16, 32, -1},
-      {16, 16, 16, 0},
-=======
       PIPE_FORMAT_R16G16B16A16_FLOAT,
       PIPE_FORMAT_NONE,
       WL_DRM_FORMAT_XBGR16F,
@@ -114,126 +86,45 @@ static const struct dri2_wl_visual {
       PIPE_FORMAT_R16G16B16X16_FLOAT,
       PIPE_FORMAT_NONE,
       WL_DRM_FORMAT_XBGR16F,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_XRGB2101010,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_XRGB2101010,
-      __DRI_IMAGE_FORMAT_XRGB2101010,
-      __DRI_IMAGE_FORMAT_XBGR2101010,
-      32,
-      WL_DRM_FORMAT_XRGB2101010,
-      {20, 10, 0, -1},
-      {10, 10, 10, 0},
-=======
       PIPE_FORMAT_B10G10R10X2_UNORM,
       PIPE_FORMAT_R10G10B10X2_UNORM,
       WL_DRM_FORMAT_XRGB2101010,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_ARGB2101010,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_ARGB2101010,
-      __DRI_IMAGE_FORMAT_ARGB2101010,
-      __DRI_IMAGE_FORMAT_ABGR2101010,
-      32,
-      WL_DRM_FORMAT_XRGB2101010,
-      {20, 10, 0, 30},
-      {10, 10, 10, 2},
-=======
       PIPE_FORMAT_B10G10R10A2_UNORM,
       PIPE_FORMAT_R10G10B10A2_UNORM,
       WL_DRM_FORMAT_XRGB2101010,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_XBGR2101010,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_XBGR2101010,
-      __DRI_IMAGE_FORMAT_XBGR2101010,
-      __DRI_IMAGE_FORMAT_XRGB2101010,
-      32,
-      WL_DRM_FORMAT_XBGR2101010,
-      {0, 10, 20, -1},
-      {10, 10, 10, 0},
-=======
       PIPE_FORMAT_R10G10B10X2_UNORM,
       PIPE_FORMAT_B10G10R10X2_UNORM,
       WL_DRM_FORMAT_XBGR2101010,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_ABGR2101010,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_ABGR2101010,
-      __DRI_IMAGE_FORMAT_ABGR2101010,
-      __DRI_IMAGE_FORMAT_ARGB2101010,
-      32,
-      WL_DRM_FORMAT_XBGR2101010,
-      {0, 10, 20, 30},
-      {10, 10, 10, 2},
-=======
       PIPE_FORMAT_R10G10B10A2_UNORM,
       PIPE_FORMAT_B10G10R10A2_UNORM,
       WL_DRM_FORMAT_XBGR2101010,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_XRGB8888,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_XRGB8888,
-      __DRI_IMAGE_FORMAT_XRGB8888,
-      __DRI_IMAGE_FORMAT_NONE,
-      32,
-      WL_DRM_FORMAT_XRGB8888,
-      {16, 8, 0, -1},
-      {8, 8, 8, 0},
-=======
       PIPE_FORMAT_BGRX8888_UNORM,
       PIPE_FORMAT_NONE,
       WL_DRM_FORMAT_XRGB8888,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_ARGB8888,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_ARGB8888,
-      __DRI_IMAGE_FORMAT_ARGB8888,
-      __DRI_IMAGE_FORMAT_NONE,
-      32,
-      WL_DRM_FORMAT_XRGB8888,
-      {16, 8, 0, 24},
-      {8, 8, 8, 8},
-=======
       PIPE_FORMAT_BGRA8888_UNORM,
       PIPE_FORMAT_NONE,
       WL_DRM_FORMAT_XRGB8888,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_ABGR8888,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_ABGR8888,
-      __DRI_IMAGE_FORMAT_ABGR8888,
-      __DRI_IMAGE_FORMAT_NONE,
-      32,
-      WL_DRM_FORMAT_XBGR8888,
-      {0, 8, 16, 24},
-      {8, 8, 8, 8},
-   },
-   {
-      "XBGR8888",
-      WL_DRM_FORMAT_XBGR8888,
-      WL_SHM_FORMAT_XBGR8888,
-      __DRI_IMAGE_FORMAT_XBGR8888,
-      __DRI_IMAGE_FORMAT_NONE,
-      32,
-      WL_DRM_FORMAT_XBGR8888,
-      {0, 8, 16, -1},
-      {8, 8, 8, 0},
-=======
       PIPE_FORMAT_RGBA8888_UNORM,
       PIPE_FORMAT_NONE,
       WL_DRM_FORMAT_XBGR8888,
@@ -243,46 +134,15 @@ static const struct dri2_wl_visual {
       PIPE_FORMAT_RGBX8888_UNORM,
       PIPE_FORMAT_NONE,
       WL_DRM_FORMAT_XBGR8888,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_RGB565,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_RGB565,
-      __DRI_IMAGE_FORMAT_RGB565,
-      __DRI_IMAGE_FORMAT_NONE,
-      16,
-      WL_DRM_FORMAT_RGB565,
-      {11, 5, 0, -1},
-      {5, 6, 5, 0},
-=======
       PIPE_FORMAT_B5G6R5_UNORM,
       PIPE_FORMAT_NONE,
       WL_DRM_FORMAT_RGB565,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_ARGB1555,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_ARGB1555,
-      __DRI_IMAGE_FORMAT_ARGB1555,
-      __DRI_IMAGE_FORMAT_ABGR1555,
-      16,
-      WL_DRM_FORMAT_XRGB1555,
-      {10, 5, 0, 15},
-      {5, 5, 5, 1},
-   },
-   {
-      "XRGB1555",
-      WL_DRM_FORMAT_XRGB1555,
-      WL_SHM_FORMAT_XRGB1555,
-      __DRI_IMAGE_FORMAT_XRGB1555,
-      __DRI_IMAGE_FORMAT_XBGR1555,
-      16,
-      WL_DRM_FORMAT_XRGB1555,
-      {10, 5, 0, -1},
-      {5, 5, 5, 0},
-=======
       PIPE_FORMAT_B5G5R5A1_UNORM,
       PIPE_FORMAT_R5G5B5A1_UNORM,
       WL_DRM_FORMAT_XRGB1555,
@@ -292,69 +152,29 @@ static const struct dri2_wl_visual {
       PIPE_FORMAT_B5G5R5X1_UNORM,
       PIPE_FORMAT_R5G5B5X1_UNORM,
       WL_DRM_FORMAT_XRGB1555,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_ARGB4444,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_ARGB4444,
-      __DRI_IMAGE_FORMAT_ARGB4444,
-      __DRI_IMAGE_FORMAT_XBGR4444,
-      16,
-      WL_DRM_FORMAT_XRGB4444,
-      {8, 4, 0, 12},
-      {4, 4, 4, 4},
-=======
       PIPE_FORMAT_B4G4R4A4_UNORM,
       PIPE_FORMAT_R4G4B4A4_UNORM,
       WL_DRM_FORMAT_XRGB4444,
->>>>>>> upstream/24.1
    },
    {
       WL_DRM_FORMAT_XRGB4444,
-<<<<<<< HEAD
-      WL_SHM_FORMAT_XRGB4444,
-      __DRI_IMAGE_FORMAT_XRGB4444,
-      __DRI_IMAGE_FORMAT_XBGR4444,
-      16,
-      WL_DRM_FORMAT_XRGB4444,
-      {8, 4, 0, -1},
-      {4, 4, 4, 0},
-=======
       PIPE_FORMAT_B4G4R4X4_UNORM,
       PIPE_FORMAT_R4G4B4X4_UNORM,
       WL_DRM_FORMAT_XRGB4444,
->>>>>>> upstream/24.1
    },
 };
 
 static int
-<<<<<<< HEAD
-dri2_wl_visual_idx_from_config(struct dri2_egl_display *dri2_dpy,
-                               const __DRIconfig *config)
-=======
 dri2_wl_visual_idx_from_pipe_format(enum pipe_format pipe_format)
->>>>>>> upstream/24.1
 {
    if (util_format_is_srgb(pipe_format))
       pipe_format = util_format_linear(pipe_format);
 
-<<<<<<< HEAD
-   dri2_get_shifts_and_sizes(dri2_dpy->core, config, shifts, sizes);
-
-   for (unsigned int i = 0; i < ARRAY_SIZE(dri2_wl_visuals); i++) {
-      const struct dri2_wl_visual *wl_visual = &dri2_wl_visuals[i];
-
-      int cmp_rgba_shifts =
-         memcmp(shifts, wl_visual->rgba_shifts, 4 * sizeof(shifts[0]));
-      int cmp_rgba_sizes =
-         memcmp(sizes, wl_visual->rgba_sizes, 4 * sizeof(sizes[0]));
-
-      if (cmp_rgba_shifts == 0 && cmp_rgba_sizes == 0)
-=======
    for (int i = 0; i < ARRAY_SIZE(dri2_wl_visuals); i++) {
       if (dri2_wl_visuals[i].pipe_format == pipe_format)
->>>>>>> upstream/24.1
          return i;
    }
 
@@ -421,12 +241,7 @@ dri2_wl_is_format_supported(void *user_data, uint32_t format)
       return false;
 
    for (int i = 0; dri2_dpy->driver_configs[i]; i++)
-<<<<<<< HEAD
-      if (j == dri2_wl_visual_idx_from_config(
-                  dri2_dpy, dri2_dpy->driver_configs[i]))
-=======
       if (j == dri2_wl_visual_idx_from_config(dri2_dpy->driver_configs[i]))
->>>>>>> upstream/24.1
          return true;
 
    return false;
@@ -854,16 +669,9 @@ dri2_wl_create_window_surface(_EGLDisplay *disp, _EGLConfig *conf,
    dri2_surf->base.Width = window->width;
    dri2_surf->base.Height = window->height;
 
-<<<<<<< HEAD
-   visual_idx = dri2_wl_visual_idx_from_config(dri2_dpy, config);
-   assert(visual_idx != -1);
-   assert(dri2_wl_visuals[visual_idx].dri_image_format !=
-          __DRI_IMAGE_FORMAT_NONE);
-=======
    visual_idx = dri2_wl_visual_idx_from_config(config);
    assert(visual_idx != -1);
    assert(dri2_wl_visuals[visual_idx].pipe_format != PIPE_FORMAT_NONE);
->>>>>>> upstream/24.1
 
    if (dri2_dpy->wl_dmabuf || dri2_dpy->wl_drm) {
       dri2_surf->format = dri2_wl_visuals[visual_idx].wl_drm_format;
@@ -2195,13 +2003,7 @@ dri2_wl_add_configs_for_visuals(_EGLDisplay *disp)
       if (!dri2_conf)
          continue;
 
-<<<<<<< HEAD
-         /* No match for config. Try if we can blitImage convert to a visual */
-         c = dri2_wl_visual_idx_from_config(dri2_dpy,
-                                            dri2_dpy->driver_configs[i]);
-=======
       format_count[idx]++;
->>>>>>> upstream/24.1
 
       if (conversion && format_count[idx] == 1) {
          _eglLog(_EGL_DEBUG, "Client format %s converted via PRIME blitImage.",

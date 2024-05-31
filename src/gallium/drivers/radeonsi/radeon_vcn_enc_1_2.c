@@ -1433,14 +1433,6 @@ static void encode(struct radeon_encoder *enc)
    enc->total_task_size = 0;
    enc->task_info(enc, enc->need_feedback);
 
-<<<<<<< HEAD
-   if (enc->need_rate_control) {
-      i = 0;
-      do {
-         enc->enc_pic.layer_sel.temporal_layer_index = i;
-         enc->layer_select(enc);
-         enc->rc_layer_init(enc);
-=======
    if (enc->need_rate_control || enc->need_rc_per_pic) {
       i = 0;
       do {
@@ -1453,7 +1445,6 @@ static void encode(struct radeon_encoder *enc)
             enc->layer_select(enc);
             enc->rc_per_pic(enc);
          }
->>>>>>> upstream/24.1
       } while (++i < enc->enc_pic.num_temporal_layers);
    }
 

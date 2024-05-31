@@ -1133,13 +1133,10 @@ gl_nir_add_point_size(nir_shader *nir)
    }
 
    nir->info.outputs_written |= VARYING_BIT_PSIZ;
-<<<<<<< HEAD
-=======
 
    /* We always modify the entrypoint */
    nir_metadata_preserve(impl, nir_metadata_block_index | nir_metadata_dominance);
    return true;
->>>>>>> upstream/24.1
 }
 
 static void
@@ -1517,17 +1514,6 @@ gl_nir_link_spirv(const struct gl_constants *consts,
       return false;
 
    gl_nir_link_assign_xfb_resources(consts, prog);
-<<<<<<< HEAD
-
-   /* Linking the stages in the opposite order (from fragment to vertex)
-    * ensures that inter-shader outputs written to in an earlier stage
-    * are eliminated if they are (transitively) not used in a later
-    * stage.
-    */
-   for (int i = num_shaders - 2; i >= 0; i--) {
-      gl_nir_link_opts(linked_shader[i]->Program->nir,
-                       linked_shader[i + 1]->Program->nir);
-=======
    gl_nir_lower_optimize_varyings(consts, prog, true);
 
    if (!linked_shader[0]->Program->nir->info.io_lowered) {
@@ -1540,7 +1526,6 @@ gl_nir_link_spirv(const struct gl_constants *consts,
          gl_nir_link_opts(linked_shader[i]->Program->nir,
                           linked_shader[i + 1]->Program->nir);
       }
->>>>>>> upstream/24.1
    }
 
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {

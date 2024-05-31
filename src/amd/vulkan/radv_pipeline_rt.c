@@ -219,49 +219,6 @@ radv_rt_fill_group_info(struct radv_device *device, const VkRayTracingPipelineCr
          groups[idx].recursive_shader = pCreateInfo->pGroups[idx].closestHitShader;
       groups[idx].any_hit_shader = pCreateInfo->pGroups[idx].anyHitShader;
       groups[idx].intersection_shader = pCreateInfo->pGroups[idx].intersectionShader;
-<<<<<<< HEAD
-
-      if (pCreateInfo->pGroups[idx].pShaderGroupCaptureReplayHandle) {
-         const struct radv_rt_capture_replay_handle *handle =
-            (const struct radv_rt_capture_replay_handle *)pCreateInfo->pGroups[idx].pShaderGroupCaptureReplayHandle;
-
-         if (groups[idx].recursive_shader < pCreateInfo->stageCount) {
-            capture_replay_blocks[groups[idx].recursive_shader] = handle->recursive_shader_alloc;
-         } else if (groups[idx].recursive_shader != VK_SHADER_UNUSED_KHR) {
-            struct radv_shader *library_shader = stages[groups[idx].recursive_shader].shader;
-            simple_mtx_lock(&library_shader->replay_mtx);
-            /* If arena_va is 0, the pipeline is monolithic and the shader was inlined into raygen */
-            if (!library_shader->has_replay_alloc && handle->recursive_shader_alloc.arena_va) {
-               union radv_shader_arena_block *new_block =
-                  radv_replay_shader_arena_block(device, &handle->recursive_shader_alloc, library_shader);
-               if (!new_block) {
-                  result = VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS;
-                  goto reloc_out;
-               }
-
-               radv_shader_wait_for_upload(device, library_shader->upload_seq);
-               radv_free_shader_memory(device, library_shader->alloc);
-
-               library_shader->alloc = new_block;
-               library_shader->has_replay_alloc = true;
-
-               library_shader->bo = library_shader->alloc->arena->bo;
-               library_shader->va = radv_buffer_get_va(library_shader->bo) + library_shader->alloc->offset;
-
-               if (!radv_shader_reupload(device, library_shader)) {
-                  result = VK_ERROR_UNKNOWN;
-                  goto reloc_out;
-               }
-            }
-
-         reloc_out:
-            simple_mtx_unlock(&library_shader->replay_mtx);
-            if (result != VK_SUCCESS)
-               return result;
-         }
-      }
-=======
->>>>>>> upstream/24.1
    }
 
    /* copy and adjust library groups (incl. handles) */
@@ -463,25 +420,16 @@ radv_rt_nir_to_asm(struct radv_device *device, struct vk_pipeline_cache *cache,
       struct radv_shader_stage temp_stage = *stage;
       temp_stage.nir = shaders[i];
       radv_nir_lower_rt_abi(temp_stage.nir, pCreateInfo, &temp_stage.args, &stage->info, stack_size, i > 0, device,
-<<<<<<< HEAD
-                            pipeline, monolithic);
-=======
                             pipeline, monolithic, traversal_stage_info);
->>>>>>> upstream/24.1
 
       /* Info might be out-of-date after inlining in radv_nir_lower_rt_abi(). */
       nir_shader_gather_info(temp_stage.nir, nir_shader_get_entrypoint(temp_stage.nir));
 
-<<<<<<< HEAD
-      radv_optimize_nir(temp_stage.nir, pipeline_key->optimisations_disabled);
-      radv_postprocess_nir(device, pipeline_key, &temp_stage);
-=======
       radv_optimize_nir(temp_stage.nir, stage->key.optimisations_disabled);
       radv_postprocess_nir(device, NULL, &temp_stage);
 
       if (stage_info)
          radv_gather_unused_args(stage_info, shaders[i]);
->>>>>>> upstream/24.1
 
       if (radv_can_dump_shader(device, temp_stage.nir, false))
          nir_print_shader(temp_stage.nir, stderr);
@@ -876,11 +824,6 @@ compile_rt_prolog(struct radv_device *device, struct radv_ray_tracing_pipeline *
    if (pipeline->base.base.shaders[MESA_SHADER_INTERSECTION])
       combine_config(config, &pipeline->base.base.shaders[MESA_SHADER_INTERSECTION]->config);
 
-<<<<<<< HEAD
-   postprocess_rt_config(config, device->physical_device->rad_info.gfx_level, device->physical_device->rt_wave_size);
-
-   pipeline->prolog->max_waves = radv_get_max_waves(device, config, &pipeline->prolog->info);
-=======
    postprocess_rt_config(config, pdev->info.gfx_level, pdev->rt_wave_size);
 
    pipeline->prolog->max_waves = radv_get_max_waves(device, config, &pipeline->prolog->info);
@@ -939,7 +882,6 @@ done:
       *creation_feedback->pPipelineCreationFeedback = pipeline_feedback;
 
    return result;
->>>>>>> upstream/24.1
 }
 
 static VkResult
@@ -1128,17 +1070,12 @@ radv_GetRayTracingCaptureReplayShaderGroupHandlesKHR(VkDevice device, VkPipeline
       uint32_t recursive_shader = rt_pipeline->groups[firstGroup + i].recursive_shader;
       if (recursive_shader != VK_SHADER_UNUSED_KHR) {
          struct radv_shader *shader = rt_pipeline->stages[recursive_shader].shader;
-<<<<<<< HEAD
-         if (shader)
-            data[i].recursive_shader_alloc = radv_serialize_shader_arena_block(shader->alloc);
-=======
          if (shader) {
             data[i].recursive_shader_alloc.offset = shader->alloc->offset;
             data[i].recursive_shader_alloc.size = shader->alloc->size;
             data[i].recursive_shader_alloc.arena_va = shader->alloc->arena->bo->va;
             data[i].recursive_shader_alloc.arena_size = shader->alloc->arena->size;
          }
->>>>>>> upstream/24.1
       }
       data[i].non_recursive_idx = rt_pipeline->groups[firstGroup + i].handle.any_hit_index;
    }

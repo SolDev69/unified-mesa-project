@@ -1131,67 +1131,7 @@ emit_instruction(asm_context& ctx, std::vector<uint32_t>& out, Instruction* inst
    case Format::FLAT:
    case Format::SCRATCH:
    case Format::GLOBAL: {
-<<<<<<< HEAD
-      FLAT_instruction& flat = instr->flatlike();
-      uint32_t encoding = (0b110111 << 26);
-      encoding |= opcode << 18;
-      if (ctx.gfx_level == GFX9 || ctx.gfx_level >= GFX11) {
-         if (instr->isFlat())
-            assert(flat.offset <= 0xfff);
-         else
-            assert(flat.offset >= -4096 && flat.offset < 4096);
-         encoding |= flat.offset & 0x1fff;
-      } else if (ctx.gfx_level <= GFX8 || instr->isFlat()) {
-         /* GFX10 has a 12-bit immediate OFFSET field,
-          * but it has a hw bug: it ignores the offset, called FlatSegmentOffsetBug
-          */
-         assert(flat.offset == 0);
-      } else {
-         assert(flat.offset >= -2048 && flat.offset <= 2047);
-         encoding |= flat.offset & 0xfff;
-      }
-      if (instr->isScratch())
-         encoding |= 1 << (ctx.gfx_level >= GFX11 ? 16 : 14);
-      else if (instr->isGlobal())
-         encoding |= 2 << (ctx.gfx_level >= GFX11 ? 16 : 14);
-      encoding |= flat.lds ? 1 << 13 : 0;
-      encoding |= flat.glc ? 1 << (ctx.gfx_level >= GFX11 ? 14 : 16) : 0;
-      encoding |= flat.slc ? 1 << (ctx.gfx_level >= GFX11 ? 15 : 17) : 0;
-      if (ctx.gfx_level >= GFX10) {
-         assert(!flat.nv);
-         encoding |= flat.dlc ? 1 << (ctx.gfx_level >= GFX11 ? 13 : 12) : 0;
-      } else {
-         assert(!flat.dlc);
-      }
-      out.push_back(encoding);
-      encoding = reg(ctx, instr->operands[0], 8);
-      if (!instr->definitions.empty())
-         encoding |= reg(ctx, instr->definitions[0], 8) << 24;
-      if (instr->operands.size() >= 3)
-         encoding |= reg(ctx, instr->operands[2], 8) << 8;
-      if (!instr->operands[1].isUndefined()) {
-         assert(ctx.gfx_level >= GFX10 || instr->operands[1].physReg() != 0x7F);
-         assert(instr->format != Format::FLAT);
-         encoding |= reg(ctx, instr->operands[1], 8) << 16;
-      } else if (instr->format != Format::FLAT ||
-                 ctx.gfx_level >= GFX10) { /* SADDR is actually used with FLAT on GFX10 */
-         /* For GFX10.3 scratch, 0x7F disables both ADDR and SADDR, unlike sgpr_null, which only
-          * disables SADDR. On GFX11, this was replaced with SVE.
-          */
-         if (ctx.gfx_level <= GFX9 ||
-             (instr->isScratch() && instr->operands[0].isUndefined() && ctx.gfx_level < GFX11))
-            encoding |= 0x7F << 16;
-         else
-            encoding |= reg(ctx, sgpr_null) << 16;
-      }
-      if (ctx.gfx_level >= GFX11 && instr->isScratch())
-         encoding |= !instr->operands[0].isUndefined() ? 1 << 23 : 0;
-      else
-         encoding |= flat.nv ? 1 << 23 : 0;
-      out.push_back(encoding);
-=======
       emit_flatlike_instruction(ctx, out, instr);
->>>>>>> upstream/24.1
       break;
    }
    case Format::EXP: {

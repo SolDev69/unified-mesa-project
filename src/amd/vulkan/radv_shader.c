@@ -50,68 +50,6 @@
 static void
 get_nir_options_for_stage(struct radv_physical_device *pdev, gl_shader_stage stage)
 {
-<<<<<<< HEAD
-   bool split_fma = (stage <= MESA_SHADER_GEOMETRY || stage == MESA_SHADER_MESH) &&
-                    device->instance->debug_flags & RADV_DEBUG_SPLIT_FMA;
-   device->nir_options[stage] = (nir_shader_compiler_options){
-      .vertex_id_zero_based = true,
-      .lower_scmp = true,
-      .lower_flrp16 = true,
-      .lower_flrp32 = true,
-      .lower_flrp64 = true,
-      .lower_device_index_to_zero = true,
-      .lower_fdiv = true,
-      .lower_fmod = true,
-      .lower_ineg = true,
-      .lower_bitfield_insert = true,
-      .lower_bitfield_extract = true,
-      .lower_pack_snorm_4x8 = true,
-      .lower_pack_unorm_4x8 = true,
-      .lower_pack_half_2x16 = true,
-      .lower_pack_64_2x32 = true,
-      .lower_pack_64_4x16 = true,
-      .lower_pack_32_2x16 = true,
-      .lower_unpack_snorm_2x16 = true,
-      .lower_unpack_snorm_4x8 = true,
-      .lower_unpack_unorm_2x16 = true,
-      .lower_unpack_unorm_4x8 = true,
-      .lower_unpack_half_2x16 = true,
-      .lower_ffma16 = split_fma || device->rad_info.gfx_level < GFX9,
-      .lower_ffma32 = split_fma || device->rad_info.gfx_level < GFX10_3,
-      .lower_ffma64 = split_fma,
-      .lower_fpow = true,
-      .lower_mul_2x32_64 = true,
-      .lower_iadd_sat = device->rad_info.gfx_level <= GFX8,
-      .lower_hadd = true,
-      .lower_mul_32x16 = true,
-      .has_bfe = true,
-      .has_bfm = true,
-      .has_bitfield_select = true,
-      .has_fsub = true,
-      .has_isub = true,
-      .has_sdot_4x8 = device->rad_info.has_accelerated_dot_product,
-      .has_sudot_4x8 = device->rad_info.has_accelerated_dot_product && device->rad_info.gfx_level >= GFX11,
-      .has_udot_4x8 = device->rad_info.has_accelerated_dot_product,
-      .has_sdot_4x8_sat = device->rad_info.has_accelerated_dot_product,
-      .has_sudot_4x8_sat = device->rad_info.has_accelerated_dot_product && device->rad_info.gfx_level >= GFX11,
-      .has_udot_4x8_sat = device->rad_info.has_accelerated_dot_product,
-      .has_dot_2x16 = device->rad_info.has_accelerated_dot_product && device->rad_info.gfx_level < GFX11,
-      .has_find_msb_rev = true,
-      .has_pack_half_2x16_rtz = true,
-      .has_bit_test = !device->use_llvm,
-      .has_fmulz = true,
-      .has_msad = true,
-      .max_unroll_iterations = 32,
-      .max_unroll_iterations_aggressive = 128,
-      .use_interpolated_input_intrinsics = true,
-      .vectorize_vec2_16bit = true,
-      .lower_int64_options = nir_lower_imul64 | nir_lower_imul_high64 | nir_lower_imul_2x32_64 | nir_lower_divmod64 |
-                             nir_lower_minmax64 | nir_lower_iabs64 | nir_lower_iadd_sat64 | nir_lower_conv64,
-      .lower_doubles_options = nir_lower_drcp | nir_lower_dsqrt | nir_lower_drsq | nir_lower_ddiv,
-      .divergence_analysis_options = nir_divergence_view_index_uniform,
-      .optimize_quad_vote_to_reduce = true,
-   };
-=======
    const struct radv_instance *instance = radv_physical_device_instance(pdev);
    nir_shader_compiler_options *options = &pdev->nir_options[stage];
    bool split_fma =
@@ -125,7 +63,6 @@ get_nir_options_for_stage(struct radv_physical_device *pdev, gl_shader_stage sta
    options->max_unroll_iterations = 32;
    options->max_unroll_iterations_aggressive = 128;
    options->lower_doubles_options = nir_lower_drcp | nir_lower_dsqrt | nir_lower_drsq | nir_lower_ddiv;
->>>>>>> upstream/24.1
 }
 
 void
@@ -1561,10 +1498,6 @@ radv_postprocess_binary_config(struct radv_device *device, struct radv_shader_bi
 
    const struct radv_shader_info *info = &binary->info;
    gl_shader_stage stage = binary->info.stage;
-<<<<<<< HEAD
-   const struct radv_physical_device *pdevice = device->physical_device;
-=======
->>>>>>> upstream/24.1
    bool scratch_enabled = config->scratch_bytes_per_wave > 0;
    bool trap_enabled = !!device->trap_handler_shader;
    unsigned vgpr_comp_cnt = 0;

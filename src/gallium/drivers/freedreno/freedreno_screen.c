@@ -1173,20 +1173,19 @@ fd_screen_create(int fd,
 
    screen->has_syncobj = fd_has_syncobj(screen->dev);
 
-<<<<<<< HEAD
-=======
-   /* parse driconf configuration now for device specific overrides: */
-   driParseConfigFiles(config->options, config->options_info, 0, "msm",
-                       NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
+   // /* parse driconf configuration now for device specific overrides: */
+   // driParseConfigFiles(config->options, config->options_info, 0, "msm",
+   //                     NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
 
-   screen->driconf.conservative_lrz =
-         !driQueryOptionb(config->options, "disable_conservative_lrz");
-   screen->driconf.enable_throttling =
-         !driQueryOptionb(config->options, "disable_throttling");
-   screen->driconf.dual_color_blend_by_location =
-         driQueryOptionb(config->options, "dual_color_blend_by_location");
+   // screen->driconf.conservative_lrz =
+   //       !driQueryOptionb(config->options, "disable_conservative_lrz");
+   // screen->driconf.enable_throttling =
+   //       !driQueryOptionb(config->options, "disable_throttling");
+   // screen->driconf.dual_color_blend_by_location =
+   //       driQueryOptionb(config->options, "dual_color_blend_by_location");
+   //
+   // Needs more testing
 
->>>>>>> upstream/24.1
    struct sysinfo si;
    sysinfo(&si);
    screen->ram_size = si.totalram;

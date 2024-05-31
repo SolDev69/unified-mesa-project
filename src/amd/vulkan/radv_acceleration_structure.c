@@ -533,16 +533,6 @@ radv_device_init_accel_struct_build_state(struct radv_device *device)
    if (device->meta_state.accel_struct_build.radix_sort)
       goto exit;
 
-<<<<<<< HEAD
-   if (device->instance->drirc.force_active_accel_struct_leaves)
-      result = create_build_pipeline_spv(device, leaf_always_active_spv, sizeof(leaf_always_active_spv),
-                                         sizeof(struct leaf_args), &device->meta_state.accel_struct_build.leaf_pipeline,
-                                         &device->meta_state.accel_struct_build.leaf_p_layout);
-   else
-      result = create_build_pipeline_spv(device, leaf_spv, sizeof(leaf_spv), sizeof(struct leaf_args),
-                                         &device->meta_state.accel_struct_build.leaf_pipeline,
-                                         &device->meta_state.accel_struct_build.leaf_p_layout);
-=======
    result = create_build_pipeline_spv(device, leaf_always_active_spv, sizeof(leaf_always_active_spv),
                                       sizeof(struct leaf_args),
                                       &device->meta_state.accel_struct_build.leaf_updateable_pipeline,
@@ -553,7 +543,6 @@ radv_device_init_accel_struct_build_state(struct radv_device *device)
    result = create_build_pipeline_spv(device, leaf_spv, sizeof(leaf_spv), sizeof(struct leaf_args),
                                       &device->meta_state.accel_struct_build.leaf_pipeline,
                                       &device->meta_state.accel_struct_build.leaf_p_layout);
->>>>>>> upstream/24.1
    if (result != VK_SUCCESS)
       goto exit;
 

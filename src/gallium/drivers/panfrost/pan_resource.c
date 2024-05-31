@@ -1087,11 +1087,7 @@ panfrost_can_discard(struct pipe_resource *resource, const struct pipe_box *box,
            !(usage & PIPE_MAP_UNSYNCHRONIZED) &&
            !(resource->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT) &&
            panfrost_box_covers_resource(resource, box) &&
-<<<<<<< HEAD
-           !(rsrc->image.data.bo->flags & PAN_BO_SHARED));
-=======
            !(rsrc->bo->flags & PAN_BO_SHARED));
->>>>>>> upstream/24.1
 }
 
 static void *
@@ -1355,14 +1351,6 @@ pan_resource_modifier_convert(struct panfrost_context *ctx,
             panfrost_blit_no_afbc_legalization(&ctx->base, &blit);
          }
       }
-<<<<<<< HEAD
-
-      /* we lose track of tmp_rsrc after this point, and the BO migration
-       * (from tmp_rsrc to rsrc) doesn't transfer the last_writer to rsrc
-       */
-      panfrost_flush_writer(ctx, tmp_rsrc, "AFBC decompressing blit");
-   }
-=======
 
       /* we lose track of tmp_rsrc after this point, and the BO migration
        * (from tmp_rsrc to rsrc) doesn't transfer the last_writer to rsrc
@@ -1371,7 +1359,6 @@ pan_resource_modifier_convert(struct panfrost_context *ctx,
    }
 
    panfrost_bo_unreference(rsrc->bo);
->>>>>>> upstream/24.1
 
    rsrc->bo = tmp_rsrc->bo;
    rsrc->image.data.base = rsrc->bo->ptr.gpu;

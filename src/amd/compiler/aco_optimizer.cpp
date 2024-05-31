@@ -4500,11 +4500,8 @@ combine_instruction(opt_ctx& ctx, aco_ptr<Instruction>& instr)
       } else if (combine_add_bcnt(ctx, instr)) {
       } else if (combine_three_valu_op(ctx, instr, aco_opcode::v_mul_u32_u24,
                                        aco_opcode::v_mad_u32_u24, "120", 1 | 2)) {
-<<<<<<< HEAD
-=======
       } else if (combine_three_valu_op(ctx, instr, aco_opcode::v_mul_i32_i24,
                                        aco_opcode::v_mad_i32_i24, "120", 1 | 2)) {
->>>>>>> upstream/24.1
       } else if (ctx.program->gfx_level >= GFX9) {
          if (combine_three_valu_op(ctx, instr, aco_opcode::s_xor_b32, aco_opcode::v_xad_u32, "120",
                                    1 | 2)) {

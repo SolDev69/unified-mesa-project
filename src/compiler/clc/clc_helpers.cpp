@@ -63,14 +63,6 @@
 
 #if DETECT_OS_UNIX
 #include <dlfcn.h>
-<<<<<<< HEAD
-#endif
-
-#ifdef USE_STATIC_OPENCL_C_H
-#if LLVM_VERSION_MAJOR < 15
-#include "opencl-c.h.h"
-=======
->>>>>>> upstream/24.1
 #endif
 
 #ifdef USE_STATIC_OPENCL_C_H

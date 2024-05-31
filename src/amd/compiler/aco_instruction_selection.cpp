@@ -5513,11 +5513,7 @@ emit_interp_instr(isel_context* ctx, unsigned idx, unsigned component, Temp src,
             bld.vintrp(aco_opcode::v_interp_mov_f32, bld.def(v1), Operand::c32(2u) /* P0 */,
                        bld.m0(prim_mask), idx, component);
          interp_p1 = bld.vintrp(aco_opcode::v_interp_p1lv_f16, bld.def(v1), coord1,
-<<<<<<< HEAD
-                                bld.m0(prim_mask), interp_p1, idx, component);
-=======
                                 bld.m0(prim_mask), interp_p1, idx, component, high_16bits);
->>>>>>> upstream/24.1
          bld.vintrp(aco_opcode::v_interp_p2_legacy_f16, Definition(dst), coord2, bld.m0(prim_mask),
                     interp_p1, idx, component, high_16bits);
       } else {

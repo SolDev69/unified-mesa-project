@@ -958,8 +958,6 @@ void si_resource_copy_region(struct pipe_context *ctx, struct pipe_resource *dst
                              src_box, SI_OP_SYNC_BEFORE_AFTER))
       return;
 
-<<<<<<< HEAD
-=======
    si_gfx_copy_image(sctx, dst, dst_level, dstx, dsty, dstz, src, src_level, src_box);
 }
 
@@ -973,7 +971,6 @@ void si_gfx_copy_image(struct si_context *sctx, struct pipe_resource *dst,
    struct pipe_sampler_view src_templ, *src_view;
    struct pipe_box dstbox;
 
->>>>>>> upstream/24.1
    /* If the blitter isn't available fail here instead of crashing. */
    if (!sctx->blitter) {
       fprintf(stderr, "si_resource_copy_region failed src_format: %s dst_format: %s\n",

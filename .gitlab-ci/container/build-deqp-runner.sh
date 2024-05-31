@@ -12,11 +12,8 @@ set -ex
 
 DEQP_RUNNER_VERSION=0.18.0
 
-<<<<<<< HEAD
-=======
 DEQP_RUNNER_GIT_URL="${DEQP_RUNNER_GIT_URL:-https://gitlab.freedesktop.org/mesa/deqp-runner.git}"
 
->>>>>>> upstream/24.1
 if [ -n "${DEQP_RUNNER_GIT_TAG}${DEQP_RUNNER_GIT_REV}" ]; then
     # Build and install from source
     DEQP_RUNNER_CARGO_ARGS="--git $DEQP_RUNNER_GIT_URL"
@@ -33,10 +30,7 @@ if [ -n "${DEQP_RUNNER_GIT_TAG}${DEQP_RUNNER_GIT_REV}" ]; then
 else
     # Install from package registry
     DEQP_RUNNER_CARGO_ARGS="--version ${DEQP_RUNNER_VERSION} ${EXTRA_CARGO_ARGS} -- deqp-runner"
-<<<<<<< HEAD
-=======
     DEQP_RUNNER_GIT_CHECKOUT="v$DEQP_RUNNER_VERSION"
->>>>>>> upstream/24.1
 fi
 
 if [[ "$RUST_TARGET" != *-android ]]; then
@@ -47,11 +41,7 @@ if [[ "$RUST_TARGET" != *-android ]]; then
 else
     mkdir -p /deqp-runner
     pushd /deqp-runner
-<<<<<<< HEAD
-    git clone --branch v${DEQP_RUNNER_VERSION} --depth 1 https://gitlab.freedesktop.org/anholt/deqp-runner.git deqp-runner-git
-=======
     git clone --branch "$DEQP_RUNNER_GIT_CHECKOUT" --depth 1 "$DEQP_RUNNER_GIT_URL" deqp-runner-git
->>>>>>> upstream/24.1
     pushd deqp-runner-git
 
     cargo install --locked  \

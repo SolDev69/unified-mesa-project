@@ -111,15 +111,9 @@ insert_parallelcopies(ssa_elimination_ctx& ctx)
          pc->operands[i] = phi_info.op;
          i++;
       }
-<<<<<<< HEAD
-      pc->tmp_in_scc = block.scc_live_out;
-      pc->scratch_sgpr = scratch_sgpr;
-      pc->needs_scratch_reg = true;
-=======
       pc->pseudo().tmp_in_scc = block.scc_live_out;
       pc->pseudo().scratch_sgpr = scratch_sgpr;
       pc->pseudo().needs_scratch_reg = true;
->>>>>>> upstream/24.1
       block.instructions.insert(it, std::move(pc));
    }
 }

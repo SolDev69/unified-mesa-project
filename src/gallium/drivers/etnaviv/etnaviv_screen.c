@@ -867,56 +867,6 @@ etna_get_specs(struct etna_screen *screen)
       else
          screen->specs.nn_core_version = 6;
    }
-<<<<<<< HEAD
-   screen->specs.vertex_output_buffer_size = val;
-
-   if (etna_gpu_get_param(screen->gpu, ETNA_GPU_VERTEX_CACHE_SIZE, &val)) {
-      DBG("could not get ETNA_GPU_VERTEX_CACHE_SIZE");
-      goto fail;
-   }
-   screen->specs.vertex_cache_size = val;
-
-   if (etna_gpu_get_param(screen->gpu, ETNA_GPU_SHADER_CORE_COUNT, &val)) {
-      DBG("could not get ETNA_GPU_SHADER_CORE_COUNT");
-      goto fail;
-   }
-   screen->specs.shader_core_count = val;
-
-   if (etna_gpu_get_param(screen->gpu, ETNA_GPU_STREAM_COUNT, &val)) {
-      DBG("could not get ETNA_GPU_STREAM_COUNT");
-      goto fail;
-   }
-   screen->specs.stream_count = val;
-
-   if (etna_gpu_get_param(screen->gpu, ETNA_GPU_REGISTER_MAX, &val)) {
-      DBG("could not get ETNA_GPU_REGISTER_MAX");
-      goto fail;
-   }
-   screen->specs.max_registers = val;
-
-   if (etna_gpu_get_param(screen->gpu, ETNA_GPU_PIXEL_PIPES, &val)) {
-      DBG("could not get ETNA_GPU_PIXEL_PIPES");
-      goto fail;
-   }
-   screen->specs.pixel_pipes = val;
-
-   if (etna_gpu_get_param(screen->gpu, ETNA_GPU_NUM_CONSTANTS, &val)) {
-      DBG("could not get %s", "ETNA_GPU_NUM_CONSTANTS");
-      goto fail;
-   }
-   if (val == 0) {
-      fprintf(stderr, "Warning: zero num constants (update kernel?)\n");
-      val = 168;
-   }
-   screen->specs.num_constants = val;
-
-   if (etna_gpu_get_param(screen->gpu, ETNA_GPU_NUM_VARYINGS, &val)) {
-      DBG("could not get ETNA_GPU_NUM_VARYINGS");
-      goto fail;
-   }
-   screen->specs.max_varyings = MIN2(val, ETNA_NUM_VARYINGS);
-=======
->>>>>>> upstream/24.1
 
    /* Figure out gross GPU architecture. See rnndb/common.xml for a specific
     * description of the differences. */

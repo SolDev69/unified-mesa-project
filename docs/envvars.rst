@@ -1384,11 +1384,6 @@ RADV driver environment variables
       enable experimental transfer queue support (GFX9+, not yet spec compliant)
    ``video_decode``
       enable experimental video decoding support
-<<<<<<< HEAD
-   ``gsfastlaunch2``
-      use GS_FAST_LAUNCH=2 for Mesh shaders (GFX11+ dGPUs only)
-=======
->>>>>>> upstream/24.1
 
 .. envvar:: RADV_TEX_ANISO
 

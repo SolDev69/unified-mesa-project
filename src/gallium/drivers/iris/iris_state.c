@@ -7150,18 +7150,10 @@ iris_upload_dirty_render_state(struct iris_context *ice,
    }
 
 #if GFX_VERx10 >= 125
-<<<<<<< HEAD
-   /* This is only used on >= gfx125 for dynamic 3DSTATE_TE emission
-    * related workarounds.
-    */
-   bool program_needs_wa_14015055625 = false;
-#endif
-=======
    /* This is only used on >= gfx125 for dynamic 3DSTATE_TE and
     * 3DSTATE_VFG emission related workarounds.
     */
    bool program_uses_primitive_id = false;
->>>>>>> upstream/24.1
 
    /* Check if FS stage will use primitive ID overrides. */
    const struct intel_vue_map *last_vue_map =
@@ -7288,11 +7280,7 @@ iris_upload_dirty_render_state(struct iris_context *ice,
             uint32_t te_state[GENX(3DSTATE_TE_length)] = { 0 };
             iris_pack_command(GENX(3DSTATE_TE), te_state, te) {
                if (intel_needs_workaround(screen->devinfo, 14015055625) &&
-<<<<<<< HEAD
-                   program_needs_wa_14015055625)
-=======
                    program_uses_primitive_id)
->>>>>>> upstream/24.1
                   te.TessellationDistributionMode = TEDMODE_OFF;
                else if (intel_needs_workaround(screen->devinfo, 22012699309))
                   te.TessellationDistributionMode = TEDMODE_RR_STRICT;

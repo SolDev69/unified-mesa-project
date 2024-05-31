@@ -132,15 +132,12 @@ enum tu_cmd_access_mask {
     */
    TU_ACCESS_BINDLESS_DESCRIPTOR_READ = 1 << 13,
 
-<<<<<<< HEAD
-=======
    /* A write to a GMEM attachment made by CP_EVENT_WRITE::BLIT. */
    TU_ACCESS_BLIT_WRITE_GMEM = 1 << 14,
 
    /* Similar to UCHE_READ, but specifically for GMEM attachment reads. */
    TU_ACCESS_UCHE_READ_GMEM = 1 << 15,
 
->>>>>>> upstream/24.1
    /* The CCHE is a write-through cache which sits behind UCHE, with multiple
     * incoherent copies. Because it's write-through we only have to worry
     * about invalidating it for reads. It's invalidated by "ccinv" in the
@@ -208,13 +205,10 @@ enum tu_cmd_flush_bits {
    TU_CMD_FLAG_WAIT_FOR_IDLE = 1 << 8,
    TU_CMD_FLAG_WAIT_FOR_ME = 1 << 9,
    TU_CMD_FLAG_BINDLESS_DESCRIPTOR_INVALIDATE = 1 << 10,
-<<<<<<< HEAD
-=======
    /* This is an unusual flush that isn't automatically executed if pending,
     * as it isn't necessary. Therefore, it's not included in ALL_FLUSH.
     */
    TU_CMD_FLAG_BLIT_CACHE_FLUSH = 1 << 11,
->>>>>>> upstream/24.1
 
    TU_CMD_FLAG_ALL_FLUSH =
       TU_CMD_FLAG_CCU_FLUSH_DEPTH |

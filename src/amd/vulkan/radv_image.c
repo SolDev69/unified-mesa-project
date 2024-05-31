@@ -577,11 +577,7 @@ radv_patch_image_from_extra_info(struct radv_device *device, struct radv_image *
          image_info->surf_index = NULL;
       }
 
-<<<<<<< HEAD
-      if (create_info->prime_blit_src && !device->physical_device->rad_info.sdma_supports_compression) {
-=======
       if (create_info->prime_blit_src && !pdev->info.sdma_supports_compression) {
->>>>>>> upstream/24.1
          /* Older SDMA hw can't handle DCC */
          image->planes[plane].surface.flags |= RADEON_SURF_DISABLE_DCC;
       }
@@ -1123,11 +1119,7 @@ radv_image_create_layout(struct radv_device *device, struct radv_image_create_in
       image_info.width = align(image_info.width, width_align);
       image_info.height = align(image_info.height, height_align);
 
-<<<<<<< HEAD
-      if (radv_has_uvd(device->physical_device) && image->vk.usage & VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR) {
-=======
       if (radv_has_uvd(pdev) && image->vk.usage & VK_IMAGE_USAGE_VIDEO_DECODE_DPB_BIT_KHR) {
->>>>>>> upstream/24.1
          /* UVD and kernel demand a full DPB allocation. */
          image_info.array_size = MIN2(16, image_info.array_size);
       }

@@ -497,45 +497,6 @@ process_instructions(exec_ctx& ctx, Block* block, std::vector<aco_ptr<Instructio
          assert((info.exec[0].second & mask_type_exact) &&
                 (info.exec[0].second & mask_type_global));
 
-<<<<<<< HEAD
-         int num;
-         Operand src;
-         Temp exit_cond;
-         if (instr->operands[0].isConstant() && !(block->kind & block_kind_top_level)) {
-            assert(instr->operands[0].constantValue() == -1u);
-            /* transition to exact and set exec to zero */
-            exit_cond = bld.tmp(s1);
-            src = bld.sop1(Builder::s_and_saveexec, bld.def(bld.lm), bld.scc(Definition(exit_cond)),
-                           Definition(exec, bld.lm), Operand::zero(), Operand(exec, bld.lm));
-
-            num = ctx.info[block->index].exec.size() - 2;
-            if (!(ctx.info[block->index].exec.back().second & mask_type_exact)) {
-               ctx.info[block->index].exec.back().first = src;
-               ctx.info[block->index].exec.emplace_back(Operand(bld.lm), mask_type_exact);
-            }
-         } else {
-            /* demote_if: transition to exact */
-            if (block->kind & block_kind_top_level && ctx.info[block->index].exec.size() == 2 &&
-                ctx.info[block->index].exec.back().second & mask_type_global) {
-               /* We don't need to actually copy anything into exec, since the s_andn2
-                * instructions later will do that.
-                */
-               ctx.info[block->index].exec.pop_back();
-            } else {
-               transition_to_Exact(ctx, bld, block->index);
-            }
-            src = instr->operands[0];
-            num = ctx.info[block->index].exec.size() - 1;
-         }
-
-         for (int i = num; i >= 0; i--) {
-            if (ctx.info[block->index].exec[i].second & mask_type_exact) {
-               Instruction* andn2 =
-                  bld.sop2(Builder::s_andn2, bld.def(bld.lm), bld.def(s1, scc),
-                           get_exec_op(ctx.info[block->index].exec[i].first), src);
-               if (i == (int)ctx.info[block->index].exec.size() - 1)
-                  andn2->definitions[0] = Definition(exec, bld.lm);
-=======
          const bool nested_cf = !(info.exec.back().second & mask_type_global);
          if (ctx.handle_wqm && state == Exact && nested_cf) {
             /* Transition back to WQM without extra instruction. */
@@ -553,7 +514,6 @@ process_instructions(exec_ctx& ctx, Block* block, std::vector<aco_ptr<Instructio
          /* Remove invocations from global exact mask. */
          Definition def = state == Exact ? Definition(exec, bld.lm) : bld.def(bld.lm);
          Operand src = instr->operands[0].isConstant() ? Operand(exec, bld.lm) : instr->operands[0];
->>>>>>> upstream/24.1
 
          Definition exit_cond =
             bld.sop2(Builder::s_andn2, def, bld.def(s1, scc), get_exec_op(info.exec[0].first), src)

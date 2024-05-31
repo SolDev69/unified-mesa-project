@@ -55,11 +55,7 @@ radv_occlusion_query_use_l2(const struct radv_physical_device *pdev)
     * flush caches before every read in shaders or use MTYPE=3 (ie. uncached) in the buffer
     * descriptor to bypass L2. Use the WAIT_REG_MEM logic instead which is easier to implement.
     */
-<<<<<<< HEAD
-   return pdev->rad_info.gfx_level >= GFX9;
-=======
    return pdev->info.gfx_level >= GFX9;
->>>>>>> upstream/24.1
 }
 
 static void
@@ -150,11 +146,7 @@ build_occlusion_query_shader(struct radv_device *device)
    nir_store_var(&b, outer_counter, nir_imm_int(&b, 0), 0x1);
    nir_store_var(&b, available, nir_imm_true(&b), 0x1);
 
-<<<<<<< HEAD
-   if (radv_occlusion_query_use_l2(device->physical_device)) {
-=======
    if (radv_occlusion_query_use_l2(pdev)) {
->>>>>>> upstream/24.1
       nir_def *query_result_wait = nir_test_mask(&b, flags, VK_QUERY_RESULT_WAIT_BIT);
       nir_push_if(&b, query_result_wait);
       {
@@ -1781,20 +1773,12 @@ radv_CmdCopyQueryPoolResults(VkCommandBuffer commandBuffer, VkQueryPool queryPoo
                              uint32_t queryCount, VkBuffer dstBuffer, VkDeviceSize dstOffset, VkDeviceSize stride,
                              VkQueryResultFlags flags)
 {
-<<<<<<< HEAD
-   RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
-   RADV_FROM_HANDLE(radv_query_pool, pool, queryPool);
-   RADV_FROM_HANDLE(radv_buffer, dst_buffer, dstBuffer);
-   struct radv_device *device = cmd_buffer->device;
-   struct radv_physical_device *pdev = device->physical_device;
-=======
    VK_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
    VK_FROM_HANDLE(radv_query_pool, pool, queryPool);
    VK_FROM_HANDLE(radv_buffer, dst_buffer, dstBuffer);
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
    const struct radv_physical_device *pdev = radv_device_physical(device);
    const struct radv_instance *instance = radv_physical_device_instance(pdev);
->>>>>>> upstream/24.1
    struct radeon_cmdbuf *cs = cmd_buffer->cs;
    uint64_t va = radv_buffer_get_va(pool->bo);
    uint64_t dest_va = radv_buffer_get_va(dst_buffer->bo);
@@ -1827,11 +1811,7 @@ radv_CmdCopyQueryPoolResults(VkCommandBuffer commandBuffer, VkQueryPool queryPoo
    case VK_QUERY_TYPE_OCCLUSION:
       if (!radv_occlusion_query_use_l2(pdev)) {
          if (flags & VK_QUERY_RESULT_WAIT_BIT) {
-<<<<<<< HEAD
-            uint64_t enabled_rb_mask = pdev->rad_info.enabled_rb_mask;
-=======
             uint64_t enabled_rb_mask = pdev->info.enabled_rb_mask;
->>>>>>> upstream/24.1
             uint32_t rb_avail_offset = 16 * util_last_bit64(enabled_rb_mask) - 4;
             for (unsigned i = 0; i < queryCount; ++i, dest_va += stride) {
                unsigned query = firstQuery + i;
@@ -1845,15 +1825,9 @@ radv_CmdCopyQueryPoolResults(VkCommandBuffer commandBuffer, VkQueryPool queryPoo
          }
       }
 
-<<<<<<< HEAD
-      radv_query_shader(cmd_buffer, &cmd_buffer->device->meta_state.query.occlusion_query_pipeline, pool->bo,
-                        dst_buffer->bo, firstQuery * pool->stride, dst_buffer->offset + dstOffset, pool->stride, stride,
-                        dst_size, queryCount, flags, 0, 0, false);
-=======
       radv_query_shader(cmd_buffer, &device->meta_state.query.occlusion_query_pipeline, pool->bo, dst_buffer->bo,
                         firstQuery * pool->stride, dst_buffer->offset + dstOffset, pool->stride, stride, dst_size,
                         queryCount, flags, 0, 0, false);
->>>>>>> upstream/24.1
       break;
    case VK_QUERY_TYPE_PIPELINE_STATISTICS:
       if (flags & VK_QUERY_RESULT_WAIT_BIT) {

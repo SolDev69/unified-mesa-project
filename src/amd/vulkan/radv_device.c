@@ -977,21 +977,7 @@ radv_CreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo *pCr
 
    device->pbb_allowed = pdev->info.gfx_level >= GFX9 && !(instance->debug_flags & RADV_DEBUG_NOBINNING);
 
-<<<<<<< HEAD
-   /* GS_FAST_LAUNCH=2 mode is supposed to be used on GFX11 but it turns
-    * out it has severe impact on performance for unknown reasons (tested on
-    * NAVI31 dGPU). It's disabled by default.
-    *
-    * On RDNA3 APUs (Phoenix) it turns GS_FAST_LAUNCH=1 doesn't work at all,
-    * and using mode2 fixes everything without any performance impact.
-    */
-   device->mesh_fast_launch_2 = ((device->instance->perftest_flags & RADV_PERFTEST_GS_FAST_LAUNCH_2) &&
-                                 device->physical_device->rad_info.gfx_level >= GFX11) ||
-                                device->physical_device->rad_info.family == CHIP_GFX1103_R1 ||
-                                device->physical_device->rad_info.family == CHIP_GFX1103_R2;
-=======
    device->disable_trunc_coord = instance->drirc.disable_trunc_coord;
->>>>>>> upstream/24.1
 
    if (instance->vk.app_info.engine_name && !strcmp(instance->vk.app_info.engine_name, "DXVK")) {
       /* For DXVK 2.3.0 and older, use dualSrcBlend to determine if this is D3D9. */
@@ -1226,25 +1212,17 @@ radv_CreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo *pCr
       device->capture_replay_arena_vas = _mesa_hash_table_u64_create(NULL);
    }
 
-<<<<<<< HEAD
-   if (device->physical_device->rad_info.gfx_level == GFX11 && device->physical_device->rad_info.has_dedicated_vram &&
-       device->instance->drirc.force_pstate_peak_gfx11_dgpu) {
-=======
    result = radv_printf_data_init(device);
    if (result != VK_SUCCESS)
       goto fail_cache;
 
    if (pdev->info.gfx_level == GFX11 && pdev->info.has_dedicated_vram && instance->drirc.force_pstate_peak_gfx11_dgpu) {
->>>>>>> upstream/24.1
       if (!radv_device_acquire_performance_counters(device))
          fprintf(stderr, "radv: failed to set pstate to profile_peak.\n");
    }
 
-<<<<<<< HEAD
-=======
    device->cache_disabled = radv_is_cache_disabled(device);
 
->>>>>>> upstream/24.1
    *pDevice = radv_device_to_handle(device);
    return VK_SUCCESS;
 

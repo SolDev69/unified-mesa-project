@@ -3956,12 +3956,9 @@ typedef struct nir_shader_compiler_options {
    bool has_rotate8;
    bool has_rotate16;
    bool has_rotate32;
-<<<<<<< HEAD
-=======
 
    /** Backend supports shfr */
    bool has_shfr32;
->>>>>>> upstream/24.1
 
    /** Backend supports ternary addition */
    bool has_iadd3;

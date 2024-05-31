@@ -716,8 +716,4 @@ option(
   description : 'Build custom xmlconfig (driconf) support. If disabled, ' +
                 'the default driconf file is hardcoded into Mesa. ' +
                 'Requires expat.'
-<<<<<<< HEAD
 )
-=======
-)
->>>>>>> upstream/24.1

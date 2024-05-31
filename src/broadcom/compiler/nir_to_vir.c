@@ -3296,8 +3296,6 @@ emit_load_local_invocation_index(struct v3d_compile *c)
                        vir_uniform_ui(c, 32 - c->local_invocation_index_bits));
 }
 
-<<<<<<< HEAD
-=======
 /* For the purposes of reduction operations (ballot, alleq, allfeq, bcastf) in
  * fragment shaders a lane is considered active if any sample flags are set
  * for *any* lane in the same quad, however, we still need to ensure that
@@ -3397,7 +3395,6 @@ emit_barrier(struct v3d_compile *c)
         vir_MOV_dest(c, vir_reg(QFILE_MAGIC, V3D_QPU_WADDR_SYNCB), tsy_conf);
 }
 
->>>>>>> upstream/24.1
 static void
 ntq_emit_intrinsic(struct v3d_compile *c, nir_intrinsic_instr *instr)
 {

@@ -2146,103 +2146,10 @@ radv_physical_device_try_create(struct radv_instance *instance, drmDevicePtr drm
    radv_init_physical_device_decoder(pdev);
    radv_init_physical_device_encoder(pdev);
 
-<<<<<<< HEAD
-   device->use_fmask = device->rad_info.gfx_level < GFX11 && !(device->instance->debug_flags & RADV_DEBUG_NO_FMASK);
-
-   device->use_ngg = (device->rad_info.gfx_level >= GFX10 && device->rad_info.family != CHIP_NAVI14 &&
-                      !(device->instance->debug_flags & RADV_DEBUG_NO_NGG)) ||
-                     device->rad_info.gfx_level >= GFX11;
-
-   /* TODO: Investigate if NGG culling helps on GFX11. */
-   device->use_ngg_culling =
-      device->use_ngg && device->rad_info.max_render_backends > 1 &&
-      (device->rad_info.gfx_level == GFX10_3 || (device->instance->perftest_flags & RADV_PERFTEST_NGGC)) &&
-      !(device->instance->debug_flags & RADV_DEBUG_NO_NGGC);
-
-   device->use_ngg_streamout = device->rad_info.gfx_level >= GFX11;
-
-   device->emulate_ngg_gs_query_pipeline_stat = device->use_ngg && device->rad_info.gfx_level < GFX11;
-
-   device->emulate_mesh_shader_queries = device->rad_info.gfx_level == GFX10_3;
-
-   /* Determine the number of threads per wave for all stages. */
-   device->cs_wave_size = 64;
-   device->ps_wave_size = 64;
-   device->ge_wave_size = 64;
-   device->rt_wave_size = 64;
-
-   if (device->rad_info.gfx_level >= GFX10) {
-      if (device->instance->perftest_flags & RADV_PERFTEST_CS_WAVE_32)
-         device->cs_wave_size = 32;
-
-      /* For pixel shaders, wave64 is recommended. */
-      if (device->instance->perftest_flags & RADV_PERFTEST_PS_WAVE_32)
-         device->ps_wave_size = 32;
-
-      if (device->instance->perftest_flags & RADV_PERFTEST_GE_WAVE_32)
-         device->ge_wave_size = 32;
-
-      /* Default to 32 on RDNA1-2 as that gives better perf due to less issues with divergence.
-       * However, on GFX11 default to wave64 as ACO does not support VOPD yet, and with the VALU
-       * dependence wave32 would likely be a net-loss (as well as the SALU count becoming more
-       * problematic)
-       */
-      if (!(device->instance->perftest_flags & RADV_PERFTEST_RT_WAVE_64) &&
-          !(device->instance->drirc.force_rt_wave64) && device->rad_info.gfx_level < GFX11)
-         device->rt_wave_size = 32;
-   }
-
-   device->max_shared_size = device->rad_info.gfx_level >= GFX7 ? 65536 : 32768;
-
-   radv_physical_device_init_mem_types(device);
-
-   radv_physical_device_get_supported_extensions(device, &device->vk.supported_extensions);
-   radv_physical_device_get_features(device, &device->vk.supported_features);
-
-   radv_get_nir_options(device);
-
-#ifndef _WIN32
-   if (drm_device) {
-      struct stat primary_stat = {0}, render_stat = {0};
-
-      device->available_nodes = drm_device->available_nodes;
-      device->bus_info = *drm_device->businfo.pci;
-
-      if ((drm_device->available_nodes & (1 << DRM_NODE_PRIMARY)) &&
-          stat(drm_device->nodes[DRM_NODE_PRIMARY], &primary_stat) != 0) {
-         result = vk_errorf(instance, VK_ERROR_INITIALIZATION_FAILED, "failed to stat DRM primary node %s",
-                            drm_device->nodes[DRM_NODE_PRIMARY]);
-         goto fail_perfcounters;
-      }
-      device->primary_devid = primary_stat.st_rdev;
-
-      if ((drm_device->available_nodes & (1 << DRM_NODE_RENDER)) &&
-          stat(drm_device->nodes[DRM_NODE_RENDER], &render_stat) != 0) {
-         result = vk_errorf(instance, VK_ERROR_INITIALIZATION_FAILED, "failed to stat DRM render node %s",
-                            drm_device->nodes[DRM_NODE_RENDER]);
-         goto fail_perfcounters;
-      }
-      device->render_devid = render_stat.st_rdev;
-   }
-#endif
-
-   radv_get_physical_device_properties(device);
-
-   if ((device->instance->debug_flags & RADV_DEBUG_INFO))
-      ac_print_gpu_info(&device->rad_info, stdout);
-
-   radv_init_physical_device_decoder(device);
-
-   radv_physical_device_init_queue_table(device);
-
-   /* We don't check the error code, but later check if it is initialized. */
-   ac_init_perfcounters(&device->rad_info, false, false, &device->ac_perfcounters);
-=======
    radv_physical_device_init_queue_table(pdev);
 
    /* We don't check the error code, but later check if it is initialized. */
    ac_init_perfcounters(&pdev->info, false, false, &pdev->ac_perfcounters);
->>>>>>> upstream/24.1
 
    /* The WSI is structured as a layer on top of the driver, so this has
     * to be the last part of initialization (at least until we get other

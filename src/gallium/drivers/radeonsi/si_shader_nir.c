@@ -207,15 +207,6 @@ static void si_late_optimize_16bit_samplers(struct si_screen *sscreen, nir_shade
          .src_types = (1 << nir_tex_src_ddx) | (1 << nir_tex_src_ddy),
       },
    };
-<<<<<<< HEAD
-   struct nir_fold_16bit_tex_image_options fold_16bit_options = {
-      .rounding_mode = nir_rounding_mode_undef,
-      .fold_tex_dest_types = nir_type_float,
-      .fold_image_dest_types = nir_type_float,
-      .fold_image_store_data = true,
-      .fold_srcs_options_count = has_g16 ? 2 : 1,
-      .fold_srcs_options = fold_srcs_options,
-=======
    struct nir_opt_16bit_tex_image_options opt_16bit_options = {
       .rounding_mode = nir_rounding_mode_undef,
       .opt_tex_dest_types = nir_type_float,
@@ -224,7 +215,6 @@ static void si_late_optimize_16bit_samplers(struct si_screen *sscreen, nir_shade
       .opt_image_srcs = true,
       .opt_srcs_options_count = has_g16 ? 2 : 1,
       .opt_srcs_options = opt_srcs_options,
->>>>>>> upstream/24.1
    };
    bool changed = false;
    NIR_PASS(changed, nir, nir_opt_16bit_tex_image, &opt_16bit_options);

@@ -1552,15 +1552,9 @@ radv_get_disabled_binning_state(struct radv_cmd_buffer *cmd_buffer)
    const struct radv_dynamic_state *d = &cmd_buffer->state.dynamic;
    uint32_t pa_sc_binner_cntl_0;
 
-<<<<<<< HEAD
-   if (pdevice->rad_info.gfx_level >= GFX10) {
-      const unsigned binning_disabled =
-         pdevice->rad_info.gfx_level >= GFX11_5 ? V_028C44_BINNING_DISABLED : V_028C44_DISABLE_BINNING_USE_NEW_SC;
-=======
    if (pdev->info.gfx_level >= GFX10) {
       const unsigned binning_disabled =
          pdev->info.gfx_level >= GFX11_5 ? V_028C44_BINNING_DISABLED : V_028C44_DISABLE_BINNING_USE_NEW_SC;
->>>>>>> upstream/24.1
       unsigned min_bytes_per_pixel = 0;
 
       for (unsigned i = 0; i < render->color_att_count; ++i) {
@@ -3841,11 +3835,7 @@ radv_emit_index_buffer(struct radv_cmd_buffer *cmd_buffer)
       return;
 
    /* Handle indirect draw calls with NULL index buffer if the GPU doesn't support them. */
-<<<<<<< HEAD
-   if (!max_index_count && cmd_buffer->device->physical_device->rad_info.has_zero_index_buffer_bug) {
-=======
    if (!max_index_count && pdev->info.has_zero_index_buffer_bug) {
->>>>>>> upstream/24.1
       radv_handle_zero_index_buffer_bug(cmd_buffer, &index_va, &max_index_count);
    }
 
@@ -6102,14 +6092,10 @@ radv_BeginCommandBuffer(VkCommandBuffer commandBuffer, const VkCommandBufferBegi
    cmd_buffer->state.dirty |= RADV_CMD_DIRTY_DYNAMIC_ALL | RADV_CMD_DIRTY_GUARDBAND | RADV_CMD_DIRTY_OCCLUSION_QUERY |
                               RADV_CMD_DIRTY_DB_SHADER_CONTROL;
 
-<<<<<<< HEAD
-   if (cmd_buffer->qf == RADV_QUEUE_COMPUTE || cmd_buffer->device->vk.enabled_features.taskShader) {
-=======
    if (cmd_buffer->qf == RADV_QUEUE_GENERAL)
       vk_dynamic_graphics_state_init(&cmd_buffer->state.dynamic.vk);
 
    if (cmd_buffer->qf == RADV_QUEUE_COMPUTE || device->vk.enabled_features.taskShader) {
->>>>>>> upstream/24.1
       uint32_t pred_value = 0;
       uint32_t pred_offset;
       if (!radv_cmd_buffer_upload_data(cmd_buffer, 4, &pred_value, &pred_offset))
@@ -6311,11 +6297,7 @@ radv_CmdBindIndexBuffer2KHR(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDe
       cmd_buffer->state.index_va = 0;
       cmd_buffer->state.max_index_count = 0;
 
-<<<<<<< HEAD
-      if (cmd_buffer->device->physical_device->rad_info.has_null_index_buffer_clamping_bug)
-=======
       if (pdev->info.has_null_index_buffer_clamping_bug)
->>>>>>> upstream/24.1
          cmd_buffer->state.index_va = 0x2;
    }
 
@@ -8432,11 +8414,7 @@ radv_cs_emit_compute_predication(const struct radv_device *device, struct radv_c
    if (!state->predication_type) {
       /* Invert the condition the first time it is needed. */
       if (!*inv_emitted) {
-<<<<<<< HEAD
-         const enum amd_gfx_level gfx_level = device->physical_device->rad_info.gfx_level;
-=======
          const enum amd_gfx_level gfx_level = pdev->info.gfx_level;
->>>>>>> upstream/24.1
 
          *inv_emitted = true;
 
@@ -8450,22 +8428,7 @@ radv_cs_emit_compute_predication(const struct radv_device *device, struct radv_c
          radeon_emit(cs, inv_va >> 32);
 
          /* If the API predication VA == 0, skip next command. */
-<<<<<<< HEAD
-         if (device->physical_device->rad_info.gfx_level >= GFX7) {
-            radeon_emit(cs, PKT3(PKT3_COND_EXEC, 3, 0));
-            radeon_emit(cs, va);
-            radeon_emit(cs, va >> 32);
-            radeon_emit(cs, 0);
-            radeon_emit(cs, 6); /* 1x COPY_DATA size */
-         } else {
-            radeon_emit(cs, PKT3(PKT3_COND_EXEC, 2, 0));
-            radeon_emit(cs, va);
-            radeon_emit(cs, va >> 32);
-            radeon_emit(cs, 6); /* 1x COPY_DATA size */
-         }
-=======
          radv_emit_cond_exec(device, cs, va, 6 /* 1x COPY_DATA size */);
->>>>>>> upstream/24.1
 
          /* Write 0 to the new predication VA (when the API condition != 0) */
          radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
@@ -8480,22 +8443,7 @@ radv_cs_emit_compute_predication(const struct radv_device *device, struct radv_c
       va = inv_va;
    }
 
-<<<<<<< HEAD
-   if (device->physical_device->rad_info.gfx_level >= GFX7) {
-      radeon_emit(cs, PKT3(PKT3_COND_EXEC, 3, 0));
-      radeon_emit(cs, va);
-      radeon_emit(cs, va >> 32);
-      radeon_emit(cs, 0);      /* Cache policy */
-      radeon_emit(cs, dwords); /* Size of the predicated packet(s) in DWORDs. */
-   } else {
-      radeon_emit(cs, PKT3(PKT3_COND_EXEC, 2, 0));
-      radeon_emit(cs, va);
-      radeon_emit(cs, va >> 32);
-      radeon_emit(cs, dwords); /* Size of the predicated packet(s) in DWORDs. */
-   }
-=======
    radv_emit_cond_exec(device, cs, va, dwords);
->>>>>>> upstream/24.1
 }
 
 static void
@@ -9080,16 +9028,9 @@ radv_emit_direct_taskmesh_draw_packets(const struct radv_device *device, struct 
    const unsigned num_views = MAX2(1, util_bitcount(view_mask));
    const unsigned ace_predication_size = num_views * 6; /* DISPATCH_TASKMESH_DIRECT_ACE size */
 
-<<<<<<< HEAD
-   radv_emit_userdata_task(cmd_buffer, x, y, z, 0);
-   radv_cs_emit_compute_predication(cmd_buffer->device, &cmd_buffer->state, cmd_buffer->gang.cs,
-                                    cmd_buffer->mec_inv_pred_va, &cmd_buffer->mec_inv_pred_emitted,
-                                    ace_predication_size);
-=======
    radv_emit_userdata_task(cmd_state, ace_cs, x, y, z, 0);
    radv_cs_emit_compute_predication(device, cmd_state, ace_cs, cmd_state->mec_inv_pred_va,
                                     &cmd_state->mec_inv_pred_emitted, ace_predication_size);
->>>>>>> upstream/24.1
 
    if (!view_mask) {
       radv_cs_emit_dispatch_taskmesh_direct_ace_packet(device, cmd_state, ace_cs, x, y, z);
@@ -9119,10 +9060,6 @@ radv_emit_indirect_taskmesh_draw_packets(const struct radv_device *device, struc
    const uint64_t count_va = !info->count_buffer ? 0
                                                  : radv_buffer_get_va(info->count_buffer->bo) +
                                                       info->count_buffer->offset + info->count_buffer_offset;
-<<<<<<< HEAD
-   uint64_t workaround_cond_va = 0;
-=======
->>>>>>> upstream/24.1
 
    if (count_va)
       radv_cs_add_buffer(ws, ace_cs, info->count_buffer->bo);
@@ -9152,16 +9089,9 @@ radv_emit_indirect_taskmesh_draw_packets(const struct radv_device *device, struc
       ace_predication_size += 2 * 5 + 6 + 6 * num_views;
    }
 
-<<<<<<< HEAD
-   radv_cs_add_buffer(ws, cmd_buffer->gang.cs, info->indirect->bo);
-   radv_cs_emit_compute_predication(cmd_buffer->device, &cmd_buffer->state, cmd_buffer->gang.cs,
-                                    cmd_buffer->mec_inv_pred_va, &cmd_buffer->mec_inv_pred_emitted,
-                                    ace_predication_size);
-=======
    radv_cs_add_buffer(ws, ace_cs, info->indirect->bo);
    radv_cs_emit_compute_predication(device, cmd_state, ace_cs, cmd_state->mec_inv_pred_va,
                                     &cmd_state->mec_inv_pred_emitted, ace_predication_size);
->>>>>>> upstream/24.1
 
    if (workaround_cond_va) {
       radv_emit_cond_exec(device, ace_cs, count_va,
@@ -10531,16 +10461,6 @@ radv_emit_dispatch_packets(struct radv_cmd_buffer *cmd_buffer, const struct radv
 
       if (radv_cmd_buffer_uses_mec(cmd_buffer)) {
          uint64_t indirect_va = info->va;
-<<<<<<< HEAD
-         const bool needs_align32_workaround =
-            cmd_buffer->device->physical_device->rad_info.has_async_compute_align32_bug &&
-            cmd_buffer->qf == RADV_QUEUE_COMPUTE && !radv_is_aligned(indirect_va, 32);
-         const unsigned ace_predication_size =
-            4 /* DISPATCH_INDIRECT */ + (needs_align32_workaround ? 6 * 3 /* 3x COPY_DATA */ : 0);
-
-         radv_cs_emit_compute_predication(cmd_buffer->device, &cmd_buffer->state, cs, cmd_buffer->mec_inv_pred_va,
-                                          &cmd_buffer->mec_inv_pred_emitted, ace_predication_size);
-=======
          const bool needs_align32_workaround = pdev->info.has_async_compute_align32_bug &&
                                                cmd_buffer->qf == RADV_QUEUE_COMPUTE &&
                                                !util_is_aligned(indirect_va, 32);
@@ -10549,7 +10469,6 @@ radv_emit_dispatch_packets(struct radv_cmd_buffer *cmd_buffer, const struct radv
 
          radv_cs_emit_compute_predication(device, &cmd_buffer->state, cs, cmd_buffer->state.mec_inv_pred_va,
                                           &cmd_buffer->state.mec_inv_pred_emitted, ace_predication_size);
->>>>>>> upstream/24.1
 
          if (needs_align32_workaround) {
             const uint64_t unaligned_va = indirect_va;
@@ -10586,14 +10505,8 @@ radv_emit_dispatch_packets(struct radv_cmd_buffer *cmd_buffer, const struct radv
          radeon_emit(cs, info->va >> 32);
 
          if (cmd_buffer->qf == RADV_QUEUE_COMPUTE) {
-<<<<<<< HEAD
-            radv_cs_emit_compute_predication(cmd_buffer->device, &cmd_buffer->state, cs,
-                                             cmd_buffer->mec_inv_pred_va, &cmd_buffer->mec_inv_pred_emitted,
-                                             3 /* PKT3_DISPATCH_INDIRECT */);
-=======
             radv_cs_emit_compute_predication(device, &cmd_buffer->state, cs, cmd_buffer->state.mec_inv_pred_va,
                                              &cmd_buffer->state.mec_inv_pred_emitted, 3 /* PKT3_DISPATCH_INDIRECT */);
->>>>>>> upstream/24.1
             predicating = false;
          }
 
@@ -10666,13 +10579,8 @@ radv_emit_dispatch_packets(struct radv_cmd_buffer *cmd_buffer, const struct radv
       }
 
       if (cmd_buffer->qf == RADV_QUEUE_COMPUTE) {
-<<<<<<< HEAD
-         radv_cs_emit_compute_predication(cmd_buffer->device, &cmd_buffer->state, cs, cmd_buffer->mec_inv_pred_va,
-                                          &cmd_buffer->mec_inv_pred_emitted, 5 /* DISPATCH_DIRECT size */);
-=======
          radv_cs_emit_compute_predication(device, &cmd_buffer->state, cs, cmd_buffer->state.mec_inv_pred_va,
                                           &cmd_buffer->state.mec_inv_pred_emitted, 5 /* DISPATCH_DIRECT size */);
->>>>>>> upstream/24.1
          predicating = false;
       }
 
@@ -10714,19 +10622,12 @@ radv_upload_compute_shader_descriptors(struct radv_cmd_buffer *cmd_buffer, VkPip
 static void
 radv_emit_rt_stack_size(struct radv_cmd_buffer *cmd_buffer)
 {
-<<<<<<< HEAD
-=======
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
->>>>>>> upstream/24.1
    unsigned rsrc2 = cmd_buffer->state.rt_prolog->config.rsrc2;
    if (cmd_buffer->state.rt_stack_size)
       rsrc2 |= S_00B12C_SCRATCH_EN(1);
 
-<<<<<<< HEAD
-   radeon_check_space(cmd_buffer->device->ws, cmd_buffer->cs, 3);
-=======
    radeon_check_space(device->ws, cmd_buffer->cs, 3);
->>>>>>> upstream/24.1
    radeon_set_sh_reg(cmd_buffer->cs, R_00B84C_COMPUTE_PGM_RSRC2, rsrc2);
 }
 
@@ -11542,14 +11443,8 @@ radv_cp_dma_wait_for_stages(struct radv_cmd_buffer *cmd_buffer, VkPipelineStageF
       radv_cp_dma_wait_for_idle(cmd_buffer);
 }
 
-<<<<<<< HEAD
-static void
-radv_barrier(struct radv_cmd_buffer *cmd_buffer, uint32_t dep_count, const VkDependencyInfo *dep_infos,
-             enum rgp_barrier_reason reason)
-=======
 void
 radv_emit_cache_flush(struct radv_cmd_buffer *cmd_buffer)
->>>>>>> upstream/24.1
 {
    struct radv_device *device = radv_cmd_buffer_device(cmd_buffer);
    const struct radv_physical_device *pdev = radv_device_physical(device);
@@ -11702,11 +11597,7 @@ radv_barrier(struct radv_cmd_buffer *cmd_buffer, uint32_t dep_count, const VkDep
 VKAPI_ATTR void VKAPI_CALL
 radv_CmdPipelineBarrier2(VkCommandBuffer commandBuffer, const VkDependencyInfo *pDependencyInfo)
 {
-<<<<<<< HEAD
-   RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
-=======
    VK_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
->>>>>>> upstream/24.1
    enum rgp_barrier_reason barrier_reason;
 
    if (cmd_buffer->vk.runtime_rp_barrier) {
@@ -11840,8 +11731,6 @@ radv_CmdWaitEvents2(VkCommandBuffer commandBuffer, uint32_t eventCount, const Vk
    }
 
    radv_barrier(cmd_buffer, eventCount, pDependencyInfos, RGP_BARRIER_EXTERNAL_CMD_WAIT_EVENTS);
-<<<<<<< HEAD
-=======
 }
 
 void
@@ -11874,7 +11763,6 @@ radv_emit_set_predication_state(struct radv_cmd_buffer *cmd_buffer, bool draw_vi
       radeon_emit(cmd_buffer->cs, va);
       radeon_emit(cmd_buffer->cs, op | ((va >> 32) & 0xFF));
    }
->>>>>>> upstream/24.1
 }
 
 void
@@ -11888,11 +11776,7 @@ radv_begin_conditional_rendering(struct radv_cmd_buffer *cmd_buffer, uint64_t va
    radv_emit_cache_flush(cmd_buffer);
 
    if (cmd_buffer->qf == RADV_QUEUE_GENERAL) {
-<<<<<<< HEAD
-      if (!cmd_buffer->device->physical_device->rad_info.has_32bit_predication) {
-=======
       if (!pdev->info.has_32bit_predication) {
->>>>>>> upstream/24.1
          uint64_t pred_value = 0, pred_va;
          unsigned pred_offset;
 
@@ -11926,11 +11810,7 @@ radv_begin_conditional_rendering(struct radv_cmd_buffer *cmd_buffer, uint64_t va
 
          pred_va = radv_buffer_get_va(cmd_buffer->upload.upload_bo) + pred_offset;
 
-<<<<<<< HEAD
-         radeon_check_space(cmd_buffer->device->ws, cmd_buffer->cs, 8);
-=======
          radeon_check_space(device->ws, cmd_buffer->cs, 8);
->>>>>>> upstream/24.1
 
          radeon_emit(cs, PKT3(PKT3_COPY_DATA, 4, 0));
          radeon_emit(

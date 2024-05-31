@@ -61,11 +61,7 @@ setup_reduce_temp(Program* program)
           * Here, the linear vgpr is used before any phi copies, so this isn't necessary.
           */
          if (inserted_at >= 0) {
-<<<<<<< HEAD
-            aco_ptr<Instruction> end{create_instruction<Pseudo_instruction>(
-=======
             aco_ptr<Instruction> end{create_instruction(
->>>>>>> upstream/24.1
                aco_opcode::p_end_linear_vgpr, Format::PSEUDO, vtmp_inserted_at >= 0 ? 2 : 1, 0)};
             end->operands[0] = Operand(reduceTmp);
             end->operands[0].setLateKill(true);
