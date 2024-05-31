@@ -1,5 +1,75 @@
 [
     {
+        "sha": "6f713a764fb412567caaabd9ae574822e79da383",
+        "description": "rusticl/event: fix deadlock when calling clGetEventProfilingInfo inside callbacks",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "14ec84da172b40932e70693237f57da8cff47272",
+        "description": "zink+nvk/ci: add flakes seen in latest nightly run",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "679639625785d0f743cdd03802052b71e9576305",
+        "description": "radv: Optimize memcpy in write_image_descriptor",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "75849bd4288e8758ace159bd5c3624ebca9fcbbc",
+        "description": "radv/ci: document angle regressions from !29436 on stoney",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f32a258503b40e8e19a1498998b0d4f8b8abb488",
+        "description": "v3d: really fix CLE MMU errors on 7.1HW Rpi5",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "11dce2ac8154237b74ee3c4bd2aaec685739f0cc",
+        "notes": null
+    },
+    {
+        "sha": "07d3d557832a223c574aa205db3f4acfb04161ad",
+        "description": "v3dv: really fix CLE MMU errors on 7.1HW Rpi5",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "bb77ac983e4f8a265141855e60ad2a5637c9b74d",
+        "notes": null
+    },
+    {
+        "sha": "dcab408a6c5793fbafa0ae2a7bdc478ee91d29c9",
+        "description": "nir: remove unpack_half_flush_to_zero",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "a1ea0956b46778d0331e4ef60ebd2be057fd0e9f",
         "description": "intel: fix HW generated local-id with indirect compute walker",
         "nominated": false,
