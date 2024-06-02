@@ -294,7 +294,7 @@
         "description": "anv: fix Gfx9 fast clears on srgb formats",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4cfb4f7d126370784cc74a4ac02e3a511e5f5d36",
         "notes": null
