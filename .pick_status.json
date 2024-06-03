@@ -784,7 +784,7 @@
         "description": "radv/ci: fix manual rules",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "ebaede788e05ea3a22bfd4f054c85053247de9ff",
         "notes": null
