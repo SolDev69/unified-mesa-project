@@ -1,5 +1,325 @@
 [
     {
+        "sha": "0311ac50adb6016efcb455ea52b11f422d6b797e",
+        "description": "v3dv: implement vkGetDeviceImageSubresourceLayoutKHR",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b882cf2ae3ca366ab710bc312044e5079f68f070",
+        "description": "v3dv: add a get_image_subresource_layout helper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bf4a8a5c5a381bcde6078dee29a68658d406af6a",
+        "description": "v3dv: refactor create_image",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cccdaab4ef99c9a6b5740ad5b66a7093a10daae6",
+        "description": "v3dv: implement vkGetImageSubresourceLayout2KHR",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "dfabed2fc9c4e5d4c613003097117e9a7ada4e08",
+        "description": "Uprev Piglit to cf8daaf5ba90fc9b8a0e144355026e2a14c79944",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "065ad0f2713de487f8d09c2377209e5d51d20c48",
+        "description": "ci: disable Collabora's farm due to maintenance",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8112d44b94bba84d6cdf8a80eeb2ac186be02f7a",
+        "description": "lima: remove the standalone compiler",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a79a2486c78a1186f390884d2e705b488de1a5c7",
+        "description": "ci: propagate RUSTICL_ENABLE and DEBUG variables to the DUTs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0b54ccff57eb9c1232fd138987d87f6c97c7a799",
+        "description": "ci/lava: the containers take sometimes more than 60m",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "46dd8b8d89ca322b441f8e92403724b223608876",
+        "description": "ci/radv: Document recent flake",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bc149e03033239d07c913d5978d7ee2afe68dadf",
+        "description": "iris: fix PIPE_RESOURCE_PARAM_STRIDE for buffers",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "831703157e7b272fcd1d36de2b3bcc8d5ec7d500",
+        "notes": null
+    },
+    {
+        "sha": "2620a7064c899d76182ba612994bcd5d5e691053",
+        "description": "ci: move (c)bindgen to own shell script",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a93932daf09191d3082c693d941c5389e6a7aaec",
+        "description": "ci/meson: reuse meson installation",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "24d9c066e2bda171c3693639c72f686090af09ca",
+        "description": "ci/lava: add support for RustiCL",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "70515de4890c0f9d81dc6d7a7531c5a40ded5a9d",
+        "description": "ci/arm64: rustify the build",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a77d953e20cde6666cbd29b2b779f6758b5cd5c8",
+        "description": "mailmap: update my email",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "33499636450e7a8316a2e4251431b5ee61a585fe",
+        "description": "anv: Properly handle cases for different query types in copy_query_results_with_shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "71d455b96fbf3807441f1b9bb82416928c77ac20",
+        "description": "glsl: remove unused detect_recursion_linked()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "724bb7fa151c420a32937736a84145da688a0a0d",
+        "description": "brw: better model READ_ARF_REG opcode",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ac03cefb28c0687fe0ef6dca615428a4720cd1dd",
+        "description": "brw: limit dependencies on SR register",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d8b78924c532bd4688e70132d1ebdb0aa0f8b18b",
+        "description": "brw: use a single virtual opcode to read ARF registers",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "2c65d90bc8500bb8ad0b9204798905e4d79fb283",
+        "notes": null
+    },
+    {
+        "sha": "588c725f270966292f965f9e13305cf07689c7eb",
+        "description": "intel/xe2+: Enable native 64-bit integer arithmetic.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7b7e5cf5d4694a896e8e0d9183c7d53a91af547c",
+        "description": "nir/algebraic: intel/fs: Optimize some patterns before lowering 64-bit integers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4834df82e25aed970ab4fd1f1bd5aef2d29a19cd",
+        "description": "nir/algebraic: More patterns to generate iadd3",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f1b941aaecd555c0455ba5a6a41d70482519c63b",
+        "description": "nir/search: Refactor is_16_bits",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6e53be2a0abe8f347ec466ade6df8a033b3446f1",
+        "description": "nir/search: Fix is_16_bits for vectors",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "7ef45e661f4072382be7cc70f417f86a1ab039cb",
+        "notes": null
+    },
+    {
+        "sha": "22095c60bcd843ff827be2bb4617d535fbf089f1",
+        "description": "nir/algebraic: Add nir_lower_int64_options::nir_lower_iadd3_64",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fdc483df2551a91ccef2948a09d0f434430c4c77",
+        "description": "ci/etnaviv: remove duplicated line from skips",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "fb1068c668464189516bfd8bb626cda74721e92b",
+        "notes": null
+    },
+    {
+        "sha": "6f713a764fb412567caaabd9ae574822e79da383",
+        "description": "rusticl/event: fix deadlock when calling clGetEventProfilingInfo inside callbacks",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "14ec84da172b40932e70693237f57da8cff47272",
+        "description": "zink+nvk/ci: add flakes seen in latest nightly run",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "679639625785d0f743cdd03802052b71e9576305",
+        "description": "radv: Optimize memcpy in write_image_descriptor",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "75849bd4288e8758ace159bd5c3624ebca9fcbbc",
+        "description": "radv/ci: document angle regressions from !29436 on stoney",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "f32a258503b40e8e19a1498998b0d4f8b8abb488",
         "description": "v3d: really fix CLE MMU errors on 7.1HW Rpi5",
         "nominated": true,
