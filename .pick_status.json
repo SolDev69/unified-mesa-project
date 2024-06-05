@@ -464,7 +464,7 @@
         "description": "anv: fix pipeline flag fields",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "688bb3755298efe2b43bb5ff4acecc61f78b7510",
         "notes": null
