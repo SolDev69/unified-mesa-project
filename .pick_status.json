@@ -2424,7 +2424,7 @@
         "description": "nak: Only copy-prop neg into iadd2/3 if no carry is written",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "1b3382b8617234cf47185d6f398586a3be238b0b",
         "notes": null
