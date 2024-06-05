@@ -1,5 +1,375 @@
 [
     {
+        "sha": "6889a0a5dd970bbfcd407085c8f12356a9dfe334",
+        "description": "zink+nvk/ci: add flakes seen in latest nightly run",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e1e566352505b27b1283e2d8662767cc1455c311",
+        "description": "docs/meson: replace deprecated pkgconfig with pkg-config",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "964f2b8140e7f3fdf8daad1698a99867897e7cb1",
+        "description": "radv: fix VRS subpass attachments with mipmaps",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9f22b31ce8d6c5e5c68fcc6f48a18ad1132630c9",
+        "description": "anv: toggle meshShaderQueries based on whether we support mesh_shader or not",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "4c7f51d3b425c0ba5ab7452e12f230a9961cec46",
+        "notes": null
+    },
+    {
+        "sha": "39cc1a4ac4953c0cd7a24cbba17711a11fc3e1ce",
+        "description": "glsl: add support for glsl es 310/320 to standalone compiler",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "000d2d0b96289afe934a84d559225c660f7af350",
+        "description": "venus: defer qfb buffer init upon query being used",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c97f9193ef5d99ec8dae90d92671be8a687c2cbe",
+        "notes": null
+    },
+    {
+        "sha": "abb1518bfdf34629feb5c51354da93433c6b2344",
+        "description": "rusticl/icd: make sure returned function pointers are of the right type",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c95d791c5eb77b4ca720aee6402761f6ddb830c2",
+        "description": "Revert \"ci: disable Collabora's farm due to maintenance\"",
+        "nominated": false,
+        "nomination_type": 2,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "065ad0f2713de487f8d09c2377209e5d51d20c48",
+        "notes": null
+    },
+    {
+        "sha": "415c5ad9897bae5bfc1ad73cc08d7c5f734d96f0",
+        "description": "intel/compiler: No need to re-type the destination register",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1e0a0b4dd5b719a2cbdd0c06d0c367e222163d3f",
+        "description": "anv: Initialize variable to fix static analyzer warning",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "75b1fa9263c21f06c4231bc11fc66adae89f4af9",
+        "description": "nir/opt_algebraic: alternative 8bit pack_[us]norm_4x8 lowering",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f66883a87500c0b37efec7496f428531a1c7f8f4",
+        "description": "nir: lower pack_uvec4_to_uint to pack_32_4x8 if supported",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a3f77e09a10a9fb1b50a2a2815660e6979f15b76",
+        "description": "ac: set has_pack_32_4x8",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1604ab0ef724aa5757ccbf0a34091d0998b93aa6",
+        "description": "dozen: Advertise VK_EXT_shader_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4db99332f34eff509b8b69ca36d05e46342acc64",
+        "description": "lavapipe: Advertise VK_EXT_shader_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f8290aea48e8b4ea6bb9a4c7033ffaa6280b5380",
+        "description": "turnip: Advertise VK_EXT_shader_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bf9038b3b8b2b354bbb4e64a65e06ae9ed3a28d9",
+        "description": "radv: Advertise VK_EXT_shader_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "705dc133c22d5af4b0011785c104a9a1a8cd61cd",
+        "description": "hasvk: Advertise VK_EXT_shader_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a7db1e80d0f822b5e788c194bc3f4862b0cf87c9",
+        "description": "anv: Advertise VK_EXT_shader_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d805ffd1a4444b906eba4508b39f7addb3056a39",
+        "description": "nvk: Advertise VK_EXT_shader_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c452143024af03e1842da391d18f9bf0e92addb8",
+        "description": "spirv: Implement SPV_EXT_replicated_composites",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fff42bcc6669aec535ab6b9bc0d9d0a1a7432b2b",
+        "description": "spirv: Assert that non-vector composites have the right length",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8fa46b31a89fde179d87f0b714bc882ebfa43b0d",
+        "description": "spirv: Handle constant cooperative matrices in OpCompositeExtract",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "b98f87612bc14fe88184dc099d9d4f8e6b3b23cb",
+        "notes": null
+    },
+    {
+        "sha": "7e6cd395c785c41d807fd164f7374a1ad0eca742",
+        "description": "nir: Handle cmat types in lower_variable_initializers",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "b98f87612bc14fe88184dc099d9d4f8e6b3b23cb",
+        "notes": null
+    },
+    {
+        "sha": "c2ab52236049f47b3245b4f8c54ca1d7e015b577",
+        "description": "spirv: Update the JSON and headers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5e01f9848b71cf1ab24b52f047ebe86e0785b4ce",
+        "description": "vulkan: Update XML and headers to 1.3.286",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4c7f51d3b425c0ba5ab7452e12f230a9961cec46",
+        "description": "anv: implement mesh shader queries",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b69f7f625b2c433e9026b146c924b51fcca1baff",
+        "description": "anv: Update pipeline statistics mask for task/mesh shader invocations",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d07321e3d86dd3715b46ace257cb59757f204559",
+        "description": "intel/genxml: add task/mesh shader statistics registers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d9567b5ee48e747eff5b8af589eff3cbd0250308",
+        "description": "anv: fix Gfx9 fast clears on srgb formats",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "4cfb4f7d126370784cc74a4ac02e3a511e5f5d36",
+        "notes": null
+    },
+    {
+        "sha": "18a0ff137ffa38257b3e54b70c5394c7de4c7b3d",
+        "description": "nir: sink/move inverse_ballot like moves",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "818ff03865cda335148e1d7a789cab8e8d90a82b",
+        "description": "aco: optimize branching sequence with p_create_vector exec producer",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "690f880d180f455f66504d8a5e14bc575bcd441a",
+        "description": "nir/opt_uniform_atomics: handle inverse_ballot when detecting single lane ifs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4f5503fa2d0ce80c6e26b93169e07a36bfa044eb",
+        "description": "nvk: Clean up unused header from libdrm_nouveau",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "821f4c8d99a3068758db834a5c219082a9609b3c",
+        "notes": null
+    },
+    {
+        "sha": "46322630f15d255a289cd238d9814d48ea2707a8",
+        "description": "gallium/tc: Allow replacement if replacing valid_range",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "27dd3807a8d9b84491c403690a376440ac34a39d",
+        "description": "freedreno: Use buffer replacement limit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4c469b7cf0d9397c52f548a229dfa1146ef3f7e7",
+        "description": "gallium/tc: Add optional buffer replacement limit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "0311ac50adb6016efcb455ea52b11f422d6b797e",
         "description": "v3dv: implement vkGetDeviceImageSubresourceLayoutKHR",
         "nominated": false,
