@@ -3304,7 +3304,7 @@
         "description": "radeonsi: fix assert triggered on gfx6 after the tessellation update",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "bd71d62b8fcf0c74ba31415375a0ec68b0525c88",
         "notes": null
