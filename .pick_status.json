@@ -2434,7 +2434,7 @@
         "description": "nak: BMov is always variable-latency",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "7cd9680554b16e7de07873cd3be428953be9ad07",
         "notes": null
