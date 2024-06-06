@@ -164,7 +164,7 @@
         "description": "nvk: Only enable WSI modifiers if the extension is supported.",
         "nominated": false,
         "nomination_type": 1,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "e6f77defec0d61f9f5851bdbda5bf4cc97cd1cea",
         "notes": null
