@@ -104,7 +104,7 @@
         "description": "tu: fix ZPASS_DONE interference between occlusion queries and autotuner",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "4e6a1f885250cfb8aedab50b795a466ea0156e55",
         "notes": null
