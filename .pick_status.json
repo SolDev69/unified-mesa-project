@@ -2614,7 +2614,7 @@
         "description": "pan/bi: Fix dynamic indexing of push constants",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d53e8489365f9f51e2571df8b9ac84a11b74373d",
         "notes": null
