@@ -2834,6 +2834,7 @@ combine_not_xor(opt_ctx& ctx, aco_ptr<Instruction>& instr)
    ctx.uses[instr->operands[0].tempId()]--;
    std::swap(instr->definitions[0], op_instr->definitions[0]);
    op_instr->opcode = aco_opcode::v_xnor_b32;
+   ctx.info[op_instr->definitions[0].tempId()].label = 0;
 
    return true;
 }
@@ -3059,6 +3060,7 @@ use_absdiff:
    std::swap(instr->definitions[0], op_instr->definitions[0]);
    std::swap(instr->definitions[1], op_instr->definitions[1]);
    ctx.uses[instr->operands[0].tempId()]--;
+   ctx.info[op_instr->definitions[0].tempId()].label = 0;
 
    return true;
 }
