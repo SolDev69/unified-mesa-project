@@ -3254,7 +3254,7 @@
         "description": "rusticl: add -cl-std only when it's not defined",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "fc30fe2c110f2fcfcec38b3bf6edbf3802050413",
         "notes": null
