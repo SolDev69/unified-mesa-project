@@ -224,10 +224,10 @@
         "description": "v3dv/pipeline: ensure vk_graphics_pipeline_all_state alive when still needed",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "f2236065b70930243a741806223616234d14980c",
-        "notes": null
+        "notes": "`Cc: mesa-stable` mistakenly added and bypassing the correct `Fixes: f2236065b70` that's also present"
     },
     {
         "sha": "8cd53d95fe3c36e659b0bef6ddd12be6fd3c32ed",
