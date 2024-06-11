@@ -624,7 +624,7 @@
         "description": "mesa/st: fix zombie shader handling for non-current programs",
         "nominated": true,
         "nomination_type": 0,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": null,
         "notes": null
