@@ -4064,7 +4064,7 @@
         "description": "amd/common: set COMPUTE_STATIC_THREAD_MGMT_SE2-3 correctly on gfx10-11",
         "nominated": false,
         "nomination_type": 1,
-        "resolution": 4,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "3c8b48e310ddeea501a63994b3a0fd454180a06b",
         "notes": null
