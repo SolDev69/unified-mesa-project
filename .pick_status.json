@@ -1,5 +1,1215 @@
 [
     {
+        "sha": "a80a1c983844bca646d5f07d65c695a84f964bfe",
+        "description": "radv: don't assume that TC_ACTION_ENA invalidates L1 cache on gfx9",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e7615a612fd042a5c6049b40760ec20a452b21f1",
+        "description": "v3dv: support VK_FORMAT_A1B5G5R5_UNORM_PACK16_KHR",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9995f336e60c2197236c7d815e8ab20ede18b781",
+        "description": "nir: add merge loop terminators optimisation",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e25da8d8d7aeff3c37017bdf7ce467704ec0f685",
+        "description": "nir: support more loop unrolling for logical operators",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "987cf4b47d5316360e6ad43e61db439c20077f49",
+        "description": "nir: more aggressively remove in loop during partial unroll",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9702570994c3d1eaeb5714e53965ffe79a5b57a4",
+        "description": "nir: clarify and update loop conditional instruction",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5ac539d70d1cc2dfe05e58a8fd4ce69efd136863",
+        "description": "venus: sync protocol for conditionally ignored dyn arrays",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f04bb4946513b5b6672f1f56fed1bd1c51604cf4",
+        "description": "intel/brw: Delete SAD2 and SADA2 opcodes",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "15f2c9c55318ec28d26f5812fe37f658e38d515d",
+        "description": "aco: Limit rt stages to 128 vgprs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ec8512ce854e66141f6cdf43f6e5805e3c8ddc17",
+        "description": "aco/spill: Don't spill phis with all-undef operands",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "80eda406d818e558397b69620eaae28b10c18e86",
+        "description": "Revert \"ci: disable Collabora's farm due to runners maintenance\"",
+        "nominated": false,
+        "nomination_type": 2,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "6cde457ab60a3c4d40b647c9bf750e279e1f05b1",
+        "notes": null
+    },
+    {
+        "sha": "128cca21c0fd55952d28a3a613b146e879dd0fbb",
+        "description": "radv: pass a radv_shader to radv_get_compute_pipeline_metadata()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "31127d7b02ce83e80a16763d657c43bcaa06142e",
+        "description": "nir/lower_wpos_center: clean up",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3beae0f98e6add1ca051292dc314123314870f9b",
+        "description": "nir,panfrost,agx: Fix driver PIXEL_COORD_INTEGER setting and drop workaround.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6a9596be566b72aaa4b17b73557fead94a9ccf2f",
+        "description": "zink: limit minSampleShading to a maxium value of 1.0",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a1d8837bade429cdabc5bdfd78e78b54b91afb70",
+        "description": "anv,intel/compiler/xe2: fill MESH_CONTROL.VPandRTAIndexAutostripEnable",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1fa343c38b060979a4f69b3ea759d2b12b104c9b",
+        "description": "intel/genxml/xe2: update MESH_CONTROL",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ba20cc1c72d2bd8fc67ff857e5d441d47a3d7721",
+        "description": "mesa: fix duplicate initializer",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e6efe2e3fe3da1efd423c37c2a2073398d1ad954",
+        "description": "anv: support setting CFE_STATE::StackIDControl per application",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "62a25f064917c701764e7d7063fd924b1facee15",
+        "description": "anv/xe2: Add STATE_COMPUTE_MODE individual masks",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a472d415bc5c11ee41ca26175d2fe2a759e57cc2",
+        "description": "anv/xe2: Enable compute walker and BTD thread preemption",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6e03ddd95d195b65672d2f080242019b99c3da22",
+        "description": "intel/genxml/gfx20: Sync POSTSYNC_DATA struct with spec",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f017beb29ce6e3469da33caff2c9a493799faca6",
+        "description": "v3dv/pipeline: ensure vk_graphics_pipeline_all_state alive when still needed",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "f2236065b70930243a741806223616234d14980c",
+        "notes": null
+    },
+    {
+        "sha": "8cd53d95fe3c36e659b0bef6ddd12be6fd3c32ed",
+        "description": "radesonsi/vcn: update vcn4 tile processing logic",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "53f6cf29e906573490a147c42e628ba927dd52a5",
+        "description": "radeonsi/vcn: remove tile_config_flag",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0d21aa4a08991911f629272c1a68b148c625b0bb",
+        "description": "frontends/va: Fix crash in vaRenderPicture when decoder is NULL",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "d1b794685f93a5b88b09e902441e9a448970f58f",
+        "notes": null
+    },
+    {
+        "sha": "6cde457ab60a3c4d40b647c9bf750e279e1f05b1",
+        "description": "ci: disable Collabora's farm due to runners maintenance",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "86ee97801bcfc7c5644827f9ea0afed911a10a2e",
+        "description": "egl/device: drop unnecessary intermediate variable",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0c58e8b8939c674527fe056c882331a110522093",
+        "description": "egl: ensure future platforms get their teardown implemented",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "20cae414ed287e4159fa61667f80a6aee9f5ad8e",
+        "description": "egl: move android-specific code into an android branch",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "54dd83e736425143de8f5f8d4cb0688e9837b035",
+        "description": "egl: fix teardown when using xcb",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "99af53c6fd6d0354cdb9bd0f6c71d1f79f60058b",
+        "description": "driconf: drop param for setting default gpu vendor id in DRI_CONF_FORCE_VK_VENDOR()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "53b99d766e309f3cac9cf0aa5225983ceee43230",
+        "description": "mesa/main: merge identical checks",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e154c403fd3abff51ac920e1a408a5a2f9293772",
+        "description": "mesa/main: simplify conditions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9648bab4b62525ba939c2526be2c21505e48af9c",
+        "description": "mesa/main: remove needless check",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e5bd74b7753267dbe53d569bea661eb7c2b2aea7",
+        "description": "mesa/main: use _mesa_is_gles1()-helper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "53fb085ebd673c4644f452aeddd2427d529dea28",
+        "description": "mesa/main: tighten rg/half-float interaction",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "75645387b6dd7cfe010c91b73c2074a3de93616b",
+        "description": "mesa/main: use extension-helper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d2817013ba84b5376fb1ea1e6fc30a0f0c3f56d9",
+        "description": "mesa/main: factor out format/type enum checking",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "227c6627cb66cb72b75fd062c3b6df78854b0038",
+        "description": "mesa/main: do not allow RGBA_INTEGER et al in gles3",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "b5a370dc250d4e5de1a2a598acfcae522e0e2bdf",
+        "notes": null
+    },
+    {
+        "sha": "5e5b0b05320c77fd337ac6d36afbb6419720cc7a",
+        "description": "mesa/main: require EXT_texture_integer for GL 3.0",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b6c2d9a911bdff607b322861a1efdbc9422f0433",
+        "description": "mesa/main: remove duplicate error-checks",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c0285f29fffdfad91e869dadfbc6ae754825fe7f",
+        "description": "mesa/main: remove stale prototype",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "8e581747d2342950ff44488064eef53768b3ae82",
+        "notes": null
+    },
+    {
+        "sha": "4be89d7ad1a464f2c9bcc2bc7e457189622716c6",
+        "description": "panfrost: lower maxVertexInputStride to match vulkan runtime",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "214761bdfe9a0ed04f00835c8ce41e3b84ff82c0",
+        "notes": null
+    },
+    {
+        "sha": "8fe554c2bff2f3e59c92ce58368e1fe33e593af3",
+        "description": "mesa/main: remove unused function",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "dd8fb7139df7329a287a0d0484790095dbe28acd",
+        "notes": null
+    },
+    {
+        "sha": "d5e2f6631491f5ee6fe13d0d77a95d113056a29e",
+        "description": "v3dv: disable some TLB paths for cases of linear depth/stencil stores",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "993ba4135c8fd1375cda0ab7064b4ef7238ab795",
+        "description": "v3dv: remove blit shader restriction on depth/stencil not being linear",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "467230e7e4f9927e39bb6db6f7ef543d40d3957f",
+        "description": "freedreno/ci: disable mid-testing reboot on a750",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bbe9cf47bfce56d2d8ee69f2167c3c8216b0f0f7",
+        "description": "nvk+zink/ci: consider all the `double` tests in spec@glsl-4.00@execution@built-in-functions to be flaky",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c2dc60751bf132d69f4bb464f4dfb5fa2d1841d2",
+        "description": "nvk+zink/ci: add flakes seen in nightly pipeline",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9f4c0d2a71e7b375131025fd17d5733b13926028",
+        "description": "nvk+zink/ci: mark KHR-GL46.sparse_texture2_tests.SparseTexture2* as fixed",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b92ce1b0d6d11ab46a1e4967ebcd93d991fcea78",
+        "description": "panfrost/ci: remove duplicate path",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9c2e2b7a2ee730d66243d240f41612730a7f77dc",
+        "description": "turnip/ci: add a750 flakes seen in the latest nightly",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "04c939113fb2082d4b08614a9e9522b35fff2db9",
+        "description": "turnip+zink/ci: mark a dEQP-GLES(2|3).functional.rasterization.(fbo|primitives).line_(strip_|)wide as fixed",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "07fa635f11481a6dd603e4b36feaa2dce3a7bd86",
+        "notes": null
+    },
+    {
+        "sha": "95ca41bef99da081818d3d8d943f5d379604665a",
+        "description": "radv/ci: drop duplicate navi31-aco flakes line",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ef0f926aff5c3d01f37607d4497a20f8e0150aad",
+        "description": "radv/ci: drop duplicate navi21-aco flakes line",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f4f30ed826f306e3505a9d968a8da3afbbc141fe",
+        "description": "radeonsi/ci: mark a bunch of tests as fixed on vangogh",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ae06e018fa7c6c76164408835c3620c11f9b8f82",
+        "description": "r300: fix RC_OMOD_DIV_2 modifier",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d94d2a05b263a45d22c00e466adf6516b5a76ade",
+        "description": "r300: fix for ouput modifier and DDX/DDX",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "472c64c90e8d7d596a622ae43aeb280d775ba60b",
+        "description": "r300: fix writemask rewrite when converting to omod",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "32cc2c281257d8d23a5e7af962ea4cc625321cae",
+        "description": "r300: fix cycles counting for KIL",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fcc97bd6c3587b17adb84e8b039510758ea5f69b",
+        "description": "r300/ci: fails list update",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "05ca6e24784f142a6442e306f2b82516d03264cc",
+        "description": "amd/common: set COMPUTE_STATIC_THREAD_MGMT_SE2-3 correctly on gfx10-11",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "3c8b48e310ddeea501a63994b3a0fd454180a06b",
+        "notes": null
+    },
+    {
+        "sha": "5d013da038f2b9a67bf76f64e48787b240ad3c56",
+        "description": "rusticl/memory: copies might overlap for host ptrs",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e522c91d5c7793210bb2dafe02eefb6df847bcba",
+        "description": "rusticl/spirv: do not pass a NULL pointer to slice::from_raw_parts",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "e8de580998fb48bda58e35150614996b8573ba08",
+        "notes": null
+    },
+    {
+        "sha": "3da444b79ea271f3964a585f44a310624dcbd5d4",
+        "description": "intel/brw: Refactor code to commute immediates into legal positions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d45da713e7e27a06406f722c3b620e0d5e5de546",
+        "description": "intel/brw: Refactor try_constant_propagate()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "85aa6f80af1369a652c1dfc74f5672568ed31854",
+        "description": "intel/brw: Drop BRW_OPCODE_IF from try_constant_propagate",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7019bc4469ff43251558f85311c5c843f5d0a816",
+        "description": "intel/brw: Drop compiler parameter from try_constant_propagate()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "43ab997951f5881f60f5a592fa3a4bb114040591",
+        "description": "intel/brw: Update instructions_match() to compare more fields",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "061da9f748fb33e542d42cd0f0499a44c3a118b5",
+        "description": "intel/brw: Make brw_reg::bits publicly accessible from fs_reg",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b4a595204b4c7efc8015595f0e6eaac48119404b",
+        "description": "intel/brw: Add a idom_tree::dominates(a, b) helper.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e2d9ff8004586214b38214b6f80a87a40fa2758b",
+        "description": "intel/brw: Handle scratch address swizzling of constants",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "07745752d669ab8c2999aaac69a3039798881138",
+        "description": "intel/brw: Skip fs_nir_setup_outputs for compute shaders",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fa1564fb87e1a4b458b8088eeb1bef32d96b247e",
+        "description": "intel/brw: Recreate GS output registers after EmitVertex",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "cb30b266ca1bcbd016a7759cb8b95c63b3af3ca3",
+        "description": "ci/deqp: uprev gl & gles cts",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c02329ded1256a8c6a66194fad93f588106cb015",
+        "description": "ci: set a common B2C_JOB_SUCCESS_REGEX with the message that's printed for all jobs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "dc113c418d0c87d556d0719bb1180da242e9ac44",
+        "description": "ac/nir: import the dispatch logic for the universal compute clear/blit shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6b15e459082c35125f2066e0316d7fe7bda99c73",
+        "description": "ac/nir: import the universal compute clear/blit shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1becc6953cbd656f1e6172fc425c37fadb3cf41f",
+        "description": "ac/nir: import the MSAA resolving pixel shader from radeonsi",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f96bbb64d692299705eff26a9eb8b0bd48c919f7",
+        "description": "radeonsi: add decision code to select when to use compute blit for performance",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3424e16ecedf9f47ca8e020b1ad4a899a3956ce0",
+        "description": "radeonsi: add decision code to select when to use CB_RESOLVE for performance",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c5641387f3d2f747fd3321a4da3e59e4add7a706",
+        "description": "radeonsi: add a new blit microbenchmark",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0c545e2fca8a7aecd3d7ed43c52f31adf2ec554b",
+        "description": "radeonsi: add fail_if_slow parameter into si_msaa_resolve_blit_via_CB",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "77d81fb8b0b583e7d925b4f71bcdfb8472c68ca1",
+        "description": "radeonsi: add a custom MSAA resolving pixel shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "21e90d9c6e9cdfb6fa42f88eb5b8d474c8e01354",
+        "description": "radeonsi: clear color buffers via compute for special tiling cases",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2a0b9839ca81b5c070da7136fc1fb940999f32e8",
+        "description": "radeonsi: add use_aco into CS blit shader key",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fe7a4ed708ee3f1519ff3ad23b12cb68a95f8107",
+        "description": "radeonsi: use shader_info::use_aco_amd to determine whether to use ACO",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c83225cd0a1460538ae43b0bf5d311d0dd44f158",
+        "description": "radeonsi: print the compute shader blit key for AMD_DEBUG",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d62ad0da5f449f7307518ce4af0cad7ec98b87e7",
+        "description": "radeonsi: use MIMG A16 (16-bit image coordinates) in compute blits",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d6c96024a803bac5f8fb24fbdfcabcf7e6de32b6",
+        "description": "radeonsi: extend NIR compute helpers to allow returning 16-bit results",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5b3e1a0532996f47434e68ac7c469f220473b3eb",
+        "description": "radeonsi: change the compute blit to clear/blit multiple pixels per lane",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d4c066abaf3226d4ceec08f8b64ccb16075da77b",
+        "description": "radeonsi: adds flags parameter into si_compute_blit to replace fail_if_slow",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "30af861bff71c7ecb479528c5582c54e9d6181c3",
+        "description": "radeonsi: restructure (rewrite) the compute blit shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d2ce5fc07ab618cf0737ed3f145ce844925bee09",
+        "description": "radeonsi: split xy_clamp_to_edge to separate X and Y flags for the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7ee936bf65593c73a5eaa1be822b05f31d96b68e",
+        "description": "radeonsi: convert the compute blit shader hash table to u64 keys",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "40bcb588ddf91195ec757f9a597ee0f092c8ce72",
+        "description": "radeonsi: remove the old si_compute_copy_image",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b0c0cca3a7daa4b827d4e074bc503ce44bd8a81b",
+        "description": "radeonsi: switch the old compute image copy to the new one using the blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f3a59fe21634b57901eb0a2417c0e65e70805032",
+        "description": "radeonsi: add a new version of si_compute_copy_image using the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b7389615c6fd7ba30352019e0f998fa0e27af7c1",
+        "description": "radeonsi: rename si_compute_copy_image -> si_compute_copy_image_old",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8b030ac5888d67eaa1c107a92e8a358dfaba6c9d",
+        "description": "radeonsi: rename si_compute_blit \"testing\" parameter to \"fail_if_slow\"",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a4602395d218c5920ef3b9e61491ad1867f0b429",
+        "description": "radeonsi: switch compute image clears to the compute blit shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9915289bdf276068c36f34b381e178b4622f8096",
+        "description": "radeonsi: extend the compute blit to do image clears as well",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e41887c6a471be445e10026240b36af47c48e26a",
+        "description": "radeonsi: cosmetic and robustness changes for the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0c5d727a5e10581736be6956f70936d3d64a4656",
+        "description": "radeonsi: document better how X/Y flipping in the compute blit works",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bb86366fee7a2584eea1e40490aa2a5f018c7b07",
+        "description": "radeonsi/gfx11: enable MSAA image stores in the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5897dde3f76ff95d18d671df2936759395fd42eb",
+        "description": "radeonsi: don't fail due to DCC when using the compute blit on compute queues",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "fcd9f0069f28966d57c8eac319cadd5754490465",
+        "description": "radeonsi: don't use si_can_use_compute_blit in the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1b924bad5e98329efc27cfb47c26931fbc73720e",
+        "description": "radeonsi: reject unsupported parameters as the first thing in the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "993c30af060bf0718c357189753f98df54bdb681",
+        "description": "radeonsi: fix sample0_only for the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0ca93e8090b5f88437b85a9278608018294bd0bb",
+        "description": "radeonsi: optimize unaligned compute blits",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2423c5ad2f85c2afabb70afb01fb3da3bb0282d6",
+        "description": "radeonsi: use MIMG D16 (16-bit data) for image instructions in compute blits",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d3638a9f5809ef267294a46574b8f5f3cba4a322",
+        "description": "radeonsi: remove fp16_rtz from the compute blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "78ab033ae8c5a4be37581d2c34626e6d068baa50",
+        "description": "radeonsi: ignore PIPE_SWIZZLE_1 for 40% VGPR usage reduction for compute blits",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "144fe156ef2cfb414a4731d4ae03afc9ffd6696d",
+        "description": "radeonsi: use better workgroup sizes for compute blits to improve perf",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "269ab6cc624c2541dfecc6f948e272226ee7c222",
+        "description": "radeonsi: don't declare 3D coordinates in the compute blit if they aren't needed",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "07fa635f11481a6dd603e4b36feaa2dce3a7bd86",
+        "description": "gallium/u_blitter: add option to override fragment shader for util_blitter_blit",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9ab9644c1f4d80d0897910d23ba4535ee3f552a5",
+        "description": "radeonsi/gfx12: fix stencil corruption",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1b9ce2625fbc6c88ff221420624954247657d5bb",
+        "description": "ac/nir/lower_ngg: don't use gfx12 xfb defs outside their basic block on gfx11",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "1ea96a47cdf13cfc833f1f3ddf3106d0ea1ffc47",
+        "notes": null
+    },
+    {
+        "sha": "ea99c3fcb9c9a4dedc69a545947e210406f5e308",
+        "description": "amd: update addrlib",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2ea3cb054baddc1895986f5c69859282b5046b6b",
+        "description": "ac/surface: pass the correct addrlib handle to Addr3GetPossibleSwizzleModes",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "d22564d29cc6d1d1d7d9370eeeb71f21e2d1fbbc",
+        "notes": null
+    },
+    {
         "sha": "41dd1c52b1d091b36f8931c4a57d3b6dc361bc84",
         "description": "ci/lava: Fix cmdline for UART/fastboot devices",
         "nominated": false,
