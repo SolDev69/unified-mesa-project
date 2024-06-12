@@ -2944,7 +2944,7 @@
         "description": "vulkan/runtime: pColorAttachmentInputIndices is allowed to be NULL",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "03490ec01953addabb53a79684ee48b5dd65c328",
         "notes": null
