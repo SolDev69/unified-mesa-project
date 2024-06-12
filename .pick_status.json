@@ -2604,7 +2604,7 @@
         "description": "panvk: Fix Cube/2DArray/3D img -> buf copies",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "f73ae1a6b5658af05fc9211c26446ab89eb125e0",
         "notes": null
