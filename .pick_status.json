@@ -1614,7 +1614,7 @@
         "description": "radeonsi: add missing nir_intrinsic_bindless_image_descriptor_amd",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d4fdeaa820a15a87cad79aa7ef7fed3bc1f1912e",
         "notes": null
