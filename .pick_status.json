@@ -1624,7 +1624,7 @@
         "description": "glsl: respect GL_EXT_shader_image_load_formatted when image is embedded in a struct",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "082d180a22ff14ce455cefba2c525c9857f0d00e",
         "notes": null
