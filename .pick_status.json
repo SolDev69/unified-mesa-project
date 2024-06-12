@@ -3244,7 +3244,7 @@
         "description": "draw/texture: handle mip_offset[0] being != 0 for layered textures.",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "839045bcc840b451679b0dfcaf7653d019a66fb2",
         "notes": null
