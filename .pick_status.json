@@ -2934,7 +2934,7 @@
         "description": "radv/video: Add missing VCN 3.0.2 to decoder init switch",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "d599391ac9b5510c3c33b655a4d0917a8c2459da",
         "notes": null
