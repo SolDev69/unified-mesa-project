@@ -1254,7 +1254,7 @@
         "description": "Revert \"radeonsi: fix initialization of occlusion query buffers for disabled RBs\"",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "dab4295cd520caf069bfbd299fb51e29ee6fd7ce",
         "notes": null
