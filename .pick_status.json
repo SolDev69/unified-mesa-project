@@ -884,7 +884,7 @@
         "description": "nine: avoid using post-compacted indices with state expecting pre-compacted ones",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "973e6f3be095eb203671826e440392ba376afb36",
         "notes": null
