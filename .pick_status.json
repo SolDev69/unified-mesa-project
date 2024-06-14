@@ -1384,7 +1384,7 @@
         "description": "glx: fix build -D glx-direct=false",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "014bbae4bf3f0bd87ab044232dfc5757982ab6e2",
         "notes": null
