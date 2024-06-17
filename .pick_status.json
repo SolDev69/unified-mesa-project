@@ -234,7 +234,7 @@
         "description": "ir3: fix handling of early clobbers in calc_min_limit_pressure",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "2ff5826f09d39104ddc33e89ffd6c4d8d47584d3",
         "notes": null
