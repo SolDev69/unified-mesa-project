@@ -2606,13 +2606,7 @@ ir3_ra(struct ir3_shader_variant *v)
       calc_min_limit_pressure(v, live, &limit_pressure);
 
    if (max_pressure.shared > limit_pressure.shared || has_shared_vectors) {
-      ir3_ra_shared(v, live);
-
-      /* Recalculate liveness and register pressure now that additional values
-       * have been added.
-       */
-      ralloc_free(live);
-      live = ir3_calc_liveness(ctx, v->ir);
+      ir3_ra_shared(v, &live);
       ir3_calc_pressure(v, live, &max_pressure);
 
       ir3_debug_print(v->ir, "AFTER: shared register allocation");
