@@ -244,7 +244,7 @@
         "description": "ir3: fix crash in try_evict_regs with src reg",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "34803d15abc0675bf9e37607687e16b9ac44436d",
         "notes": null
