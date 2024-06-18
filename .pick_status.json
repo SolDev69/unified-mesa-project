@@ -64,7 +64,7 @@
         "description": "panvk: Check for maxBufferSize in panvk_CreateBuffer",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "822478ec20c8bca8a3a7e23cffc7ceee7773ff03",
         "notes": null
