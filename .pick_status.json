@@ -1,5 +1,615 @@
 [
     {
+        "sha": "10d21d410068f2ca32fe898f6b4b690993d90daa",
+        "description": "mesa: Enable EXT_shadow_samplers for GLES2",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "33a849e004de381853ea9d4fa4f047741efaf508",
+        "description": "radv: emit indirect sets for indirect compute pipelines with DGC",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b1ba02e707b71b1601ca0a04b1152c8587dd565a",
+        "description": "radv: force using indirect descriptor sets for indirect compute pipelines",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ef21df917fb9b85b86e4e627893a84426a35a967",
+        "description": "glsl: remove do_function_inlining()",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f1ef6517e83a9440ce3dcdb34f608aa4641f0b3b",
+        "description": "glsl: remove Par-linking from the standalone linker",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0bf10ad4ad5e97e76739beb4c768ce0a8ca98397",
+        "description": "radv: Use number of TES inputs for TCS-TES linking.",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "be49b02f0517d38a9445039789eebe1e0f7dcc73",
+        "notes": null
+    },
+    {
+        "sha": "03553647434a60369e5cc3ec763b2132c7ab7c34",
+        "description": "ac/nir/tess: Fix per-patch output VRAM mapping.",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "2cf7f282df720b9bf80e8bfa6ffae0d7b51a09f5",
+        "notes": null
+    },
+    {
+        "sha": "0f0ebd8512e02f3b55365bc38541850f32197e4b",
+        "description": "ac/nir/tess: Fix per-patch output LDS mapping.",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "c61eb5480674e922a512c036455b00f30c12037c",
+        "notes": null
+    },
+    {
+        "sha": "348b8859dc178e5b7599073282c7789d72bfa6fe",
+        "description": "ac/nir/tess: Only write tess factors that the TES reads.",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "2cf7f282df720b9bf80e8bfa6ffae0d7b51a09f5",
+        "notes": null
+    },
+    {
+        "sha": "9845e99960a7d8e4acb7f60eb66d5d72c1430a58",
+        "description": "tu: avoid memory polling in occlusion query endings using ZPASS_DONE",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5653c52151817a4f302b43306fd35e588855ffec",
+        "description": "tu: fix ZPASS_DONE interference between occlusion queries and autotuner",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "4e6a1f885250cfb8aedab50b795a466ea0156e55",
+        "notes": null
+    },
+    {
+        "sha": "6bc7cd61085e9f96be0b7adc5dbf4611617387be",
+        "description": "ir3: only add live-in phis for top-level intervals while spilling",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "18cd803cefebcd99a8c753d9c57e20ac6c51ccdb",
+        "description": "ir3: refactor ir3_spill.c to use the ir3_cursor/ir3_builder API",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "1972db36c6eab65a2f48bc2b1397fab8d74e0088",
+        "description": "ir3: add ir3_cursor/ir3_builder helpers",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "dc04fd8e6246c213ee61e0cd88001e959cfb3e21",
+        "description": "ir3: restore interval_offset after liveness recalculation in shared RA",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "fa22b0901af548d5e1433ad4cdbda314182137c5",
+        "notes": null
+    },
+    {
+        "sha": "3f3c19064965886ac735cbb3ce0815fa77739ff8",
+        "description": "ir3: move liveness recalculation inside ir3_ra_shared",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "fa22b0901af548d5e1433ad4cdbda314182137c5",
+        "notes": null
+    },
+    {
+        "sha": "7a5b198a44a5838741209bb5457b59b2f352dc64",
+        "description": "ir3: index instructions before fixing up merge sets after spilling",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "018d0ab805a17f7fde84e82c0510c9de2493e8d8",
+        "description": "ir3: make indexing instructions optional in ir3_merge_regs",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "17b155fedec357140fed4184de48e689d3310e31",
+        "description": "ir3: expose instruction indexing helper for merge sets",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "1bc3b819e60838e0e5f12afe4f04698da1a6fe48",
+        "description": "ir3: don't remove collects early while spilling",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "eaec57ab6b5a2698948a92ca5c7b34c5bbf279c6",
+        "description": "ir3: don't remove intervals for non-killed tex prefetch sources",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "70e10babeae7960abc6334cc98e76e9a11f3f617",
+        "description": "ir3: correctly set wrmask for reload.macro",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "37c929ce5da42d498609e0b451f60a3aad62138a",
+        "description": "ir3: set offset on splits created while spilling",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "613eaac7b53bfbfcd6ef536412be6c9c63cdea4f",
+        "notes": null
+    },
+    {
+        "sha": "af6f82b954a1581e448a1af47de32fd057b81a00",
+        "description": "ir3: fix handling of early clobbers in calc_min_limit_pressure",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "2ff5826f09d39104ddc33e89ffd6c4d8d47584d3",
+        "notes": null
+    },
+    {
+        "sha": "023c7351f209afd0d230735b512f3d5809191fbf",
+        "description": "ir3: fix crash in try_evict_regs with src reg",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "34803d15abc0675bf9e37607687e16b9ac44436d",
+        "notes": null
+    },
+    {
+        "sha": "c24aad586797ea4ff87bb299573dfc619c402662",
+        "description": "ir3: set current instruction before all validation asserts",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f57bee676f84f9866e4e1d7ac5b69da3a4ff988f",
+        "description": "ir3: debug print limit pressure and post-spill max pressure",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "eadabc2eabf7601b271a9f7ac130870d90de90a8",
+        "description": "ir3: print dst_offset of spill.macro",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ac2a582fac1a8e1466f3f56d02e878a588ae6d48",
+        "description": "ir3: print intervals when dumping merge sets",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0a0ac6a72f8b10f88443e7fdf894f4530ebc1183",
+        "description": "ir3: print sharedness/halfness of merge set regs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "39f5bbf8711d54b1b5e4ce82ddaadd4565680135",
+        "description": "ci/vkd3d: drop redundant \"vkd3d-proton execution: SUCCESS\"",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9a9204764a7a6204275d2a7d5f7659fd20f23df6",
+        "description": "ci/vkd3d: drop `quiet` wrapper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b6633e5880bff3c97e07570113037905f86ff31a",
+        "description": "ci/vkd3d: drop the \"clear results folder without deleting the folder\" logic",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "eddbadb0b158ccab3f0321c0bacba31b249b1055",
+        "description": "ci/vkd3d: put `then` on the same line as the `if` to match the rest of the code style",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "57485f9a3d12b6039ec41949258addb0c4321ca9",
+        "description": "ci/vkd3d: print URL to the vkd3d-proton.log file to make it easier to access",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "662b0ad3cda62216ca189f78a9a31c1b085eedbe",
+        "description": "ci/vkd3d: rename vkd3d test log file to end in .txt",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "6f6a13f5fced31a445dc066e10424f98ed6d32dd",
+        "description": "ci/vkd3d: print a real error message when failing to get the list of failing tests",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e266b6287ecc32eb80b2cf79ccd6568a578387e5",
+        "description": "ci/vkd3d: limit the vulkaninfo capture to the driverInfo line",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "285ba60166517ab7c3d28e48cb93caaddb45dd36",
+        "description": "ci/vkd3d: group version check lines together",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bec7b417ca9b43992bdaa09917fbf388c249145d",
+        "description": "ci/vkd3d: don't ignore errors",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1c23b95aa45e3bf209b05e59e0b917e56c2e2efd",
+        "description": "ci/vkd3d: stop ignoring errors in a block where errors can't happen",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b50c8217efa24e48f38f22d8ff232e63cedc147c",
+        "description": "ci/vkd3d: fix error message printing",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7a1f28c1ebaf4c6e49688c49727ce2c5e2d92688",
+        "description": "ci/vkd3d: drop override of job artifacts",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4db58a04f9ab69f2309d28c9f5efdbac8bfed37f",
+        "description": "ci/vkd3d: print a message when the expected failures file is missing",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b1f82ce6465401378904563fb80400e5123f8147",
+        "description": "ci/vkd3d: deduplicate the diff between the expectation and the results",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e602a7a3928e9066364943a46e9d19d57ab328ce",
+        "description": "freedreno/replay: Fix replaying without SET_IOVA",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7c07c44d57fd2b299c21177c6646a723c700a2d9",
+        "description": "freedreno/rddecompiler: Make possible to use original shader",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9e750f00c3bfb86a7f41eb21babea5bb5c32ce4c",
+        "description": "intel/brw: Make opt_copy_propagation_defs clean up its own trash",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2af84c2d49285ef4e0c353712ed91a9bd8c6a044",
+        "description": "intel/brw: Use the defs-based copy propagation along with the old one",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "580e1c592d90392a30185d8059499498748909fd",
+        "description": "intel/brw: Introduce a new SSA-based copy propagation pass",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9690bd369d5a6739142eeb23f92d34429b75855d",
+        "description": "intel/brw: Delete old local common subexpression elimination pass",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8f09c58ddcead8e05a06823681fb3ec83c7dbf81",
+        "description": "intel/brw: Switch to the new defs-based global CSE pass",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "234c45c929e0341f1d0c2a51a587c4ce7e4bba52",
+        "description": "intel/brw: Write a new global CSE pass that works on defs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2b30b3bbd4a1b5638dfd5aeb56b2bdc7166134e1",
+        "description": "intel/brw: Print defs in dump_instructions",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "08da7edc0e7ca0404d5c412ad70d17c5553b5991",
+        "description": "intel/brw: Track the number of uses of each def in def_analysis",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0d144821f0f7647ab377e629599b17dd24a2fe13",
+        "description": "intel/brw: Add a new def analysis pass",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ad9e414aa9f52e138e7a83302aeb68dc23098bc2",
+        "description": "intel/brw: Skip LOAD_PAYLOADs after every texture instruction if possible",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "84219892adb423c248e7770925e8095ca84ff9f1",
+        "description": "intel/brw: Make gl_SubgroupInvocation lane index loading SSA",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "344d4ee9f0ecc75cacd0f1079c57e8e4d10425e9",
+        "description": "intel/brw: Make VEC() perform a single write to its destination.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "7df492923a90030673012993f1b7aa678cf1cd2d",
+        "description": "glsl: drop dump-builder support from standalone compiler",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "02f33b7d924ac738df862d9f8bafe9fc2bc92b6b",
+        "description": "broadcom/compiler: initialize payload_conflict for all initial nodes",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "cb83f25b39173db92d8ccaeac3a9b640f46f7651",
+        "notes": null
+    },
+    {
         "sha": "7dcba7e873c6b753930e2fdc8c714bb4da1a22dd",
         "description": "v3dv/ci: fix spurious line in expected",
         "nominated": false,
