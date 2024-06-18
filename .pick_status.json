@@ -994,10 +994,10 @@
         "description": "asahi/lib: generate git_sha1.h for agx_device.c",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 2,
         "main_sha": null,
         "because_sha": "0be124b77e3f4fa9fba7aa5b7212f7058412217b",
-        "notes": null
+        "notes": "Not useful in a release and not a clean backport (although trivial to fix), so let's just not bother"
     },
     {
         "sha": "10bd300b68e9ade942e36174ff0ed7648997da69",
