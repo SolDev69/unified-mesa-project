@@ -94,7 +94,7 @@
         "description": "panvk: Add missing null check in DestroyCommandPool",
         "nominated": true,
         "nomination_type": 1,
-        "resolution": 0,
+        "resolution": 1,
         "main_sha": null,
         "because_sha": "afbac1af7737310fc5741ee8d2d94e147333ce1f",
         "notes": null
