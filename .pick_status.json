@@ -1,5 +1,625 @@
 [
     {
+        "sha": "887f0e0af664b11c081b4140931e7213240c7b41",
+        "description": "panvk: Enable device_init, null_handle and object_management in CI for Mali-G52",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bbc7c76590ed83e911a1be06aaa5525bac9bbb88",
+        "description": "panvk: Implement CmdDispatchBase",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "91fd031ba77c51847a6ee7d5b4810550b28b717d",
+        "description": "panvk: Add more allocation checks in create_device",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f6a7a141c756becee8614bd311b451f22b7b7dcd",
+        "description": "panvk: Fix device mempool leaks",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "2eaa437574615d1c6a3a51011d13c1e5b6f883cc",
+        "notes": null
+    },
+    {
+        "sha": "9ff209342b12dd5d348f4cb5565acb13774d1726",
+        "description": "panvk: Ensure to unref transient bo in reset for mempools",
+        "nominated": false,
+        "nomination_type": 1,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "906fb2371aa038c388bfa6f22ee2227c085aa526",
+        "notes": null
+    },
+    {
+        "sha": "16b0743375fce73b9aaa972bf8f0db84d0156034",
+        "description": "panvk: Make panvk_kmod_zalloc use correct allocation scope on non-transient",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c0f8465fa88a87b5fa89b2bbd2c87b3c313f11cf",
+        "description": "panvk: Check for maxBufferSize in panvk_CreateBuffer",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "822478ec20c8bca8a3a7e23cffc7ceee7773ff03",
+        "notes": null
+    },
+    {
+        "sha": "7dd771b2d760eb6319623d9c8231d81e27231942",
+        "description": "panvk: Make mempool detect NULL BOs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8b1eed39ad1aacdbd55bbafa74e41ecb47bcb216",
+        "description": "panvk: Add missing clean up in blend_shader_cache_init",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "716e0e15681d8a704c44cf9bb9ff51ca32d6e45f",
+        "description": "panvk: Add missing null check in DestroyCommandPool",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "afbac1af7737310fc5741ee8d2d94e147333ce1f",
+        "notes": null
+    },
+    {
+        "sha": "e6d487792e7f43e4fe0092675b303b9fb5f3b7ee",
+        "description": "mailmap: update rohan's primary email address",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9cb82944e9b2e419e463bc8fa7841afefb6ce425",
+        "description": "mailmap: use consistent spelling for constantine",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "926c7d67c46867f04d4177f1dbd5bd5aec3b0a42",
+        "description": "mailmap: move konstantin to the right sorted position",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bc6fe203a772f034e2dd2e6859bb21a2095bc9b9",
+        "description": "mailmap: map collabora.co.uk to collabora.com",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f3e0cc5c300d1a0fe7590c5f56000f8551793879",
+        "description": "mailmap: invert my mailmapping",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "df713647bc3da4ba2de536702633bbc5e45a40a6",
+        "description": "mailmap: merge Robert and Bob Beckett into one",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3c259f5cac1afff748c8081341c1198f57fa8198",
+        "description": "mailmap: invert tomeu's mapping",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b888946f7a0a037f72159b26f07969460d92ee01",
+        "description": "radv/video: fix layered decode h264/5 tests.",
+        "nominated": true,
+        "nomination_type": 0,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "a0f3d99f443d400752db391172c851e53d232024",
+        "description": "gallivm: add lp_context_ref for combine usage of LLVMContextSetOpaquePointers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "65092ab1a5522e9b05f2e58fe7326e7cb6f02a02",
+        "description": "nouveau/nvc0: add support for using common pushbuf dumper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f12641f89fea18e0a0ae64a36ab8257f231daf18",
+        "description": "nouveau/push: add support for m2mf/i2mf to dumper",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "4b6970cf36bda928d89a43ebf943ad60db37e12e",
+        "description": "ci: Update trace SHAs",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "22f1b04a99a587bcc3a20d19f2db0eb657cb4789",
+        "description": "nir/format_convert: Assert that UNORM formats are <= 16 bits",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5f5f4474f623d638d737cba59a538df6d0d0410e",
+        "description": "nir: Add a format unpack helper and tests",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "faf4c2edfef5b09873b81a24246abd500b71c2ef",
+        "description": "nir: Add a format pack helper and tests",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "bd961343d354abb1570680c4a7e1689f4c9b7cef",
+        "description": "util: Make format_srgb.h C++ safe",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1ffb0c5af46d0c5cc7dc6c2c8445c0df48fb8461",
+        "description": "nir: Support 0 and 32 bits in some format conversion helpers",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "34161d3fda1a3fb788a9215b7848b5998d40571e",
+        "description": "nir: Move most of nir_format_convert to a C file",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9d3b144018fb3e1faca3f664cdf311b0003ec121",
+        "description": "nir: Add a nir_intrinsic_use for unit tests",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "5b9ac9a68f001ab5f1244ac027e7841114aed67f",
+        "description": "nir/format_convert: Use fmin/fmax to clamp R9G9B9E5 data",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "86aad90e2a89293385000f28f9f03a2675591870",
+        "description": "nir/format_convert: Smash NaN to 0 in pack_r9g9b9e5()",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "9981709d8f3cadf04950fae3ac6f34afdfd2d3fb",
+        "notes": null
+    },
+    {
+        "sha": "cd8a3ea04b0e269ee55966173e94fd725dbbf38f",
+        "description": "util/format: Handle denorms when converting to R11G11B10F",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ef5e44127406b50ccd12dd10e62b5685bde13fa1",
+        "description": "util/format: Round to nearest even when converting to R11G11B20F",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3797fc18d8fa24404eeae13ed760604ad0d96d10",
+        "description": "util/format_pack: Clamp SNORM values to [-1, 1] when unpacking",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "354f0958afefe579864d9dff047271a6c1e055c1",
+        "description": "util/format_pack: Also use iround for SCALED formats",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b187be5b1c4184b2286210c6a29011d0accfe736",
+        "description": "util/format_pack: Fix packing of signed 1010102 SSCALED formats",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "2a9f4618c52400115e05e8c30e3c32e5ab183078",
+        "description": "intel/brw: Make component_size() consistent between VGRF and FIXED_GRF",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "8fb70f0746639cf716cab56509f4c84dffe0c8bd",
+        "description": "intel/brw: Add unit tests for scoreboard handling FIXED_GRF with stride",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "701379782730104937b1b10994de08710ab78590",
+        "description": "nvidia: fixup classes import and import new classes.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c4e952dbd97ea9a3c3511f05253c56bb8990626c",
+        "description": "anv: reuse device local variable",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0147908a899958fe7ef1f74218ee20bf1a24175c",
+        "description": "anv: predicate emission of STATE_BASE_ADDRESS",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9a3e8508a70d4c62a37620fc8c712df8207717f0",
+        "description": "anv: factor out STATE_BASE_ADDRESS filling to helper function",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f8c0a99d52be913f16a1760b3f4f7cfda9919d24",
+        "description": "anv: emit conditional after gfx state flushing",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "ed43be941e24c229d538fb3ac1f811a846b0be15",
+        "description": "anv: add custom mi write fences",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9fe3af1e2a22e25299fdb2a00a7490dfda8ab370",
+        "description": "aco: insert s_nop before discard early exit sendmsg(dealloc_vgpr)",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "37fbfa655a4dd73a1c95ade29362d8e93f5d1fcc",
+        "notes": null
+    },
+    {
+        "sha": "814e7c7af570516330fe201e9b55fc31d62f76ba",
+        "description": "Revert \"ci: lima farm maintenance\"",
+        "nominated": false,
+        "nomination_type": 2,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": "c5e13af73cd2d3b58934cef82ae22cb00736ff08",
+        "notes": null
+    },
+    {
+        "sha": "08ecb39789684fee566842986fcd5d1cd1a74e3a",
+        "description": "lima/ci: update piglit ci expectations",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "9cadf45ddf190b684d2dddfe398e7a0d76de045d",
+        "description": "svga: Retry DRM_VMW_SYNCCPU ioctl on failure.",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "f982d2bb7976d3c581c5d42133695147c6c0ec10",
+        "description": "intel/brw: Fix typo in DPAS emission code",
+        "nominated": true,
+        "nomination_type": 1,
+        "resolution": 0,
+        "main_sha": null,
+        "because_sha": "e666872c751bedd1e4c2e1231644c14ed18639e7",
+        "notes": null
+    },
+    {
+        "sha": "c3c398d56da951e4fb3169fd0d41a56069a1b86c",
+        "description": "aco: make local functions static in files without anonymous namespace",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "046414e061f3514e2623f7e59133ce5a31c77d9a",
+        "description": "aco: add more anonymous namespaces",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "c9c483bf0295ee7cd542d01c0eef939f7aeaec7b",
+        "description": "ir3: Enable early preamble",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d8d192f3f4e35fb1709740109db3883ebeb864af",
+        "description": "ir3: Correctly assemble mova1 with (r) on const",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "e9c764c825b536f8e54065411f9d520a69dad1c9",
+        "description": "freedreno/ir3: mova has special meaning for (r) flag",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "0a4afef6ea81df891040ca74ce437fe0e453830f",
+        "description": "freedreno/a6xx: Implement early preamble",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "53ba1613ec6ff29c43674689cb3649a6e77c4521",
+        "description": "tu: Implement early preamble",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "3ce04c11116d836a308dc1bad5dab63ee4177a43",
+        "description": "ir3: Add ir3_info::early_preamble",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "d35c1e50510e568acb4bac6c133744d5182b705c",
+        "description": "freedreno/a6xx: Workaround early preamble HW bug",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "472ce31e569157fb6d21074c4288ee7abc9790b9",
+        "description": "tu: Workaround early preamble HW bug",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "1f1f42e9d4bc7360810dc4db6a86f6285a4d8c6a",
+        "description": "freedreno,ir3: Add has_early_preamble",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "aa1603bcb0b3b9d3c112190b4e49169784d8306d",
+        "description": "ir3/legalize: Insert dummy bary.f after preamble",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
+        "sha": "b38fef99acdc5525b767b1904a67a7fd264d0243",
+        "description": "ir3: Put VS->TCS barrier after preamble",
+        "nominated": false,
+        "nomination_type": 3,
+        "resolution": 4,
+        "main_sha": null,
+        "because_sha": null,
+        "notes": null
+    },
+    {
         "sha": "10d21d410068f2ca32fe898f6b4b690993d90daa",
         "description": "mesa: Enable EXT_shadow_samplers for GLES2",
         "nominated": false,
