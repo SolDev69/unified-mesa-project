@@ -383,7 +383,7 @@ configure_image(const struct wsi_swapchain *chain,
    }
 }
 
-#if defined(HAVE_PTHREAD) && !defined(_WIN32)
+#if defined(HAVE_PTHREAD) && !defined(__ANDROID__) && !defined(_WIN32)
 bool
 wsi_init_pthread_cond_monotonic(pthread_cond_t *cond)
 {
