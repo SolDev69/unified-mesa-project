@@ -28,7 +28,7 @@
 #ifndef RWLOCK_H
 #define RWLOCK_H
 
-#if defined(HAVE_PTHREAD) && !defined(__ANDROID__)
+#if defined(HAVE_PTHREAD)
 #include <pthread.h>
 #endif
 

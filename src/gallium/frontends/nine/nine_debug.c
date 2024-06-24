@@ -72,7 +72,7 @@ _nine_debug_printf( unsigned long flag,
         dbg_flags |= debug_get_flags_option("NINE_DEBUG", nine_debug_flags, 0);
     }
 
-#if defined(HAVE_PTHREAD) && !defined(__ANDROID__)
+#if defined(HAVE_PTHREAD)
     if (dbg_flags & DBG_TID)
         tid = (unsigned long)pthread_self();
 #endif

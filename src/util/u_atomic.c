@@ -21,7 +21,7 @@
  * IN THE SOFTWARE.
  */
 
-#if defined(MISSING_64BIT_ATOMICS) && defined(HAVE_PTHREAD) && !defined(__ANDROID__)
+#if defined(MISSING_64BIT_ATOMICS) && defined(HAVE_PTHREAD)
 
 #include <stdint.h>
 #include <pthread.h>

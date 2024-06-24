@@ -40,7 +40,7 @@
 #if defined(_WIN32) && !defined(HAVE_PTHREAD)
 #  include <io.h> /* close */
 #  include <process.h> /* _exit */
-#elif defined(HAVE_PTHREAD) && !defined(__ANDROID__)
+#elif defined(HAVE_PTHREAD)
 #  include <pthread.h>
 #  include <unistd.h> /* close, _exit */
 #else
@@ -113,7 +113,7 @@ typedef struct
 } once_flag;
 #  define ONCE_FLAG_INIT {0}
 #  define TSS_DTOR_ITERATIONS 1
-#elif defined(HAVE_PTHREAD) && !defined(__ANDROID__)
+#elif defined(HAVE_PTHREAD)
 typedef pthread_cond_t  cnd_t;
 typedef pthread_t       thrd_t;
 typedef pthread_key_t   tss_t;
