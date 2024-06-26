@@ -2354,7 +2354,8 @@ bool radv_is_buffer_format_supported(VkFormat format, bool *scaled);
 uint32_t radv_colorformat_endian_swap(uint32_t colorformat);
 unsigned radv_translate_colorswap(VkFormat format, bool do_endian_swap);
 uint32_t radv_translate_dbformat(VkFormat format);
-uint32_t radv_translate_tex_dataformat(VkFormat format, const struct util_format_description *desc, int first_non_void);
+uint32_t radv_translate_tex_dataformat(const struct radv_physical_device *pdev, VkFormat format,
+                                       const struct util_format_description *desc, int first_non_void);
 uint32_t radv_translate_tex_numformat(VkFormat format, const struct util_format_description *desc, int first_non_void);
 bool radv_format_pack_clear_color(VkFormat format, uint32_t clear_vals[2], VkClearColorValue *value);
 bool radv_is_storage_image_format_supported(const struct radv_physical_device *physical_device, VkFormat format);

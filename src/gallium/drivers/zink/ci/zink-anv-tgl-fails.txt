@@ -668,3 +668,8 @@ KHR-GL46.sparse_texture_tests.SparseTextureCommitment,Crash
 # Assertion `size % ZINK_SPARSE_BUFFER_PAGE_SIZE == 0 || offset + size == bo->base.size' failed.
 spec@arb_sparse_buffer@basic,Crash
 spec@arb_sparse_buffer@buffer-data,Crash
+
+# Failing on a bunch of drivers with an assert on the weak_ref
+# pipeline cache, seems to be a zink issue not destroying a
+# shader/pipeline before calling vkDestroyPipeline()
+spec@ext_external_objects@vk-vert-buf-reuse,Crash

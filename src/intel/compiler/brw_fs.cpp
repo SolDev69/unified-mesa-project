@@ -5752,13 +5752,16 @@ fs_visitor::lower_find_live_channel()
        * instruction has execution masking disabled, so it's kind of
        * useless there.
        */
-      fs_reg exec_mask(retype(brw_mask_reg(0), BRW_REGISTER_TYPE_UD));
 
       const fs_builder ibld(this, block, inst);
       if (!inst->is_partial_write())
          ibld.emit_undef_for_dst(inst);
 
       const fs_builder ubld = fs_builder(this, block, inst).exec_all().group(1, 0);
+
+      fs_reg exec_mask = ubld.vgrf(BRW_REGISTER_TYPE_UD);
+      ubld.UNDEF(exec_mask);
+      ubld.emit(SHADER_OPCODE_READ_MASK_REG, exec_mask, brw_imm_ud(0));
 
       /* ce0 doesn't consider the thread dispatch mask (DMask or VMask),
        * so combine the execution and dispatch masks to obtain the true mask.
