@@ -186,8 +186,9 @@ gfx10_cs_emit_cache_flush(struct radeon_cmdbuf *cs, enum amd_gfx_level gfx_level
          *sqtt_flush_bits |= RGP_FLUSH_FLUSH_CB | RGP_FLUSH_INVAL_CB;
       }
 
+      /* GFX11 can't flush DB_META and should use a TS event instead. */
       /* TODO: trigger on RADV_CMD_FLAG_FLUSH_AND_INV_DB_META ? */
-      if (gfx_level < GFX11 && (flush_bits & RADV_CMD_FLAG_FLUSH_AND_INV_DB)) {
+      if (gfx_level != GFX11 && (flush_bits & RADV_CMD_FLAG_FLUSH_AND_INV_DB)) {
          /* Flush HTILE. Will wait for idle later. */
          radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
          radeon_emit(cs, EVENT_TYPE(V_028A90_FLUSH_AND_INV_DB_META) | EVENT_INDEX(0));
@@ -456,7 +457,7 @@ radv_cs_emit_cache_flush(struct radeon_winsys *ws, struct radeon_cmdbuf *cs, enu
        * All operations that invalidate L2 also seem to invalidate
        * metadata. Volatile (VOL) and WC flushes are not listed here.
        *
-       * TC    | TC_WB         = writeback & invalidate L2 & L1
+       * TC    | TC_WB         = writeback & invalidate L2
        * TC    | TC_WB | TC_NC = writeback & invalidate L2 for MTYPE == NC
        *         TC_WB | TC_NC = writeback L2 for MTYPE == NC
        * TC            | TC_NC = invalidate L2 for MTYPE == NC
@@ -469,11 +470,11 @@ radv_cs_emit_cache_flush(struct radeon_winsys *ws, struct radeon_cmdbuf *cs, enu
 
       /* Ideally flush TC together with CB/DB. */
       if (flush_bits & RADV_CMD_FLAG_INV_L2) {
-         /* Writeback and invalidate everything in L2 & L1. */
+         /* Writeback and invalidate everything in L2. */
          tc_flags = EVENT_TC_ACTION_ENA | EVENT_TC_WB_ACTION_ENA;
 
          /* Clear the flags. */
-         flush_bits &= ~(RADV_CMD_FLAG_INV_L2 | RADV_CMD_FLAG_WB_L2 | RADV_CMD_FLAG_INV_VCACHE);
+         flush_bits &= ~(RADV_CMD_FLAG_INV_L2 | RADV_CMD_FLAG_WB_L2);
 
          *sqtt_flush_bits |= RGP_FLUSH_INVAL_L2;
       }

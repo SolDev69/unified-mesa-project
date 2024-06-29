@@ -2815,11 +2815,11 @@ genX(cmd_buffer_begin_companion)(struct anv_cmd_buffer *cmd_buffer,
    cmd_buffer->state.current_db_mode = ANV_CMD_DESCRIPTOR_BUFFER_MODE_LEGACY;
    genX(cmd_buffer_emit_bt_pool_base_address)(cmd_buffer);
 
-   /* Re-emit the aux table register in every command buffer.  This way we're
-    * ensured that we have the table even if this command buffer doesn't
-    * initialize any images.
+   /* Invalidate the aux table in every primary command buffer. This ensures
+    * the command buffer see the last updates made by the host.
     */
-   if (cmd_buffer->device->info->has_aux_map) {
+   if (cmd_buffer->vk.level == VK_COMMAND_BUFFER_LEVEL_PRIMARY &&
+       cmd_buffer->device->info->has_aux_map) {
       anv_add_pending_pipe_bits(cmd_buffer,
                                 ANV_PIPE_AUX_TABLE_INVALIDATE_BIT,
                                 "new cmd buffer with aux-tt");
@@ -2940,11 +2940,11 @@ genX(BeginCommandBuffer)(
 
    if (anv_cmd_buffer_is_video_queue(cmd_buffer) ||
        anv_cmd_buffer_is_blitter_queue(cmd_buffer)) {
-      /* Re-emit the aux table register in every command buffer.  This way we're
-       * ensured that we have the table even if this command buffer doesn't
-       * initialize any images.
+      /* Invalidate the aux table in every primary command buffer. This
+       * ensures the command buffer see the last updates made by the host.
        */
-      if (cmd_buffer->device->info->has_aux_map) {
+      if (cmd_buffer->vk.level == VK_COMMAND_BUFFER_LEVEL_PRIMARY &&
+          cmd_buffer->device->info->has_aux_map) {
          anv_add_pending_pipe_bits(cmd_buffer,
                                    ANV_PIPE_AUX_TABLE_INVALIDATE_BIT,
                                    "new cmd buffer with aux-tt");
@@ -2982,11 +2982,11 @@ genX(BeginCommandBuffer)(
                              ANV_PIPE_VF_CACHE_INVALIDATE_BIT,
                              "new cmd buffer");
 
-   /* Re-emit the aux table register in every command buffer.  This way we're
-    * ensured that we have the table even if this command buffer doesn't
-    * initialize any images.
+   /* Invalidate the aux table in every primary command buffer. This ensures
+    * the command buffer see the last updates made by the host.
     */
-   if (cmd_buffer->device->info->has_aux_map) {
+   if (cmd_buffer->vk.level == VK_COMMAND_BUFFER_LEVEL_PRIMARY &&
+       cmd_buffer->device->info->has_aux_map) {
       anv_add_pending_pipe_bits(cmd_buffer,
                                 ANV_PIPE_AUX_TABLE_INVALIDATE_BIT,
                                 "new cmd buffer with aux-tt");
@@ -3217,14 +3217,16 @@ cmd_buffer_emit_copy_ts_buffer(struct u_trace_context *utctx,
                                void *ts_to, uint32_t to_offset,
                                uint32_t count)
 {
+   struct anv_device *device =
+      container_of(utctx, struct anv_device, ds.trace_context);
    struct anv_memcpy_state *memcpy_state = cmdstream;
    struct anv_address from_addr = (struct anv_address) {
-      .bo = ts_from, .offset = from_offset * sizeof(uint64_t) };
+      .bo = ts_from, .offset = from_offset * device->utrace_timestamp_size };
    struct anv_address to_addr = (struct anv_address) {
-      .bo = ts_to, .offset = to_offset * sizeof(uint64_t) };
+      .bo = ts_to, .offset = to_offset * device->utrace_timestamp_size };
 
    genX(emit_so_memcpy)(memcpy_state, to_addr, from_addr,
-                        count * sizeof(uint64_t));
+                        count * device->utrace_timestamp_size);
 }
 
 void
@@ -3322,6 +3324,11 @@ genX(CmdExecuteCommands)(
          }
       }
       genX(emit_so_memcpy_fini)(&memcpy_state);
+
+      anv_add_pending_pipe_bits(container,
+                                ANV_PIPE_CS_STALL_BIT | ANV_PIPE_STALL_AT_SCOREBOARD_BIT,
+                                "Wait for primary->secondary RP surface state copies");
+      genX(cmd_buffer_apply_pipe_flushes)(container);
 
       if (container->vk.pool->flags & VK_COMMAND_POOL_CREATE_PROTECTED_BIT)
          genX(cmd_buffer_set_protected_memory)(container, true);

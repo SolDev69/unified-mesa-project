@@ -100,7 +100,6 @@ spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type
 spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type: GL_RGBA8,Fail
 spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type: GL_RGBA8I,Fail
 spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type: GL_SRGB8_ALPHA8,Fail
-spec@arb_texture_rectangle@1-1-linear-texture,Fail
 spec@arb_texture_rectangle@tex-miplevel-selection gl2:texture() 2drect,Crash
 spec@arb_texture_rectangle@tex-miplevel-selection gl2:texture() 2drectshadow,Crash
 spec@arb_texture_rectangle@tex-miplevel-selection gl2:textureproj 2drect,Crash
@@ -383,8 +382,6 @@ spec@!opengl 3.1@primitive-restart-xfb flush,Fail
 spec@!opengl 3.1@primitive-restart-xfb generated,Fail
 spec@!opengl 3.1@primitive-restart-xfb written,Fail
 spec@!opengl es 3.0@gles-3.0-transform-feedback-uniform-buffer-object,Fail
-
-dEQP-GLES31.functional.texture.border_clamp.range_clamp.linear_float_color,Fail
 
 # Resolve operations not supported
 dEQP-VK.rasterization.interpolation_multisample_4_bit.lines,Crash
@@ -1185,59 +1182,11 @@ dEQP-VK.pipeline.monolithic.multisample_shader_builtin.sample_mask.pattern.137_1
 dEQP-VK.pipeline.monolithic.multisample_shader_builtin.sample_mask.write.128_128_1.samples_4,Crash
 dEQP-VK.pipeline.monolithic.multisample_shader_builtin.sample_mask.write.137_191_1.samples_4,Crash
 
-# Problems in the image copy logic?
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height_layers.r8g8b8a8_unorm_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height_layers.r8g8b8a8_unorm_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height_layers.r8g8b8a8_unorm_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height_layers.r8g8b8a8_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height.r8g8b8a8_unorm_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height.r8g8b8a8_unorm_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height.r8g8b8a8_unorm_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.height.r8g8b8a8_unorm,Fail
+# Some huge tests fail to allocate when running several deqp-vk instances. Those pass just fine
+# when executed in isolation. There's still something strange though: the CTS trips out on a NULL
+# VkDeviceMemory when it should report a VK_ERROR. This needs further investigation.
 dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height_layers.r8g8b8a8_unorm_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height_layers.r8g8b8a8_unorm_d24_unorm_s8_uint,Fail
 dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height_layers.r8g8b8a8_unorm_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height_layers.r8g8b8a8_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height.r8g8b8a8_unorm_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height.r8g8b8a8_unorm_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height.r8g8b8a8_unorm_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.2d_array.huge.width_height.r8g8b8a8_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.huge.width_height.r8g8b8a8_unorm_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.huge.width_height.r8g8b8a8_unorm_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.huge.width_height.r8g8b8a8_unorm_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.huge.width_height.r8g8b8a8_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a1r5g5b5_unorm_pack16_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a1r5g5b5_unorm_pack16_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a1r5g5b5_unorm_pack16_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a1r5g5b5_unorm_pack16,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_uint_pack32_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_uint_pack32_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_uint_pack32_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_uint_pack32,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_unorm_pack32_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_unorm_pack32_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_unorm_pack32_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.a2b10g10r10_unorm_pack32,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r16g16_sint_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r16g16_sint_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r16g16_sint_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r16g16_sint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32g32b32a32_sfloat_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32g32b32a32_sfloat_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32g32b32a32_sfloat_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32g32b32a32_sfloat,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32_uint_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32_uint_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32_uint_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r32_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r5g6b5_unorm_pack16_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r5g6b5_unorm_pack16_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r5g6b5_unorm_pack16_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r5g6b5_unorm_pack16,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r8g8b8a8_unorm_d16_unorm,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r8g8b8a8_unorm_d24_unorm_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r8g8b8a8_unorm_d32_sfloat_s8_uint,Fail
-dEQP-VK.pipeline.monolithic.render_to_image.core.cube.small.r8g8b8a8_unorm,Fail
 
 # uprev Piglit in Mesa
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-refcount-multithread,Crash
