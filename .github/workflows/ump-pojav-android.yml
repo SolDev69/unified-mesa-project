@@ -48,7 +48,7 @@ jobs:
             --prefix=/tmp/mesa \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
-            -Dplatform-sdk-version=25 \
+            -Dplatform-sdk-version=33 \
             -Dandroid-stub=true \
             -Dandroid-libbacktrace=disabled \
             -Dandroid-strict=false \
@@ -59,7 +59,7 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=freedreno,zink,panfrost \
+            -Dgallium-drivers=freedreno,zink,panfrost,swrast \
             -Dfreedreno-kmds=kgsl \
             -Dshared-glapi=false \
             -Dbuildtype=release
