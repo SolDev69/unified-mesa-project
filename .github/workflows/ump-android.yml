@@ -1,4 +1,4 @@
-name: Build UMP (debug)
+name: Build UMP
 
 on:
   [push, pull_request, workflow_dispatch]
@@ -52,22 +52,19 @@ jobs:
             -Dandroid-stub=true \
             -Dandroid-libbacktrace=disabled \
             -Dandroid-strict=false \
-            -Dxlib-lease=disabled \
-            -Degl=disabled \
-            -Dgbm=disabled \
-            -Dglx=disabled \
+            -Degl=enabled \
             -Dopengl=true \
+            -Ddri-search-path="/vendor/lib64/egl" \
             -Dosmesa=true \
             -Dvulkan-drivers= \
             -Dgallium-drivers=freedreno,zink,panfrost \
             -Dfreedreno-kmds=kgsl \
-            -Dshared-glapi=false \
-            -Dbuildtype=debug
+            -Dbuildtype=release
           ninja -C "build-android" install
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson setup "build-android-turnip" \
             --cross-file "build-crossfile-turnip" \
-            -Dbuildtype=debug \
+            -Dbuildtype=release \
             --prefix=/tmp/mesa \
             -Dplatforms=android \
             -Dplatform-sdk-version=33 \
@@ -79,11 +76,11 @@ jobs:
             -Db_lto=true
           ninja -C "build-android-turnip" install
           mkdir /tmp/mesa/toupload
-          mv /tmp/mesa/lib/* /tmp/mesa/toupload/
+          mv /tmp/mesa/lib/libOSMesa.so.8.0.0 /tmp/mesa/lib/libvulkan_freedreno.so /tmp/mesa/toupload/
           cd /tmp/mesa/toupload
           mv libOSMesa.so.8.0.0 libOSMesa.so
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
-          name: UMP-dbg_${{matrix.arch}}
+          name: UMP_${{matrix.arch}}
           path: /tmp/mesa/toupload
