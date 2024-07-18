@@ -1,4 +1,4 @@
-name: Build UMP (debug)
+name: Build UMP
 
 on:
   [push, pull_request, workflow_dispatch]
@@ -52,19 +52,22 @@ jobs:
             -Dandroid-stub=true \
             -Dandroid-libbacktrace=disabled \
             -Dandroid-strict=false \
-            -Degl=enabled \
+            -Dxlib-lease=disabled \
+            -Degl=disabled \
+            -Dgbm=disabled \
+            -Dglx=disabled \
             -Dopengl=true \
-            -Ddri-search-path="/vendor/lib64/egl" \
             -Dosmesa=true \
             -Dvulkan-drivers= \
             -Dgallium-drivers=freedreno,zink,panfrost \
             -Dfreedreno-kmds=kgsl \
-            -Dbuildtype=debug
+            -Dshared-glapi=false \
+            -Dbuildtype=release
           ninja -C "build-android" install
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson setup "build-android-turnip" \
             --cross-file "build-crossfile-turnip" \
-            -Dbuildtype=debug \
+            -Dbuildtype=release \
             --prefix=/tmp/mesa \
             -Dplatforms=android \
             -Dplatform-sdk-version=33 \
