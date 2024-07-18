@@ -64,6 +64,9 @@ jobs:
             -Dshared-glapi=false \
             -Dbuildtype=release
           ninja -C "build-android" install
+          meson setup "build-android-magisk" \
+            --cross-file "build-crossfile" -Dplatforms=android -Dplatform-sdk-version=26 -Dandroid-stub=true -Dgallium-drivers=freedreno -Dvulkan-drivers= -Dfreedreno-kgsl=true -Degl=enabled -Ddri-search-path="/vendor/lib64/egl" --prefix /tmp/mesa-magisk
+          ninja -C "build-android-magisk" install
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson setup "build-android-turnip" \
             --cross-file "build-crossfile-turnip" \
@@ -80,6 +83,7 @@ jobs:
           ninja -C "build-android-turnip" install
           mkdir /tmp/mesa/toupload
           mv /tmp/mesa/lib/libOSMesa.so.8.0.0 /tmp/mesa/lib/libvulkan_freedreno.so /tmp/mesa/toupload/
+          mv /tmp/mesa-magisk/lib/* /tmp/mesa/toupload
           cd /tmp/mesa/toupload
           mv libOSMesa.so.8.0.0 libOSMesa.so
       - name: Upload libraries
