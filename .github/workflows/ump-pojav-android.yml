@@ -65,7 +65,7 @@ jobs:
             -Dbuildtype=release
           ninja -C "build-android" install
           meson setup "build-android-magisk" \
-            --cross-file "build-crossfile" -Dplatforms=android -Dplatform-sdk-version=26 -Dandroid-stub=true -Dgallium-drivers=freedreno -Dvulkan-drivers= -Dfreedreno-kgsl=true -Degl=enabled -Ddri-search-path="/vendor/lib64/egl" --prefix /tmp/mesa-magisk
+            --cross-file "build-crossfile" -Dplatforms=android -Dplatform-sdk-version=26 -Dandroid-stub=true -Dgallium-drivers=freedreno -Dvulkan-drivers= -Dfreedreno-kmds=kgsl -Degl=enabled -Ddri-search-path="/vendor/lib64/egl" --prefix /tmp/mesa-magisk
           ninja -C "build-android-magisk" install
           envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           meson setup "build-android-turnip" \
