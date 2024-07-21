@@ -77,8 +77,18 @@ jobs:
           ninja -C "build-android-turnip" install
           cd /tmp/mesa/lib
           mv libOSMesa.so libOSMesa_znL.so
+
+          mkdir /tmp/mesa/toupload
+          cp /tmp/mesa/lib/libOSMesa_znL.so /tmp/mesa/lib/libvulkan_freedreno.so /tmp/mesa/lib/libvulkan_virtio.so /tmp/mesa/toupload/
+
       - name: Upload libraries
         uses: actions/upload-artifact@v2
         with:
           name: libOSMesa_znL_${{matrix.arch}}
-          path: /tmp/mesa/lib/libOSMesa_znL.so
+          path: /tmp/mesa/toupload/
+
+      - name: Upload compiled folder
+        uses: actions/upload-artifact@v2
+        with:
+          name: libOSMesa_znL_${{matrix.arch}}
+          path: /tmp/mesa/lib/
