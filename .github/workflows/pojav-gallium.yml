@@ -71,8 +71,7 @@ jobs:
             -Dandroid-stub=true \
             -Dgallium-drivers= \
             -Dvulkan-drivers=freedreno,virtio-experimental \
-            -Dfreedreno-kmds=kgsl \
-            -Dandroid-strict=false \
+            -Dfreedreno-kgsl=true \
             -Db_lto=true
           ninja -C "build-android-turnip" install
           cd /tmp/mesa/lib
