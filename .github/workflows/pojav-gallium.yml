@@ -61,6 +61,20 @@ jobs:
             -Dshared-glapi=false \
             -Dbuildtype=release
           ninja -C "build-android" install
+          envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
+          meson setup "build-android-turnip" \
+            --cross-file "build-crossfile-turnip" \
+            -Dbuildtype=release \
+            --prefix=/tmp/mesa \
+            -Dplatforms=android \
+            -Dplatform-sdk-version=33 \
+            -Dandroid-stub=true \
+            -Dgallium-drivers= \
+            -Dvulkan-drivers=freedreno,virtio-experimental \
+            -Dfreedreno-kmds=kgsl \
+            -Dandroid-strict=false \
+            -Db_lto=true
+          ninja -C "build-android-turnip" install
           cd /tmp/mesa/lib
           mv libOSMesa.so libOSMesa_znL.so
       - name: Upload libraries
