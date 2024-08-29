@@ -1,0 +1,2046 @@
+diff --git a/.github/workflows/macos.yml b/.github/workflows/macos.yml
+deleted file mode 100644
+index d1b66ef4cad..00000000000
+--- a/.github/workflows/macos.yml
++++ /dev/null
+@@ -1,60 +0,0 @@
+-name: macOS-CI
+-on: push
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  macOS-CI:
+-    strategy:
+-      matrix:
+-        glx_option: ['dri', 'xlib']
+-    runs-on: macos-11
+-    env:
+-      GALLIUM_DUMP_CPU: true
+-      MESON_EXEC: /Users/runner/Library/Python/3.11/bin/meson
+-    steps:
+-    - name: Checkout
+-      uses: actions/checkout@v3
+-    - name: Install Dependencies
+-      run: |
+-        cat > Brewfile <<EOL
+-        brew "bison"
+-        brew "expat"
+-        brew "gettext"
+-        brew "libx11"
+-        brew "libxcb"
+-        brew "libxdamage"
+-        brew "libxext"
+-        brew "molten-vk"
+-        brew "ninja"
+-        brew "pkg-config"
+-        brew "python@3.10"
+-        EOL
+-
+-        brew update
+-        brew bundle --verbose
+-    - name: Install Mako and meson
+-      run: pip3 install --user mako meson
+-    - name: Configure
+-      run: |
+-        cat > native_config <<EOL
+-        [binaries]
+-        llvm-config = '/usr/local/opt/llvm/bin/llvm-config'
+-        EOL
+-        $MESON_EXEC . build --native-file=native_config -Dmoltenvk-dir=$(brew --prefix molten-vk) -Dbuild-tests=true -Dosmesa=true -Dgallium-drivers=swrast,zink -Dglx=${{ matrix.glx_option }}
+-    - name: Build
+-      run: $MESON_EXEC compile -C build
+-    - name: Test
+-      run: $MESON_EXEC test -C build --print-errorlogs
+-    - name: Install
+-      run: $MESON_EXEC install -C build --destdir $PWD/install
+-    - name: 'Upload Artifact'
+-      if: always()
+-      uses: actions/upload-artifact@v3
+-      with:
+-        name: macos-${{ matrix.glx_option }}-result
+-        path: |
+-          build/meson-logs/
+-          install/
+-        retention-days: 5
+diff --git a/.github/workflows/ump-pojav-android.yml b/.github/workflows/ump-pojav-android.yml
+new file mode 100644
+index 00000000000..06e8aac0695
+--- /dev/null
++++ b/.github/workflows/ump-pojav-android.yml
+@@ -0,0 +1,89 @@
++name: Build UMP
++
++on:
++  [push, pull_request, workflow_dispatch]
++
++# A workflow run is made up of one or more jobs that can run sequentially or in parallel
++jobs:
++  build:
++    strategy:
++      matrix:
++        arch: [ "arm32", "aarch64", "x86_64" ]
++      fail-fast: false
++
++    name: "Build for ${{matrix.arch}}"
++
++    runs-on: ubuntu-latest
++
++    steps:
++        
++      - uses: actions/checkout@v2
++
++      - name: Build
++        run: |
++          sudo apt update
++          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
++          pip3 install mako
++          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
++          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
++          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
++          cd drm
++          meson setup "build-android" \
++            --prefix=/tmp/drm-static \
++            --cross-file "../build-crossfile-drm" \
++            -Ddefault_library=static \
++            -Dintel=disabled \
++            -Dradeon=disabled \
++            -Damdgpu=disabled \
++            -Dnouveau=disabled \
++            -Dvmwgfx=disabled \
++            -Dfreedreno=enabled \
++            -Dvc4=disabled \
++            -Detnaviv=disabled \
++            -Dfreedreno-kgsl=true
++          ninja -C "build-android" install
++          cd ..
++          envsubst <android-${{matrix.arch}} >build-crossfile
++          meson setup "build-android" \
++            --prefix=/tmp/mesa \
++            --cross-file "build-crossfile" \
++            -Dplatforms=android \
++            -Dplatform-sdk-version=25 \
++            -Dandroid-stub=true \
++            -Dandroid-libbacktrace=disabled \
++            -Dandroid-strict=false \
++            -Dxlib-lease=disabled \
++            -Degl=disabled \
++            -Dgbm=disabled \
++            -Dglx=disabled \
++            -Dopengl=true \
++            -Dosmesa=true \
++            -Dvulkan-drivers= \
++            -Dgallium-drivers=freedreno,zink,panfrost,swrast \
++            -Dfreedreno-kmds=kgsl \
++            -Dshared-glapi=false \
++            -Dbuildtype=release
++          ninja -C "build-android" install
++          envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
++          meson setup "build-android-turnip" \
++            --cross-file "build-crossfile-turnip" \
++            -Dbuildtype=release \
++            --prefix=/tmp/mesa \
++            -Dplatforms=android \
++            -Dplatform-sdk-version=33 \
++            -Dandroid-stub=true \
++            -Dgallium-drivers= \
++            -Dvulkan-drivers=freedreno \
++            -Dfreedreno-kmds=kgsl \
++            -Dandroid-strict=false \
++            -Db_lto=true
++          ninja -C "build-android-turnip" install
++          mkdir /tmp/mesa/toupload
++          mv /tmp/mesa/lib/libOSMesa.so.8.0.0 /tmp/mesa/lib/libvulkan_freedreno.so /tmp/mesa/toupload/
++          cd /tmp/mesa/toupload
++          mv libOSMesa.so.8.0.0 libOSMesa.so
++      - name: Upload libraries
++        uses: actions/upload-artifact@v2
++        with:
++          name: UMP_${{matrix.arch}}
++          path: /tmp/mesa/toupload
+diff --git a/.github/workflows/ump-pojav-android_debug.yml b/.github/workflows/ump-pojav-android_debug.yml
+new file mode 100644
+index 00000000000..c9952737403
+--- /dev/null
++++ b/.github/workflows/ump-pojav-android_debug.yml
+@@ -0,0 +1,89 @@
++name: Build UMP (debug)
++
++on:
++  [push, pull_request, workflow_dispatch]
++
++# A workflow run is made up of one or more jobs that can run sequentially or in parallel
++jobs:
++  build:
++    strategy:
++      matrix:
++        arch: [ "arm32", "aarch64", "x86_64" ]
++      fail-fast: false
++
++    name: "Build for ${{matrix.arch}}"
++
++    runs-on: ubuntu-latest
++
++    steps:
++        
++      - uses: actions/checkout@v2
++
++      - name: Build
++        run: |
++          sudo apt update
++          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
++          pip3 install mako
++          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
++          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
++          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
++          cd drm
++          meson setup "build-android" \
++            --prefix=/tmp/drm-static \
++            --cross-file "../build-crossfile-drm" \
++            -Ddefault_library=static \
++            -Dintel=disabled \
++            -Dradeon=disabled \
++            -Damdgpu=disabled \
++            -Dnouveau=disabled \
++            -Dvmwgfx=disabled \
++            -Dfreedreno=enabled \
++            -Dvc4=disabled \
++            -Detnaviv=disabled \
++            -Dfreedreno-kgsl=true
++          ninja -C "build-android" install
++          cd ..
++          envsubst <android-${{matrix.arch}} >build-crossfile
++          meson setup "build-android" \
++            --prefix=/tmp/mesa \
++            --cross-file "build-crossfile" \
++            -Dplatforms=android \
++            -Dplatform-sdk-version=25 \
++            -Dandroid-stub=true \
++            -Dandroid-libbacktrace=disabled \
++            -Dandroid-strict=false \
++            -Dxlib-lease=disabled \
++            -Degl=disabled \
++            -Dgbm=disabled \
++            -Dglx=disabled \
++            -Dopengl=true \
++            -Dosmesa=true \
++            -Dvulkan-drivers= \
++            -Dgallium-drivers=freedreno,zink,panfrost,swrast \
++            -Dfreedreno-kmds=kgsl \
++            -Dshared-glapi=false \
++            -Dbuildtype=debug
++          ninja -C "build-android" install
++          envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
++          meson setup "build-android-turnip" \
++            --cross-file "build-crossfile-turnip" \
++            -Dbuildtype=debug \
++            --prefix=/tmp/mesa \
++            -Dplatforms=android \
++            -Dplatform-sdk-version=33 \
++            -Dandroid-stub=true \
++            -Dgallium-drivers= \
++            -Dvulkan-drivers=freedreno \
++            -Dfreedreno-kmds=kgsl \
++            -Dandroid-strict=false \
++            -Db_lto=true
++          ninja -C "build-android-turnip" install
++          mkdir /tmp/mesa/toupload
++          mv /tmp/mesa/lib/* /tmp/mesa/toupload/
++          cd /tmp/mesa/toupload
++          mv libOSMesa.so.8.0.0 libOSMesa.so
++      - name: Upload libraries
++        uses: actions/upload-artifact@v2
++        with:
++          name: UMP-dbg_${{matrix.arch}}
++          path: /tmp/mesa/toupload
+\ No newline at end of file
+diff --git a/android-aarch64 b/android-aarch64
+new file mode 100644
+index 00000000000..2737a2d01bd
+--- /dev/null
++++ b/android-aarch64
+@@ -0,0 +1,26 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++
++# Also, include the plain DRM lib we found earlier. Panfrost relies on it rather heavily, especially when
++# interacting with the panfrost DRM module and not kbase
++
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv8'
++
++endian = 'little'
+diff --git a/android-arm32 b/android-arm32
+new file mode 100644
+index 00000000000..6bd6af4e902
+--- /dev/null
++++ b/android-arm32
+@@ -0,0 +1,26 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++
++# Also, include the plain DRM lib we found earlier. Panfrost relies on it rather heavily, especially when
++# interacting with the panfrost DRM module and not kbase
++
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv7'
++
++endian = 'little'
+diff --git a/android-drm-aarch64 b/android-drm-aarch64
+new file mode 100644
+index 00000000000..d78f79edde3
+--- /dev/null
++++ b/android-drm-aarch64
+@@ -0,0 +1,22 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv8'
++
++endian = 'little'
+diff --git a/android-drm-arm32 b/android-drm-arm32
+new file mode 100644
+index 00000000000..9ff8a6c4d30
+--- /dev/null
++++ b/android-drm-arm32
+@@ -0,0 +1,22 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv7'
++
++endian = 'little'
+diff --git a/android-drm-x86_64 b/android-drm-x86_64
+new file mode 100644
+index 00000000000..dbd35a22ece
+--- /dev/null
++++ b/android-drm-x86_64
+@@ -0,0 +1,23 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv8'
++
++
++endian = 'little'
+\ No newline at end of file
+diff --git a/android-turnip-aarch64 b/android-turnip-aarch64
+new file mode 100644
+index 00000000000..a07dab511e5
+--- /dev/null
++++ b/android-turnip-aarch64
+@@ -0,0 +1,13 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-strip'
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++[host_machine]
++system = 'android'
++cpu_family = 'aarch64'
++cpu = 'armv8'
++endian = 'little'
+\ No newline at end of file
+diff --git a/android-turnip-arm32 b/android-turnip-arm32
+new file mode 100644
+index 00000000000..c1461b2bc0a
+--- /dev/null
++++ b/android-turnip-arm32
+@@ -0,0 +1,13 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi26-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi-strip'
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++[host_machine]
++system = 'android'
++cpu_family = 'arm'
++cpu = 'armv7'
++endian = 'little'
+\ No newline at end of file
+diff --git a/android-turnip-x86_64 b/android-turnip-x86_64
+new file mode 100644
+index 00000000000..6775f7b605c
+--- /dev/null
++++ b/android-turnip-x86_64
+@@ -0,0 +1,13 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-strip'
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.', '/usr/bin/pkg-config']
++[host_machine]
++system = 'android'
++cpu_family = 'x86_64'
++cpu = 'amd64'
++endian = 'little'
+\ No newline at end of file
+diff --git a/android-x86_64 b/android-x86_64
+new file mode 100644
+index 00000000000..b67ca9a44ea
+--- /dev/null
++++ b/android-x86_64
+@@ -0,0 +1,27 @@
++[binaries]
++ar = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
++c = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC']
++cpp = ['ccache', '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android26-clang++', '-O3', '-DVK_USE_PLATFORM_ANDROID_KHR', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
++c_ld = 'lld'
++cpp_ld = 'lld'
++strip = '$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
++# Android doesn't come with a pkg-config, but we need one for meson to be happy not
++# finding all the optional deps it looks for.  Use system pkg-config pointing at a
++# directory we get to populate with any .pc files we want to add for Android
++
++# Also, include the plain DRM lib we found earlier. Panfrost relies on it rather heavily, especially when
++# interacting with the panfrost DRM module and not kbase
++
++pkgconfig = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
++
++[host_machine]
++system = 'linux'
++# cpu_family = 'x86_64'
++# cpu = 'amd64'
++
++# ik this is wrong but workaround sanity check
++cpu_family = 'arm'
++cpu = 'armv8'
++
++
++endian = 'little'
+\ No newline at end of file
+diff --git a/meson.build b/meson.build
+index 8963b314256..16e3c149e72 100644
+--- a/meson.build
++++ b/meson.build
+@@ -196,6 +196,10 @@ foreach gallium_driver : gallium_drivers
+   pre_args += '-DHAVE_@0@'.format(gallium_driver.to_upper())
+ endforeach
+ 
++if get_option('freedreno-kmds').contains('kgsl')
++  pre_args += '-DHAVE_FREEDRENO_KGSL'
++endif
++
+ with_gallium = gallium_drivers.length() != 0
+ with_gallium_kmsro = system_has_kms_drm and [
+   with_gallium_asahi,
+@@ -1974,9 +1978,6 @@ if dep_unwind.found()
+ endif
+ 
+ if with_osmesa
+-  if not with_gallium_softpipe
+-    error('OSMesa gallium requires gallium softpipe or llvmpipe.')
+-  endif
+   if host_machine.system() == 'windows'
+     osmesa_lib_name = 'osmesa'
+   else
+diff --git a/src/android_stub/meson.build b/src/android_stub/meson.build
+index 6097ae8ef07..0e3f27bc4a5 100644
+--- a/src/android_stub/meson.build
++++ b/src/android_stub/meson.build
+@@ -1,6 +1,6 @@
+ if with_android_stub
+   stub_libs = []
+-  lib_names = ['cutils', 'hardware', 'log', 'nativewindow', 'sync']
++  lib_names = ['hardware', 'log', 'nativewindow', 'sync']
+ 
+   if with_libbacktrace
+     lib_names += ['backtrace']
+diff --git a/src/egl/drivers/dri2/platform_android.c b/src/egl/drivers/dri2/platform_android.c
+index 8e2b705ea9b..db99c0271c1 100644
+--- a/src/egl/drivers/dri2/platform_android.c
++++ b/src/egl/drivers/dri2/platform_android.c
+@@ -1056,9 +1056,46 @@ droid_probe_device(_EGLDisplay *disp, bool swrast)
+    return EGL_TRUE;
+ }
+ 
++static EGLBoolean droid_open_device_kgsl(_EGLDisplay *disp, bool swrast)
++{
++   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
++   static const char path[] = "/dev/kgsl-3d0";
++   static const char driver_name[] = "kgsl";
++
++   dri2_dpy->fd_render_gpu = loader_open_device(path);
++   if (dri2_dpy->fd_render_gpu < 0) {
++      _eglLog(_EGL_WARNING, "Failed to open kgsl");
++      return EGL_FALSE;
++   }
++
++   dri2_dpy->driver_name = strdup(driver_name);
++   dri2_dpy->loader_extensions = droid_image_loader_extensions;
++   if (!dri2_load_driver_dri3(disp)) {
++      free(dri2_dpy->driver_name);
++      dri2_dpy->driver_name = NULL;
++      goto error;
++   }
++
++   if (!dri2_create_screen(disp)) {
++      _eglLog(_EGL_WARNING, "DRI2: Failed to create screen");
++      droid_unload_driver(disp);
++      goto error;
++   }
++
++   return EGL_TRUE;
++error:
++   close(dri2_dpy->fd_render_gpu);
++   dri2_dpy->fd_render_gpu = -1;
++   return EGL_FALSE;
++}
++
+ static EGLBoolean
+ droid_open_device(_EGLDisplay *disp, bool swrast)
+ {
++#ifdef HAVE_FREEDRENO_KGSL
++   if (droid_open_device_kgsl(disp, swrast))
++      goto done;
++#endif
+ #define MAX_DRM_DEVICES 64
+    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+    _EGLDevice *dev_list = _eglGlobal.DeviceList;
+@@ -1168,6 +1205,15 @@ dri2_initialize_android(_EGLDisplay *disp)
+       goto cleanup;
+    }
+ 
++   /* Only add a egl device if this is not the kgsl driver */
++   if (strcmp(dri2_dpy->driver_name, "kgsl") != 0) {
++      dev = _eglAddDevice(dri2_dpy->fd_render_gpu, false);
++      if (!dev) {
++         err = "DRI2: failed to find EGLDevice";
++         goto cleanup;
++      }
++   }
++
+    if (!dri2_setup_device(disp, false)) {
+       err = "DRI2: failed to setup EGLDevice";
+       goto cleanup;
+diff --git a/src/freedreno/drm/freedreno_device.c b/src/freedreno/drm/freedreno_device.c
+index 367e499b732..8b0c8ed6917 100644
+--- a/src/freedreno/drm/freedreno_device.c
++++ b/src/freedreno/drm/freedreno_device.c
+@@ -37,22 +37,25 @@ struct fd_device *msm_device_new(int fd, drmVersionPtr version);
+ #ifdef HAVE_FREEDRENO_VIRTIO
+ struct fd_device *virtio_device_new(int fd, drmVersionPtr version);
+ #endif
++#ifdef HAVE_FREEDRENO_KGSL
++struct fd_device *kgsl_device_new(int fd);
++#endif
+ 
+ struct fd_device *
+ fd_device_new(int fd)
+ {
+    struct fd_device *dev = NULL;
+-   drmVersionPtr version;
++   drmVersionPtr version = NULL;
+    bool use_heap = false;
++   bool support_use_heap = true;
+ 
++#ifdef HAVE_LIBDRM
+    /* figure out if we are kgsl or msm drm driver: */
+    version = drmGetVersion(fd);
+-   if (!version) {
+-      ERROR_MSG("cannot get version: %s", strerror(errno));
+-      return NULL;
+-   }
+-
+-   if (!strcmp(version->name, "msm")) {
++   if (!version)
++      DEBUG_MSG("cannot get version: %s", strerror(errno));
++#endif
++   if (version && !strcmp(version->name, "msm")) {
+       DEBUG_MSG("msm DRM device");
+       if (version->version_major != 1) {
+          ERROR_MSG("unsupported version: %u.%u.%u", version->version_major,
+@@ -62,7 +65,7 @@ fd_device_new(int fd)
+ 
+       dev = msm_device_new(fd, version);
+ #ifdef HAVE_FREEDRENO_VIRTIO
+-   } else if (!strcmp(version->name, "virtio_gpu")) {
++   } else if (version && !strcmp(version->name, "virtio_gpu")) {
+       DEBUG_MSG("virtio_gpu DRM device");
+       dev = virtio_device_new(fd, version);
+       /* Only devices that support a hypervisor are a6xx+, so avoid the
+@@ -71,9 +74,12 @@ fd_device_new(int fd)
+       use_heap = true;
+ #endif
+ #if HAVE_FREEDRENO_KGSL
+-   } else if (!strcmp(version->name, "kgsl")) {
++   } else {
+       DEBUG_MSG("kgsl DRM device");
+       dev = kgsl_device_new(fd);
++      support_use_heap = false;
++      if (dev)
++         goto out;
+ #endif
+    }
+ 
+@@ -116,7 +122,7 @@ out:
+       fd_pipe_del(pipe);
+    }
+ 
+-   if (use_heap) {
++   if (support_use_heap && use_heap) {
+       dev->ring_heap = fd_bo_heap_new(dev, RING_FLAGS);
+       dev->default_heap = fd_bo_heap_new(dev, 0);
+    }
+@@ -233,6 +239,12 @@ fd_dbg(void)
+    return debug_get_option_libgl();
+ }
+ 
++uint32_t
++fd_get_features(struct fd_device *dev)
++{
++    return dev->features;
++}
++
+ bool
+ fd_has_syncobj(struct fd_device *dev)
+ {
+diff --git a/src/freedreno/drm/freedreno_drmif.h b/src/freedreno/drm/freedreno_drmif.h
+index 30490b12c30..d717cc0dbca 100644
+--- a/src/freedreno/drm/freedreno_drmif.h
++++ b/src/freedreno/drm/freedreno_drmif.h
+@@ -67,6 +67,13 @@ enum fd_param_id {
+    FD_VA_SIZE,       /* GPU virtual address size */
+ };
+ 
++enum fd_reset_status {
++   FD_RESET_NO_ERROR,
++   FD_RESET_GUILTY,
++   FD_RESET_INNOCENT,
++   FD_RESET_UNKNOWN,
++};
++
+ /**
+  * Helper for fence/seqno comparisions which deals properly with rollover.
+  * Returns true if fence 'a' is before fence 'b'
+@@ -183,6 +190,12 @@ enum fd_version {
+ };
+ enum fd_version fd_device_version(struct fd_device *dev);
+ 
++enum fd_features {
++    FD_FEATURE_DIRECT_RESET = 1,
++    FD_FEATURE_IMPORT_DMABUF = 2,
++};
++
++uint32_t fd_get_features(struct fd_device *dev);
+ bool fd_has_syncobj(struct fd_device *dev);
+ 
+ /* pipe functions:
+@@ -204,6 +217,7 @@ int fd_pipe_wait(struct fd_pipe *pipe, const struct fd_fence *fence);
+ /* timeout in nanosec */
+ int fd_pipe_wait_timeout(struct fd_pipe *pipe, const struct fd_fence *fence,
+                          uint64_t timeout);
++int fd_pipe_get_reset_status(struct fd_pipe *pipe, enum fd_reset_status *status);
+ 
+ /* buffer-object functions:
+  */
+@@ -285,6 +299,7 @@ struct fd_bo *fd_bo_from_handle(struct fd_device *dev, uint32_t handle,
+                                 uint32_t size);
+ struct fd_bo *fd_bo_from_name(struct fd_device *dev, uint32_t name);
+ struct fd_bo *fd_bo_from_dmabuf(struct fd_device *dev, int fd);
++struct fd_bo *fd_bo_from_dmabuf_drm(struct fd_device *dev, int fd);
+ void fd_bo_mark_for_dump(struct fd_bo *bo);
+ 
+ static inline uint64_t
+diff --git a/src/freedreno/drm/freedreno_pipe.c b/src/freedreno/drm/freedreno_pipe.c
+index 13e8ad979e8..9fd443a9631 100644
+--- a/src/freedreno/drm/freedreno_pipe.c
++++ b/src/freedreno/drm/freedreno_pipe.c
+@@ -213,6 +213,12 @@ fd_pipe_emit_fence(struct fd_pipe *pipe, struct fd_ringbuffer *ring)
+    return fence;
+ }
+ 
++int
++fd_pipe_get_reset_status(struct fd_pipe *pipe, enum fd_reset_status *status)
++{
++    return pipe->funcs->reset_status(pipe, status);
++}
++
+ struct fd_fence *
+ fd_fence_new(struct fd_pipe *pipe, bool use_fence_fd)
+ {
+diff --git a/src/freedreno/drm/freedreno_priv.h b/src/freedreno/drm/freedreno_priv.h
+index 95bf0478330..73a0e631c37 100644
+--- a/src/freedreno/drm/freedreno_priv.h
++++ b/src/freedreno/drm/freedreno_priv.h
+@@ -207,6 +207,7 @@ struct fd_device {
+    int fd;
+    enum fd_version version;
+    int32_t refcnt;
++   uint32_t features;
+ 
+    /* tables to keep track of bo's, to avoid "evil-twin" fd_bo objects:
+     *
+@@ -308,6 +309,7 @@ struct fd_pipe_funcs {
+    struct fd_ringbuffer *(*ringbuffer_new_object)(struct fd_pipe *pipe,
+                                                   uint32_t size);
+    struct fd_submit *(*submit_new)(struct fd_pipe *pipe);
++   int (*reset_status)(struct fd_pipe *pipe, enum fd_reset_status *status);
+ 
+    /**
+     * Flush any deferred submits (if deferred submits are supported by
+diff --git a/src/freedreno/drm/kgsl/kgsl_bo.c b/src/freedreno/drm/kgsl/kgsl_bo.c
+new file mode 100644
+index 00000000000..6e4124589fe
+--- /dev/null
++++ b/src/freedreno/drm/kgsl/kgsl_bo.c
+@@ -0,0 +1,208 @@
++#include "kgsl_priv.h"
++#include "util/os_mman.h"
++
++static uint64_t
++kgsl_bo_iova(struct fd_bo *bo)
++{
++    struct kgsl_bo *kgsl_bo = to_kgsl_bo(bo);
++    return kgsl_bo->iova;
++}
++
++static void
++kgsl_bo_set_name(struct fd_bo *bo, const char *fmt, va_list ap)
++{
++    /* This function is a no op for KGSL */
++    return;
++}
++
++static int
++kgsl_bo_offset(struct fd_bo *bo, uint64_t *offset)
++{
++    /* from tu_kgsl.c - offset for mmap needs to be */
++    /* the returned alloc id shifted over 12 */
++    *offset = bo->handle << 12;
++    return 0;
++}
++
++static int
++kgsl_bo_madvise(struct fd_bo *bo, int willneed)
++{
++    /* KGSL does not support this, so simply return willneed */
++    return willneed;
++}
++
++static int
++kgsl_bo_cpu_prep(struct fd_bo *bo, struct fd_pipe *pipe, uint32_t op)
++{
++    /* only need to handle implicit sync here which is a NOP for KGSL */
++    return 0;
++}
++
++void
++kgsl_bo_close_handle(struct fd_bo *bo)
++{
++    struct kgsl_gpumem_free_id req = {
++        .id = bo->handle
++    };
++
++    kgsl_pipe_safe_ioctl(bo->dev->fd, IOCTL_KGSL_GPUMEM_FREE_ID, &req);
++}
++
++static void
++kgsl_bo_destroy(struct fd_bo *bo)
++{
++    /* KGSL will immediately delete the BO when we close
++     * the handle, so wait on all fences to ensure
++     * the GPU is done using it before we destory it
++     */
++    for (uint32_t i = 0; i < bo->nr_fences; i++) {
++        struct fd_pipe *pipe = bo->fences[i]->pipe;
++        pipe->funcs->wait(pipe, bo->fences[i], ~0);
++    }
++
++    fd_bo_fini_common(bo);
++}
++
++static void *
++kgsl_bo_map(struct fd_bo *bo)
++{
++    struct kgsl_bo *kgsl_bo = to_kgsl_bo(bo);
++    if (!bo->map) {
++        if (kgsl_bo->bo_type == KGSL_BO_IMPORT) {
++            /* in `fd_bo_map` if it tries to mmap this BO. mmap logic is copied from
++             * https://android.googlesource.com/platform/hardware/libhardware/+/master/modules/gralloc/mapper.cpp#44
++             */
++            bo->map = os_mmap(0, bo->size, PROT_READ | PROT_WRITE, MAP_SHARED, kgsl_bo->import_fd, 0);
++        } else {
++            uint64_t offset;
++            int ret;
++
++            ret = bo->funcs->offset(bo, &offset);
++            if (ret) {
++                return NULL;
++            }
++
++            bo->map = os_mmap(0, bo->size, PROT_READ | PROT_WRITE, MAP_SHARED,
++                    bo->dev->fd, offset);
++            if (bo->map == MAP_FAILED) {
++                ERROR_MSG("mmap failed: %s", strerror(errno));
++                bo->map = NULL;
++            }
++        }
++
++        if (bo->map == MAP_FAILED) {
++            ERROR_MSG("mmap failed: %s", strerror(errno));
++            bo->map = NULL;
++        }
++    }
++    return bo->map;
++}
++
++static const struct fd_bo_funcs bo_funcs = {
++    .iova = kgsl_bo_iova,
++    .set_name = kgsl_bo_set_name,
++    .offset = kgsl_bo_offset,
++    .map = kgsl_bo_map,
++    .madvise = kgsl_bo_madvise,
++    .cpu_prep = kgsl_bo_cpu_prep,
++    .destroy = kgsl_bo_destroy,
++};
++
++/* Size is not used by KGSL */
++struct fd_bo *
++kgsl_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle)
++{
++    struct fd_bo *bo;
++    int ret;
++    struct kgsl_gpuobj_info req = {
++        .id = handle,
++    };
++
++    ret = kgsl_pipe_safe_ioctl(dev->fd,
++            IOCTL_KGSL_GPUOBJ_INFO, &req);
++
++    if (ret) {
++        ERROR_MSG("Failed to get handle info (%s)", strerror(errno));
++        return NULL;
++    }
++
++    struct kgsl_bo *kgsl_bo = calloc(1, sizeof(*kgsl_bo));
++    if (!kgsl_bo)
++        return NULL;
++
++    bo = &kgsl_bo->base;
++    bo->dev = dev;
++    bo->size = req.size;
++    bo->handle = req.id;
++    bo->funcs = &bo_funcs;
++
++    kgsl_bo->iova = req.gpuaddr;
++
++    fd_bo_init_common(bo, dev);
++
++    return bo;
++}
++
++struct fd_bo *
++kgsl_bo_from_dmabuf(struct fd_device *dev, int fd)
++{
++    struct fd_bo *bo;
++    struct kgsl_gpuobj_import_dma_buf import_dmabuf = {
++        .fd = fd,
++    };
++    struct kgsl_gpuobj_import req = {
++        .priv = (uintptr_t)&import_dmabuf,
++        .priv_len = sizeof(import_dmabuf),
++        .flags = 0,
++        .type = KGSL_USER_MEM_TYPE_DMABUF,
++    };
++    int ret;
++
++    ret = kgsl_pipe_safe_ioctl(dev->fd,
++            IOCTL_KGSL_GPUOBJ_IMPORT, &req);
++
++    if (ret) {
++        ERROR_MSG("Failed to import dma-buf (%s)", strerror(errno));
++        return NULL;
++    }
++
++    bo = fd_bo_from_handle(dev, req.id, 0);
++
++    struct kgsl_bo *kgsl_bo = to_kgsl_bo(bo);
++    kgsl_bo->bo_type = KGSL_BO_IMPORT;
++    kgsl_bo->import_fd = fd;
++
++    return bo;
++}
++
++struct fd_bo *
++kgsl_bo_new(struct fd_device *dev, uint32_t size, uint32_t flags)
++{
++    int ret;
++    struct fd_bo *bo;
++    struct kgsl_gpumem_alloc_id req = {
++        .size = size,
++    };
++
++    if (flags & FD_BO_GPUREADONLY)
++        req.flags |= KGSL_MEMFLAGS_GPUREADONLY;
++
++    ret = kgsl_pipe_safe_ioctl(dev->fd, IOCTL_KGSL_GPUMEM_ALLOC_ID, &req);
++
++    if (ret) {
++        ERROR_MSG("GPUMEM_ALLOC_ID failed (%s)", strerror(errno));
++        return NULL;
++    }
++
++    bo = kgsl_bo_from_handle(dev, size, req.id);
++
++    struct kgsl_bo *kgsl_bo = to_kgsl_bo(bo);
++    kgsl_bo->bo_type = KGSL_BO_NATIVE;
++
++    if (!bo) {
++        ERROR_MSG("Failed to allocate buffer object");
++        return NULL;
++    }
++
++    return bo;
++}
+diff --git a/src/freedreno/drm/kgsl/kgsl_device.c b/src/freedreno/drm/kgsl/kgsl_device.c
+new file mode 100644
+index 00000000000..702b6666731
+--- /dev/null
++++ b/src/freedreno/drm/kgsl/kgsl_device.c
+@@ -0,0 +1,44 @@
++#include "kgsl_priv.h"
++
++static const struct fd_device_funcs funcs = {
++    .bo_new = kgsl_bo_new,
++    .pipe_new = kgsl_pipe_new,
++    .bo_from_handle = kgsl_bo_from_handle,
++    .bo_from_dmabuf = kgsl_bo_from_dmabuf,
++    .bo_close_handle = kgsl_bo_close_handle,
++    .destroy = kgsl_device_destroy,
++};
++
++struct fd_device *
++kgsl_device_new(int fd)
++{
++    struct kgsl_device *kgsl_dev;
++    struct fd_device *dev;
++    struct kgsl_devinfo info;
++
++    /* Try to read the device info to detect if the FD is really KGSL */
++    if(kgsl_get_prop(fd, KGSL_PROP_DEVICE_INFO, &info, sizeof(info)))
++        return NULL;
++
++    kgsl_dev = calloc(1, sizeof(*kgsl_dev));
++    if (!kgsl_dev)
++      return NULL;
++
++    dev = &kgsl_dev->base;
++    dev->funcs = &funcs;
++    dev->fd = fd;
++    dev->version = FD_VERSION_ROBUSTNESS;
++    dev->features = FD_FEATURE_DIRECT_RESET | FD_FEATURE_IMPORT_DMABUF;
++
++    /* async submit_queue used for softpin deffered submits */
++    util_queue_init(&dev->submit_queue, "sq", 8, 1, 0, NULL);
++
++    dev->bo_size = sizeof(struct kgsl_bo);
++
++    return dev;
++}
++
++static void
++kgsl_device_destroy(struct fd_device *dev)
++{
++}
+diff --git a/src/freedreno/drm/kgsl/kgsl_pipe.c b/src/freedreno/drm/kgsl/kgsl_pipe.c
+new file mode 100644
+index 00000000000..7adec108dd0
+--- /dev/null
++++ b/src/freedreno/drm/kgsl/kgsl_pipe.c
+@@ -0,0 +1,223 @@
++#include "kgsl_priv.h"
++#include "freedreno_ringbuffer_sp.h"
++
++/* TODO this function is borrowed from turnip, can it be shared in some way? */
++int
++kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg)
++{
++   int ret;
++
++   do {
++      ret = ioctl(fd, request, arg);
++   } while (ret == -1 && (errno == EINTR || errno == EAGAIN));
++
++   return ret;
++}
++
++/* TODO this function is borrowed from turnip, can it be shared in some way?
++ * safe_ioctl is not enough as restarted waits would not adjust the timeout
++ * which could lead to waiting substantially longer than requested
++ */
++static int
++wait_timestamp_safe(int fd,
++                    unsigned int context_id,
++                    unsigned int timestamp,
++                    int64_t timeout_ms)
++{
++   int64_t start_time = os_time_get_nano();
++   struct kgsl_device_waittimestamp_ctxtid wait = {
++      .context_id = context_id,
++      .timestamp = timestamp,
++      .timeout = timeout_ms,
++   };
++
++   while (true) {
++      int ret = kgsl_pipe_safe_ioctl(fd, IOCTL_KGSL_DEVICE_WAITTIMESTAMP_CTXTID, &wait);
++
++      if (ret == -1 && (errno == EINTR || errno == EAGAIN)) {
++         int64_t current_time = os_time_get_nano();
++
++         /* update timeout to consider time that has passed since the start */
++         timeout_ms -= (current_time - start_time) / 1000000;
++         if (timeout_ms <= 0) {
++            errno = ETIME;
++            return -1;
++         }
++
++         wait.timeout = (unsigned int) timeout_ms;
++         start_time = current_time;
++      } else {
++         return ret;
++      }
++   }
++}
++
++int
++kgsl_get_prop(int fd, unsigned int type, void *value, size_t size)
++{
++   struct kgsl_device_getproperty getprop = {
++      .type = type,
++      .value = value,
++      .sizebytes = size,
++   };
++
++   return kgsl_pipe_safe_ioctl(fd, IOCTL_KGSL_DEVICE_GETPROPERTY, &getprop);
++}
++
++static int
++kgsl_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
++                    uint64_t *value)
++{
++   struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
++   switch (param) {
++   case FD_DEVICE_ID:
++   case FD_GPU_ID:
++      *value = kgsl_pipe->dev_id.gpu_id;
++      return 0;
++   case FD_GMEM_SIZE:
++      *value = kgsl_pipe->gmem_size;
++      return 0;
++   case FD_GMEM_BASE:
++      *value = kgsl_pipe->gmem_base;
++      return 0;
++   case FD_CHIP_ID:
++      *value = kgsl_pipe->dev_id.chip_id;
++      return 0;
++   case FD_NR_PRIORITIES:
++      /* Take from kgsl kmd source code, if device is a4xx or newer
++       * it has KGSL_PRIORITY_MAX_RB_LEVELS=4 priorities otherwise it just has one.
++       * https://android.googlesource.com/kernel/msm/+/refs/tags/android-13.0.0_r0.21/drivers/gpu/msm/kgsl.h#56
++       */
++      *value = kgsl_pipe->dev_id.gpu_id >= 400 ? 4 : 1;
++      return 0;
++   case FD_MAX_FREQ:
++      /* Explicity fault on MAX_FREQ as we don't have a way to convert
++       * timestamp values from KGSL into time values. If we use the default
++       * path an error message would be generated when this is simply an
++       * unsupported feature.
++       */
++      return -1;
++   default:
++      ERROR_MSG("invalid param id: %d", param);
++      return -1;
++   }
++}
++
++static int
++kgsl_pipe_set_param(struct fd_pipe *pipe, uint32_t param, uint64_t value)
++{
++    ERROR_MSG("kgsl_pipe_set_param not implemented");
++    return -1;
++}
++
++static int
++kgsl_pipe_wait(struct fd_pipe *pipe, const struct fd_fence *fence, uint64_t timeout)
++{
++    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
++    return wait_timestamp_safe(pipe->dev->fd, kgsl_pipe->queue_id, fence->kfence, timeout);
++}
++
++static void
++kgsl_pipe_destroy(struct fd_pipe *pipe)
++{
++    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
++    struct kgsl_drawctxt_destroy req = {
++        .drawctxt_id = kgsl_pipe->queue_id,
++    };
++
++    fd_pipe_sp_ringpool_fini(pipe);
++    kgsl_pipe_safe_ioctl(pipe->dev->fd, IOCTL_KGSL_DRAWCTXT_DESTROY, &req);
++    free(kgsl_pipe);
++}
++
++static int
++kgsl_reset_status(struct fd_pipe *pipe, enum fd_reset_status *status)
++{
++    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
++    uint32_t value = kgsl_pipe->queue_id;
++    int ret = kgsl_get_prop(pipe->dev->fd, KGSL_PROP_GPU_RESET_STAT, &value, sizeof(value));
++
++    if (!ret) {
++        switch (value) {
++        case KGSL_CTX_STAT_NO_ERROR:
++            *status = FD_RESET_NO_ERROR;
++            break;
++        case KGSL_CTX_STAT_GUILTY_CONTEXT_RESET_EXT:
++            *status = FD_RESET_GUILTY;
++            break;
++        case KGSL_CTX_STAT_INNOCENT_CONTEXT_RESET_EXT:
++            *status = FD_RESET_INNOCENT;
++            break;
++        case KGSL_CTX_STAT_UNKNOWN_CONTEXT_RESET_EXT:
++        default:
++            *status = FD_RESET_UNKNOWN;
++            break;
++        }
++    }
++
++    return ret;
++}
++
++static const struct fd_pipe_funcs pipe_funcs = {
++    .ringbuffer_new_object = fd_ringbuffer_sp_new_object,
++    .submit_new = kgsl_submit_sp_new,
++    .reset_status = kgsl_reset_status,
++    .flush = fd_pipe_sp_flush,
++    .wait = kgsl_pipe_wait,
++    .get_param = kgsl_pipe_get_param,
++    .set_param = kgsl_pipe_set_param,
++    .destroy = kgsl_pipe_destroy,
++};
++
++struct fd_pipe *kgsl_pipe_new(struct fd_device *dev, enum fd_pipe_id id,
++                              uint32_t prio)
++{
++    struct kgsl_pipe *kgsl_pipe = NULL;
++    struct fd_pipe *pipe = NULL;
++    kgsl_pipe = calloc(1, sizeof(*kgsl_pipe));
++    if (!kgsl_pipe) {
++        ERROR_MSG("allocation failed");
++        goto fail;
++    }
++
++    pipe = &kgsl_pipe->base;
++    pipe->dev = dev;
++    pipe->funcs = &pipe_funcs;
++
++    struct kgsl_devinfo info;
++    if(kgsl_get_prop(dev->fd, KGSL_PROP_DEVICE_INFO, &info, sizeof(info)))
++        goto fail;
++
++    uint64_t gmem_iova;
++    if(kgsl_get_prop(dev->fd, KGSL_PROP_UCHE_GMEM_VADDR, &gmem_iova, sizeof(gmem_iova)))
++        goto fail;
++
++    kgsl_pipe->dev_id.gpu_id =
++        ((info.chip_id >> 24) & 0xff) * 100 +
++        ((info.chip_id >> 16) & 0xff) * 10 +
++        ((info.chip_id >>  8) & 0xff);
++
++    kgsl_pipe->dev_id.chip_id = info.chip_id;
++    kgsl_pipe->gmem_size = info.gmem_sizebytes;
++    kgsl_pipe->gmem_base = gmem_iova;
++
++    struct kgsl_drawctxt_create req = {
++        .flags = KGSL_CONTEXT_SAVE_GMEM |
++                 KGSL_CONTEXT_NO_GMEM_ALLOC |
++                 KGSL_CONTEXT_PREAMBLE,
++    };
++
++    int ret = kgsl_pipe_safe_ioctl(dev->fd, IOCTL_KGSL_DRAWCTXT_CREATE, &req);
++    if(ret)
++        goto fail;
++
++    kgsl_pipe->queue_id = req.drawctxt_id;
++
++    fd_pipe_sp_ringpool_init(pipe);
++
++    return pipe;
++fail:
++    if (pipe)
++        fd_pipe_del(pipe);
++    return NULL;
++}
+diff --git a/src/freedreno/drm/kgsl/kgsl_priv.h b/src/freedreno/drm/kgsl/kgsl_priv.h
+new file mode 100644
+index 00000000000..ed65c952902
+--- /dev/null
++++ b/src/freedreno/drm/kgsl/kgsl_priv.h
+@@ -0,0 +1,54 @@
++#ifndef KGSL_PRIV_H
++#define KGSL_PRIV_H
++#include "freedreno_priv.h"
++
++/* TODO the KGSL kernel interface should probably be moved */
++/* into someplace common that both turnip and freedreno can use */
++#include "../../vulkan/msm_kgsl.h"
++
++int kgsl_get_prop(int fd, unsigned int type, void *value, size_t size);
++
++struct kgsl_device {
++    struct fd_device base;
++};
++FD_DEFINE_CAST(fd_device, kgsl_device);
++
++struct fd_device *kgsl_device_new(int fd);
++static void kgsl_device_destroy(struct fd_device *dev);
++
++struct kgsl_pipe {
++    struct fd_pipe base;
++
++    struct fd_dev_id dev_id;
++
++    uint32_t gmem_size;
++    uint64_t gmem_base;
++    uint32_t queue_id;
++};
++FD_DEFINE_CAST(fd_pipe, kgsl_pipe);
++
++struct fd_pipe *kgsl_pipe_new(struct fd_device *dev, enum fd_pipe_id id,
++                              uint32_t prio);
++int kgsl_pipe_safe_ioctl(int fd, unsigned long request, void *arg);
++struct fd_submit *kgsl_submit_sp_new(struct fd_pipe *pipe);
++
++struct kgsl_bo {
++    struct fd_bo base;
++    const char *name;
++    uint64_t iova;
++    uint32_t queue_id;
++    int import_fd; // fd for imported buffers
++
++    enum {
++        KGSL_BO_NATIVE,
++        KGSL_BO_IMPORT,
++    } bo_type;
++};
++FD_DEFINE_CAST(fd_bo, kgsl_bo);
++
++struct fd_bo *kgsl_bo_new(struct fd_device *dev, uint32_t size, uint32_t flags);
++struct fd_bo *kgsl_bo_from_dmabuf(struct fd_device *dev, int fd);
++struct fd_bo *kgsl_bo_from_handle(struct fd_device *dev, uint32_t size, uint32_t handle);
++void kgsl_bo_close_handle(struct fd_bo *bo);
++
++#endif
+diff --git a/src/freedreno/drm/kgsl/kgsl_ringbuffer_sp.c b/src/freedreno/drm/kgsl/kgsl_ringbuffer_sp.c
+new file mode 100644
+index 00000000000..e8b2842ac3d
+--- /dev/null
++++ b/src/freedreno/drm/kgsl/kgsl_ringbuffer_sp.c
+@@ -0,0 +1,119 @@
++#include "kgsl_priv.h"
++#include "freedreno_ringbuffer_sp.h"
++
++static int
++timestamp_to_fd(struct fd_pipe *pipe, uint32_t timestamp)
++{
++    int fd;
++    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
++    struct kgsl_timestamp_event event = {
++        .type = KGSL_TIMESTAMP_EVENT_FENCE,
++        .context_id = kgsl_pipe->queue_id,
++        .timestamp = timestamp,
++        .priv = &fd,
++        .len = sizeof(fd),
++    };
++
++    int ret = kgsl_pipe_safe_ioctl(pipe->dev->fd, IOCTL_KGSL_TIMESTAMP_EVENT, &event);
++    if (ret)
++        return -1;
++
++    return fd;
++}
++
++static int
++flush_submit_list(struct list_head *submit_list)
++{
++    struct fd_submit_sp *fd_submit = to_fd_submit_sp(last_submit(submit_list));
++    struct fd_pipe *pipe = fd_submit->base.pipe;
++    struct kgsl_pipe *kgsl_pipe = to_kgsl_pipe(pipe);
++    unsigned nr_cmds = 0;
++
++
++    MESA_TRACE_FUNC();
++
++    foreach_submit (submit, submit_list) {
++        assert(submit->pipe == &kgsl_pipe->base);
++        nr_cmds += to_fd_ringbuffer_sp(submit->primary)->u.nr_cmds;
++    }
++
++    struct kgsl_command_object cmds[nr_cmds];
++    unsigned cmd_idx = 0;
++    foreach_submit_safe (submit, submit_list) {
++        struct fd_ringbuffer_sp *deferred_primary =
++            to_fd_ringbuffer_sp(submit->primary);
++
++        for (unsigned i = 0; i < deferred_primary->u.nr_cmds; i++) {
++            struct fd_bo *ring_bo = deferred_primary->u.cmds[i].ring_bo;
++
++            cmds[cmd_idx++] = (struct kgsl_command_object) {
++                .offset = 0,
++                .gpuaddr = ring_bo->iova + submit_offset(ring_bo, deferred_primary->offset),
++                .size = deferred_primary->u.cmds[i].size,
++                .flags = KGSL_CMDLIST_IB,
++                .id = ring_bo->handle,
++            };
++        }
++
++        if (submit == last_submit(submit_list)) {
++            DEBUG_MSG("merged %u submits", cmd_idx);
++            break;
++        }
++
++        list_del(&submit->node);
++        fd_submit_del(submit);
++    }
++
++    struct kgsl_cmd_syncpoint_fence sync_fence = {
++        .fd = fd_submit->in_fence_fd,
++    };
++
++    struct kgsl_command_syncpoint sync = {
++        .type = KGSL_CMD_SYNCPOINT_TYPE_FENCE,
++        .size = sizeof(sync_fence),
++        .priv = (uintptr_t) &sync_fence,
++    };
++
++
++    struct kgsl_gpu_command req = {
++        .flags = KGSL_CMDBATCH_SUBMIT_IB_LIST,
++        .context_id = kgsl_pipe->queue_id,
++        .cmdlist = (uintptr_t) cmds,
++        .numcmds = cmd_idx,
++        .cmdsize = sizeof(struct kgsl_command_object),
++        .synclist = (uintptr_t) &sync,
++        .syncsize = sizeof(struct kgsl_command_syncpoint),
++        .numsyncs = sync_fence.fd != -1 ? 1 : 0,
++    };
++
++    int ret = kgsl_pipe_safe_ioctl(pipe->dev->fd, IOCTL_KGSL_GPU_COMMAND, &req);
++
++    if (ret) {
++        ERROR_MSG("submit failed %d (%s)", ret, strerror(errno));
++        goto fail;
++    }
++
++    fd_submit->out_fence->kfence = req.timestamp;
++
++    if  (fd_submit->out_fence->use_fence_fd) {
++        int fd = timestamp_to_fd(pipe, req.timestamp);
++        if (fd < 0) {
++            ERROR_MSG("Failed to create sync file for timestamp (%s)", strerror(errno));
++            goto fail;
++        }
++
++        fd_submit->out_fence->fence_fd = fd;
++    }
++
++    if (fd_submit->in_fence_fd != -1)
++        close(fd_submit->in_fence_fd);
++
++fail:
++    return ret;
++}
++
++struct fd_submit *
++kgsl_submit_sp_new(struct fd_pipe *pipe)
++{
++    return fd_submit_sp_new(pipe, flush_submit_list);
++}
+diff --git a/src/freedreno/drm/meson.build b/src/freedreno/drm/meson.build
+index 72b1137e277..a4cbf8e77f0 100644
+--- a/src/freedreno/drm/meson.build
++++ b/src/freedreno/drm/meson.build
+@@ -69,6 +69,17 @@ if freedreno_kmds.contains('virtio')
+   ]
+ endif
+ 
++libfreedreno_kgsl_files = files(
++  'kgsl/kgsl_device.c',
++  'kgsl/kgsl_bo.c',
++  'kgsl/kgsl_pipe.c',
++  'kgsl/kgsl_ringbuffer_sp.c',
++)
++
++if freedreno_kmds.contains('kgsl')
++  libfreedreno_drm_files += libfreedreno_kgsl_files
++endif
++
+ libfreedreno_drm = static_library(
+   'freedreno_drm',
+   [
+diff --git a/src/freedreno/ir3/ir3_compiler.c b/src/freedreno/ir3/ir3_compiler.c
+index ae631d478a3..b18b4a5f43b 100644
+--- a/src/freedreno/ir3/ir3_compiler.c
++++ b/src/freedreno/ir3/ir3_compiler.c
+@@ -308,9 +308,6 @@ ir3_compiler_create(struct fd_device *dev, const struct fd_dev_id *dev_id,
+    if (compiler->gen >= 5 && !(ir3_shader_debug & IR3_DBG_NOFP16))
+       compiler->nir_options.support_16bit_alu = true;
+ 
+-   if (!options->disable_cache)
+-      ir3_disk_cache_init(compiler);
+-
+    return compiler;
+ }
+ 
+diff --git a/src/freedreno/ir3/ir3_disk_cache.c b/src/freedreno/ir3/ir3_disk_cache.c
+index a7c39556956..2f16baafeab 100644
+--- a/src/freedreno/ir3/ir3_disk_cache.c
++++ b/src/freedreno/ir3/ir3_disk_cache.c
+@@ -56,7 +56,7 @@ ir3_disk_cache_init(struct ir3_compiler *compiler)
+       build_id_find_nhdr_for_addr(ir3_disk_cache_init);
+    assert(note && build_id_length(note) == 20); /* sha1 */
+ 
+-   const uint8_t *id_sha1 = build_id_data(note);
++   const uint8_t *id_sha1 = "1";
+    assert(id_sha1);
+ 
+    char timestamp[41];
+diff --git a/src/freedreno/meson.build b/src/freedreno/meson.build
+index cae09c88edb..a81f7b88e29 100644
+--- a/src/freedreno/meson.build
++++ b/src/freedreno/meson.build
+@@ -28,8 +28,8 @@ rnn_path = rnn_src_path + ':' + get_option('prefix') + '/' + rnn_install_path
+ dep_lua = dependency('lua54', 'lua53', 'lua52', 'lua', required: false,
+                      allow_fallback: true, version: '>=5.2')
+ 
+-dep_libarchive = dependency('libarchive', allow_fallback: true, required: false)
+-dep_libxml2 = dependency('libxml-2.0', allow_fallback: true, required: false)
++dep_libarchive = dependency('libarchive', allow_fallback: false, required: false)
++dep_libxml2 = dependency('libxml-2.0', allow_fallback: false, required: false)
+ prog_gzip = find_program('gzip', required: false)
+ 
+ install_fd_decode_tools = dep_libxml2.found() and prog_gzip.found() and \
+diff --git a/src/gallium/auxiliary/target-helpers/inline_sw_helper.h b/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
+index ddb67b3a25a..538d9c5b7b7 100644
+--- a/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
++++ b/src/gallium/auxiliary/target-helpers/inline_sw_helper.h
+@@ -8,6 +8,10 @@
+ #include "frontend/sw_winsys.h"
+ #include "target-helpers/inline_debug_helper.h"
+ 
++#include <stdio.h>
++#include <fcntl.h>
++#include <errno.h>
++
+ /* Helper function to choose and instantiate one of the software rasterizers:
+  * llvmpipe, softpipe.
+  */
+@@ -29,6 +33,18 @@
+ #include "d3d12/d3d12_public.h"
+ #endif
+ 
++#ifdef GALLIUM_ZINK
++#include "zink/zink_public.h"
++#endif
++
++#ifdef GALLIUM_FREEDRENO
++#include "freedreno/freedreno_public.h"
++#endif
++
++#ifdef GALLIUM_PANFROST
++#include "panfrost/pan_public.h"
++#endif
++
+ static inline struct pipe_screen *
+ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
+ {
+@@ -62,6 +78,30 @@ sw_screen_create_named(struct sw_winsys *winsys, const char *driver)
+       screen = d3d12_create_dxcore_screen(winsys, NULL);
+ #endif
+ 
++#if defined(GALLIUM_FREEDRENO)
++   if(screen == NULL && strcmp(driver, "freedreno") == 0) {
++      int kbase_device_fd = open("/dev/kgsl-3d0", O_RDWR | O_CLOEXEC | O_NONBLOCK);
++      if (kbase_device_fd == -1) { 
++         printf("FD_OSMESA: Failed to open kbase device: %s", strerror(errno));
++      } else {
++         struct pipe_screen_config dummy_cfg = { NULL, NULL };
++         screen = fd_screen_create(kbase_device_fd, &dummy_cfg, NULL);
++      }
++   }
++#endif
++
++#if defined(GALLIUM_PANFROST)
++   if(screen == NULL && strcmp(driver, "panfrost") == 0) {
++      int kbase_device_fd = open("/dev/mali0", O_RDWR | O_CLOEXEC | O_NONBLOCK);
++      if (kbase_device_fd == -1) { 
++         printf("PAN_OSMESA: Failed to open kbase device: %s", strerror(errno));
++      } else {
++         struct pipe_screen_config dummy_cfg = { NULL, NULL };
++         screen = panfrost_create_screen(kbase_device_fd, &dummy_cfg, NULL);
++      }
++   }
++#endif
++
+    return screen ? debug_screen_wrap(screen) : NULL;
+ }
+ 
+diff --git a/src/gallium/drivers/freedreno/freedreno_context.c b/src/gallium/drivers/freedreno/freedreno_context.c
+index e7f0981514b..e88f74ecc08 100644
+--- a/src/gallium/drivers/freedreno/freedreno_context.c
++++ b/src/gallium/drivers/freedreno/freedreno_context.c
+@@ -498,6 +498,22 @@ fd_get_device_reset_status(struct pipe_context *pctx)
+    return status;
+ }
+ 
++static enum pipe_reset_status
++fd_get_device_reset_status_direct(struct pipe_context *pctx)
++{
++   struct fd_context *ctx = fd_context(pctx);
++   enum pipe_reset_status status_list[] = {
++      [FD_RESET_NO_ERROR] = PIPE_NO_RESET,
++      [FD_RESET_GUILTY] = PIPE_GUILTY_CONTEXT_RESET,
++      [FD_RESET_INNOCENT] = PIPE_INNOCENT_CONTEXT_RESET,
++      [FD_RESET_UNKNOWN] = PIPE_UNKNOWN_CONTEXT_RESET,
++   };
++   enum fd_reset_status fd_status;
++   ASSERTED int ret = fd_pipe_get_reset_status(ctx->pipe, &fd_status);
++   assert(!ret);
++   return status_list[fd_status];
++}
++
+ static void
+ fd_trace_record_ts(struct u_trace *ut, void *cs, void *timestamps,
+                    unsigned idx, bool end_of_pipe)
+@@ -663,11 +679,6 @@ fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
+ 
+    ctx->in_fence_fd = -1;
+ 
+-   if (fd_device_version(screen->dev) >= FD_VERSION_ROBUSTNESS) {
+-      ctx->context_reset_count = fd_get_reset_count(ctx, true);
+-      ctx->global_reset_count = fd_get_reset_count(ctx, false);
+-   }
+-
+    simple_mtx_init(&ctx->gmem_lock, mtx_plain);
+ 
+    /* need some sane default in case gallium frontends don't
+@@ -689,6 +700,14 @@ fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
+    pctx->texture_barrier = fd_texture_barrier;
+    pctx->memory_barrier = fd_memory_barrier;
+ 
++   if (fd_get_features(screen->dev) & FD_FEATURE_DIRECT_RESET) {
++      pctx->get_device_reset_status = fd_get_device_reset_status_direct;
++   } else if(fd_device_version(screen->dev) >= FD_VERSION_ROBUSTNESS) {
++      ctx->context_reset_count = fd_get_reset_count(ctx, true);
++      ctx->global_reset_count = fd_get_reset_count(ctx, false);
++      pctx->get_device_reset_status = fd_get_device_reset_status;
++   }
++
+    pctx->stream_uploader = u_upload_create_default(pctx);
+    if (!pctx->stream_uploader)
+       goto fail;
+diff --git a/src/gallium/drivers/freedreno/freedreno_public.h b/src/gallium/drivers/freedreno/freedreno_public.h
+new file mode 100644
+index 00000000000..d6779da1b31
+--- /dev/null
++++ b/src/gallium/drivers/freedreno/freedreno_public.h
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (C) 2018 Alyssa Rosenzweig
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the next
++ * paragraph) shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifndef FD_PUBLIC_H
++#define FD_PUBLIC_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct pipe_screen;
++struct pipe_screen_config;
++struct renderonly;
++
++struct pipe_screen *fd_screen_create(int fd, const struct pipe_screen_config *config, struct renderonly *ro);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+\ No newline at end of file
+diff --git a/src/gallium/drivers/freedreno/freedreno_screen.c b/src/gallium/drivers/freedreno/freedreno_screen.c
+index d04ab107eef..98793460574 100644
+--- a/src/gallium/drivers/freedreno/freedreno_screen.c
++++ b/src/gallium/drivers/freedreno/freedreno_screen.c
+@@ -65,6 +65,7 @@
+ #include "ir3/ir3_descriptor.h"
+ #include "ir3/ir3_gallium.h"
+ #include "ir3/ir3_nir.h"
++#include "freedreno_public.h"
+ 
+ /* clang-format off */
+ static const struct debug_named_value fd_debug_options[] = {
+@@ -625,6 +626,11 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
+       return 0;
+    case PIPE_CAP_THROTTLE:
+       return screen->driconf.enable_throttling;
++   case PIPE_CAP_DMABUF:
++      if (fd_get_features(screen->dev) & FD_FEATURE_IMPORT_DMABUF)
++         return DRM_PRIME_CAP_IMPORT;
++      /* Fallthough to default case */
++      FALLTHROUGH;
+    default:
+       return u_pipe_screen_get_param_defaults(pscreen, param);
+    }
+@@ -1062,7 +1068,7 @@ fd_screen_create(int fd,
+                  const struct pipe_screen_config *config,
+                  struct renderonly *ro)
+ {
+-   struct fd_device *dev = fd_device_new_dup(fd);
++   struct fd_device *dev = fd_device_new(fd);
+    if (!dev)
+       return NULL;
+ 
+@@ -1168,24 +1174,10 @@ fd_screen_create(int fd,
+ 
+    screen->has_syncobj = fd_has_syncobj(screen->dev);
+ 
+-   /* parse driconf configuration now for device specific overrides: */
+-   driParseConfigFiles(config->options, config->options_info, 0, "msm",
+-                       NULL, fd_dev_name(screen->dev_id), NULL, 0, NULL, 0);
+-
+-   screen->driconf.conservative_lrz =
+-         !driQueryOptionb(config->options, "disable_conservative_lrz");
+-   screen->driconf.enable_throttling =
+-         !driQueryOptionb(config->options, "disable_throttling");
+-
+    struct sysinfo si;
+    sysinfo(&si);
+    screen->ram_size = si.totalram;
+ 
+-   DBG("Pipe Info:");
+-   DBG(" GPU-id:          %s", fd_dev_name(screen->dev_id));
+-   DBG(" Chip-id:         0x%016"PRIx64, screen->chip_id);
+-   DBG(" GMEM size:       0x%08x", screen->gmemsize_bytes);
+-
+    const struct fd_dev_info info = fd_dev_info(screen->dev_id);
+    if (!info.chip) {
+       mesa_loge("unsupported GPU: a%03d", screen->gpu_id);
+@@ -1234,11 +1226,6 @@ fd_screen_create(int fd,
+       if (screen->primtypes[i])
+          screen->primtypes_mask |= (1 << i);
+ 
+-   if (FD_DBG(PERFC)) {
+-      screen->perfcntr_groups =
+-         fd_perfcntrs(screen->dev_id, &screen->num_perfcntr_groups);
+-   }
+-
+    /* NOTE: don't enable if we have too old of a kernel to support
+     * growable cmdstream buffers, since memory requirement for cmdstream
+     * buffers would be too much otherwise.
+diff --git a/src/gallium/drivers/freedreno/meson.build b/src/gallium/drivers/freedreno/meson.build
+index 0d66d2c1836..017e4a3c973 100644
+--- a/src/gallium/drivers/freedreno/meson.build
++++ b/src/gallium/drivers/freedreno/meson.build
+@@ -19,6 +19,7 @@
+ # SOFTWARE.
+ 
+ files_libfreedreno = files(
++  'freedreno_public.h',
+   'driinfo_freedreno.h',
+   'freedreno_autotune.c',
+   'freedreno_autotune.h',
+diff --git a/src/gallium/drivers/zink/zink_bo.c b/src/gallium/drivers/zink/zink_bo.c
+index 2c5e78c1b7a..43de5383d4b 100644
+--- a/src/gallium/drivers/zink/zink_bo.c
++++ b/src/gallium/drivers/zink/zink_bo.c
+@@ -35,7 +35,7 @@
+ #include "zink_screen.h"
+ #include "util/u_hash_table.h"
+ 
+-#if !defined(__APPLE__) && !defined(_WIN32)
++#if !defined(__APPLE__) && !defined(_WIN32) && !defined(__ANDROID__)
+ #define ZINK_USE_DMABUF
+ #include <xf86drm.h>
+ #endif
+diff --git a/src/gallium/drivers/zink/zink_context.c b/src/gallium/drivers/zink/zink_context.c
+index 8978ea2f2a1..31c9f38f012 100644
+--- a/src/gallium/drivers/zink/zink_context.c
++++ b/src/gallium/drivers/zink/zink_context.c
+@@ -3353,13 +3353,13 @@ static void
+ reapply_color_write(struct zink_context *ctx)
+ {
+    struct zink_screen *screen = zink_screen(ctx->base.screen);
+-   assert(screen->info.have_EXT_color_write_enable);
++   if(!screen->info.have_EXT_color_write_enable) return;
+    const VkBool32 enables[PIPE_MAX_COLOR_BUFS] = {1, 1, 1, 1, 1, 1, 1, 1};
+    const VkBool32 disables[PIPE_MAX_COLOR_BUFS] = {0};
+    const unsigned max_att = MIN2(PIPE_MAX_COLOR_BUFS, screen->info.props.limits.maxColorAttachments);
+    VKCTX(CmdSetColorWriteEnableEXT)(ctx->batch.state->cmdbuf, max_att, ctx->disable_color_writes ? disables : enables);
+    VKCTX(CmdSetColorWriteEnableEXT)(ctx->batch.state->reordered_cmdbuf, max_att, enables);
+-   assert(screen->info.have_EXT_extended_dynamic_state);
++   if(!screen->info.have_EXT_extended_dynamic_state) return;
+    if (ctx->dsa_state)
+       VKCTX(CmdSetDepthWriteEnable)(ctx->batch.state->cmdbuf, ctx->disable_color_writes ? VK_FALSE : ctx->dsa_state->hw_state.depth_write);
+ }
+diff --git a/src/gallium/drivers/zink/zink_screen.c b/src/gallium/drivers/zink/zink_screen.c
+index 0362d53de5e..4cae8106bc3 100644
+--- a/src/gallium/drivers/zink/zink_screen.c
++++ b/src/gallium/drivers/zink/zink_screen.c
+@@ -274,9 +274,11 @@ disk_cache_init(struct zink_screen *screen)
+    /* Hash in the zink driver build. */
+    const struct build_id_note *note =
+        build_id_find_nhdr_for_addr(disk_cache_init);
+-   unsigned build_id_len = build_id_length(note);
+-   assert(note && build_id_len == 20); /* sha1 */
+-   _mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
++   if (note != NULL) {
++      unsigned build_id_len = build_id_length(note);
++      assert(note && build_id_len == 20); /* sha1 */
++      _mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
++   }
+ #endif
+ 
+    /* Hash in the Vulkan pipeline cache UUID to identify the combination of
+@@ -3181,7 +3183,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
+ 
+    u_trace_state_init();
+ 
+-   screen->loader_lib = util_dl_open(VK_LIBNAME);
++   screen->loader_lib = (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);
+    if (!screen->loader_lib) {
+       mesa_loge("ZINK: failed to load "VK_LIBNAME);
+       goto fail;
+@@ -3196,15 +3198,6 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
+    }
+ 
+    screen->instance_info.loader_version = zink_get_loader_version(screen);
+-   if (config) {
+-      driParseConfigFiles(config->options, config->options_info, 0, "zink",
+-                          NULL, NULL, NULL, 0, NULL, 0);
+-      screen->driconf.dual_color_blend_by_location = driQueryOptionb(config->options, "dual_color_blend_by_location");
+-      screen->driconf.glsl_correct_derivatives_after_discard = driQueryOptionb(config->options, "glsl_correct_derivatives_after_discard");
+-      //screen->driconf.inline_uniforms = driQueryOptionb(config->options, "radeonsi_inline_uniforms");
+-      screen->driconf.emulate_point_smooth = driQueryOptionb(config->options, "zink_emulate_point_smooth");
+-      screen->driconf.zink_shader_object_enable = driQueryOptionb(config->options, "zink_shader_object_enable");
+-   }
+ 
+    if (!zink_create_instance(screen, dev_major > 0 && dev_major < 255))
+       goto fail;
+diff --git a/src/gallium/targets/osmesa/meson.build b/src/gallium/targets/osmesa/meson.build
+index d16e7858c63..f4b7a8efaf4 100644
+--- a/src/gallium/targets/osmesa/meson.build
++++ b/src/gallium/targets/osmesa/meson.build
+@@ -55,10 +55,10 @@ libosmesa = shared_library(
+     libmesa, libgallium, libws_null, osmesa_link_with,
+   ],
+   dependencies : [
+-    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_swrast
++    dep_ws2_32, dep_selinux, dep_thread, dep_clock, dep_unwind, driver_freedreno, dep_libdrm, driver_zink, driver_swrast, driver_panfrost, driver_kmsro
+   ],
+   name_prefix : host_machine.system() == 'windows' ? '' : [],  # otherwise mingw will create libosmesa.dll
+-  soversion : host_machine.system() == 'windows' ? '' : '8',
++  soversion : '',
+   version : '8.0.0',
+   darwin_versions : '9.0.0',
+   install : true,
+diff --git a/src/util/os_misc.c b/src/util/os_misc.c
+index 7261577488f..7df95a1c195 100644
+--- a/src/util/os_misc.c
++++ b/src/util/os_misc.c
+@@ -56,7 +56,6 @@
+ #  define LOG_TAG "MESA"
+ #  include <unistd.h>
+ #  include <log/log.h>
+-#  include <cutils/properties.h>
+ #elif DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || DETECT_OS_HURD || DETECT_OS_MANAGARM
+ #  include <unistd.h>
+ #elif DETECT_OS_OPENBSD || DETECT_OS_FREEBSD
+@@ -128,53 +127,6 @@ os_log_message(const char *message)
+ #endif
+ }
+ 
+-#if DETECT_OS_ANDROID
+-#  include <ctype.h>
+-#  include "c11/threads.h"
+-
+-/**
+- * Get an option value from android's property system, as a fallback to
+- * getenv() (which is generally less useful on android due to processes
+- * typically being forked from the zygote.
+- *
+- * The option name used for getenv is translated into a property name
+- * by:
+- *
+- *  1) convert to lowercase
+- *  2) replace '_' with '.'
+- *  3) if necessary, prepend "mesa."
+- *
+- * For example:
+- *  - MESA_EXTENSION_OVERRIDE -> mesa.extension.override
+- *  - GALLIUM_HUD -> mesa.gallium.hud
+- *
+- */
+-static char *
+-os_get_android_option(const char *name)
+-{
+-   static thread_local char os_android_option_value[PROPERTY_VALUE_MAX];
+-   char key[PROPERTY_KEY_MAX];
+-   char *p = key, *end = key + PROPERTY_KEY_MAX;
+-   /* add "mesa." prefix if necessary: */
+-   if (strstr(name, "MESA_") != name)
+-      p += strlcpy(p, "mesa.", end - p);
+-   p += strlcpy(p, name, end - p);
+-   for (int i = 0; key[i]; i++) {
+-      if (key[i] == '_') {
+-         key[i] = '.';
+-      } else {
+-         key[i] = tolower(key[i]);
+-      }
+-   }
+-
+-   int len = property_get(key, os_android_option_value, NULL);
+-   if (len > 1) {
+-      return os_android_option_value;
+-   }
+-   return NULL;
+-}
+-#endif
+-
+ #if DETECT_OS_WINDOWS
+ 
+ /* getenv doesn't necessarily reflect changes to the environment
+@@ -195,11 +147,6 @@ const char *
+ os_get_option(const char *name)
+ {
+    const char *opt = getenv(name);
+-#if DETECT_OS_ANDROID
+-   if (!opt) {
+-      opt = os_get_android_option(name);
+-   }
+-#endif
+    return opt;
+ }
+ 
+diff --git a/src/util/perf/cpu_trace.h b/src/util/perf/cpu_trace.h
+index 6cebb51bafd..ade4453abec 100644
+--- a/src/util/perf/cpu_trace.h
++++ b/src/util/perf/cpu_trace.h
+@@ -27,20 +27,6 @@
+       if (unlikely(util_perfetto_is_tracing_enabled()))                      \
+          util_perfetto_trace_end();                                          \
+    } while (0)
+-
+-/* NOTE: for now disable atrace for C++ to workaround a ndk bug with ordering
+- * between stdatomic.h and atomic.h.  See:
+- *
+- *   https://github.com/android/ndk/issues/1178
+- */
+-#elif defined(ANDROID) && !defined(__cplusplus)
+-
+-#include <cutils/trace.h>
+-
+-#define _MESA_TRACE_BEGIN(name)                                              \
+-   atrace_begin(ATRACE_TAG_GRAPHICS, name)
+-#define _MESA_TRACE_END() atrace_end(ATRACE_TAG_GRAPHICS)
+-
+ #else
+ 
+ #define _MESA_TRACE_BEGIN(name)
+diff --git a/src/util/u_debug_stack_android.cpp b/src/util/u_debug_stack_android.cpp
+index 4481771baf9..f17f4f3ad8e 100644
+--- a/src/util/u_debug_stack_android.cpp
++++ b/src/util/u_debug_stack_android.cpp
+@@ -25,8 +25,6 @@
+ 
+ #if WITH_LIBBACKTRACE
+ 
+-#include <backtrace/Backtrace.h>
+-
+ #include "util/simple_mtx.h"
+ #include "util/u_debug.h"
+ #include "util/hash_table.h"
+@@ -55,56 +53,12 @@ debug_backtrace_capture(debug_stack_frame *backtrace,
+                         unsigned start_frame,
+                         unsigned nr_frames)
+ {
+-   Backtrace *bt;
+-
+-   if (!nr_frames)
+-      return;
+-
+-   bt = Backtrace::Create(BACKTRACE_CURRENT_PROCESS,
+-                          BACKTRACE_CURRENT_THREAD);
+-   if (bt == NULL) {
+-      for (unsigned i = 0; i < nr_frames; i++)
+-         backtrace[i].procname = NULL;
+-      return;
+-   }
+-
+-   /* Add one to exclude this call. Unwind already ignores itself. */
+-   bt->Unwind(start_frame + 1);
+-
+-   simple_mtx_lock(&table_mutex);
+-
+-   for (unsigned i = 0; i < nr_frames; i++) {
+-      const backtrace_frame_data_t* frame = bt->GetFrame(i);
+-      if (frame) {
+-         backtrace[i].procname = intern_symbol(frame->func_name.c_str());
+-         backtrace[i].start_ip = frame->pc;
+-         backtrace[i].off = frame->func_offset;
+-         backtrace[i].map = intern_symbol(frame->map.Name().c_str());
+-         backtrace[i].map_off = frame->rel_pc;
+-      } else {
+-         backtrace[i].procname = NULL;
+-      }
+-   }
+-
+-   simple_mtx_unlock(&table_mutex);
+-
+-   delete bt;
+ }
+ 
+ void
+ debug_backtrace_dump(const debug_stack_frame *backtrace,
+                      unsigned nr_frames)
+ {
+-   for (unsigned i = 0; i < nr_frames; i++) {
+-      if (backtrace[i].procname)
+-         debug_printf(
+-            "%s(+0x%x)\t%012" PRIx64 ": %s+0x%x\n",
+-            backtrace[i].map,
+-            backtrace[i].map_off,
+-            backtrace[i].start_ip,
+-            backtrace[i].procname,
+-            backtrace[i].off);
+-   }
+ }
+ 
+ void
+@@ -112,16 +66,6 @@ debug_backtrace_print(FILE *f,
+                       const debug_stack_frame *backtrace,
+                       unsigned nr_frames)
+ {
+-   for (unsigned i = 0; i < nr_frames; i++) {
+-      if (backtrace[i].procname)
+-         fprintf(f,
+-                 "%s(+0x%x)\t%012" PRIx64 ": %s+0x%x\n",
+-                 backtrace[i].map,
+-                 backtrace[i].map_off,
+-                 backtrace[i].start_ip,
+-                 backtrace[i].procname,
+-                 backtrace[i].off);
+-   }
+ }
+ 
+ #else
