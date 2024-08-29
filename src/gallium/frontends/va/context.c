@@ -103,7 +103,7 @@ static struct VADriverVTable vtable =
    &vlVaExportSurfaceHandle,
 #endif
 #if VA_CHECK_VERSION(1, 15, 0)
-   NULL, /* vaSyncSurface2 */
+   &vlVaSyncSurface2,
    &vlVaSyncBuffer,
 #endif
 #if VA_CHECK_VERSION(1, 21, 0)
@@ -145,8 +145,10 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    case VA_DISPLAY_GLX:
    case VA_DISPLAY_X11:
       drv->vscreen = vl_dri3_screen_create(ctx->native_dpy, ctx->x11_screen);
+#ifdef HAVE_X11_DRI2
       if (!drv->vscreen)
          drv->vscreen = vl_dri2_screen_create(ctx->native_dpy, ctx->x11_screen);
+#endif
       if (!drv->vscreen)
          drv->vscreen = vl_xlib_swrast_screen_create(ctx->native_dpy, ctx->x11_screen);
       break;
@@ -188,14 +190,20 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    if (!drv->htab)
       goto error_htab;
 
-   if (!vl_compositor_init(&drv->compositor, drv->pipe))
-      goto error_compositor;
-   if (!vl_compositor_init_state(&drv->cstate, drv->pipe))
-      goto error_compositor_state;
+   bool can_init_compositor = (drv->vscreen->pscreen->get_param(drv->vscreen->pscreen, PIPE_CAP_GRAPHICS) ||
+                              drv->vscreen->pscreen->get_param(drv->vscreen->pscreen, PIPE_CAP_COMPUTE));
 
-   vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, &drv->csc);
-   if (!vl_compositor_set_csc_matrix(&drv->cstate, (const vl_csc_matrix *)&drv->csc, 1.0f, 0.0f))
-      goto error_csc_matrix;
+   if (can_init_compositor) {
+      if (!vl_compositor_init(&drv->compositor, drv->pipe))
+         goto error_compositor;
+      if (!vl_compositor_init_state(&drv->cstate, drv->pipe))
+         goto error_compositor_state;
+
+      vl_csc_get_matrix(VL_CSC_COLOR_STANDARD_BT_601, NULL, true, &drv->csc);
+      if (!vl_compositor_set_csc_matrix(&drv->cstate, (const vl_csc_matrix *)&drv->csc, 1.0f, 0.0f))
+         goto error_csc_matrix;
+   }
+
    (void) mtx_init(&drv->mutex, mtx_plain);
 
    ctx->pDriverData = (void *)drv;
@@ -208,7 +216,11 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    ctx->max_attributes = 1;
    ctx->max_image_formats = VL_VA_MAX_IMAGE_FORMATS;
    ctx->max_subpic_formats = 1;
+#if VA_CHECK_VERSION(1, 15, 0)
+   ctx->max_display_attributes = 1; /* VADisplayPCIID */
+#else
    ctx->max_display_attributes = 0;
+#endif
 
    snprintf(drv->vendor_string, sizeof(drv->vendor_string),
             "Mesa Gallium driver " PACKAGE_VERSION " for %s",
@@ -218,10 +230,12 @@ VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
    return VA_STATUS_SUCCESS;
 
 error_csc_matrix:
-   vl_compositor_cleanup_state(&drv->cstate);
+   if (can_init_compositor)
+      vl_compositor_cleanup_state(&drv->cstate);
 
 error_compositor_state:
-   vl_compositor_cleanup(&drv->compositor);
+   if (can_init_compositor)
+      vl_compositor_cleanup(&drv->compositor);
 
 error_compositor:
    handle_table_destroy(drv->htab);
@@ -360,7 +374,7 @@ vlVaCreateContext(VADriverContextP ctx, VAConfigID config_id, int picture_width,
          context->desc.h264enc.frame_idx = util_hash_table_create_ptr_keys();
          break;
       case PIPE_VIDEO_FORMAT_HEVC:
-         context->desc.h265enc.rc.rate_ctrl_method = config->rc;
+         context->desc.h265enc.rc[0].rate_ctrl_method = config->rc;
          context->desc.h265enc.frame_idx = util_hash_table_create_ptr_keys();
          break;
       case PIPE_VIDEO_FORMAT_AV1:
@@ -369,6 +383,7 @@ vlVaCreateContext(VADriverContextP ctx, VAConfigID config_id, int picture_width,
       default:
          break;
       }
+      context->desc.base.packed_headers = config->packed_headers;
    }
 
    context->surfaces = _mesa_set_create(NULL, _mesa_hash_pointer, _mesa_key_pointer_equal);
@@ -444,6 +459,8 @@ vlVaDestroyContext(VADriverContextP ctx, VAContextID context_id)
       FREE(context->deint);
    }
    FREE(context->desc.base.decrypt_key);
+   FREE(context->bs.buffers);
+   FREE(context->bs.sizes);
    FREE(context);
    handle_table_remove(drv->htab, context_id);
    mtx_unlock(&drv->mutex);

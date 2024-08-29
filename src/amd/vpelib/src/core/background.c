@@ -35,8 +35,10 @@ void vpe_create_bg_segments(
     struct stream_ctx  *stream_ctx = &(vpe_priv->stream_ctx[0]);
     int32_t             vp_x       = stream_ctx->stream.scaling_info.src_rect.x;
     int32_t             vp_y       = stream_ctx->stream.scaling_info.src_rect.y;
-    uint16_t            src_div    = vpe_is_yuv420(stream_ctx->stream.surface_info.format) ? 2 : 1;
-    uint16_t            dst_div    = vpe_is_yuv420(vpe_priv->output_ctx.surface.format) ? 2 : 1;
+    uint16_t            src_h_div  = vpe_is_yuv420(stream_ctx->stream.surface_info.format) ? 2 : 1;
+    uint16_t            src_v_div  = vpe_is_yuv420(stream_ctx->stream.surface_info.format) ? 2 : 1;
+    uint16_t            dst_h_div  = vpe_is_yuv420(vpe_priv->output_ctx.surface.format) ? 2 : 1;
+    uint16_t            dst_v_div  = vpe_is_yuv420(vpe_priv->output_ctx.surface.format) ? 2 : 1;
 
     for (gap_index = 0; gap_index < gaps_cnt; gap_index++) {
 
@@ -60,7 +62,8 @@ void vpe_create_bg_segments(
         if (vpe_is_yuv420(scaler_data->format)) {
             scaler_data->ratios.horz_c = vpe_fixpt_from_fraction(1, 2);
             scaler_data->ratios.vert_c = vpe_fixpt_from_fraction(1, 2);
-        } else {
+        }
+        else {
             scaler_data->ratios.horz_c = vpe_fixpt_one;
             scaler_data->ratios.vert_c = vpe_fixpt_one;
         }
@@ -76,18 +79,18 @@ void vpe_create_bg_segments(
         scaler_data->viewport.width  = VPE_MIN_VIEWPORT_SIZE;
         scaler_data->viewport.height = VPE_MIN_VIEWPORT_SIZE;
 
-        scaler_data->viewport_c.x      = scaler_data->viewport.x / src_div;
-        scaler_data->viewport_c.y      = scaler_data->viewport.y / src_div;
-        scaler_data->viewport_c.width  = scaler_data->viewport.width / src_div;
-        scaler_data->viewport_c.height = scaler_data->viewport.height / src_div;
+        scaler_data->viewport_c.x      = scaler_data->viewport.x / src_h_div;
+        scaler_data->viewport_c.y      = scaler_data->viewport.y / src_v_div;
+        scaler_data->viewport_c.width  = scaler_data->viewport.width / src_h_div;
+        scaler_data->viewport_c.height = scaler_data->viewport.height / src_v_div;
 
         /* destination viewport */
         scaler_data->dst_viewport = gaps[gap_index];
 
-        scaler_data->dst_viewport_c.x      = scaler_data->dst_viewport.x / dst_div;
-        scaler_data->dst_viewport_c.y      = scaler_data->dst_viewport.y / dst_div;
-        scaler_data->dst_viewport_c.width  = scaler_data->dst_viewport.width / dst_div;
-        scaler_data->dst_viewport_c.height = scaler_data->dst_viewport.height / dst_div;
+        scaler_data->dst_viewport_c.x      = scaler_data->dst_viewport.x / dst_h_div;
+        scaler_data->dst_viewport_c.y      = scaler_data->dst_viewport.y / dst_v_div;
+        scaler_data->dst_viewport_c.width  = scaler_data->dst_viewport.width / dst_h_div;
+        scaler_data->dst_viewport_c.height = scaler_data->dst_viewport.height / dst_v_div;
 
         /* taps and inits */
         scaler_data->taps.h_taps = scaler_data->taps.v_taps = 4;
@@ -107,22 +110,14 @@ void vpe_create_bg_segments(
         VPE_ASSERT(gaps_cnt - gap_index - 1 <= (uint16_t)0xF);
 
         // background takes stream_idx 0 as its input
-        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].inputs[0].stream_idx = 0;
-        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].dst_viewport   = scaler_data->dst_viewport;
-        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].dst_viewport_c = scaler_data->dst_viewport_c;
-        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].num_inputs     = 1;
-        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].ops            = ops;
-        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].cd = (uint8_t)(gaps_cnt - gap_index - 1);
-        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].tm_enabled =
-            false; // currently only support frontend tm
-
-        if (vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].cd == (gaps_cnt - 1)) {
-            vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].is_begin = true;
-        }
-
-        if (vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].cd == 0) {
-            vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].is_end = true;
-        }
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].inputs[0].stream_idx      = 0;
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].num_outputs               = 1;
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].outputs[0].dst_viewport   = scaler_data->dst_viewport;
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].outputs[0].dst_viewport_c = scaler_data->dst_viewport_c;
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].num_inputs                = 1;
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].ops                       = ops;
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].cd                        = (uint8_t)(gaps_cnt - gap_index - 1);
+        vpe_priv->vpe_cmd_info[vpe_priv->num_vpe_cmds].tm_enabled                = false; // currently only support frontend tm
 
         vpe_priv->num_vpe_cmds++;
     }
@@ -160,7 +155,11 @@ uint16_t vpe_find_bg_gaps(struct vpe_priv *vpe_priv, const struct vpe_rect *targ
     struct vpe_rect *dst_viewport_rect;
     bool             full_bg       = false;
     const uint32_t   max_seg_width = vpe_priv->pub.caps->plane_caps.max_viewport_width;
+#ifdef VPE_BUILD_1_1
+    const uint16_t num_multiple = vpe_priv->vpe_num_instance ? vpe_priv->vpe_num_instance : 1;
+#else
     const uint16_t num_multiple = 1;
+#endif
 
     num_segs          = vpe_priv->stream_ctx[0].num_segments;
     dst_viewport_rect = &(vpe_priv->stream_ctx[0].segment_ctx[0].scaler_data.dst_viewport);

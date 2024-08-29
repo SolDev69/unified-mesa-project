@@ -1,38 +1,113 @@
 /*
  * Copyright 2023 Pavel Ondračka <pavel.ondracka@gmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * on the rights to use, copy, modify, merge, publish, distribute, sub
- * license, and/or sell copies of the Software, and to permit persons to whom
- * the Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHOR(S) AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
- * USE OR OTHER DEALINGS IN THE SOFTWARE. */
+ * SPDX-License-Identifier: MIT
+ */
 
 #include "r300_nir.h"
 
 #include "compiler/nir/nir_builder.h"
 #include "r300_screen.h"
 
+bool
+r300_is_only_used_as_float(const nir_alu_instr *instr)
+{
+   nir_foreach_use(src, &instr->def) {
+      if (nir_src_is_if(src))
+         return false;
+
+      nir_instr *user_instr = nir_src_parent_instr(src);
+      if (user_instr->type == nir_instr_type_alu) {
+         nir_alu_instr *alu = nir_instr_as_alu(user_instr);
+         switch (alu->op) {
+         case nir_op_mov:
+         case nir_op_vec2:
+         case nir_op_vec3:
+         case nir_op_vec4:
+         case nir_op_bcsel:
+         case nir_op_b32csel:
+            if (!r300_is_only_used_as_float(alu))
+               return false;
+            break;
+         default:
+	    break;
+         }
+
+         const nir_op_info *info = &nir_op_infos[alu->op];
+         nir_alu_src *alu_src = exec_node_data(nir_alu_src, src, src);
+         int src_idx = alu_src - &alu->src[0];
+         if ((info->input_types[src_idx] & nir_type_int) ||
+             (info->input_types[src_idx] & nir_type_bool))
+            return false;
+      }
+   }
+   return true;
+}
+
 static unsigned char
 r300_should_vectorize_instr(const nir_instr *instr, const void *data)
 {
+   bool *too_many_ubos = (bool *) data;
+
    if (instr->type != nir_instr_type_alu)
       return 0;
 
+   /* Vectorization can make the constant layout worse and increase
+    * the constant register usage. The worst scenario is vectorization
+    * of lowered indirect register access, where we access i-th element
+    * and later we access i-1 or i+1 (most notably glamor and gsk shaders).
+    * In this case we already added constants 1..n where n is the array
+    * size, however we can reuse them unless the lowered ladder gets
+    * vectorized later.
+    *
+    * Thus prevent vectorization of the specific patterns from lowered
+    * indirect access.
+    *
+    * This is quite a heavy hammer, we could in theory estimate how many
+    * slots will the current ubos and constants need and only disable
+    * vectorization when we are close to the limit. However, this would
+    * likely need a global shader analysis each time r300_should_vectorize_inst
+    * is called, which we want to avoid.
+    *
+    * So for now just don't vectorize anything that loads constants.
+    */
+   if (*too_many_ubos) {
+      nir_alu_instr *alu = nir_instr_as_alu(instr);
+      unsigned num_srcs = nir_op_infos[alu->op].num_inputs;
+      for (unsigned i = 0; i < num_srcs; i++) {
+         if (nir_src_is_const(alu->src[i].src)) {
+            return 0;
+         }
+      }
+   }
+
    return 4;
 }
+
+/* R300 and R400 have just 32 vec4 constant register slots in fs.
+ * Therefore, while its possible we will be able to compact some of
+ * the constants later, we need to be extra careful with adding
+ * new constants anyway.
+ */
+static bool have_too_many_ubos(nir_shader *s, bool is_r500)
+{
+   if (s->info.stage != MESA_SHADER_FRAGMENT)
+      return false;
+
+   if (is_r500)
+      return false;
+
+   nir_foreach_variable_with_modes(var, s, nir_var_mem_ubo) {
+      int ubo = var->data.driver_location;
+      assert (ubo == 0);
+
+      unsigned size = glsl_get_explicit_size(var->interface_type, false);
+      if (DIV_ROUND_UP(size, 16) > 32)
+         return true;
+   }
+
+   return false;
+}
+
 
 static bool
 r300_should_vectorize_io(unsigned align, unsigned bit_size,
@@ -43,7 +118,7 @@ r300_should_vectorize_io(unsigned align, unsigned bit_size,
    if (bit_size != 32)
       return false;
 
-   /* Our offset alignment should aways be at least 4 bytes */
+   /* Our offset alignment should always be at least 4 bytes */
    if (align < 4)
       return false;
 
@@ -74,6 +149,28 @@ r300_optimize_nir(struct nir_shader *s, struct pipe_screen *screen)
    bool is_r500 = r300_screen(screen)->caps.is_r500;
 
    bool progress;
+   if (s->info.stage == MESA_SHADER_FRAGMENT) {
+      if (is_r500) {
+         NIR_PASS_V(s, r300_transform_fs_trig_input);
+      }
+   } else {
+      if (r300_screen(screen)->caps.has_tcl) {
+         if (r300_screen(screen)->caps.is_r500) {
+            /* Only nine should set both NTT shader name and
+             * use_legacy_math_rules and D3D9 already mandates
+             * the proper range for the trigonometric inputs.
+             */
+            if (!s->info.use_legacy_math_rules || !(s->info.name && !strcmp("TTN", s->info.name))) {
+               NIR_PASS_V(s, r300_transform_vs_trig_input);
+            }
+         } else {
+            if (r300_screen(screen)->caps.is_r400) {
+               NIR_PASS_V(s, r300_transform_vs_trig_input);
+            }
+         }
+      }
+   }
+
    do {
       progress = false;
 
@@ -100,9 +197,11 @@ r300_optimize_nir(struct nir_shader *s, struct pipe_screen *screen)
       NIR_PASS(progress, s, nir_opt_if, nir_opt_if_optimize_phi_true_false);
       if (is_r500)
          nir_shader_intrinsics_pass(s, set_speculate,
-                                    nir_metadata_block_index |
-                                    nir_metadata_dominance, NULL);
+                                    nir_metadata_control_flow, NULL);
       NIR_PASS(progress, s, nir_opt_peephole_select, is_r500 ? 8 : ~0, true, true);
+      if (s->info.stage == MESA_SHADER_FRAGMENT) {
+         NIR_PASS(progress, s, r300_nir_lower_bool_to_float_fs);
+      }
       NIR_PASS(progress, s, nir_opt_algebraic);
       NIR_PASS(progress, s, nir_opt_constant_folding);
       nir_load_store_vectorize_options vectorize_opts = {
@@ -112,9 +211,12 @@ r300_optimize_nir(struct nir_shader *s, struct pipe_screen *screen)
       };
       NIR_PASS(progress, s, nir_opt_load_store_vectorize, &vectorize_opts);
       NIR_PASS(progress, s, nir_opt_shrink_stores, true);
-      NIR_PASS(progress, s, nir_opt_shrink_vectors);
+      NIR_PASS(progress, s, nir_opt_shrink_vectors, false);
       NIR_PASS(progress, s, nir_opt_loop);
-      NIR_PASS(progress, s, nir_opt_vectorize, r300_should_vectorize_instr, NULL);
+
+      bool too_many_ubos = have_too_many_ubos(s, is_r500);
+      NIR_PASS(progress, s, nir_opt_vectorize, r300_should_vectorize_instr,
+               &too_many_ubos);
       NIR_PASS(progress, s, nir_opt_undef);
       if(!progress)
          NIR_PASS(progress, s, nir_lower_undef_to_zero);

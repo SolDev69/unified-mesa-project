@@ -1,24 +1,6 @@
 /*
  * Copyright © 2019 Google, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef FREEDRENO_LAYOUT_H_
@@ -113,8 +95,8 @@ struct fdl_layout {
    struct fdl_slice ubwc_slices[FDL_MAX_MIP_LEVELS];
    uint32_t pitch0;
    uint32_t ubwc_width0;
-   uint32_t layer_size;
-   uint32_t ubwc_layer_size; /* in bytes */
+   uint64_t layer_size;
+   uint64_t ubwc_layer_size; /* in bytes */
    bool ubwc : 1;
    bool layer_first : 1; /* see above description */
    bool tile_all : 1;
@@ -143,7 +125,7 @@ struct fdl_layout {
    uint32_t nr_samples;
    enum pipe_format format;
 
-   uint32_t size;       /* Size of the whole image, in bytes. */
+   uint64_t size;       /* Size of the whole image, in bytes. */
    uint32_t base_align; /* Alignment of the base address, in bytes. */
    uint8_t pitchalign;  /* log2(pitchalign) */
 };
@@ -296,6 +278,7 @@ struct fdl_view_args {
    enum pipe_format format;
    enum fdl_view_type type;
    enum fdl_chroma_location chroma_offsets[2];
+   bool ubwc_fc_mutable;
 };
 
 #define FDL6_TEX_CONST_DWORDS 16

@@ -91,7 +91,6 @@ enum pipe_video_cap
    PIPE_VIDEO_CAP_STACKED_FRAMES = 9,
    PIPE_VIDEO_CAP_MAX_MACROBLOCKS = 10,
    PIPE_VIDEO_CAP_MAX_TEMPORAL_LAYERS = 11,
-   PIPE_VIDEO_CAP_EFC_SUPPORTED = 12,
    PIPE_VIDEO_CAP_ENC_MAX_SLICES_PER_FRAME = 13,
    PIPE_VIDEO_CAP_ENC_SLICES_STRUCTURE = 14,
    PIPE_VIDEO_CAP_ENC_MAX_REFERENCES_PER_FRAME = 15,
@@ -337,7 +336,7 @@ enum pipe_video_slice_mode
    /*
     * Partitions the frame using max slice size per coded slice
    */
-   PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SICE = 1,
+   PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SIZE = 1,
 };
 
 enum pipe_video_entrypoint

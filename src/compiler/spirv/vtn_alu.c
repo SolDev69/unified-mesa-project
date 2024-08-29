@@ -386,20 +386,69 @@ vtn_nir_alu_op_for_spirv_opcode(struct vtn_builder *b,
    case SpvOpPtrCastToGeneric:   return nir_op_mov;
    case SpvOpGenericCastToPtr:   return nir_op_mov;
 
-   /* Derivatives: */
-   case SpvOpDPdx:         return nir_op_fddx;
-   case SpvOpDPdy:         return nir_op_fddy;
-   case SpvOpDPdxFine:     return nir_op_fddx_fine;
-   case SpvOpDPdyFine:     return nir_op_fddy_fine;
-   case SpvOpDPdxCoarse:   return nir_op_fddx_coarse;
-   case SpvOpDPdyCoarse:   return nir_op_fddy_coarse;
-
    case SpvOpIsNormal:     return nir_op_fisnormal;
    case SpvOpIsFinite:     return nir_op_fisfinite;
 
    default:
       vtn_fail("No NIR equivalent: %u", opcode);
    }
+}
+
+static void
+handle_fp_fast_math(struct vtn_builder *b, UNUSED struct vtn_value *val,
+                 UNUSED int member, const struct vtn_decoration *dec,
+                 UNUSED void *_void)
+{
+   vtn_assert(dec->scope == VTN_DEC_DECORATION);
+   if (dec->decoration != SpvDecorationFPFastMathMode)
+      return;
+
+   SpvFPFastMathModeMask can_fast_math =
+      SpvFPFastMathModeAllowRecipMask |
+      SpvFPFastMathModeAllowContractMask |
+      SpvFPFastMathModeAllowReassocMask |
+      SpvFPFastMathModeAllowTransformMask;
+
+   if ((dec->operands[0] & can_fast_math) != can_fast_math)
+      b->nb.exact = true;
+
+   /* Decoration overrides defaults */
+   b->nb.fp_fast_math = 0;
+   if (!(dec->operands[0] & SpvFPFastMathModeNSZMask))
+      b->nb.fp_fast_math |=
+         FLOAT_CONTROLS_SIGNED_ZERO_PRESERVE_FP16 |
+         FLOAT_CONTROLS_SIGNED_ZERO_PRESERVE_FP32 |
+         FLOAT_CONTROLS_SIGNED_ZERO_PRESERVE_FP64;
+   if (!(dec->operands[0] & SpvFPFastMathModeNotNaNMask))
+      b->nb.fp_fast_math |=
+         FLOAT_CONTROLS_NAN_PRESERVE_FP16 |
+         FLOAT_CONTROLS_NAN_PRESERVE_FP32 |
+         FLOAT_CONTROLS_NAN_PRESERVE_FP64;
+   if (!(dec->operands[0] & SpvFPFastMathModeNotInfMask))
+      b->nb.fp_fast_math |=
+         FLOAT_CONTROLS_INF_PRESERVE_FP16 |
+         FLOAT_CONTROLS_INF_PRESERVE_FP32 |
+         FLOAT_CONTROLS_INF_PRESERVE_FP64;
+}
+
+void
+vtn_handle_fp_fast_math(struct vtn_builder *b, struct vtn_value *val)
+{
+   /* Take the NaN/Inf/SZ preserve bits from the execution mode and set them
+    * on the builder, so the generated instructions can take it from it.
+    * We only care about some of them, check nir_alu_instr for details.
+    * We also copy all bit widths, because we can't easily get the correct one
+    * here.
+    */
+#define FLOAT_CONTROLS2_BITS (FLOAT_CONTROLS_SIGNED_ZERO_INF_NAN_PRESERVE_FP16 | \
+                              FLOAT_CONTROLS_SIGNED_ZERO_INF_NAN_PRESERVE_FP32 | \
+                              FLOAT_CONTROLS_SIGNED_ZERO_INF_NAN_PRESERVE_FP64)
+   static_assert(FLOAT_CONTROLS2_BITS == BITSET_MASK(9),
+      "enum float_controls and fp_fast_math out of sync!");
+   b->nb.fp_fast_math = b->shader->info.float_controls_execution_mode &
+      FLOAT_CONTROLS2_BITS;
+   vtn_foreach_decoration(b, val, handle_fp_fast_math, NULL);
+#undef FLOAT_CONTROLS2_BITS
 }
 
 static void
@@ -581,6 +630,7 @@ vtn_handle_alu(struct vtn_builder *b, SpvOp opcode,
    }
 
    vtn_handle_no_contraction(b, dest_val);
+   vtn_handle_fp_fast_math(b, dest_val);
    bool mediump_16bit = vtn_alu_op_mediump_16bit(b, opcode, dest_val);
 
    /* Collect the various SSA sources */
@@ -670,20 +720,39 @@ vtn_handle_alu(struct vtn_builder *b, SpvOp opcode,
       break;
    }
 
+   case SpvOpDPdx:
+      dest->def = nir_ddx(&b->nb, src[0]);
+      break;
+   case SpvOpDPdxFine:
+      dest->def = nir_ddx_fine(&b->nb, src[0]);
+      break;
+   case SpvOpDPdxCoarse:
+      dest->def = nir_ddx_coarse(&b->nb, src[0]);
+      break;
+   case SpvOpDPdy:
+      dest->def = nir_ddy(&b->nb, src[0]);
+      break;
+   case SpvOpDPdyFine:
+      dest->def = nir_ddy_fine(&b->nb, src[0]);
+      break;
+   case SpvOpDPdyCoarse:
+      dest->def = nir_ddy_coarse(&b->nb, src[0]);
+      break;
+
    case SpvOpFwidth:
       dest->def = nir_fadd(&b->nb,
-                               nir_fabs(&b->nb, nir_fddx(&b->nb, src[0])),
-                               nir_fabs(&b->nb, nir_fddy(&b->nb, src[0])));
+                               nir_fabs(&b->nb, nir_ddx(&b->nb, src[0])),
+                               nir_fabs(&b->nb, nir_ddy(&b->nb, src[0])));
       break;
    case SpvOpFwidthFine:
       dest->def = nir_fadd(&b->nb,
-                               nir_fabs(&b->nb, nir_fddx_fine(&b->nb, src[0])),
-                               nir_fabs(&b->nb, nir_fddy_fine(&b->nb, src[0])));
+                               nir_fabs(&b->nb, nir_ddx_fine(&b->nb, src[0])),
+                               nir_fabs(&b->nb, nir_ddy_fine(&b->nb, src[0])));
       break;
    case SpvOpFwidthCoarse:
       dest->def = nir_fadd(&b->nb,
-                               nir_fabs(&b->nb, nir_fddx_coarse(&b->nb, src[0])),
-                               nir_fabs(&b->nb, nir_fddy_coarse(&b->nb, src[0])));
+                               nir_fabs(&b->nb, nir_ddx_coarse(&b->nb, src[0])),
+                               nir_fabs(&b->nb, nir_ddy_coarse(&b->nb, src[0])));
       break;
 
    case SpvOpVectorTimesScalar:

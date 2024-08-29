@@ -30,7 +30,6 @@
 #include "compiler/nir/nir.h"
 #include "compiler/nir/nir_serialize.h"
 #include "nir/tgsi_to_nir.h"
-#include "nir_legacy.h"
 
 #include "pipe/p_state.h"
 
@@ -87,6 +86,7 @@ static const nir_shader_compiler_options fs_nir_options = {
    .force_indirect_unrolling_sampler = true,
    .lower_varying_from_uniform = true,
    .max_unroll_iterations = 32,
+   .has_ddx_intrinsics = true,
 };
 
 const void *
@@ -108,7 +108,7 @@ type_size(const struct glsl_type *type, bool bindless)
    return glsl_count_attribute_slots(type, false);
 }
 
-void
+static void
 lima_program_optimize_vs_nir(struct nir_shader *s)
 {
    bool progress;
@@ -216,7 +216,7 @@ lima_vec_to_regs_filter_cb(const nir_instr *instr, unsigned writemask,
    return !lima_alu_to_scalar_filter_cb(instr, data);
 }
 
-void
+static void
 lima_program_optimize_fs_nir(struct nir_shader *s,
                              struct nir_lower_tex_options *tex_options)
 {
@@ -263,6 +263,7 @@ lima_program_optimize_fs_nir(struct nir_shader *s,
 
    /* Must be run after optimization loop */
    NIR_PASS_V(s, lima_nir_scale_trig);
+   NIR_PASS_V(s, lima_nir_ppir_algebraic_late);
 
    NIR_PASS_V(s, nir_copy_prop);
    NIR_PASS_V(s, nir_opt_dce);
@@ -279,7 +280,7 @@ lima_program_optimize_fs_nir(struct nir_shader *s,
    NIR_PASS_V(s, lima_nir_duplicate_load_inputs);
    NIR_PASS_V(s, lima_nir_duplicate_load_consts);
 
-   NIR_PASS_V(s, nir_legacy_trivialize, true);
+   NIR_PASS_V(s, nir_trivialize_registers);
 
    nir_sweep(s);
 }

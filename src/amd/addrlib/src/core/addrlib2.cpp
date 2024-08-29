@@ -118,11 +118,12 @@ Lib* Lib::GetLib(
     if ((pAddrLib != NULL) &&
         (pAddrLib->GetChipFamily() <= ADDR_CHIP_FAMILY_VI))
     {
-        // only valid and GFX9+ ASIC can use AddrLib2 function.
+        // only GFX9+ ASIC can use AddrLib2 function.
         ADDR_ASSERT_ALWAYS();
         hLib = NULL;
     }
-    return static_cast<Lib*>(hLib);
+
+    return static_cast<Lib*>(pAddrLib);
 }
 
 
@@ -1170,6 +1171,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceAddrFromCoordLinear(
         ADDR_ASSERT(pIn->numMipLevels <= MaxMipLevels);
 
         localIn.bpp          = pIn->bpp;
+        localIn.swizzleMode  = pIn->swizzleMode;
         localIn.flags        = pIn->flags;
         localIn.width        = Max(pIn->unalignedWidth, 1u);
         localIn.height       = Max(pIn->unalignedHeight, 1u);
@@ -1259,6 +1261,7 @@ ADDR_E_RETURNCODE Lib::ComputeSurfaceCoordFromAddrLinear(
         ADDR2_COMPUTE_SURFACE_INFO_INPUT  localIn  = {0};
         ADDR2_COMPUTE_SURFACE_INFO_OUTPUT localOut = {0};
         localIn.bpp          = pIn->bpp;
+        localIn.swizzleMode  = pIn->swizzleMode;
         localIn.flags        = pIn->flags;
         localIn.width        = Max(pIn->unalignedWidth, 1u);
         localIn.height       = Max(pIn->unalignedHeight, 1u);

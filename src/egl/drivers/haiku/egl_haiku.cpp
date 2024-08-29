@@ -49,11 +49,13 @@
 #include "hgl/hgl_sw_winsys.h"
 #include "hgl_context.h"
 
+#include <Bitmap.h>
+
 extern "C" {
 #include "target-helpers/inline_sw_helper.h"
 }
 
-#ifdef DEBUG
+#if MESA_DEBUG
 #define TRACE(x...) printf("egl_haiku: " x)
 #define CALLED()    TRACE("CALLED: %s\n", __PRETTY_FUNCTION__)
 #else
@@ -115,6 +117,9 @@ haiku_create_window_surface(_EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
+   // Unset and delete previously set bitmap if any.
+   delete ((BitmapHook *)native_window)->SetBitmap(NULL);
+
    return &wgl_surf->base;
 }
 
@@ -168,6 +173,13 @@ haiku_destroy_surface(_EGLDisplay *disp, _EGLSurface *surf)
       struct haiku_egl_surface *hgl_surf = haiku_egl_surface(surf);
       struct pipe_screen *screen = hgl_dpy->disp->fscreen->screen;
       screen->fence_reference(screen, &hgl_surf->throttle_fence, NULL);
+
+      // Unset bitmap to release ownership. Bitmap will be deleted later
+      // when destroying framebuffer.
+      BitmapHook *bitmapHook = (BitmapHook*)hgl_surf->fb->winsysContext;
+      if (bitmapHook != NULL)
+         bitmapHook->SetBitmap(NULL);
+
       hgl_destroy_st_framebuffer(hgl_surf->fb);
       free(surf);
    }
@@ -220,7 +232,7 @@ haiku_swap_buffers(_EGLDisplay *disp, _EGLSurface *surf)
    // flush back buffer and swap buffers if double buffering is used
    if (backBuffer != NULL) {
       screen->flush_frontbuffer(screen, st->pipe, backBuffer, 0, 0,
-                                buffer->winsysContext, NULL);
+                                buffer->winsysContext, 1, NULL);
       std::swap(frontBuffer, backBuffer);
       p_atomic_inc(&buffer->base.stamp);
    }
@@ -228,6 +240,8 @@ haiku_swap_buffers(_EGLDisplay *disp, _EGLSurface *surf)
    // XXX: right front / back if HGL_STEREO?
 
    update_size(buffer);
+
+   st_context_invalidate_state(st, ST_INVALIDATE_FB_STATE);
 
    return EGL_TRUE;
 }

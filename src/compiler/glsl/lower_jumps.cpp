@@ -722,9 +722,10 @@ lower_continue:
              * any instructions that that are already wrapped in the
              * appropriate guard.
              */
-            ir_instruction* ir_after;
-            for(ir_after = (ir_instruction*)ir->get_next(); !ir_after->is_tail_sentinel();)
+            exec_node *node;
+            for(node = ir->get_next(); !node->is_tail_sentinel();)
             {
+               ir_instruction* ir_after = (ir_instruction*)node;
                ir_if* ir_if = ir_after->as_if();
                if(ir_if && ir_if->else_instructions.is_empty()) {
                   ir_dereference_variable* ir_if_cond_deref = ir_if->condition->as_dereference_variable();
@@ -736,7 +737,7 @@ lower_continue:
                      continue;
                   }
                }
-               ir_after = (ir_instruction*)ir_after->get_next();
+               node = ir_after->get_next();
 
                /* only set this if we find any unprotected instruction */
                this->progress = true;
@@ -929,7 +930,7 @@ do_lower_jumps(exec_list *instructions, bool pull_out_jumps, bool lower_sub_retu
    bool progress_ever = false;
    do {
       v.progress = false;
-      visit_exec_list(instructions, &v);
+      visit_exec_list_safe(instructions, &v);
       progress_ever = v.progress || progress_ever;
    } while (v.progress);
 

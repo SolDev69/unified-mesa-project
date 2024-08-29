@@ -37,6 +37,7 @@
 #include "util/u_process.h"
 #include "util/u_screen.h"
 #include "util/u_video.h"
+#include "util/xmlconfig.h"
 
 #include <fcntl.h>
 
@@ -107,10 +108,6 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
 
    /* Native MRT is introduced with v5 */
    bool has_mrt = (dev->arch >= 5);
-
-   /* Only kernel drivers >= 1.1 can allocate HEAP BOs */
-   bool has_heap = panfrost_device_kmod_version_major(dev) > 1 ||
-                   panfrost_device_kmod_version_minor(dev) >= 1;
 
    switch (param) {
    case PIPE_CAP_NPOT_TEXTURES:
@@ -211,13 +208,13 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
     * handles this but we need to fix up the border colour.
     */
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
-      if (dev->arch == 7)
+      if (dev->arch == 7 || dev->arch >= 10)
          return PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_FREEDRENO;
       else
          return 0;
 
    case PIPE_CAP_MAX_TEXEL_BUFFER_ELEMENTS_UINT:
-      return 65536;
+      return PAN_MAX_TEXEL_BUFFER_ELEMENTS;
 
    /* Must be at least 64 for correct behaviour */
    case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
@@ -239,19 +236,23 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
 
    case PIPE_CAP_MAX_TEXTURE_2D_SIZE:
-      return 1 << (MAX_MIP_LEVELS - 1);
+      return 1 << (PAN_MAX_MIP_LEVELS - 1);
 
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return MAX_MIP_LEVELS;
+      return PAN_MAX_MIP_LEVELS;
+
+   /* pixel coord is in integer sysval on bifrost. */
+   case PIPE_CAP_FS_COORD_PIXEL_CENTER_INTEGER:
+      return dev->arch >= 6;
+   case PIPE_CAP_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
+      return dev->arch < 6;
 
    case PIPE_CAP_FS_COORD_ORIGIN_LOWER_LEFT:
-   case PIPE_CAP_FS_COORD_PIXEL_CENTER_INTEGER:
-      /* Hardware is upper left. Pixel center at (0.5, 0.5) */
+      /* Hardware is upper left */
       return 0;
 
    case PIPE_CAP_FS_COORD_ORIGIN_UPPER_LEFT:
-   case PIPE_CAP_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
    case PIPE_CAP_TGSI_TEXCOORD:
       return 1;
 
@@ -331,7 +332,10 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 0;
 
    case PIPE_CAP_DRAW_INDIRECT:
-      return has_heap;
+      return 1;
+
+   case PIPE_CAP_MULTI_DRAW_INDIRECT:
+      return dev->arch >= 10;
 
    case PIPE_CAP_START_INSTANCE:
    case PIPE_CAP_DRAW_PARAMETERS:
@@ -364,6 +368,9 @@ panfrost_get_param(struct pipe_screen *screen, enum pipe_cap param)
 
    case PIPE_CAP_NATIVE_FENCE_FD:
       return 1;
+
+   case PIPE_CAP_ASTC_DECODE_MODE:
+      return dev->arch >= 9 && (dev->compressed_formats & (1 << 30));
 
    default:
       return u_pipe_screen_get_param_defaults(screen, param);
@@ -552,12 +559,6 @@ panfrost_is_format_supported(struct pipe_screen *screen,
 {
    struct panfrost_device *dev = pan_device(screen);
 
-   assert(target == PIPE_BUFFER || target == PIPE_TEXTURE_1D ||
-          target == PIPE_TEXTURE_1D_ARRAY || target == PIPE_TEXTURE_2D ||
-          target == PIPE_TEXTURE_2D_ARRAY || target == PIPE_TEXTURE_RECT ||
-          target == PIPE_TEXTURE_3D || target == PIPE_TEXTURE_CUBE ||
-          target == PIPE_TEXTURE_CUBE_ARRAY);
-
    /* MSAA 2x gets rounded up to 4x. MSAA 8x/16x only supported on v5+.
     * TODO: debug MSAA 8x/16x */
 
@@ -602,6 +603,63 @@ panfrost_is_format_supported(struct pipe_screen *screen,
    return MALI_EXTRACT_INDEX(fmt.hw) && ((pan_bind_flags & ~fmt.bind) == 0);
 }
 
+static void
+panfrost_query_compression_rates(struct pipe_screen *screen,
+                                 enum pipe_format format, int max,
+                                 uint32_t *rates, int *count)
+{
+   struct panfrost_device *dev = pan_device(screen);
+
+   if (!dev->has_afrc) {
+      *count = 0;
+      return;
+   }
+
+   *count = panfrost_afrc_query_rates(format, max, rates);
+}
+
+static void
+panfrost_query_compression_modifiers(struct pipe_screen *screen,
+                                     enum pipe_format format, uint32_t rate,
+                                     int max, uint64_t *modifiers, int *count)
+{
+   struct panfrost_device *dev = pan_device(screen);
+
+   if (!dev->has_afrc || rate == PIPE_COMPRESSION_FIXED_RATE_NONE) {
+      int mod_count = 0;
+      for (unsigned i = 0; i < PAN_MODIFIER_COUNT; ++i) {
+         if (drm_is_afrc(pan_best_modifiers[i]))
+            continue;
+         if (mod_count < max)
+            modifiers[mod_count] = pan_best_modifiers[i];
+         mod_count++;
+         if (max > 0 && mod_count >= max)
+            break;
+      }
+      *count = mod_count;
+      return;
+   }
+
+   *count = panfrost_afrc_get_modifiers(format, rate, max, modifiers);
+}
+
+static bool
+panfrost_is_compression_modifier(struct pipe_screen *screen,
+                                 enum pipe_format format, uint64_t modifier,
+                                 uint32_t *rate)
+{
+   struct panfrost_device *dev = pan_device(screen);
+   uint32_t compression_rate = panfrost_afrc_get_rate(format, modifier);
+
+   if (!dev->has_afrc)
+      return false;
+
+   if (rate)
+      *rate = compression_rate;
+
+   return (compression_rate != 0);
+}
+
 /* We always support linear and tiled operations, both external and internal.
  * We support AFBC for a subset of formats, and colourspace transform for a
  * subset of those. */
@@ -614,9 +672,11 @@ panfrost_walk_dmabuf_modifiers(struct pipe_screen *screen,
 {
    /* Query AFBC status */
    struct panfrost_device *dev = pan_device(screen);
-   bool afbc = dev->has_afbc && panfrost_format_supports_afbc(dev, format);
+   bool afbc =
+      dev->has_afbc && panfrost_format_supports_afbc(dev->arch, format);
    bool ytr = panfrost_afbc_can_ytr(format);
-   bool tiled_afbc = panfrost_afbc_can_tile(dev);
+   bool tiled_afbc = panfrost_afbc_can_tile(dev->arch);
+   bool afrc = dev->has_afrc && panfrost_format_supports_afrc(format);
 
    unsigned count = 0;
 
@@ -628,6 +688,9 @@ panfrost_walk_dmabuf_modifiers(struct pipe_screen *screen,
          continue;
 
       if ((pan_best_modifiers[i] & AFBC_FORMAT_MOD_TILED) && !tiled_afbc)
+         continue;
+
+      if (drm_is_afrc(pan_best_modifiers[i]) && !afrc)
          continue;
 
       if (test_modifier != DRM_FORMAT_MOD_INVALID &&
@@ -730,7 +793,32 @@ panfrost_get_compute_param(struct pipe_screen *pscreen,
       RET((uint64_t[]){dev->arch >= 6 ? 256 : 128});
 
    case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
-      RET((uint64_t[]){1024 * 1024 * 512 /* Maybe get memory */});
+   case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE: {
+      uint64_t total_ram;
+
+      if (!os_get_total_physical_memory(&total_ram))
+         return 0;
+
+      /* We don't want to burn too much ram with the GPU. If the user has 4GiB
+       * or less, we use at most half. If they have more than 4GiB, we use 3/4.
+       */
+      uint64_t available_ram;
+      if (total_ram <= 4ull * 1024 * 1024 * 1024)
+         available_ram = total_ram / 2;
+      else
+         available_ram = total_ram * 3 / 4;
+
+      /* 48bit address space max, with the lower 32MB reserved. We clamp
+       * things so it matches kmod VA range limitations.
+       */
+      uint64_t user_va_start =
+         panfrost_clamp_to_usable_va_range(dev->kmod.dev, PAN_VA_USER_START);
+      uint64_t user_va_end =
+         panfrost_clamp_to_usable_va_range(dev->kmod.dev, PAN_VA_USER_END);
+
+      /* We cannot support more than the VA limit */
+      RET((uint64_t[]){MIN2(available_ram, user_va_end - user_va_start)});
+   }
 
    case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
       RET((uint64_t[]){32768});
@@ -738,9 +826,6 @@ panfrost_get_compute_param(struct pipe_screen *pscreen,
    case PIPE_COMPUTE_CAP_MAX_PRIVATE_SIZE:
    case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:
       RET((uint64_t[]){4096});
-
-   case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE:
-      RET((uint64_t[]){1024 * 1024 * 512 /* Maybe get memory */});
 
    case PIPE_COMPUTE_CAP_MAX_CLOCK_FREQUENCY:
       RET((uint32_t[]){800 /* MHz -- TODO */});
@@ -773,7 +858,7 @@ panfrost_destroy_screen(struct pipe_screen *pscreen)
    panfrost_resource_screen_destroy(pscreen);
    panfrost_pool_cleanup(&screen->blitter.bin_pool);
    panfrost_pool_cleanup(&screen->blitter.desc_pool);
-   pan_blend_shaders_cleanup(dev);
+   pan_blend_shader_cache_cleanup(&dev->blend_shaders);
 
    if (screen->vtbl.screen_destroy)
       screen->vtbl.screen_destroy(pscreen);
@@ -835,6 +920,9 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
 
    struct panfrost_device *dev = pan_device(&screen->base);
 
+   driParseConfigFiles(config->options, config->options_info, 0,
+                       "panfrost", NULL, NULL, NULL, 0, NULL, 0);
+
    /* Debug must be set first for pandecode to work correctly */
    dev->debug =
       debug_get_flags_option("PAN_MESA_DEBUG", panfrost_debug_options, 0);
@@ -852,6 +940,29 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
       panfrost_destroy_screen(&(screen->base));
       return NULL;
    }
+
+   screen->force_afbc_packing = dev->debug & PAN_DBG_FORCE_PACK;
+   if (!screen->force_afbc_packing)
+      screen->force_afbc_packing = driQueryOptionb(config->options,
+                                                   "pan_force_afbc_packing");
+
+   const char *option = debug_get_option("PAN_AFRC_RATE", NULL);
+   if (!option) {
+      screen->force_afrc_rate = -1;
+   } else if (strcmp(option, "default") == 0) {
+      screen->force_afrc_rate = PIPE_COMPRESSION_FIXED_RATE_DEFAULT;
+   } else {
+      int64_t rate =
+         debug_parse_num_option(option, PIPE_COMPRESSION_FIXED_RATE_NONE);
+      screen->force_afrc_rate = rate;
+   }
+
+   screen->csf_tiler_heap.chunk_size = driQueryOptioni(config->options,
+                                                       "pan_csf_chunk_size");
+   screen->csf_tiler_heap.initial_chunks = driQueryOptioni(config->options,
+                                                           "pan_csf_initial_chunks");
+   screen->csf_tiler_heap.max_chunks = driQueryOptioni(config->options,
+                                                       "pan_csf_max_chunks");
 
    dev->ro = ro;
 
@@ -878,9 +989,14 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
    screen->base.fence_finish = panfrost_fence_finish;
    screen->base.fence_get_fd = panfrost_fence_get_fd;
    screen->base.set_damage_region = panfrost_resource_set_damage_region;
+   screen->base.query_compression_rates = panfrost_query_compression_rates;
+   screen->base.query_compression_modifiers =
+      panfrost_query_compression_modifiers;
+   screen->base.is_compression_modifier = panfrost_is_compression_modifier;
 
    panfrost_resource_screen_init(&screen->base);
-   pan_blend_shaders_init(dev);
+   pan_blend_shader_cache_init(&dev->blend_shaders,
+                               panfrost_device_gpu_id(dev));
 
    panfrost_disk_cache_init(screen);
 
@@ -898,6 +1014,8 @@ panfrost_create_screen(int fd, const struct pipe_screen_config *config,
       panfrost_cmdstream_screen_init_v7(screen);
    else if (dev->arch == 9)
       panfrost_cmdstream_screen_init_v9(screen);
+   else if (dev->arch == 10)
+      panfrost_cmdstream_screen_init_v10(screen);
    else
       unreachable("Unhandled architecture major");
 

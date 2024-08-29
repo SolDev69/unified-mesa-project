@@ -17,6 +17,7 @@
                 "VK_EXT_custom_border_color": 1,
                 "VK_EXT_line_rasterization": 1,
                 "VK_KHR_swapchain_mutable_format": 1,
+                "VK_KHR_incremental_present": 1,
                 "VK_EXT_border_color_swizzle": 1,
                 "VK_KHR_descriptor_update_template": 1
             },
@@ -446,7 +447,8 @@
             "extensions": {
                 "VK_EXT_provoking_vertex": 1,
                 "VK_KHR_dynamic_rendering": 1,
-                "VK_EXT_dynamic_rendering_unused_attachments": 1
+                "VK_EXT_dynamic_rendering_unused_attachments": 1,
+                "VK_EXT_legacy_vertex_attributes": 1
             },
             "features": {
                 "VkPhysicalDeviceDynamicRenderingFeatures": {
@@ -454,6 +456,9 @@
                 },
                 "VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT": {
                     "dynamicRenderingUnusedAttachments": true
+                },
+                "VkPhysicalDeviceLegacyVertexAttributesFeaturesEXT": {
+                    "legacyVertexAttributes": true
                 }
             }
         },

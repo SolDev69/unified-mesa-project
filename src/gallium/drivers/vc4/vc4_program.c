@@ -1273,18 +1273,6 @@ ntq_emit_alu(struct vc4_compile *c, nir_alu_instr *instr)
                 result = qir_V8MULD(c, src[0], src[1]);
                 break;
 
-        case nir_op_fddx:
-        case nir_op_fddx_coarse:
-        case nir_op_fddx_fine:
-                result = ntq_fddx(c, src[0]);
-                break;
-
-        case nir_op_fddy:
-        case nir_op_fddy_coarse:
-        case nir_op_fddy_fine:
-                result = ntq_fddy(c, src[0]);
-                break;
-
         case nir_op_uadd_carry:
                 qir_SF(c, qir_ADD(c, src[0], src[1]));
                 result = ntq_emit_cond_to_int(c, QPU_COND_CS);
@@ -1550,6 +1538,9 @@ ntq_setup_inputs(struct vc4_compile *c)
         nir_foreach_shader_in_variable(var, c->s)
                 num_entries++;
 
+        if (num_entries == 0)
+                return;
+
         nir_variable *vars[num_entries];
 
         unsigned i = 0;
@@ -1676,8 +1667,7 @@ ntq_emit_color_read(struct vc4_compile *c, nir_intrinsic_instr *instr)
         /* Reads of the per-sample color need to be done in
          * order.
          */
-        int sample_index = (nir_intrinsic_base(instr) -
-                            VC4_NIR_TLB_COLOR_READ_INPUT);
+        int sample_index = nir_intrinsic_base(instr);
         for (int i = 0; i <= sample_index; i++) {
                 if (c->color_reads[i].file == QFILE_NULL) {
                         c->color_reads[i] =
@@ -1694,12 +1684,6 @@ ntq_emit_load_input(struct vc4_compile *c, nir_intrinsic_instr *instr)
         assert(instr->num_components == 1);
         assert(nir_src_is_const(instr->src[0]) &&
                "vc4 doesn't support indirect inputs");
-
-        if (c->stage == QSTAGE_FRAG &&
-            nir_intrinsic_base(instr) >= VC4_NIR_TLB_COLOR_READ_INPUT) {
-                ntq_emit_color_read(c, instr);
-                return;
-        }
 
         uint32_t offset = nir_intrinsic_base(instr) +
                           nir_src_as_uint(instr->src[0]);
@@ -1792,6 +1776,10 @@ ntq_emit_intrinsic(struct vc4_compile *c, nir_intrinsic_instr *instr)
                 ntq_emit_load_input(c, instr);
                 break;
 
+        case nir_intrinsic_load_tlb_color_brcm:
+                ntq_emit_color_read(c, instr);
+                break;
+
         case nir_intrinsic_store_output:
                 assert(nir_src_is_const(instr->src[1]) &&
                        "vc4 doesn't support indirect outputs");
@@ -1818,7 +1806,7 @@ ntq_emit_intrinsic(struct vc4_compile *c, nir_intrinsic_instr *instr)
                 }
                 break;
 
-        case nir_intrinsic_discard:
+        case nir_intrinsic_terminate:
                 if (c->execute.file != QFILE_NULL) {
                         qir_SF(c, c->execute);
                         qir_MOV_cond(c, QPU_COND_ZS, c->discard,
@@ -1828,7 +1816,7 @@ ntq_emit_intrinsic(struct vc4_compile *c, nir_intrinsic_instr *instr)
                 }
                 break;
 
-        case nir_intrinsic_discard_if: {
+        case nir_intrinsic_terminate_if: {
                 /* true (~0) if we're discarding */
                 struct qreg cond = ntq_get_src(c, instr->src[0], 0);
 
@@ -1857,6 +1845,20 @@ ntq_emit_intrinsic(struct vc4_compile *c, nir_intrinsic_instr *instr)
                               qir_uniform(c, QUNIFORM_TEXRECT_SCALE_Y, sampler));
                 break;
         }
+
+        case nir_intrinsic_ddx:
+        case nir_intrinsic_ddx_coarse:
+        case nir_intrinsic_ddx_fine:
+                ntq_store_def(c, &instr->def, 0,
+                              ntq_fddx(c, ntq_get_src(c, instr->src[0], 0)));
+                break;
+
+        case nir_intrinsic_ddy:
+        case nir_intrinsic_ddy_coarse:
+        case nir_intrinsic_ddy_fine:
+                ntq_store_def(c, &instr->def, 0,
+                              ntq_fddy(c, ntq_get_src(c, instr->src[0], 0)));
+                break;
 
         default:
                 fprintf(stderr, "Unknown intrinsic: ");
@@ -2179,6 +2181,8 @@ static const nir_shader_compiler_options nir_options = {
         .lower_mul_high = true,
         .max_unroll_iterations = 32,
         .force_indirect_unrolling = (nir_var_shader_in | nir_var_shader_out | nir_var_function_temp),
+        .has_ddx_intrinsics = true,
+        .scalarize_ddx = true,
 };
 
 const void *
@@ -2584,39 +2588,41 @@ vc4_setup_compiled_fs_inputs(struct vc4_context *vc4, struct vc4_compile *c,
         struct vc4_fs_inputs inputs;
 
         memset(&inputs, 0, sizeof(inputs));
-        inputs.input_slots = ralloc_array(shader,
-                                          struct vc4_varying_slot,
-                                          c->num_input_slots);
+        if (c->num_input_slots > 0) {
+                inputs.input_slots = ralloc_array(shader,
+                                                  struct vc4_varying_slot,
+                                                  c->num_input_slots);
 
-        bool input_live[c->num_input_slots];
+                bool input_live[c->num_input_slots];
 
-        memset(input_live, 0, sizeof(input_live));
-        qir_for_each_inst_inorder(inst, c) {
-                for (int i = 0; i < qir_get_nsrc(inst); i++) {
-                        if (inst->src[i].file == QFILE_VARY)
-                                input_live[inst->src[i].index] = true;
-                }
-        }
-
-        for (int i = 0; i < c->num_input_slots; i++) {
-                struct vc4_varying_slot *slot = &c->input_slots[i];
-
-                if (!input_live[i])
-                        continue;
-
-                /* Skip non-VS-output inputs. */
-                if (slot->slot == (uint8_t)~0)
-                        continue;
-
-                if (slot->slot == VARYING_SLOT_COL0 ||
-                    slot->slot == VARYING_SLOT_COL1 ||
-                    slot->slot == VARYING_SLOT_BFC0 ||
-                    slot->slot == VARYING_SLOT_BFC1) {
-                        shader->color_inputs |= (1 << inputs.num_inputs);
+                memset(input_live, 0, sizeof(input_live));
+                qir_for_each_inst_inorder(inst, c) {
+                        for (int i = 0; i < qir_get_nsrc(inst); i++) {
+                                if (inst->src[i].file == QFILE_VARY)
+                                        input_live[inst->src[i].index] = true;
+                        }
                 }
 
-                inputs.input_slots[inputs.num_inputs] = *slot;
-                inputs.num_inputs++;
+                for (int i = 0; i < c->num_input_slots; i++) {
+                        struct vc4_varying_slot *slot = &c->input_slots[i];
+
+                        if (!input_live[i])
+                                continue;
+
+                        /* Skip non-VS-output inputs. */
+                        if (slot->slot == (uint8_t)~0)
+                                continue;
+
+                        if (slot->slot == VARYING_SLOT_COL0 ||
+                            slot->slot == VARYING_SLOT_COL1 ||
+                            slot->slot == VARYING_SLOT_BFC0 ||
+                            slot->slot == VARYING_SLOT_BFC1) {
+                                shader->color_inputs |= (1 << inputs.num_inputs);
+                        }
+
+                        inputs.input_slots[inputs.num_inputs] = *slot;
+                        inputs.num_inputs++;
+                }
         }
         shader->num_inputs = inputs.num_inputs;
 
@@ -2921,11 +2927,18 @@ fs_inputs_compare(const void *key1, const void *key2)
         const struct vc4_fs_inputs *inputs1 = key1;
         const struct vc4_fs_inputs *inputs2 = key2;
 
-        return (inputs1->num_inputs == inputs2->num_inputs &&
-                memcmp(inputs1->input_slots,
-                       inputs2->input_slots,
-                       sizeof(*inputs1->input_slots) *
-                       inputs1->num_inputs) == 0);
+        if (inputs1->num_inputs == inputs2->num_inputs) {
+                if (inputs1->num_inputs == 0) {
+                        return true;
+                } else {
+                        return memcmp(inputs1->input_slots,
+                                      inputs2->input_slots,
+                                      sizeof(*inputs1->input_slots) *
+                                      inputs1->num_inputs) == 0;
+                }
+        }
+
+        return false;
 }
 
 static void

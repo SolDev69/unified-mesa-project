@@ -317,7 +317,7 @@
    DRI_CONF_OPT_B(ignore_discard_framebuffer, def, \
                   "Ignore glDiscardFramebuffer/glInvalidateFramebuffer, workaround for games that use it incorrectly")
 
-#define DRI_CONF_FORCE_VK_VENDOR(def) \
+#define DRI_CONF_FORCE_VK_VENDOR() \
    DRI_CONF_OPT_I(force_vk_vendor, 0, -1, 2147483647, "Override GPU vendor id")
 
 #define DRI_CONF_FAKE_SPARSE(def) \
@@ -327,6 +327,10 @@
 #define DRI_CONF_INTEL_ENABLE_WA_14018912822(def) \
    DRI_CONF_OPT_B(intel_enable_wa_14018912822, def, \
                   "Intel workaround for using zero blend constants")
+
+#define DRI_CONF_INTEL_SAMPLER_ROUTE_TO_LSC(def) \
+   DRI_CONF_OPT_B(intel_sampler_route_to_lsc, def, \
+                  "Intel specific toggle to enable sampler route to LSC")
 
 #define DRI_CONF_VK_REQUIRE_ETC2(def) \
   DRI_CONF_OPT_B(vk_require_etc2, def, \
@@ -421,6 +425,10 @@
 #define DRI_CONF_VK_X11_ENSURE_MIN_IMAGE_COUNT(def) \
    DRI_CONF_OPT_B(vk_x11_ensure_min_image_count, def, \
                   "Force the X11 WSI to create at least the number of image specified by the driver in VkSurfaceCapabilitiesKHR::minImageCount")
+
+#define DRI_CONF_VK_X11_IGNORE_SUBOPTIMAL(def) \
+   DRI_CONF_OPT_B(vk_x11_ignore_suboptimal, def, \
+                  "Force the X11 WSI to never report VK_SUBOPTIMAL_KHR")
 
 #define DRI_CONF_VK_KHR_PRESENT_WAIT(def) \
    DRI_CONF_OPT_B(vk_khr_present_wait, def, \
@@ -590,6 +598,14 @@
    DRI_CONF_OPT_B(tu_dont_reserve_descriptor_set, def, \
                   "Don't internally reserve one of the HW descriptor sets for descriptor set dynamic offset support, this frees up an extra descriptor set at the cost of that feature")
 
+#define DRI_CONF_TU_ALLOW_OOB_INDIRECT_UBO_LOADS(def) \
+   DRI_CONF_OPT_B(tu_allow_oob_indirect_ubo_loads, def, \
+                  "Some D3D11 games rely on out-of-bounds indirect UBO loads to return real values from underlying bound descriptor, this prevents us from lowering indirectly accessed UBOs to consts")
+
+#define DRI_CONF_TU_DISABLE_D24S8_BORDER_COLOR_WORKAROUND(def) \
+   DRI_CONF_OPT_B(tu_disable_d24s8_border_color_workaround, def, \
+                  "Use UBWC for D24S8 images with VK_IMAGE_USAGE_SAMPLED_BIT when customBorderColorWithoutFormat is enabled")
+
 /**
  * \brief venus specific configuration options
  */
@@ -628,10 +644,6 @@
 #define DRI_CONF_RADV_ZERO_VRAM(def) \
    DRI_CONF_OPT_B(radv_zero_vram, def, \
                   "Initialize to zero all VRAM allocations")
-
-#define DRI_CONF_RADV_LOWER_DISCARD_TO_DEMOTE(def) \
-   DRI_CONF_OPT_B(radv_lower_discard_to_demote, def, \
-                  "Lower discard instructions to demote")
 
 #define DRI_CONF_RADV_INVARIANT_GEOM(def) \
    DRI_CONF_OPT_B(radv_invariant_geom, def, \
@@ -720,9 +732,8 @@
 #define DRI_CONF_RADV_CLEAR_LDS(def) \
    DRI_CONF_OPT_B(radv_clear_lds, def, "Clear LDS at the end of shaders. Might decrease performance.")
 
-#define DRI_CONF_RADV_FORCE_ACTIVE_ACCEL_STRUCT_LEAVES(def) \
-   DRI_CONF_OPT_B(radv_force_active_accel_struct_leaves, def, \
-                  "Force leaf nodes of acceleration structures to be marked active.")
+#define DRI_CONF_RADV_DISABLE_NGG_GS(def) \
+   DRI_CONF_OPT_B(radv_disable_ngg_gs, def, "Disable NGG GS on GFX10/GFX10.3.")
 
 /**
  * \brief ANV specific configuration options
@@ -731,6 +742,10 @@
 #define DRI_CONF_ANV_ASSUME_FULL_SUBGROUPS(def) \
    DRI_CONF_OPT_I(anv_assume_full_subgroups, def, 0, 32, \
                   "Allow assuming full subgroups requirement even when it's not specified explicitly and set the given size")
+
+#define DRI_CONF_ANV_ASSUME_FULL_SUBGROUPS_WITH_BARRIER(def) \
+   DRI_CONF_OPT_B(anv_assume_full_subgroups_with_barrier, def, \
+                  "Assume full subgroups requirement for compute shaders that use control barriers")
 
 #define DRI_CONF_ANV_SAMPLE_MASK_OUT_OPENGL_BEHAVIOUR(def) \
    DRI_CONF_OPT_B(anv_sample_mask_out_opengl_behaviour, def, \
@@ -777,9 +792,31 @@
    DRI_CONF_OPT_B(anv_disable_fcv, def, \
                   "Disable FCV optimization")
 
-#define DRI_CONF_ANV_HASVK_OVERRIDE_API_VERSION(def) \
+#define DRI_CONF_ANV_DISABLE_XE2_CCS(def) \
+   DRI_CONF_OPT_B(anv_disable_xe2_ccs, def, \
+                  "Disable CCS optimization on Xe2")
+
+#define DRI_CONF_ANV_EXTERNAL_MEMORY_IMPLICIT_SYNC(def) \
+   DRI_CONF_OPT_B(anv_external_memory_implicit_sync, def, "Implicit sync on external BOs")
+
+#define DRI_CONF_ANV_COMPRESSION_CONTROL_ENABLED(def) \
+   DRI_CONF_OPT_B(compression_control_enabled, def, "Enable VK_EXT_image_compression_control support")
+
+#define DRI_CONF_ANV_FAKE_NONLOCAL_MEMORY(def) \
+   DRI_CONF_OPT_B(anv_fake_nonlocal_memory, def, \
+                  "Present host-visible device-local memory types as non device-local")
+
+/**
+ * \brief HASVK specific configuration options
+ */
+
+#define DRI_CONF_HASVK_OVERRIDE_API_VERSION(def) \
    DRI_CONF_OPT_B(hasvk_report_vk_1_3_version, def, \
                   "Override intel_hasvk API version")
+
+#define DRI_CONF_ANV_FORCE_GUC_LOW_LATENCY(def) \
+   DRI_CONF_OPT_B(force_guc_low_latency, def, \
+                  "Enable low latency GuC strategy. Only supported on i915.")
 
 /**
  * \brief DZN specific configuration options
@@ -790,5 +827,8 @@
 
 #define DRI_CONF_DZN_ENABLE_8BIT_LOADS_STORES(def) \
    DRI_CONF_OPT_B(dzn_enable_8bit_loads_stores, def, "Enable VK_KHR_8bit_loads_stores")
+
+#define DRI_CONF_DZN_DISABLE(def) \
+   DRI_CONF_OPT_B(dzn_disable, def, "Fail instance creation")
 
 #endif

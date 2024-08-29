@@ -203,6 +203,13 @@ the correct layout is:
 * [25:16]: Newest overlapped wave ID.
 * [9:0]: Current wave ID.
 
+## RDNA3 `v_pk_fmac_f16_dpp`
+
+"Table 30. Which instructions support DPP" in the RDNA3 ISA documentation has no exception for
+VOP2 `v_pk_fmac_f16`. But like all other packed math opcodes, DPP does not function in practice.
+RDNA1 and RDNA2 support `v_pk_fmac_f16_dpp`.
+
+
 # Hardware Bugs
 
 ## SMEM corrupts VCCZ on SI/CI
@@ -365,7 +372,8 @@ A va_vdst=0 wait: `s_waitcnt_deptr 0x0fff`
 ### VALUMaskWriteHazard
 
 Triggered by:
-SALU writing then reading a SGPR that was previously used as a lane mask for a VALU.
+SALU writing then SALU or VALU reading a SGPR that was previously used as a lane mask for a VALU.
 
 Mitigated by:
-A VALU instruction reading a SGPR or with literal, or a sa_sdst=0 wait: `s_waitcnt_depctr 0xfffe`
+A VALU instruction reading a non-exec SGPR before the SALU write, or a sa_sdst=0 wait after the
+SALU write: `s_waitcnt_depctr 0xfffe`

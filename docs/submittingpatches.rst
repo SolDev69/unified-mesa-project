@@ -139,7 +139,7 @@ following example::
 Multiple ``Backport-to:`` lines are allowed.
 
 The last option is deprecated and mostly here for historical reasons
-dating back to when patch submision was done via emails: using a ``Cc:``
+dating back to when patch submission was done via emails: using a ``Cc:``
 tag. Support for this tag will be removed at some point.
 Here are some examples of such a note::
 
@@ -174,7 +174,7 @@ to test this is to make use of the \`git rebase\` command, to run your
 tests on each commit. Assuming your branch is based off
 ``origin/main``, you can run:
 
-.. code-block:: console
+.. code-block:: sh
 
    $ git rebase --interactive --exec "meson test -C build/" origin/main
 
@@ -433,7 +433,7 @@ Git tips
 -  ``git rebase -i ...`` is your friend. Don't be afraid to use it.
 -  Apply a fixup to commit FOO.
 
-   .. code-block:: console
+   .. code-block:: sh
 
       git add ...
       git commit --fixup=FOO
@@ -441,6 +441,6 @@ Git tips
 
 -  Test for build breakage between patches e.g last 8 commits.
 
-   .. code-block:: console
+   .. code-block:: sh
 
       git rebase -i --exec="ninja -C build/" HEAD~8

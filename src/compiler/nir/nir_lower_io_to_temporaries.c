@@ -244,8 +244,7 @@ fixup_interpolation_instr(struct lower_io_state *state,
     * correct part of the temporary.
     */
    nir_def *load = nir_load_deref(b, nir_src_as_deref(interp->src[0]));
-   nir_def_rewrite_uses(&interp->def, load);
-   nir_instr_remove(&interp->instr);
+   nir_def_replace(&interp->def, load);
 
    nir_deref_path_finish(&interp_path);
 }
@@ -318,7 +317,7 @@ move_variables_to_list(nir_shader *shader, nir_variable_mode mode,
    }
 }
 
-void
+bool
 nir_lower_io_to_temporaries(nir_shader *shader, nir_function_impl *entrypoint,
                             bool outputs, bool inputs)
 {
@@ -326,8 +325,10 @@ nir_lower_io_to_temporaries(nir_shader *shader, nir_function_impl *entrypoint,
 
    if (shader->info.stage == MESA_SHADER_TESS_CTRL ||
        shader->info.stage == MESA_SHADER_TASK ||
-       shader->info.stage == MESA_SHADER_MESH)
-      return;
+       shader->info.stage == MESA_SHADER_MESH) {
+      nir_metadata_preserve(entrypoint, nir_metadata_all);
+      return false;
+   }
 
    state.shader = shader;
    state.entrypoint = entrypoint;
@@ -366,8 +367,7 @@ nir_lower_io_to_temporaries(nir_shader *shader, nir_function_impl *entrypoint,
       if (outputs)
          emit_output_copies_impl(&state, impl);
 
-      nir_metadata_preserve(impl, nir_metadata_block_index |
-                                     nir_metadata_dominance);
+      nir_metadata_preserve(impl, nir_metadata_control_flow);
    }
 
    exec_list_append(&shader->variables, &state.old_inputs);
@@ -378,4 +378,5 @@ nir_lower_io_to_temporaries(nir_shader *shader, nir_function_impl *entrypoint,
    nir_fixup_deref_modes(shader);
 
    _mesa_hash_table_destroy(state.input_map, NULL);
+   return true;
 }

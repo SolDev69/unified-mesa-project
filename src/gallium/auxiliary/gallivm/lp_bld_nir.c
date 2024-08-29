@@ -644,43 +644,26 @@ do_alu_action(struct lp_build_nir_context *bld_base,
                               bld_base->dbl_bld.vec_type, "");
       break;
    case nir_op_f2i8:
-      result = LLVMBuildFPToSI(builder,
-                               src[0],
-                               bld_base->uint8_bld.vec_type, "");
-      break;
    case nir_op_f2i16:
-      result = LLVMBuildFPToSI(builder,
-                               src[0],
-                               bld_base->uint16_bld.vec_type, "");
-      break;
    case nir_op_f2i32:
-      result = LLVMBuildFPToSI(builder, src[0], bld_base->base.int_vec_type, "");
-      break;
-   case nir_op_f2u8:
-      result = LLVMBuildFPToUI(builder,
-                               src[0],
-                               bld_base->uint8_bld.vec_type, "");
-      break;
-   case nir_op_f2u16:
-      result = LLVMBuildFPToUI(builder,
-                               src[0],
-                               bld_base->uint16_bld.vec_type, "");
-      break;
-   case nir_op_f2u32:
-      result = LLVMBuildFPToUI(builder,
-                               src[0],
-                               bld_base->base.int_vec_type, "");
-      break;
    case nir_op_f2i64:
-      result = LLVMBuildFPToSI(builder,
-                               src[0],
-                               bld_base->int64_bld.vec_type, "");
+   case nir_op_f2u8:
+   case nir_op_f2u16:
+   case nir_op_f2u32:
+   case nir_op_f2u64: {
+      nir_alu_type dst_type = nir_op_infos[instr->op].output_type;
+      bool is_unsigned = nir_alu_type_get_base_type(dst_type) == nir_type_uint;
+      LLVMTypeRef int_type = get_int_bld(bld_base, is_unsigned, nir_alu_type_get_type_size(dst_type))->vec_type;
+
+      char name[64];
+      char tmp[64];
+      char intrinsic[64];
+      snprintf(name, sizeof(name), "llvm.fpto%ci.sat", is_unsigned ? 'u' : 's');
+      lp_format_intrinsic(tmp, 64, name, int_type);
+      lp_format_intrinsic(intrinsic, 64, tmp, LLVMTypeOf(src[0]));
+      result = lp_build_intrinsic_unary(builder, intrinsic, int_type, src[0]);
       break;
-   case nir_op_f2u64:
-      result = LLVMBuildFPToUI(builder,
-                               src[0],
-                               bld_base->uint64_bld.vec_type, "");
-      break;
+   }
    case nir_op_fabs:
       result = lp_build_abs(get_flt_bld(bld_base, src_bit_size[0]), src[0]);
       break;
@@ -693,16 +676,6 @@ do_alu_action(struct lp_build_nir_context *bld_base,
       break;
    case nir_op_fcos:
       result = lp_build_cos(get_flt_bld(bld_base, src_bit_size[0]), src[0]);
-      break;
-   case nir_op_fddx:
-   case nir_op_fddx_coarse:
-   case nir_op_fddx_fine:
-      result = lp_build_ddx(get_flt_bld(bld_base, src_bit_size[0]), src[0]);
-      break;
-   case nir_op_fddy:
-   case nir_op_fddy_coarse:
-   case nir_op_fddy_fine:
-      result = lp_build_ddy(get_flt_bld(bld_base, src_bit_size[0]), src[0]);
       break;
    case nir_op_fdiv:
       result = lp_build_div(get_flt_bld(bld_base, src_bit_size[0]),
@@ -1641,7 +1614,7 @@ visit_load_image(struct lp_build_nir_context *bld_base,
 
    params.coords = coords;
    params.outdata = result;
-   params.img_op = LP_IMG_LOAD;
+   lp_img_op_from_intrinsic(&params, instr);
    if (nir_intrinsic_image_dim(instr) == GLSL_SAMPLER_DIM_MS ||
        nir_intrinsic_image_dim(instr) == GLSL_SAMPLER_DIM_SUBPASS_MS)
       params.ms_index = cast_type(bld_base, get_src(bld_base, instr->src[2]),
@@ -1724,6 +1697,11 @@ lp_img_op_from_intrinsic(struct lp_img_params *params, nir_intrinsic_instr *inst
    if (instr->intrinsic == nir_intrinsic_image_load ||
        instr->intrinsic == nir_intrinsic_bindless_image_load) {
       params->img_op = LP_IMG_LOAD;
+      return;
+   }
+
+   if (instr->intrinsic == nir_intrinsic_bindless_image_sparse_load) {
+      params->img_op = LP_IMG_LOAD_SPARSE;
       return;
    }
 
@@ -1918,7 +1896,7 @@ visit_discard(struct lp_build_nir_context *bld_base,
               nir_intrinsic_instr *instr)
 {
    LLVMValueRef cond = NULL;
-   if (instr->intrinsic == nir_intrinsic_discard_if) {
+   if (instr->intrinsic == nir_intrinsic_terminate_if) {
       cond = get_src(bld_base, instr->src[0]);
       cond = cast_type(bld_base, cond, nir_type_int, 32);
    }
@@ -2135,6 +2113,7 @@ visit_intrinsic(struct lp_build_nir_context *bld_base,
       visit_store_reg(bld_base, instr);
       break;
    case nir_intrinsic_load_input:
+   case nir_intrinsic_load_per_primitive_input:
       visit_load_input(bld_base, instr, result);
       break;
    case nir_intrinsic_store_output:
@@ -2192,8 +2171,8 @@ visit_intrinsic(struct lp_build_nir_context *bld_base,
    case nir_intrinsic_load_helper_invocation:
       bld_base->helper_invocation(bld_base, &result[0]);
       break;
-   case nir_intrinsic_discard_if:
-   case nir_intrinsic_discard:
+   case nir_intrinsic_terminate_if:
+   case nir_intrinsic_terminate:
       visit_discard(bld_base, instr);
       break;
    case nir_intrinsic_emit_vertex:
@@ -2208,6 +2187,7 @@ visit_intrinsic(struct lp_build_nir_context *bld_base,
       break;
    case nir_intrinsic_image_load:
    case nir_intrinsic_bindless_image_load:
+   case nir_intrinsic_bindless_image_sparse_load:
       visit_load_image(bld_base, instr, result);
       break;
    case nir_intrinsic_image_store:
@@ -2325,6 +2305,26 @@ visit_intrinsic(struct lp_build_nir_context *bld_base,
    case nir_intrinsic_load_param:
       visit_load_param(bld_base, instr, result);
       break;
+   case nir_intrinsic_ddx:
+   case nir_intrinsic_ddy:
+   case nir_intrinsic_ddx_coarse:
+   case nir_intrinsic_ddy_coarse:
+   case nir_intrinsic_ddx_fine:
+   case nir_intrinsic_ddy_fine: {
+      LLVMValueRef src = get_src(bld_base, instr->src[0]);
+      src = cast_type(bld_base, src, nir_type_float, nir_src_bit_size(instr->src[0]));
+
+      struct lp_build_context *bld = get_flt_bld(bld_base, nir_src_bit_size(instr->src[0]));
+
+      if (instr->intrinsic == nir_intrinsic_ddx ||
+          instr->intrinsic == nir_intrinsic_ddx_coarse ||
+          instr->intrinsic == nir_intrinsic_ddx_fine)
+         result[0] = lp_build_ddx(bld, src);
+      else
+         result[0] = lp_build_ddy(bld, src);
+
+      break;
+   }
    default:
       fprintf(stderr, "Unsupported intrinsic: ");
       nir_print_instr(&instr->instr, stderr);
@@ -2466,6 +2466,9 @@ lp_build_nir_sample_key(gl_shader_stage stage, nir_tex_instr *instr)
    }
 
    sample_key |= lod_property << LP_SAMPLER_LOD_PROPERTY_SHIFT;
+
+   if (instr->is_sparse)
+      sample_key |= LP_SAMPLER_RESIDENCY;
 
    return sample_key;
 }
@@ -2817,20 +2820,37 @@ visit_block(struct lp_build_nir_context *bld_base, nir_block *block)
    }
 }
 
+static bool
+lp_should_flatten_cf_list(struct exec_list *cf_list)
+{
+   if (exec_list_is_empty(cf_list))
+      return true;
+   if (!exec_list_is_singular(cf_list))
+      return false;
+
+   struct exec_node *head = exec_list_get_head(cf_list);
+   nir_block *block = nir_cf_node_as_block(exec_node_data(nir_cf_node, head, node));
+   return exec_list_length(&block->instr_list) < 8;
+}
 
 static void
 visit_if(struct lp_build_nir_context *bld_base, nir_if *if_stmt)
 {
    LLVMValueRef cond = get_src(bld_base, if_stmt->condition);
 
-   bld_base->if_cond(bld_base, cond);
+   bool flatten_then = lp_should_flatten_cf_list(&if_stmt->then_list);
+
+   bld_base->if_cond(bld_base, cond, flatten_then);
    visit_cf_list(bld_base, &if_stmt->then_list);
 
    if (!exec_list_is_empty(&if_stmt->else_list)) {
-      bld_base->else_stmt(bld_base);
+      bool flatten_else = lp_should_flatten_cf_list(&if_stmt->else_list);
+      bld_base->else_stmt(bld_base, flatten_then, flatten_else);
       visit_cf_list(bld_base, &if_stmt->else_list);
+      bld_base->endif_stmt(bld_base, flatten_else);
+   } else {
+      bld_base->endif_stmt(bld_base, flatten_then);
    }
-   bld_base->endif_stmt(bld_base);
 }
 
 

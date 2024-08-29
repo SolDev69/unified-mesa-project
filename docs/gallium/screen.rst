@@ -111,7 +111,7 @@ The integer capabilities:
   features only present in the OpenGL compatibility profile.
   The only legacy features that Gallium drivers must implement are
   the legacy shader inputs and outputs (colors, texcoords, fog, clipvertex,
-  edgeflag).
+  edge flag).
 * ``PIPE_CAP_ESSL_FEATURE_LEVEL``: An optional cap to allow drivers to
   report a higher GLSL version for GLES contexts.  This is useful when a
   driver does not support all the required features for a higher GL version,
@@ -413,8 +413,6 @@ The integer capabilities:
 * ``PIPE_CAP_STREAM_OUTPUT_INTERLEAVE_BUFFERS``: Whether interleaved stream
   output mode is able to interleave across buffers. This is required for
   :ext:`GL_ARB_transform_feedback3`.
-* ``PIPE_CAP_SHADER_CAN_READ_OUTPUTS``: Whether every TGSI shader stage can read
-  from the output file.
 * ``PIPE_CAP_FBFETCH``: The number of render targets whose value in the
   current framebuffer can be read in the shader.  0 means framebuffer fetch
   is not supported.  1 means that only the first render target can be read,
@@ -426,6 +424,7 @@ The integer capabilities:
 * ``PIPE_CAP_LEGACY_MATH_RULES``: Whether NIR shaders support the
   ``shader_info.use_legacy_math_rules`` flag (see documentation there), and
   TGSI shaders support the corresponding ``TGSI_PROPERTY_LEGACY_MATH_RULES``.
+* ``PIPE_CAP_FP16``: Whether 16-bit float operations are supported.
 * ``PIPE_CAP_DOUBLES``: Whether double precision floating-point operations
   are supported.
 * ``PIPE_CAP_INT64``: Whether 64-bit integer operations are supported.
@@ -544,7 +543,6 @@ The integer capabilities:
 * ``PIPE_CAP_DEST_SURFACE_SRGB_CONTROL``: Indicates whether the drivers
   supports switching the format between sRGB and linear for a surface that is
   used as destination in draw and blit calls.
-* ``PIPE_CAP_NIR_COMPACT_ARRAYS``: True if the compiler backend supports NIR's compact array feature, for all shader stages.
 * ``PIPE_CAP_MAX_VARYINGS``: The maximum number of fragment shader
   varyings. This will generally correspond to
   ``PIPE_SHADER_CAP_MAX_INPUTS`` for the fragment shader, but in some
@@ -563,6 +561,8 @@ The integer capabilities:
     1. ``DRM_PRIME_CAP_IMPORT``: resource_from_handle is supported
     2. ``DRM_PRIME_CAP_EXPORT``: resource_get_handle is supported
 
+* ``PIPE_CAP_CL_GL_SHARING``: True if driver supports everything required by a frontend implementing the CL extension, and
+  also supports importing/exporting all of pipe_texture_target via dma buffers.
 * ``PIPE_CAP_PREFER_COMPUTE_FOR_MULTIMEDIA``: Whether VDPAU, VAAPI, and
   OpenMAX should use a compute-based blit instead of pipe_context::blit and compute pipeline for compositing images.
 * ``PIPE_CAP_FRAGMENT_SHADER_INTERLOCK``: True if fragment shader interlock
@@ -648,6 +648,12 @@ The integer capabilities:
 * ``PIPE_CAP_VALIDATE_ALL_DIRTY_STATES`` : Whether state validation must also validate the state changes for resources types used in the previous shader but not in the current shader.
 * ``PIPE_CAP_HAS_CONST_BW``: Whether the driver only supports non-data-dependent layouts (ie. not bandwidth compressed formats like AFBC, UBWC, etc), or supports ``PIPE_BIND_CONST_BW`` to disable data-dependent layouts on requested resources.
 * ``PIPE_CAP_PERFORMANCE_MONITOR``: Whether GL_AMD_performance_monitor should be exposed.
+* ``PIPE_CAP_TEXTURE_SAMPLER_INDEPENDENT``: Whether sampler views and sampler states are independent objects, meaning both can be freely mixed and matched by the frontend. This isn't required for OpenGL where on the shader level those are the same object. However for proper gallium nine and OpenCL support this is required.
+* ``PIPE_CAP_ASTC_DECODE_MODE``: Whether the driver supports ASTC decode precision. The :ext:`GL_KHR_texture_compression_astc_decode_mode` extension will only get exposed if :ext:`GL_KHR_texture_compression_astc_ldr` is also supported.
+* ``PIPE_CAP_SHADER_SUBGROUP_SIZE``: A fixed subgroup size shader runs on GPU when GLSL GL_KHR_shader_subgroup_* extensions are enabled.
+* ``PIPE_CAP_SHADER_SUBGROUP_SUPPORTED_STAGES``: Bitmask of Shader stages which support GL_KHR_shader_subgroup_* intrinsics.
+* ``PIPE_CAP_SHADER_SUBGROUP_SUPPORTED_FEATURES``: Bitmask of shader subgroup features listed in GL_KHR_shader_subgroup.
+* ``PIPE_CAP_SHADER_SUBGROUP_QUAD_ALL_STAGES``: Whether shader subgroup quad operations are supported by shader stages other than fragment shader.
 
 
 .. _pipe_capf:
@@ -802,7 +808,7 @@ pipe_screen::get_compute_param.
   non-zero means yes, zero means no. Value type: ``uint32_t``
 * ``PIPE_COMPUTE_CAP_SUBGROUP_SIZES``: Ored power of two sizes of a basic execution
   unit in threads. Also known as wavefront size, warp size or SIMD width.
-  E.g. `64 | 32`.
+  E.g. ``64 | 32``.
 * ``PIPE_COMPUTE_CAP_ADDRESS_BITS``: The default compute device address space
   size specified as an unsigned integer value in bits.
 * ``PIPE_COMPUTE_CAP_MAX_VARIABLE_THREADS_PER_BLOCK``: Maximum variable number

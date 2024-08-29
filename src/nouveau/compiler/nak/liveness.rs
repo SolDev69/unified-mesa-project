@@ -1,9 +1,9 @@
 // Copyright © 2022 Collabora, Ltd.
 // SPDX-License-Identifier: MIT
 
-use crate::bitset::BitSet;
 use crate::ir::*;
 
+use compiler::bitset::BitSet;
 use std::cell::RefCell;
 use std::cmp::{max, Ord, Ordering};
 use std::collections::{hash_set, HashMap, HashSet};
@@ -115,6 +115,14 @@ impl FromIterator<SSAValue> for LiveSet {
     }
 }
 
+impl Extend<SSAValue> for LiveSet {
+    fn extend<T: IntoIterator<Item = SSAValue>>(&mut self, iter: T) {
+        for ssa in iter {
+            self.insert(ssa);
+        }
+    }
+}
+
 pub trait BlockLiveness {
     /// Returns true if @val is still live after @ip
     fn is_live_after_ip(&self, val: &SSAValue, ip: usize) -> bool;
@@ -140,7 +148,7 @@ pub trait BlockLiveness {
         }
 
         // This is the first high point
-        let vec_dst_live = live.clone();
+        let vec_dst_live = live;
 
         // Use a hash set because sources may occur more than once
         let mut killed = HashSet::new();
@@ -201,11 +209,11 @@ pub trait Liveness {
                     max(max_live[file], live_at_instr[file])
                 });
 
-                if let Op::FSOut(fs_out) = &instr.op {
+                if let Op::RegOut(reg_out) = &instr.op {
                     // This should be the last instruction.  Everything should
                     // be dead once we've processed it.
                     debug_assert!(live.count(RegFile::GPR) == 0);
-                    let num_gprs_out = fs_out.srcs.len().try_into().unwrap();
+                    let num_gprs_out = reg_out.srcs.len().try_into().unwrap();
                     max_live[RegFile::GPR] =
                         max(max_live[RegFile::GPR], num_gprs_out);
                 }
@@ -428,7 +436,7 @@ impl NextUseBlockLiveness {
     }
 
     /// Returns an iterator over all the values which are live-in to this block
-    pub fn iter_live_in<'a>(&'a self) -> impl Iterator<Item = &'a SSAValue> {
+    pub fn iter_live_in(&self) -> impl Iterator<Item = &SSAValue> {
         self.ssa_map.iter().filter_map(|(ssa, entry)| {
             if entry.defined || entry.uses.is_empty() {
                 None

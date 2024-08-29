@@ -408,7 +408,7 @@ create_variant(struct etna_shader *shader,
 
    etna_disk_cache_store(shader->compiler, v);
 
-#ifdef DEBUG
+#if MESA_DEBUG
    if (DBG_ENABLED(ETNA_DBG_DUMP_SHADERS))
       etna_dump_shader(v);
 #endif
@@ -489,6 +489,7 @@ etna_create_shader_state(struct pipe_context *pctx,
       return NULL;
 
    shader->id = p_atomic_inc_return(&compiler->shader_count);
+   shader->info = screen->info;
    shader->specs = &screen->specs;
    shader->compiler = screen->compiler;
    util_queue_fence_init(&shader->ready);
@@ -593,7 +594,7 @@ etna_shader_screen_init(struct pipe_screen *pscreen)
    /* Create at least one thread - even on single core CPU systems. */
    num_threads = MAX2(1, num_threads);
 
-   screen->compiler = etna_compiler_create(pscreen->get_name(pscreen), &screen->specs);
+   screen->compiler = etna_compiler_create(pscreen->get_name(pscreen), screen->info);
    if (!screen->compiler)
       return false;
 

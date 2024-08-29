@@ -461,8 +461,6 @@ dEQP-GLES3.functional.texture.wrap.astc_8x8.repeat_repeat_linear_divisible,Fail
 dEQP-GLES3.functional.texture.wrap.astc_8x8.repeat_repeat_linear_not_divisible,Fail
 dEQP-GLES3.functional.texture.wrap.astc_8x8_srgb.repeat_repeat_linear_divisible,Fail
 dEQP-GLES3.functional.texture.wrap.astc_8x8_srgb.repeat_repeat_linear_not_divisible,Fail
-dEQP-GLES3.functional.vertex_arrays.single_attribute.normalize.int2_10_10_10.components4_quads1,Fail
-dEQP-GLES3.functional.vertex_arrays.single_attribute.normalize.int2_10_10_10.components4_quads256,Fail
 dEQP-GLES31.functional.debug.error_filters.case_29,Fail
 dEQP-GLES31.functional.debug.negative_coverage.callbacks.buffer.read_pixels_fbo_format_mismatch,Fail
 dEQP-GLES31.functional.debug.negative_coverage.get_error.buffer.blit_framebuffer_multisample,Fail
@@ -901,7 +899,6 @@ hiz@hiz-stencil-read-window-depth0,Fail
 hiz@hiz-stencil-read-window-depth1,Fail
 hiz@hiz-stencil-test-window-depth0,Fail
 hiz@hiz-stencil-test-window-depth1,Fail
-shaders@glsl-bug-110796,Fail
 spec@!opengl 1.0@gl-1.0-drawbuffer-modes,Fail
 spec@!opengl 1.0@gl-1.0-swapbuffers-behavior,Fail
 spec@!opengl 1.0@rasterpos,Fail
@@ -1117,9 +1114,6 @@ spec@arb_texture_rg@texwrap formats@GL_R8- NPOT,Fail
 spec@arb_texture_rg@texwrap formats@GL_RG16- NPOT,Fail
 spec@arb_texture_rg@texwrap formats@GL_RG8- NPOT,Fail
 
-spec@arb_texture_view@rendering-formats,Fail
-spec@arb_texture_view@rendering-formats@clear GL_RGBA8_SNORM as GL_R32F,Fail
-
 spec@arb_transform_feedback2@change objects while paused,Crash
 spec@arb_transform_feedback3@arb_transform_feedback3-ext_interleaved_two_bufs_gs,Crash
 spec@arb_transform_feedback3@arb_transform_feedback3-ext_interleaved_two_bufs_gs_max,Crash
@@ -1127,9 +1121,6 @@ spec@arb_transform_feedback3@arb_transform_feedback3-ext_interleaved_two_bufs_vs
 
 # error: main:90: eglChooseConfig() returned no configs
 spec@egl 1.4@eglterminate then unbind context,Fail
-
-# "No such file or directory (os error 2)"
-spec@egl_ext_protected_content@conformance,Fail
 
 # "eglChooseConfig() failed"
 spec@egl_khr_surfaceless_context@viewport,Fail
@@ -1245,7 +1236,6 @@ spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-strip,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-strip-first-vertex,Fail
 spec@glsl-es-3.00@execution@varying-struct-centroid_gles3,Fail
-spec@intel_performance_query@intel_performance_query-issue_2235,Fail
 
 spec@khr_texture_compression_astc@miptree-gl srgb-fp,Fail
 spec@khr_texture_compression_astc@miptree-gl srgb-fp@sRGB decode full precision,Fail
@@ -1283,3 +1273,13 @@ spec@arb_texture_buffer_object@texture-buffer-size-clamp@rg8ui_texture_buffer_si
 spec@arb_texture_buffer_object@texture-buffer-size-clamp@rg8ui_texture_buffer_size_via_sampler,Fail
 spec@arb_texture_buffer_object@texture-buffer-size-clamp@rgba8ui_texture_buffer_size_via_image,Fail
 spec@arb_texture_buffer_object@texture-buffer-size-clamp@rgba8ui_texture_buffer_size_via_sampler,Fail
+
+# uprev Piglit in Mesa
+spec@glsl-1.40@uniform_buffer@two-stages,Fail
+spec@arb_internalformat_query2@max dimensions related pname checks,Fail
+spec@arb_internalformat_query2@max dimensions related pname checks@GL_MAX_COMBINED_DIMENSIONS,Fail
+spec@arb_internalformat_query2@max dimensions related pname checks@GL_MAX_DEPTH,Fail
+spec@arb_internalformat_query2@max dimensions related pname checks@GL_MAX_HEIGHT,Fail
+spec@arb_internalformat_query2@max dimensions related pname checks@GL_MAX_LAYERS,Fail
+spec@arb_internalformat_query2@max dimensions related pname checks@GL_MAX_WIDTH,Fail
+

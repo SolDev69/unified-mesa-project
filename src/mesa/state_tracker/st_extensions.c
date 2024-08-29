@@ -73,6 +73,30 @@ static int _clamp(int a, int min, int max)
       return a;
 }
 
+static unsigned mesa_to_gl_stages(unsigned stages)
+{
+   unsigned ret = 0;
+
+   if (stages & BITFIELD_BIT(MESA_SHADER_VERTEX))
+      ret |= GL_VERTEX_SHADER_BIT;
+
+   if (stages & BITFIELD_BIT(MESA_SHADER_TESS_CTRL))
+      ret |= GL_TESS_CONTROL_SHADER_BIT;
+
+   if (stages & BITFIELD_BIT(MESA_SHADER_TESS_EVAL))
+      ret |= GL_TESS_EVALUATION_SHADER_BIT;
+
+   if (stages & BITFIELD_BIT(MESA_SHADER_GEOMETRY))
+      ret |= GL_GEOMETRY_SHADER_BIT;
+
+   if (stages & BITFIELD_BIT(MESA_SHADER_FRAGMENT))
+      ret |= GL_FRAGMENT_SHADER_BIT;
+
+   if (stages & BITFIELD_BIT(MESA_SHADER_COMPUTE))
+      ret |= GL_COMPUTE_SHADER_BIT;
+
+   return ret;
+}
 
 /**
  * Query driver to get implementation limits.
@@ -170,11 +194,9 @@ void st_init_limits(struct pipe_screen *screen,
 
    c->HasFBFetch = screen->get_param(screen, PIPE_CAP_FBFETCH);
 
-   c->SupportsReadingOutputs = screen->get_param(screen, PIPE_CAP_SHADER_CAN_READ_OUTPUTS);
-
    c->CombinedClipCullDistanceArrays = !screen->get_param(screen, PIPE_CAP_CULL_DISTANCE_NOCOMBINE);
 
-   c->PointSizeFixed = screen->get_param(screen, PIPE_CAP_POINT_SIZE_FIXED);
+   c->PointSizeFixed = screen->get_param(screen, PIPE_CAP_POINT_SIZE_FIXED) != PIPE_POINT_SIZE_LOWER_ALWAYS;
 
    for (sh = 0; sh < PIPE_SHADER_TYPES; ++sh) {
       const gl_shader_stage stage = tgsi_processor_to_shader_stage(sh);
@@ -352,9 +374,6 @@ void st_init_limits(struct pipe_screen *screen,
           (options->EmitNoIndirectUniform || pc->MaxUniformBlocks < 12)) {
          can_ubo = false;
       }
-
-      if (!screen->get_param(screen, PIPE_CAP_NIR_COMPACT_ARRAYS))
-         options->LowerCombinedClipCullDistance = true;
 
       if (sh == PIPE_SHADER_VERTEX || sh == PIPE_SHADER_GEOMETRY) {
          if (screen->get_param(screen, PIPE_CAP_VIEWPORT_TRANSFORM_LOWERED))
@@ -606,7 +625,7 @@ void st_init_limits(struct pipe_screen *screen,
    c->VertexBufferOffsetIsInt32 =
       screen->get_param(screen, PIPE_CAP_SIGNED_VERTEX_BUFFER_OFFSET);
 
-   c->AllowDynamicVAOFastPath =
+   c->UseVAOFastPath =
          screen->get_param(screen, PIPE_CAP_ALLOW_DYNAMIC_VAO_FASTPATH);
 
    c->glBeginEndBufferSize =
@@ -626,6 +645,18 @@ void st_init_limits(struct pipe_screen *screen,
 
    c->AllowGLThreadBufferSubDataOpt =
       screen->get_param(screen, PIPE_CAP_ALLOW_GLTHREAD_BUFFER_SUBDATA_OPT);
+
+   c->HasDrawVertexState =
+      screen->get_param(screen, PIPE_CAP_DRAW_VERTEX_STATE);
+
+   c->ShaderSubgroupSize =
+      screen->get_param(screen, PIPE_CAP_SHADER_SUBGROUP_SIZE);
+   c->ShaderSubgroupSupportedStages =
+      mesa_to_gl_stages(screen->get_param(screen, PIPE_CAP_SHADER_SUBGROUP_SUPPORTED_STAGES));
+   c->ShaderSubgroupSupportedFeatures =
+      screen->get_param(screen, PIPE_CAP_SHADER_SUBGROUP_SUPPORTED_FEATURES);
+   c->ShaderSubgroupQuadAllStages =
+      screen->get_param(screen, PIPE_CAP_SHADER_SUBGROUP_QUAD_ALL_STAGES);
 }
 
 
@@ -836,6 +867,7 @@ void st_init_extensions(struct pipe_screen *screen,
 #endif
       { o(EXT_shader_samples_identical),     PIPE_CAP_SHADER_SAMPLES_IDENTICAL         },
       { o(EXT_texture_array),                PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS         },
+      { o(EXT_texture_compression_astc_decode_mode), PIPE_CAP_ASTC_DECODE_MODE         },
       { o(EXT_texture_filter_anisotropic),   PIPE_CAP_ANISOTROPIC_FILTER               },
       { o(EXT_texture_filter_minmax),        PIPE_CAP_SAMPLER_REDUCTION_MINMAX         },
       { o(EXT_texture_mirror_clamp),         PIPE_CAP_TEXTURE_MIRROR_CLAMP             },
@@ -844,8 +876,11 @@ void st_init_extensions(struct pipe_screen *screen,
       { o(EXT_transform_feedback),           PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS        },
       { o(EXT_window_rectangles),            PIPE_CAP_MAX_WINDOW_RECTANGLES            },
 
+      { o(KHR_shader_subgroup),              PIPE_CAP_SHADER_SUBGROUP_SIZE             },
+
       { o(AMD_depth_clamp_separate),         PIPE_CAP_DEPTH_CLIP_DISABLE_SEPARATE      },
       { o(AMD_framebuffer_multisample_advanced), PIPE_CAP_FRAMEBUFFER_MSAA_CONSTRAINTS },
+      { o(AMD_gpu_shader_half_float),        PIPE_CAP_FP16                             },
       { o(AMD_performance_monitor),          PIPE_CAP_PERFORMANCE_MONITOR              },
       { o(AMD_pinned_memory),                PIPE_CAP_RESOURCE_FROM_USER_MEMORY        },
       { o(ATI_meminfo),                      PIPE_CAP_QUERY_MEMORY_INFO                },
@@ -1801,36 +1836,16 @@ void st_init_extensions(struct pipe_screen *screen,
    }
 
    if (extensions->ARB_gl_spirv) {
-      struct spirv_supported_capabilities *spirv_caps = &consts->SpirVCapabilities;
-
-      spirv_caps->atomic_storage             = extensions->ARB_shader_atomic_counters;
-      spirv_caps->demote_to_helper_invocation = extensions->EXT_demote_to_helper_invocation;
-      spirv_caps->draw_parameters            = extensions->ARB_shader_draw_parameters;
-      spirv_caps->derivative_group           = extensions->NV_compute_shader_derivatives;
-      spirv_caps->float64                    = extensions->ARB_gpu_shader_fp64;
-      spirv_caps->geometry_streams           = extensions->ARB_gpu_shader5;
-      spirv_caps->image_ms_array             = extensions->ARB_shader_image_load_store &&
-                                               consts->MaxImageSamples > 1;
-      spirv_caps->image_read_without_format  = extensions->EXT_shader_image_load_formatted;
-      spirv_caps->image_write_without_format = extensions->ARB_shader_image_load_store;
-      spirv_caps->int64                      = extensions->ARB_gpu_shader_int64;
-      spirv_caps->int64_atomics              = extensions->NV_shader_atomic_int64;
-      spirv_caps->post_depth_coverage        = extensions->ARB_post_depth_coverage;
-      spirv_caps->shader_clock               = extensions->ARB_shader_clock;
-      spirv_caps->shader_viewport_index_layer = extensions->ARB_shader_viewport_layer_array;
-      spirv_caps->stencil_export             = extensions->ARB_shader_stencil_export;
-      spirv_caps->storage_image_ms           = extensions->ARB_shader_image_load_store &&
-                                               consts->MaxImageSamples > 1;
-      spirv_caps->subgroup_ballot            = extensions->ARB_shader_ballot;
-      spirv_caps->subgroup_vote              = extensions->ARB_shader_group_vote;
-      spirv_caps->tessellation               = extensions->ARB_tessellation_shader;
-      spirv_caps->transform_feedback         = extensions->ARB_transform_feedback3;
-      spirv_caps->variable_pointers          =
-         screen->get_param(screen, PIPE_CAP_GL_SPIRV_VARIABLE_POINTERS);
-      spirv_caps->integer_functions2         = extensions->INTEL_shader_integer_functions2;
-
       consts->SpirVExtensions = CALLOC_STRUCT(spirv_supported_extensions);
-      _mesa_fill_supported_spirv_extensions(consts->SpirVExtensions, spirv_caps);
+      consts->SpirVExtensions->supported[SPV_KHR_shader_draw_parameters] =
+         extensions->ARB_shader_draw_parameters;
+      consts->SpirVExtensions->supported[SPV_KHR_storage_buffer_storage_class] = true;
+      consts->SpirVExtensions->supported[SPV_KHR_variable_pointers] =
+         screen->get_param(screen, PIPE_CAP_GL_SPIRV_VARIABLE_POINTERS);
+      consts->SpirVExtensions->supported[SPV_KHR_shader_ballot] =
+         extensions->ARB_shader_ballot;
+      consts->SpirVExtensions->supported[SPV_KHR_subgroup_vote] =
+         extensions->ARB_shader_group_vote;
    }
 
    consts->AllowDrawOutOfOrder =

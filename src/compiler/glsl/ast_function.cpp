@@ -97,8 +97,11 @@ prototype_string(const glsl_type *return_type, const char *name,
    ralloc_asprintf_append(&str, "%s(", name);
 
    const char *comma = "";
-   foreach_in_list(const ir_variable, param, parameters) {
-      ralloc_asprintf_append(&str, "%s%s", comma, glsl_get_type_name(param->type));
+   foreach_in_list(const ir_instruction, param, parameters) {
+      ralloc_asprintf_append(&str, "%s%s", comma,
+                             glsl_get_type_name(param->ir_type ==
+                                                ir_type_variable ? ((ir_variable *)param)->type :
+                                                ((ir_rvalue *)param)->type));
       comma = ", ";
    }
 
@@ -701,6 +704,8 @@ match_function_by_name(const char *name,
       /* Look for a match in the local shader.  If exact, we're done. */
       bool is_exact = false;
       sig = local_sig = f->matching_signature(state, actual_parameters,
+                                              state->has_implicit_conversions(),
+                                              state->has_implicit_int_to_uint_conversion(),
                                               allow_builtins, &is_exact);
       if (is_exact)
          return sig;
@@ -752,6 +757,8 @@ match_subroutine_by_name(const char *name,
       return NULL;
    *var_r = var;
    sig = found->matching_signature(state, actual_parameters,
+                                   state->has_implicit_conversions(),
+                                   state->has_implicit_int_to_uint_conversion(),
                                    false, &is_exact);
    return sig;
 }
@@ -889,6 +896,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
       case GLSL_TYPE_INT:
          result = new(ctx) ir_expression(ir_unop_i2u, src);
          break;
+      case GLSL_TYPE_FLOAT16:
+         result = new(ctx) ir_expression(ir_unop_f162u, src);
+         break;
       case GLSL_TYPE_FLOAT:
          result = new(ctx) ir_expression(ir_unop_f2u, src);
          break;
@@ -919,6 +929,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
       case GLSL_TYPE_UINT:
          result = new(ctx) ir_expression(ir_unop_u2i, src);
          break;
+      case GLSL_TYPE_FLOAT16:
+         result = new(ctx) ir_expression(ir_unop_f162i, src);
+         break;
       case GLSL_TYPE_FLOAT:
          result = new(ctx) ir_expression(ir_unop_f2i, src);
          break;
@@ -936,6 +949,31 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
          break;
       }
       break;
+   case GLSL_TYPE_FLOAT16:
+      switch (b) {
+      case GLSL_TYPE_UINT:
+         result = new(ctx) ir_expression(ir_unop_u2f16, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_INT:
+         result = new(ctx) ir_expression(ir_unop_i2f16, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_BOOL:
+         result = new(ctx) ir_expression(ir_unop_b2f16, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_FLOAT:
+         result = new(ctx) ir_expression(ir_unop_f2f16, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_DOUBLE:
+         result = new(ctx) ir_expression(ir_unop_d2f16, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_UINT64:
+         result = new(ctx) ir_expression(ir_unop_u642f16, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_INT64:
+         result = new(ctx) ir_expression(ir_unop_i642f16, desired_type, src, NULL);
+         break;
+      }
+      break;
    case GLSL_TYPE_FLOAT:
       switch (b) {
       case GLSL_TYPE_UINT:
@@ -946,6 +984,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
          break;
       case GLSL_TYPE_BOOL:
          result = new(ctx) ir_expression(ir_unop_b2f, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_FLOAT16:
+         result = new(ctx) ir_expression(ir_unop_f162f, desired_type, src, NULL);
          break;
       case GLSL_TYPE_DOUBLE:
          result = new(ctx) ir_expression(ir_unop_d2f, desired_type, src, NULL);
@@ -967,6 +1008,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
          break;
       case GLSL_TYPE_INT:
          result = new(ctx) ir_expression(ir_unop_i2b, desired_type, src, NULL);
+         break;
+      case GLSL_TYPE_FLOAT16:
+         result = new(ctx) ir_expression(ir_unop_f162b, desired_type, src, NULL);
          break;
       case GLSL_TYPE_FLOAT:
          result = new(ctx) ir_expression(ir_unop_f2b, desired_type, src, NULL);
@@ -997,6 +1041,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
                                          new(ctx) ir_expression(ir_unop_b2f,
                                                                 src));
          break;
+      case GLSL_TYPE_FLOAT16:
+         result = new(ctx) ir_expression(ir_unop_f162d, desired_type, src, NULL);
+         break;
       case GLSL_TYPE_FLOAT:
          result = new(ctx) ir_expression(ir_unop_f2d, desired_type, src, NULL);
          break;
@@ -1021,6 +1068,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
                                          new(ctx) ir_expression(ir_unop_b2i64,
                                                                 src));
          break;
+      case GLSL_TYPE_FLOAT16:
+         result = new(ctx) ir_expression(ir_unop_f162u64, src);
+         break;
       case GLSL_TYPE_FLOAT:
          result = new(ctx) ir_expression(ir_unop_f2u64, src);
          break;
@@ -1042,6 +1092,9 @@ convert_component(ir_rvalue *src, const glsl_type *desired_type)
          break;
       case GLSL_TYPE_BOOL:
          result = new(ctx) ir_expression(ir_unop_b2i64, src);
+         break;
+      case GLSL_TYPE_FLOAT16:
+         result = new(ctx) ir_expression(ir_unop_f162i64, src);
          break;
       case GLSL_TYPE_FLOAT:
          result = new(ctx) ir_expression(ir_unop_f2i64, src);
@@ -1113,7 +1166,9 @@ implicitly_convert_component(ir_rvalue * &from, const glsl_base_type to,
                           from->type->vector_elements,
                           from->type->matrix_columns);
 
-      if (_mesa_glsl_can_implicitly_convert(from->type, desired_type, state)) {
+      if (_mesa_glsl_can_implicitly_convert(from->type, desired_type,
+                                            state->has_implicit_conversions(),
+                                            state->has_implicit_int_to_uint_conversion())) {
          /* Even though convert_component() implements the constructor
           * conversion rules (not the implicit conversion rules), its safe
           * to use it here because we already checked that the implicit
@@ -1654,7 +1709,7 @@ emit_inline_matrix_constructor(const glsl_type *type,
        * components with zero.
        */
       glsl_base_type param_base_type = first_param->type->base_type;
-      assert(glsl_type_is_float(first_param->type) || glsl_type_is_double(first_param->type));
+      assert(glsl_type_is_float_16_32_64(first_param->type));
       ir_variable *rhs_var =
          new(ctx) ir_variable(glsl_simple_type(param_base_type, 4, 1),
                               "mat_ctor_vec",
@@ -2348,6 +2403,24 @@ ast_function_expression::hir(exec_list *instructions,
          }
 
          ir_rvalue *result = convert_component(ir, desired_type);
+
+         /* If the bindless packing constructors are used directly as function
+          * params to bultin functions the compiler doesn't know what to do
+          * with them. To avoid this make sure we always copy the results from
+          * the pack to a temp first.
+          */
+         if (result->as_expression() &&
+             result->as_expression()->operation == ir_unop_pack_sampler_2x32) {
+            ir_variable *var =
+               new(ctx) ir_variable(desired_type, "sampler_ctor",
+                                    ir_var_temporary);
+            instructions->push_tail(var);
+
+            ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
+            ir_instruction *assignment = new(ctx) ir_assignment(lhs, result);
+            instructions->push_tail(assignment);
+            result = lhs;
+         }
 
          /* Attempt to convert the parameter to a constant valued expression.
           * After doing so, track whether or not all the parameters to the

@@ -195,7 +195,8 @@ vc4_blitter_save(struct vc4_context *vc4)
 {
         util_blitter_save_fragment_constant_buffer_slot(vc4->blitter,
                                                         vc4->constbuf[PIPE_SHADER_FRAGMENT].cb);
-        util_blitter_save_vertex_buffer_slot(vc4->blitter, vc4->vertexbuf.vb);
+        util_blitter_save_vertex_buffers(vc4->blitter, vc4->vertexbuf.vb,
+                                         vc4->vertexbuf.count);
         util_blitter_save_vertex_elements(vc4->blitter, vc4->vtx);
         util_blitter_save_vertex_shader(vc4->blitter, vc4->prog.bind_vs);
         util_blitter_save_rasterizer(vc4->blitter, vc4->rasterizer);
@@ -457,7 +458,7 @@ vc4_render_blit(struct pipe_context *ctx, struct pipe_blit_info *info)
         }
 
         vc4_blitter_save(vc4);
-        util_blitter_blit(vc4->blitter, info);
+        util_blitter_blit(vc4->blitter, info, NULL);
 
         info->mask = 0;
 }
@@ -527,7 +528,7 @@ vc4_stencil_blit(struct pipe_context *ctx, struct pipe_blit_info *info)
                                   PIPE_MASK_RGBA : PIPE_MASK_R,
                                   PIPE_TEX_FILTER_NEAREST,
                                   info->scissor_enable ? &info->scissor :  NULL,
-                                  info->alpha_blend, false, 0);
+                                  info->alpha_blend, false, 0, NULL);
 
         pipe_surface_reference(&dst_surf, NULL);
         pipe_sampler_view_reference(&src_view, NULL);

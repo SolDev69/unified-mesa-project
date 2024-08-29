@@ -511,12 +511,18 @@ d3d12_video_encoder_reconfigure_encoder_objects(struct d3d12_video_encoder *pD3D
 
    // If on-the-fly reconfiguration happened without object recreation, set
    // D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_*_CHANGED reconfiguration flags in EncodeFrame
-   if (rateControlChanged &&
-       ((pD3D12Enc->m_currentEncodeCapabilities.m_SupportFlags &
-         D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_RECONFIGURATION_AVAILABLE) !=
-        0 /*checking if the flag it's actually set*/) &&
-       (pD3D12Enc->m_fenceValue > 1) && (!reCreatedEncoder || !reCreatedEncoderHeap)) {
-      pD3D12Enc->m_currentEncodeConfig.m_seqFlags |= D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_RATE_CONTROL_CHANGE;
+
+   // When driver workaround for rate control reconfig is active we cannot send to the driver the
+   // D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_RATE_CONTROL_CHANGE since it's not actually reporting
+   // support for setting it.
+   if ((pD3D12Enc->driver_workarounds & d3d12_video_encoder_driver_workaround_rate_control_reconfig) == 0) {
+      if (rateControlChanged &&
+         ((pD3D12Enc->m_currentEncodeCapabilities.m_SupportFlags &
+            D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_RECONFIGURATION_AVAILABLE) !=
+         0 /*checking if the flag it's actually set*/) &&
+         (pD3D12Enc->m_fenceValue > 1) && (!reCreatedEncoder || !reCreatedEncoderHeap)) {
+         pD3D12Enc->m_currentEncodeConfig.m_seqFlags |= D3D12_VIDEO_ENCODER_SEQUENCE_CONTROL_FLAG_RATE_CONTROL_CHANGE;
+      }
    }
 
    if (slicesChanged &&
@@ -1073,6 +1079,10 @@ d3d12_video_encoder_disable_rc_qualitylevels(struct D3D12EncodeRateControlState 
 {
    rcState.m_Flags &= ~D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QUALITY_VS_SPEED;
    switch (rcState.m_Mode) {
+      case D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CQP:
+      {
+         rcState.m_Config.m_Configuration_CQP1.QualityVsSpeed = 0;
+      } break;
       case D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CBR:
       {
          rcState.m_Config.m_Configuration_CBR1.QualityVsSpeed = 0;
@@ -1215,6 +1225,12 @@ bool d3d12_video_encoder_negotiate_requested_features_and_d3d12_driver_caps(stru
                d3d12_video_encoder_disable_rc_qualitylevels(pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc);
             }
          }
+      }
+
+      /* Try fallback for multi-slice/tile not supported with single subregion mode */
+      if ((capEncoderSupportData1.ValidationFlags & D3D12_VIDEO_ENCODER_VALIDATION_FLAG_SUBREGION_LAYOUT_MODE_NOT_SUPPORTED) != 0) {
+         pD3D12Enc->m_currentEncodeConfig.m_encoderSliceConfigMode = D3D12_VIDEO_ENCODER_FRAME_SUBREGION_LAYOUT_MODE_FULL_FRAME;
+         debug_printf("[d3d12_video_encoder] WARNING: Requested slice/tile mode not supported by driver, will continue encoding with single subregion encoding.\n");
       }
 
       ///
@@ -1362,6 +1378,16 @@ bool d3d12_video_encoder_query_d3d12_driver_caps(struct d3d12_video_encoder *pD3
       // D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1 extends D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT
       // in a binary compatible way, so just cast it and try with the older query D3D12_FEATURE_VIDEO_ENCODER_SUPPORT
       D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT * casted_down_cap_data = reinterpret_cast<D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT*>(&capEncoderSupportData1);
+
+      //
+      // Remove legacy query parameters for features not supported in older OS when using older OS support query
+      // since the D3D12 older runtime will not recognize the new flags and structures
+      // Update both encoder current config and re-generate support cap rate control input
+      //
+      pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags &= ~D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENSION1_SUPPORT;
+      d3d12_video_encoder_disable_rc_qualitylevels(pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc);
+      capEncoderSupportData1.RateControl = d3d12_video_encoder_get_current_rate_control_settings(pD3D12Enc);
+
       hr = pD3D12Enc->m_spD3D12VideoDevice->CheckFeatureSupport(D3D12_FEATURE_VIDEO_ENCODER_SUPPORT,
                                                                          casted_down_cap_data,
                                                                          sizeof(D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT));
@@ -1370,6 +1396,17 @@ bool d3d12_video_encoder_query_d3d12_driver_caps(struct d3d12_video_encoder *pD3
          return false;
       }
    }
+
+   // Workaround for drivers supporting rate control reconfiguration but not reporting it
+   // and having issues with encoder state/heap objects recreation
+   if (pD3D12Enc->m_pD3D12Screen->vendor_id == 0x8086 /* HW_VENDOR_INTEL */) {
+      // If IHV driver doesn't report reconfiguration, force doing the reconfiguration without object recreation
+      if ((capEncoderSupportData1.SupportFlags & D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_RECONFIGURATION_AVAILABLE) == 0) {
+         pD3D12Enc->driver_workarounds |= d3d12_video_encoder_driver_workaround_rate_control_reconfig;
+         capEncoderSupportData1.SupportFlags |= D3D12_VIDEO_ENCODER_SUPPORT_FLAG_RATE_CONTROL_RECONFIGURATION_AVAILABLE;
+      }
+   }
+
    pD3D12Enc->m_currentEncodeCapabilities.m_SupportFlags    = capEncoderSupportData1.SupportFlags;
    pD3D12Enc->m_currentEncodeCapabilities.m_ValidationFlags = capEncoderSupportData1.ValidationFlags;
    return true;
@@ -1559,7 +1596,6 @@ d3d12_video_encoder_create_encoder(struct pipe_context *context, const struct pi
    pD3D12Enc->base.end_frame        = d3d12_video_encoder_end_frame;
    pD3D12Enc->base.flush            = d3d12_video_encoder_flush;
    pD3D12Enc->base.get_encode_headers = d3d12_video_encoder_get_encode_headers;
-   pD3D12Enc->base.get_feedback_fence = d3d12_video_encoder_get_feedback_fence;
    pD3D12Enc->base.get_feedback     = d3d12_video_encoder_get_feedback;
 
    struct d3d12_context *pD3D12Ctx = (struct d3d12_context *) context;
@@ -1950,7 +1986,7 @@ d3d12_video_encoder_encode_bitstream(struct pipe_video_codec * codec,
             (pD3D12Enc->m_currentEncodeCapabilities.m_ResourceRequirementsCaps.CompressedBitstreamBufferAccessAlignment > 1)
             && ((pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].preEncodeGeneratedHeadersByteSize % pD3D12Enc->m_currentEncodeCapabilities.m_ResourceRequirementsCaps.CompressedBitstreamBufferAccessAlignment) != 0)
          ) {
-            size_t new_size = ALIGN(pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].preEncodeGeneratedHeadersByteSize, pD3D12Enc->m_currentEncodeCapabilities.m_ResourceRequirementsCaps.CompressedBitstreamBufferAccessAlignment);
+            uint64_t new_size = align64(pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].preEncodeGeneratedHeadersByteSize, pD3D12Enc->m_currentEncodeCapabilities.m_ResourceRequirementsCaps.CompressedBitstreamBufferAccessAlignment);
             pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].preEncodeGeneratedHeadersBytePadding = new_size - pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].preEncodeGeneratedHeadersByteSize;
             pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].preEncodeGeneratedHeadersByteSize = new_size;
             pD3D12Enc->m_BitstreamHeadersBuffer.resize(pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].preEncodeGeneratedHeadersByteSize, 0);
@@ -2071,7 +2107,7 @@ d3d12_video_encoder_encode_bitstream(struct pipe_video_codec * codec,
 
          CD3DX12_RESOURCE_DESC referencesTexArrayDesc(GetDesc(referenceFramesDescriptor.ppTexture2Ds[0]));
 
-#if DEBUG
+#if MESA_DEBUG
    // the reconpic output should be all the same texarray allocation
    if((reconPicOutputTextureDesc.pReconstructedPicture) && (referenceFramesDescriptor.NumTexture2Ds > 0))
       assert(referenceFramesDescriptor.ppTexture2Ds[0] == reconPicOutputTextureDesc.pReconstructedPicture);
@@ -2487,14 +2523,14 @@ d3d12_video_encoder_extract_encode_metadata(
       d3d12_resource_from_resource(&pD3D12Screen->base, pResolvedMetadataBuffer);
    assert(pPipeResolvedMetadataBuffer);
    assert(resourceMetadataSize < INT_MAX);
-   struct pipe_box box = {
-      0,                                        // x
-      0,                                        // y
-      0,                                        // z
-      static_cast<int>(resourceMetadataSize),   // width
-      1,                                        // height
-      1                                         // depth
-   };
+   struct pipe_box box;
+   u_box_3d(0,                                        // x
+            0,                                        // y
+            0,                                        // z
+            static_cast<int>(resourceMetadataSize),   // width
+            1,                                        // height
+            1,                                        // depth
+            &box);
    struct pipe_transfer *mapTransfer;
    unsigned mapUsage = PIPE_MAP_READ;
    void *                pMetadataBufferSrc = pD3D12Enc->base.context->buffer_map(pD3D12Enc->base.context,
@@ -2543,7 +2579,7 @@ d3d12_video_encoder_extract_encode_metadata(
 /**
  * end encoding of the current frame
  */
-void
+int
 d3d12_video_encoder_end_frame(struct pipe_video_codec * codec,
                               struct pipe_video_buffer *target,
                               struct pipe_picture_desc *picture)
@@ -2556,7 +2592,7 @@ d3d12_video_encoder_end_frame(struct pipe_video_codec * codec,
    if (pD3D12Enc->m_inflightResourcesPool[d3d12_video_encoder_pool_current_index(pD3D12Enc)].encode_result != PIPE_VIDEO_FEEDBACK_METADATA_ENCODE_FLAG_OK) {
       debug_printf("WARNING: [d3d12_video_encoder] d3d12_video_encoder_end_frame - Frame submission %" PRIu64 " failed. Encoder lost, please recreate pipe_video_codec object\n", pD3D12Enc->m_fenceValue);
       assert(false);
-      return;
+      return 1;
    }
 
    // Signal finish of current frame encoding to the picture management tracker
@@ -2572,6 +2608,7 @@ d3d12_video_encoder_end_frame(struct pipe_video_codec * codec,
                  pD3D12Enc->m_fenceValue);
 
    pD3D12Enc->m_bPendingWorkNotFlushed = true;
+   return 0;
 }
 
 void
@@ -2603,24 +2640,6 @@ d3d12_video_encoder_store_current_picture_references(d3d12_video_encoder *pD3D12
          unreachable("Unsupported pipe_video_format");
       } break;
    }
-}
-
-struct pipe_fence_handle*
-d3d12_video_encoder_get_feedback_fence(struct pipe_video_codec *codec, void *feedback)
-{
-   struct d3d12_video_encoder *pD3D12Enc = (struct d3d12_video_encoder *) codec;
-   struct d3d12_fence *feedback_fence = (struct d3d12_fence *) feedback;
-   uint64_t requested_metadata_fence = feedback_fence->value;
-   uint64_t current_metadata_slot = (requested_metadata_fence % D3D12_VIDEO_ENC_METADATA_BUFFERS_COUNT);
-   if (pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].encode_result & PIPE_VIDEO_FEEDBACK_METADATA_ENCODE_FLAG_FAILED) {
-      debug_printf("Error: d3d12_video_encoder_get_feedback_fence failed for Encode GPU command for fence %" PRIu64 " failed on submission with encode_result: %x\n",
-                     requested_metadata_fence,
-                     pD3D12Enc->m_spEncodedFrameMetadata[current_metadata_slot].encode_result);
-      assert(false);
-      return NULL;
-   }
-
-   return (pipe_fence_handle*) feedback;
 }
 
 int d3d12_video_encoder_get_encode_headers([[maybe_unused]] struct pipe_video_codec *codec,

@@ -126,6 +126,7 @@ static const nir_shader_compiler_options i915_compiler_options = {
    .max_unroll_iterations = 32,
    .no_integers = true,
    .has_fused_comp_and_csel = true,
+   .has_ddx_intrinsics = true,
 };
 
 static const struct nir_shader_compiler_options gallivm_nir_options = {
@@ -171,6 +172,7 @@ static const struct nir_shader_compiler_options gallivm_nir_options = {
    .lower_vector_cmp = true,
    .lower_device_index_to_zero = true,
    /* .support_16bit_alu = true, */
+   .has_ddx_intrinsics = true,
 };
 
 static const void *
@@ -209,7 +211,7 @@ i915_optimize_nir(struct nir_shader *s)
       NIR_PASS(progress, s, nir_opt_algebraic);
       NIR_PASS(progress, s, nir_opt_constant_folding);
       NIR_PASS(progress, s, nir_opt_shrink_stores, true);
-      NIR_PASS(progress, s, nir_opt_shrink_vectors);
+      NIR_PASS(progress, s, nir_opt_shrink_vectors, false);
       NIR_PASS(progress, s, nir_opt_loop);
       NIR_PASS(progress, s, nir_opt_undef);
       NIR_PASS(progress, s, nir_opt_loop_unroll);

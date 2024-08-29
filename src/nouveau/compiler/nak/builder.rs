@@ -12,7 +12,7 @@ pub trait Builder {
         self.push_instr(Instr::new_boxed(op))
     }
 
-    fn predicate<'a>(&'a mut self, pred: Pred) -> PredicatedBuilder<'a, Self>
+    fn predicate(&mut self, pred: Pred) -> PredicatedBuilder<'_, Self>
     where
         Self: Sized,
     {
@@ -43,13 +43,13 @@ pub trait Builder {
             }
             if is_predicate {
                 self.push_op(OpPLop3 {
-                    dsts: [dst.into(), Dst::None],
+                    dsts: [dst, Dst::None],
                     srcs: [x, y, true.into()],
                     ops: [op, LogicOp3::new_const(false)],
                 });
             } else {
                 self.push_op(OpLop3 {
-                    dst: dst.into(),
+                    dst: dst,
                     srcs: [x, y, 0.into()],
                     op: op,
                 });
@@ -68,13 +68,13 @@ pub trait Builder {
                     }
                 };
                 self.push_op(OpPSetP {
-                    dsts: [dst.into(), Dst::None],
+                    dsts: [dst, Dst::None],
                     ops: [cmp_op, PredSetOp::And],
                     srcs: [x, y, true.into()],
                 });
             } else {
                 self.push_op(OpLop2 {
-                    dst: dst.into(),
+                    dst: dst,
                     srcs: [x, y],
                     op: op,
                 });
@@ -143,6 +143,55 @@ pub trait SSABuilder: Builder {
         dst
     }
 
+    fn shl64(&mut self, x: Src, shift: Src) -> SSARef {
+        let x = x.as_ssa().unwrap();
+        debug_assert!(shift.src_mod.is_none());
+
+        let dst = self.alloc_ssa(RegFile::GPR, 2);
+        if self.sm() >= 70 {
+            self.push_op(OpShf {
+                dst: dst[0].into(),
+                low: x[0].into(),
+                high: 0.into(),
+                shift,
+                right: false,
+                wrap: true,
+                data_type: IntType::U64,
+                dst_high: false,
+            });
+        } else {
+            // On Maxwell and earlier, shf.l doesn't work without .high so we
+            // have to use a regular 32-bit shift here.  32-bit shift doesn't
+            // have the NIR wrap semantics so we need to wrap manually.
+            let shift = if let SrcRef::Imm32(imm) = shift.src_ref {
+                (imm & 0x3f).into()
+            } else {
+                self.lop2(LogicOp2::And, shift, 0x3f.into()).into()
+            };
+            self.push_op(OpShf {
+                dst: dst[0].into(),
+                low: 0.into(),
+                high: x[0].into(),
+                shift,
+                right: false,
+                wrap: false,
+                data_type: IntType::U32,
+                dst_high: true,
+            });
+        }
+        self.push_op(OpShf {
+            dst: dst[1].into(),
+            low: x[0].into(),
+            high: x[1].into(),
+            shift,
+            right: false,
+            wrap: true,
+            data_type: IntType::U64,
+            dst_high: true,
+        });
+        dst
+    }
+
     fn shr(&mut self, x: Src, shift: Src, signed: bool) -> SSARef {
         let dst = self.alloc_ssa(RegFile::GPR, 1);
         if self.sm() >= 70 {
@@ -165,6 +214,34 @@ pub trait SSABuilder: Builder {
                 signed,
             });
         }
+        dst
+    }
+
+    fn shr64(&mut self, x: Src, shift: Src, signed: bool) -> SSARef {
+        let x = x.as_ssa().unwrap();
+        debug_assert!(shift.src_mod.is_none());
+
+        let dst = self.alloc_ssa(RegFile::GPR, 2);
+        self.push_op(OpShf {
+            dst: dst[0].into(),
+            low: x[0].into(),
+            high: x[1].into(),
+            shift,
+            right: true,
+            wrap: true,
+            data_type: if signed { IntType::I64 } else { IntType::U64 },
+            dst_high: false,
+        });
+        self.push_op(OpShf {
+            dst: dst[1].into(),
+            low: 0.into(),
+            high: x[1].into(),
+            shift,
+            right: true,
+            wrap: true,
+            data_type: if signed { IntType::I64 } else { IntType::U64 },
+            dst_high: true,
+        });
         dst
     }
 
@@ -217,6 +294,31 @@ pub trait SSABuilder: Builder {
         dst
     }
 
+    fn hadd2(&mut self, x: Src, y: Src) -> SSARef {
+        let dst = self.alloc_ssa(RegFile::GPR, 1);
+        self.push_op(OpHAdd2 {
+            dst: dst.into(),
+            srcs: [x, y],
+            saturate: false,
+            ftz: false,
+            f32: false,
+        });
+        dst
+    }
+
+    fn hset2(&mut self, cmp_op: FloatCmpOp, x: Src, y: Src) -> SSARef {
+        let dst = self.alloc_ssa(RegFile::GPR, 1);
+        self.push_op(OpHSet2 {
+            dst: dst.into(),
+            set_op: PredSetOp::And,
+            cmp_op: cmp_op,
+            srcs: [x, y],
+            ftz: false,
+            accum: SrcRef::True.into(),
+        });
+        dst
+    }
+
     fn dsetp(&mut self, cmp_op: FloatCmpOp, x: Src, y: Src) -> SSARef {
         let dst = self.alloc_ssa(RegFile::Pred, 1);
         self.push_op(OpDSetP {
@@ -231,60 +333,98 @@ pub trait SSABuilder: Builder {
 
     fn iabs(&mut self, i: Src) -> SSARef {
         let dst = self.alloc_ssa(RegFile::GPR, 1);
-        self.push_op(OpIAbs {
-            dst: dst.into(),
-            src: i,
-        });
+        if self.sm() >= 70 {
+            self.push_op(OpIAbs {
+                dst: dst.into(),
+                src: i,
+            });
+        } else {
+            self.push_op(OpI2I {
+                dst: dst.into(),
+                src: i,
+                src_type: IntType::I32,
+                dst_type: IntType::I32,
+                saturate: false,
+                abs: true,
+                neg: false,
+            });
+        }
         dst
     }
 
-    fn iadd(&mut self, x: Src, y: Src) -> SSARef {
+    fn iadd(&mut self, x: Src, y: Src, z: Src) -> SSARef {
         let dst = self.alloc_ssa(RegFile::GPR, 1);
         if self.sm() >= 70 {
             self.push_op(OpIAdd3 {
                 dst: dst.into(),
-                srcs: [Src::new_zero(), x, y],
+                srcs: [x, y, z],
                 overflow: [Dst::None; 2],
             });
         } else {
+            assert!(z.is_zero());
             self.push_op(OpIAdd2 {
                 dst: dst.into(),
                 srcs: [x, y],
-                carry_in: 0.into(),
                 carry_out: Dst::None,
             });
         }
         dst
     }
 
-    fn iadd64(&mut self, x: Src, y: Src) -> SSARef {
-        let x = x.as_ssa().unwrap();
-        let y = y.as_ssa().unwrap();
+    fn iadd64(&mut self, x: Src, y: Src, z: Src) -> SSARef {
+        fn split_iadd64_src(src: Src) -> [Src; 2] {
+            match src.src_ref {
+                SrcRef::Zero => [0.into(), 0.into()],
+                SrcRef::SSA(ssa) => {
+                    if src.src_mod.is_ineg() {
+                        [Src::from(ssa[0]).ineg(), Src::from(ssa[1]).bnot()]
+                    } else {
+                        [Src::from(ssa[0]), Src::from(ssa[1])]
+                    }
+                }
+                _ => panic!("Unsupported iadd64 source"),
+            }
+        }
+
+        let is_3src = !x.is_zero() && !y.is_zero() && !z.is_zero();
+
+        let x = split_iadd64_src(x);
+        let y = split_iadd64_src(y);
         let dst = self.alloc_ssa(RegFile::GPR, 2);
         if self.sm() >= 70 {
-            let carry = self.alloc_ssa(RegFile::Pred, 1);
+            let carry1 = self.alloc_ssa(RegFile::Pred, 1);
+            let (carry2_dst, carry2_src) = if is_3src {
+                let carry2 = self.alloc_ssa(RegFile::Pred, 1);
+                (carry2.into(), carry2.into())
+            } else {
+                // If one of the sources is known to be zero, we only need one
+                // carry predicate.
+                (Dst::None, false.into())
+            };
+
+            let z = split_iadd64_src(z);
             self.push_op(OpIAdd3 {
                 dst: dst[0].into(),
-                overflow: [carry.into(), Dst::None],
-                srcs: [x[0].into(), y[0].into(), 0.into()],
+                overflow: [carry1.into(), carry2_dst],
+                srcs: [x[0], y[0], z[0]],
             });
             self.push_op(OpIAdd3X {
                 dst: dst[1].into(),
                 overflow: [Dst::None, Dst::None],
-                srcs: [x[1].into(), y[1].into(), 0.into()],
-                carry: [carry.into(), false.into()],
+                srcs: [x[1], y[1], z[1]],
+                carry: [carry1.into(), carry2_src],
             });
         } else {
+            assert!(z.is_zero());
             let carry = self.alloc_ssa(RegFile::Carry, 1);
             self.push_op(OpIAdd2 {
                 dst: dst[0].into(),
-                srcs: [x[0].into(), y[0].into()],
+                srcs: [x[0], y[0]],
                 carry_out: carry.into(),
-                carry_in: 0.into(),
             });
-            self.push_op(OpIAdd2 {
+            self.push_op(OpIAdd2X {
                 dst: dst[1].into(),
-                srcs: [x[1].into(), y[1].into()],
+                srcs: [x[1], y[1]],
                 carry_out: Dst::None,
                 carry_in: carry.into(),
             });
@@ -349,11 +489,24 @@ pub trait SSABuilder: Builder {
 
     fn ineg(&mut self, i: Src) -> SSARef {
         let dst = self.alloc_ssa(RegFile::GPR, 1);
-        self.push_op(OpINeg {
-            dst: dst.into(),
-            src: i,
-        });
+        if self.sm() >= 70 {
+            self.push_op(OpIAdd3 {
+                dst: dst.into(),
+                overflow: [Dst::None; 2],
+                srcs: [0.into(), i.ineg(), 0.into()],
+            });
+        } else {
+            self.push_op(OpIAdd2 {
+                dst: dst.into(),
+                srcs: [0.into(), i.ineg()],
+                carry_out: Dst::None,
+            });
+        }
         dst
+    }
+
+    fn ineg64(&mut self, x: Src) -> SSARef {
+        self.iadd64(0.into(), x.ineg(), 0.into())
     }
 
     fn isetp(
@@ -409,16 +562,51 @@ pub trait SSABuilder: Builder {
                 });
             }
             IntCmpOp::Ge | IntCmpOp::Gt | IntCmpOp::Le | IntCmpOp::Lt => {
-                self.push_op(OpISetP {
-                    dst: dst.into(),
-                    set_op: PredSetOp::And,
-                    cmp_op: cmp_op,
-                    cmp_type: cmp_type,
-                    ex: true,
-                    srcs: [x[1].into(), y[1].into()],
-                    accum: true.into(),
-                    low_cmp: low.into(),
-                });
+                if self.sm() >= 70 {
+                    self.push_op(OpISetP {
+                        dst: dst.into(),
+                        set_op: PredSetOp::And,
+                        cmp_op,
+                        cmp_type,
+                        ex: true,
+                        srcs: [x[1].into(), y[1].into()],
+                        accum: true.into(),
+                        low_cmp: low.into(),
+                    });
+                } else {
+                    // On Maxwell, iset.ex doesn't do what we want so we need to
+                    // do it with 3 comparisons.  Fortunately, we can chain them
+                    // together and don't need the extra logic that the NIR
+                    // lowering would emit.
+                    let low_and_high_eq = self.alloc_ssa(RegFile::Pred, 1);
+                    self.push_op(OpISetP {
+                        dst: low_and_high_eq.into(),
+                        set_op: PredSetOp::And,
+                        cmp_op: IntCmpOp::Eq,
+                        cmp_type: IntCmpType::U32,
+                        ex: false,
+                        srcs: [x[1].into(), y[1].into()],
+                        accum: low.into(),
+                        low_cmp: true.into(),
+                    });
+                    self.push_op(OpISetP {
+                        dst: dst.into(),
+                        set_op: PredSetOp::Or,
+                        // We always want a strict inequality for the high part
+                        // so it's false when the two are equal and safe to OR
+                        // with the low part.
+                        cmp_op: match cmp_op {
+                            IntCmpOp::Lt | IntCmpOp::Le => IntCmpOp::Lt,
+                            IntCmpOp::Gt | IntCmpOp::Ge => IntCmpOp::Gt,
+                            _ => panic!("Not an integer inequality"),
+                        },
+                        cmp_type,
+                        ex: false,
+                        srcs: [x[1].into(), y[1].into()],
+                        accum: low_and_high_eq.into(),
+                        low_cmp: true.into(),
+                    });
+                }
             }
         }
         dst
@@ -434,6 +622,26 @@ pub trait SSABuilder: Builder {
         dst
     }
 
+    fn brev(&mut self, x: Src) -> SSARef {
+        let dst = self.alloc_ssa(RegFile::GPR, 1);
+        if self.sm() >= 70 {
+            self.push_op(OpBRev {
+                dst: dst.into(),
+                src: x,
+            });
+        } else {
+            // No BREV in Maxwell
+            self.push_op(OpBfe {
+                dst: dst.into(),
+                base: x,
+                signed: false,
+                range: Src::new_imm_u32(0x2000),
+                reverse: true,
+            });
+        }
+        dst
+    }
+
     fn mufu(&mut self, op: MuFuOp, src: Src) -> SSARef {
         let dst = self.alloc_ssa(RegFile::GPR, 1);
         self.push_op(OpMuFu {
@@ -442,6 +650,53 @@ pub trait SSABuilder: Builder {
             src: src,
         });
         dst
+    }
+
+    fn fsin(&mut self, src: Src) -> SSARef {
+        let tmp = if self.sm() >= 70 {
+            let frac_1_2pi = 1.0 / (2.0 * std::f32::consts::PI);
+            self.fmul(src, frac_1_2pi.into())
+        } else {
+            let tmp = self.alloc_ssa(RegFile::GPR, 1);
+            self.push_op(OpRro {
+                dst: tmp.into(),
+                op: RroOp::SinCos,
+                src,
+            });
+            tmp
+        };
+        self.mufu(MuFuOp::Sin, tmp.into())
+    }
+
+    fn fcos(&mut self, src: Src) -> SSARef {
+        let tmp = if self.sm() >= 70 {
+            let frac_1_2pi = 1.0 / (2.0 * std::f32::consts::PI);
+            self.fmul(src, frac_1_2pi.into())
+        } else {
+            let tmp = self.alloc_ssa(RegFile::GPR, 1);
+            self.push_op(OpRro {
+                dst: tmp.into(),
+                op: RroOp::SinCos,
+                src,
+            });
+            tmp
+        };
+        self.mufu(MuFuOp::Cos, tmp.into())
+    }
+
+    fn fexp2(&mut self, src: Src) -> SSARef {
+        let tmp = if self.sm() >= 70 {
+            src
+        } else {
+            let tmp = self.alloc_ssa(RegFile::GPR, 1);
+            self.push_op(OpRro {
+                dst: tmp.into(),
+                op: RroOp::Exp2,
+                src,
+            });
+            tmp.into()
+        };
+        self.mufu(MuFuOp::Exp2, tmp)
     }
 
     fn prmt(&mut self, x: Src, y: Src, sel: [u8; 4]) -> SSARef {
@@ -493,14 +748,28 @@ pub trait SSABuilder: Builder {
         assert!(x.is_predicate() == y.is_predicate());
         if x.is_predicate() {
             let dst = self.alloc_ssa(RegFile::Pred, 1);
-            self.push_op(OpPLop3 {
-                dsts: [dst.into(), Dst::None],
-                srcs: [cond, x, y],
-                ops: [
-                    LogicOp3::new_lut(&|c, x, y| (c & x) | (!c & y)),
-                    LogicOp3::new_const(false),
-                ],
-            });
+            if self.sm() >= 70 {
+                self.push_op(OpPLop3 {
+                    dsts: [dst.into(), Dst::None],
+                    srcs: [cond, x, y],
+                    ops: [
+                        LogicOp3::new_lut(&|c, x, y| (c & x) | (!c & y)),
+                        LogicOp3::new_const(false),
+                    ],
+                });
+            } else {
+                let tmp = self.alloc_ssa(RegFile::Pred, 1);
+                self.push_op(OpPSetP {
+                    dsts: [tmp.into(), Dst::None],
+                    ops: [PredSetOp::And, PredSetOp::And],
+                    srcs: [cond, x, true.into()],
+                });
+                self.push_op(OpPSetP {
+                    dsts: [dst.into(), Dst::None],
+                    ops: [PredSetOp::And, PredSetOp::Or],
+                    srcs: [cond.bnot(), y, tmp.into()],
+                });
+            }
             dst
         } else {
             let dst = self.alloc_ssa(RegFile::GPR, 1);
@@ -511,6 +780,12 @@ pub trait SSABuilder: Builder {
             });
             dst
         }
+    }
+
+    fn undef(&mut self) -> SSARef {
+        let dst = self.alloc_ssa(RegFile::GPR, 1);
+        self.push_op(OpUndef { dst: dst.into() });
+        dst
     }
 
     fn copy(&mut self, src: Src) -> SSARef {
@@ -524,7 +799,7 @@ pub trait SSABuilder: Builder {
     }
 
     fn bmov_to_bar(&mut self, src: Src) -> SSARef {
-        assert!(src.src_ref.as_ssa().unwrap().file() == RegFile::GPR);
+        assert!(src.src_ref.as_ssa().unwrap().file() == Some(RegFile::GPR));
         let dst = self.alloc_ssa(RegFile::Bar, 1);
         self.push_op(OpBMov {
             dst: dst.into(),
@@ -535,7 +810,7 @@ pub trait SSABuilder: Builder {
     }
 
     fn bmov_to_gpr(&mut self, src: Src) -> SSARef {
-        assert!(src.src_ref.as_ssa().unwrap().file() == RegFile::Bar);
+        assert!(src.src_ref.as_ssa().unwrap().file() == Some(RegFile::Bar));
         let dst = self.alloc_ssa(RegFile::GPR, 1);
         self.push_op(OpBMov {
             dst: dst.into(),
@@ -546,19 +821,21 @@ pub trait SSABuilder: Builder {
     }
 }
 
-pub struct InstrBuilder {
+pub struct InstrBuilder<'a> {
     instrs: MappedInstrs,
-    sm: u8,
+    sm: &'a dyn ShaderModel,
 }
 
-impl InstrBuilder {
-    pub fn new(sm: u8) -> Self {
+impl<'a> InstrBuilder<'a> {
+    pub fn new(sm: &'a dyn ShaderModel) -> Self {
         Self {
             instrs: MappedInstrs::None,
             sm,
         }
     }
+}
 
+impl InstrBuilder<'_> {
     pub fn as_vec(self) -> Vec<Box<Instr>> {
         match self.instrs {
             MappedInstrs::None => Vec::new(),
@@ -572,30 +849,35 @@ impl InstrBuilder {
     }
 }
 
-impl Builder for InstrBuilder {
+impl Builder for InstrBuilder<'_> {
     fn push_instr(&mut self, instr: Box<Instr>) -> &mut Instr {
         self.instrs.push(instr);
         self.instrs.last_mut().unwrap().as_mut()
     }
 
     fn sm(&self) -> u8 {
-        self.sm
+        self.sm.sm()
     }
 }
 
 pub struct SSAInstrBuilder<'a> {
-    b: InstrBuilder,
+    b: InstrBuilder<'a>,
     alloc: &'a mut SSAValueAllocator,
 }
 
 impl<'a> SSAInstrBuilder<'a> {
-    pub fn new(sm: u8, alloc: &'a mut SSAValueAllocator) -> Self {
+    pub fn new(
+        sm: &'a dyn ShaderModel,
+        alloc: &'a mut SSAValueAllocator,
+    ) -> Self {
         Self {
             b: InstrBuilder::new(sm),
             alloc: alloc,
         }
     }
+}
 
+impl SSAInstrBuilder<'_> {
     pub fn as_vec(self) -> Vec<Box<Instr>> {
         self.b.as_vec()
     }
@@ -642,6 +924,38 @@ impl<'a, T: Builder> Builder for PredicatedBuilder<'a, T> {
 
 impl<'a, T: SSABuilder> SSABuilder for PredicatedBuilder<'a, T> {
     fn alloc_ssa(&mut self, file: RegFile, comps: u8) -> SSARef {
+        self.b.alloc_ssa(file, comps)
+    }
+}
+
+pub struct UniformBuilder<'a, T: Builder> {
+    b: &'a mut T,
+    uniform: bool,
+}
+
+impl<'a, T: Builder> UniformBuilder<'a, T> {
+    pub fn new(b: &'a mut T, uniform: bool) -> Self {
+        Self { b, uniform }
+    }
+}
+
+impl<'a, T: Builder> Builder for UniformBuilder<'a, T> {
+    fn push_instr(&mut self, instr: Box<Instr>) -> &mut Instr {
+        self.b.push_instr(instr)
+    }
+
+    fn sm(&self) -> u8 {
+        self.b.sm()
+    }
+}
+
+impl<'a, T: SSABuilder> SSABuilder for UniformBuilder<'a, T> {
+    fn alloc_ssa(&mut self, file: RegFile, comps: u8) -> SSARef {
+        let file = if self.uniform {
+            file.to_uniform().unwrap()
+        } else {
+            file
+        };
         self.b.alloc_ssa(file, comps)
     }
 }

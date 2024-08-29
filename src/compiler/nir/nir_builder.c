@@ -66,6 +66,7 @@ nir_builder_alu_instr_finish_and_insert(nir_builder *build, nir_alu_instr *instr
    const nir_op_info *op_info = &nir_op_infos[instr->op];
 
    instr->exact = build->exact;
+   instr->fp_fast_math = build->fp_fast_math;
 
    /* Guess the number of components the destination temporary should have
     * based on our input sizes, if it's not fixed for the op.
@@ -312,6 +313,17 @@ nir_build_tex_deref_instr(nir_builder *build, nir_texop op,
 }
 
 nir_def *
+nir_build_string(nir_builder *build, const char *value)
+{
+   nir_debug_info_instr *instr =
+      nir_debug_info_instr_create(build->shader, nir_debug_info_string, strlen(value));
+   memcpy(instr->string, value, instr->string_length);
+   nir_def_init(&instr->instr, &instr->def, 1, nir_get_ptr_bitsize(build->shader));
+   nir_builder_instr_insert(build, &instr->instr);
+   return &instr->def;
+}
+
+nir_def *
 nir_vec_scalars(nir_builder *build, nir_scalar *comp, unsigned num_components)
 {
    nir_op op = nir_op_vec(num_components);
@@ -324,6 +336,7 @@ nir_vec_scalars(nir_builder *build, nir_scalar *comp, unsigned num_components)
       instr->src[i].swizzle[0] = comp[i].comp;
    }
    instr->exact = build->exact;
+   instr->fp_fast_math = build->fp_fast_math;
 
    /* Note: not reusing nir_builder_alu_instr_finish_and_insert() because it
     * can't re-guess the num_components when num_components == 1 (nir_op_mov).

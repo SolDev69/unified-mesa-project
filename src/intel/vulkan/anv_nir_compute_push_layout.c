@@ -26,8 +26,6 @@
 #include "compiler/brw_nir.h"
 #include "util/mesa-sha1.h"
 
-#define sizeof_field(type, field) sizeof(((type *)0)->field)
-
 void
 anv_nir_compute_push_layout(nir_shader *nir,
                             const struct anv_physical_device *pdevice,
@@ -36,6 +34,7 @@ anv_nir_compute_push_layout(nir_shader *nir,
                             struct brw_stage_prog_data *prog_data,
                             struct anv_pipeline_bind_map *map,
                             const struct anv_pipeline_push_map *push_map,
+                            enum anv_descriptor_set_layout_type desc_type,
                             void *mem_ctx)
 {
    const struct brw_compiler *compiler = pdevice->compiler;
@@ -66,17 +65,6 @@ anv_nir_compute_push_layout(nir_shader *nir,
                break;
             }
 
-            case nir_intrinsic_load_desc_set_address_intel:
-            case nir_intrinsic_load_desc_set_dynamic_index_intel: {
-               unsigned base = offsetof(struct anv_push_constants,
-                                        desc_surface_offsets);
-               push_start = MIN2(push_start, base);
-               push_end = MAX2(push_end, base +
-                  sizeof_field(struct anv_push_constants,
-                               desc_surface_offsets));
-               break;
-            }
-
             default:
                break;
             }
@@ -98,16 +86,18 @@ anv_nir_compute_push_layout(nir_shader *nir,
        * the shader.
        */
       const uint32_t push_reg_mask_start =
-         offsetof(struct anv_push_constants, push_reg_mask[nir->info.stage]);
-      const uint32_t push_reg_mask_end = push_reg_mask_start + sizeof(uint64_t);
+         anv_drv_const_offset(push_reg_mask[nir->info.stage]);
+      const uint32_t push_reg_mask_end = push_reg_mask_start +
+                                         anv_drv_const_size(push_reg_mask[nir->info.stage]);
       push_start = MIN2(push_start, push_reg_mask_start);
       push_end = MAX2(push_end, push_reg_mask_end);
    }
 
    if (nir->info.stage == MESA_SHADER_FRAGMENT && fragment_dynamic) {
       const uint32_t fs_msaa_flags_start =
-         offsetof(struct anv_push_constants, gfx.fs_msaa_flags);
-      const uint32_t fs_msaa_flags_end = fs_msaa_flags_start + sizeof(uint32_t);
+         anv_drv_const_offset(gfx.fs_msaa_flags);
+      const uint32_t fs_msaa_flags_end = fs_msaa_flags_start +
+                                         anv_drv_const_size(gfx.fs_msaa_flags);
       push_start = MIN2(push_start, fs_msaa_flags_start);
       push_end = MAX2(push_end, fs_msaa_flags_end);
    }
@@ -120,8 +110,8 @@ anv_nir_compute_push_layout(nir_shader *nir,
        * push constants one dword less than the full amount including
        * gl_SubgroupId.
        */
-      assert(push_end <= offsetof(struct anv_push_constants, cs.subgroup_id));
-      push_end = offsetof(struct anv_push_constants, cs.subgroup_id);
+      assert(push_end <= anv_drv_const_offset(cs.subgroup_id));
+      push_end = anv_drv_const_offset(cs.subgroup_id);
    }
 
    /* Align push_start down to a 32B boundary and make it no larger than
@@ -130,10 +120,8 @@ anv_nir_compute_push_layout(nir_shader *nir,
    push_start = MIN2(push_start, push_end);
    push_start = ROUND_DOWN_TO(push_start, 32);
 
-   /* For vec4 our push data size needs to be aligned to a vec4 and for
-    * scalar, it needs to be aligned to a DWORD.
-    */
-   const unsigned alignment = compiler->scalar_stage[nir->info.stage] ? 4 : 16;
+   /* For scalar, push data size needs to be aligned to a DWORD. */
+   const unsigned alignment = 4;
    nir->num_uniforms = ALIGN(push_end - push_start, alignment);
    prog_data->nr_params = nir->num_uniforms / 4;
    prog_data->param = rzalloc_array(mem_ctx, uint32_t, prog_data->nr_params);
@@ -141,14 +129,11 @@ anv_nir_compute_push_layout(nir_shader *nir,
    struct anv_push_range push_constant_range = {
       .set = ANV_DESCRIPTOR_SET_PUSH_CONSTANTS,
       .start = push_start / 32,
-      .length = DIV_ROUND_UP(push_end - push_start, 32),
+      .length = ALIGN(push_end - push_start, devinfo->grf_size) / 32,
    };
 
    if (has_push_intrinsic) {
       nir_foreach_function_impl(impl, nir) {
-         nir_builder build = nir_builder_create(impl);
-         nir_builder *b = &build;
-
          nir_foreach_block(block, impl) {
             nir_foreach_instr_safe(instr, block) {
                if (instr->type != nir_instr_type_intrinsic)
@@ -172,41 +157,6 @@ anv_nir_compute_push_layout(nir_shader *nir,
                   break;
                }
 
-               case nir_intrinsic_load_desc_set_address_intel: {
-                  assert(brw_shader_stage_requires_bindless_resources(nir->info.stage));
-                  b->cursor = nir_before_instr(&intrin->instr);
-                  nir_def *pc_load = nir_load_uniform(b, 1, 32,
-                     nir_imul_imm(b, intrin->src[0].ssa, sizeof(uint32_t)),
-                     .base = offsetof(struct anv_push_constants,
-                                      desc_surface_offsets),
-                     .range = sizeof_field(struct anv_push_constants,
-                                           desc_surface_offsets),
-                     .dest_type = nir_type_uint32);
-                  pc_load = nir_iand_imm(b, pc_load, ANV_DESCRIPTOR_SET_OFFSET_MASK);
-                  nir_def *desc_addr =
-                     nir_pack_64_2x32_split(
-                        b, pc_load,
-                        nir_load_reloc_const_intel(
-                           b, BRW_SHADER_RELOC_DESCRIPTORS_ADDR_HIGH));
-                  nir_def_rewrite_uses(&intrin->def, desc_addr);
-                  break;
-               }
-
-               case nir_intrinsic_load_desc_set_dynamic_index_intel: {
-                  b->cursor = nir_before_instr(&intrin->instr);
-                  nir_def *pc_load = nir_load_uniform(b, 1, 32,
-                     nir_imul_imm(b, intrin->src[0].ssa, sizeof(uint32_t)),
-                     .base = offsetof(struct anv_push_constants,
-                                      desc_surface_offsets),
-                     .range = sizeof_field(struct anv_push_constants,
-                                           desc_surface_offsets),
-                     .dest_type = nir_type_uint32);
-                  pc_load = nir_iand_imm(
-                     b, pc_load, ANV_DESCRIPTOR_SET_DYNAMIC_INDEX_MASK);
-                  nir_def_rewrite_uses(&intrin->def, pc_load);
-                  break;
-               }
-
                default:
                   break;
                }
@@ -218,13 +168,7 @@ anv_nir_compute_push_layout(nir_shader *nir,
    if (push_ubo_ranges) {
       brw_nir_analyze_ubo_ranges(compiler, nir, prog_data->ubo_ranges);
 
-      /* The vec4 back-end pushes at most 32 regs while the scalar back-end
-       * pushes up to 64.  This is primarily because the scalar back-end has a
-       * massively more competent register allocator and so the risk of
-       * spilling due to UBO pushing isn't nearly as high.
-       */
-      const unsigned max_push_regs =
-         compiler->scalar_stage[nir->info.stage] ? 64 : 32;
+      const unsigned max_push_regs = 64;
 
       unsigned total_push_regs = push_constant_range.length;
       for (unsigned i = 0; i < 4; i++) {
@@ -241,7 +185,7 @@ anv_nir_compute_push_layout(nir_shader *nir,
 
       if (robust_flags & BRW_ROBUSTNESS_UBO) {
          const uint32_t push_reg_mask_offset =
-            offsetof(struct anv_push_constants, push_reg_mask[nir->info.stage]);
+            anv_drv_const_offset(push_reg_mask[nir->info.stage]);
          assert(push_reg_mask_offset >= push_start);
          prog_data->push_reg_mask_param =
             (push_reg_mask_offset - push_start) / 4;
@@ -297,7 +241,7 @@ anv_nir_compute_push_layout(nir_shader *nir,
          container_of(prog_data, struct brw_wm_prog_data, base);
 
       const uint32_t fs_msaa_flags_offset =
-         offsetof(struct anv_push_constants, gfx.fs_msaa_flags);
+         anv_drv_const_offset(gfx.fs_msaa_flags);
       assert(fs_msaa_flags_offset >= push_start);
       wm_prog_data->msaa_flags_param =
          (fs_msaa_flags_offset - push_start) / 4;
@@ -323,11 +267,13 @@ anv_nir_compute_push_layout(nir_shader *nir,
 }
 
 void
-anv_nir_validate_push_layout(struct brw_stage_prog_data *prog_data,
+anv_nir_validate_push_layout(const struct anv_physical_device *pdevice,
+                             struct brw_stage_prog_data *prog_data,
                              struct anv_pipeline_bind_map *map)
 {
 #ifndef NDEBUG
-   unsigned prog_data_push_size = DIV_ROUND_UP(prog_data->nr_params, 8);
+   unsigned prog_data_push_size = ALIGN(prog_data->nr_params, pdevice->info.grf_size / 4) / 8;
+
    for (unsigned i = 0; i < 4; i++)
       prog_data_push_size += prog_data->ubo_ranges[i].length;
 

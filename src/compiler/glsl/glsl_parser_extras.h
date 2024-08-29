@@ -776,6 +776,22 @@ struct _mesa_glsl_parse_state {
     */
    bool KHR_blend_equation_advanced_enable;
    bool KHR_blend_equation_advanced_warn;
+   bool KHR_shader_subgroup_arithmetic_enable;
+   bool KHR_shader_subgroup_arithmetic_warn;
+   bool KHR_shader_subgroup_ballot_enable;
+   bool KHR_shader_subgroup_ballot_warn;
+   bool KHR_shader_subgroup_basic_enable;
+   bool KHR_shader_subgroup_basic_warn;
+   bool KHR_shader_subgroup_clustered_enable;
+   bool KHR_shader_subgroup_clustered_warn;
+   bool KHR_shader_subgroup_quad_enable;
+   bool KHR_shader_subgroup_quad_warn;
+   bool KHR_shader_subgroup_shuffle_enable;
+   bool KHR_shader_subgroup_shuffle_warn;
+   bool KHR_shader_subgroup_shuffle_relative_enable;
+   bool KHR_shader_subgroup_shuffle_relative_warn;
+   bool KHR_shader_subgroup_vote_enable;
+   bool KHR_shader_subgroup_vote_warn;
 
    /* OES extensions go here, sorted alphabetically.
     */
@@ -820,6 +836,8 @@ struct _mesa_glsl_parse_state {
     */
    bool AMD_conservative_depth_enable;
    bool AMD_conservative_depth_warn;
+   bool AMD_gpu_shader_half_float_enable;
+   bool AMD_gpu_shader_half_float_warn;
    bool AMD_gpu_shader_int64_enable;
    bool AMD_gpu_shader_int64_warn;
    bool AMD_shader_stencil_export_enable;
@@ -878,6 +896,8 @@ struct _mesa_glsl_parse_state {
    bool EXT_shader_io_blocks_warn;
    bool EXT_shader_samples_identical_enable;
    bool EXT_shader_samples_identical_warn;
+   bool EXT_shadow_samplers_enable;
+   bool EXT_shadow_samplers_warn;
    bool EXT_tessellation_point_size_enable;
    bool EXT_tessellation_point_size_warn;
    bool EXT_tessellation_shader_enable;
@@ -1083,7 +1103,8 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
  * \endverbatim
  */
 extern bool _mesa_glsl_can_implicitly_convert(const glsl_type *from, const glsl_type *desired,
-                                              _mesa_glsl_parse_state *state);
+                                              bool has_implicit_conversions,
+                                              bool has_implicit_int_to_uint_conversion);
 
 #endif /* __cplusplus */
 

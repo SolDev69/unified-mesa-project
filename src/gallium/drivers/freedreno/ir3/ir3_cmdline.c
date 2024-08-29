@@ -1,24 +1,6 @@
 /*
- * Copyright (C) 2014 Rob Clark <robclark@freedesktop.org>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright © 2014 Rob Clark <robclark@freedesktop.org>
+ * SPDX-License-Identifier: MIT
  *
  * Authors:
  *    Rob Clark <robclark@freedesktop.org>
@@ -51,6 +33,7 @@
 #include "compiler/glsl/glsl_to_nir.h"
 #include "compiler/glsl/standalone.h"
 #include "compiler/spirv/nir_spirv.h"
+#include "compiler/spirv/spirv_info.h"
 
 #include "pipe/p_context.h"
 
@@ -120,7 +103,21 @@ load_glsl(unsigned num_files, char *const *files, gl_shader_stage stage)
    if (!prog)
       errx(1, "couldn't parse `%s'", files[0]);
 
-   nir_shader *nir = glsl_to_nir(&local_ctx.Const, prog, stage, nir_options);
+   nir_shader *nir = glsl_to_nir(&local_ctx.Const,
+                                 &prog->_LinkedShaders[stage]->ir,
+                                 &prog->_LinkedShaders[stage]->Program->info,
+                                 stage, nir_options);
+
+   if (nir->info.stage == MESA_SHADER_FRAGMENT) {
+      nir->info.fs.pixel_center_integer =
+         prog->_LinkedShaders[stage]->Program->info.fs.pixel_center_integer;
+      nir->info.fs.origin_upper_left =
+         prog->_LinkedShaders[stage]->Program->info.fs.origin_upper_left;
+      nir->info.fs.advanced_blend_modes =
+         prog->_LinkedShaders[stage]->Program->info.fs.advanced_blend_modes;
+   }
+
+   gl_nir_inline_functions(nir);
 
    /* required NIR passes: */
    if (nir_options->lower_all_io_to_temps ||
@@ -128,7 +125,8 @@ load_glsl(unsigned num_files, char *const *files, gl_shader_stage stage)
        nir->info.stage == MESA_SHADER_GEOMETRY) {
       NIR_PASS_V(nir, nir_lower_io_to_temporaries,
                  nir_shader_get_entrypoint(nir), true, true);
-   } else if (nir->info.stage == MESA_SHADER_FRAGMENT) {
+   } else if (nir->info.stage == MESA_SHADER_TESS_EVAL ||
+              nir->info.stage == MESA_SHADER_FRAGMENT) {
       NIR_PASS_V(nir, nir_lower_io_to_temporaries,
                  nir_shader_get_entrypoint(nir), true, false);
    }
@@ -226,16 +224,17 @@ debug_func(void *priv, enum nir_spirv_debug_level level, size_t spirv_offset,
 static nir_shader *
 load_spirv(const char *filename, const char *entry, gl_shader_stage stage)
 {
-   const struct spirv_to_nir_options spirv_options = {
+   const struct spirv_capabilities spirv_caps = {
       /* these caps are just make-believe */
-      .caps = {
-         .draw_parameters = true,
-         .float64 = true,
-         .image_read_without_format = true,
-         .image_write_without_format = true,
-         .int64 = true,
-         .variable_pointers = true,
-      },
+      .DrawParameters = true,
+      .Float64 = true,
+      .StorageImageReadWithoutFormat = true,
+      .StorageImageWriteWithoutFormat = true,
+      .Int64 = true,
+      .VariablePointers = true,
+   };
+   const struct spirv_to_nir_options spirv_options = {
+      .capabilities = &spirv_caps,
       .debug = {
          .func = debug_func,
       }

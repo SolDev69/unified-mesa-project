@@ -404,6 +404,16 @@ enum pipe_flush_flags
 #define PIPE_CONTEXT_NO_LOD_BIAS (1 << 8)
 
 /**
+ * Create a media-only context. Use in pipe_screen::context_create.
+ * This disables draw, blit, and clear*, render_condition, and other graphics.
+ * This also disabled all compute related functions
+ * functions. Interop with other media contexts is still allowed.
+ * This allows scheduling jobs on a media-only hardware command queue that
+ * can run in parallel with media without stalling it.
+ */
+#define PIPE_CONTEXT_MEDIA_ONLY      (1 << 9)
+
+/**
  * Flags for pipe_context::memory_barrier.
  */
 #define PIPE_BARRIER_MAPPED_BUFFER     (1 << 0)
@@ -497,6 +507,12 @@ enum pipe_flush_flags
 #define PIPE_RESOURCE_FLAG_UNMAPPABLE            (1 << 8) /* implies staging transfers due to VK interop */
 #define PIPE_RESOURCE_FLAG_DRV_PRIV              (1 << 9) /* driver/winsys private */
 #define PIPE_RESOURCE_FLAG_FRONTEND_PRIV         (1 << 24) /* gallium frontend private */
+
+/**
+ * Fixed-rate compression
+ */
+#define PIPE_COMPRESSION_FIXED_RATE_NONE    0x0
+#define PIPE_COMPRESSION_FIXED_RATE_DEFAULT 0xF
 
 /**
  * Hint about the expected lifecycle of a resource.
@@ -647,6 +663,19 @@ enum pipe_conservative_raster_mode
 #define PIPE_IMAGE_ACCESS_VOLATILE           (1 << 3)
 #define PIPE_IMAGE_ACCESS_TEX2D_FROM_BUFFER  (1 << 4)
 #define PIPE_IMAGE_ACCESS_DRIVER_INTERNAL    (1 << 5)
+
+/**
+ * Shader subgroup feature flags aligned with GL_KHR_shader_subgroup.
+ */
+#define PIPE_SHADER_SUBGROUP_FEATURE_BASIC            (1 << 0)
+#define PIPE_SHADER_SUBGROUP_FEATURE_VOTE             (1 << 1)
+#define PIPE_SHADER_SUBGROUP_FEATURE_ARITHMETIC       (1 << 2)
+#define PIPE_SHADER_SUBGROUP_FEATURE_BALLOT           (1 << 3)
+#define PIPE_SHADER_SUBGROUP_FEATURE_SHUFFLE          (1 << 4)
+#define PIPE_SHADER_SUBGROUP_FEATURE_SHUFFLE_RELATIVE (1 << 5)
+#define PIPE_SHADER_SUBGROUP_FEATURE_CLUSTERED        (1 << 6)
+#define PIPE_SHADER_SUBGROUP_FEATURE_QUAD             (1 << 7)
+#define PIPE_SHADER_SUBGROUP_NUM_FEATURES             8
 
 /**
  * Implementation capabilities/limits which are queried through
@@ -803,11 +832,11 @@ enum pipe_cap
    PIPE_CAP_MIXED_COLOR_DEPTH_BITS,
    PIPE_CAP_SHADER_ARRAY_COMPONENTS,
    PIPE_CAP_STREAM_OUTPUT_INTERLEAVE_BUFFERS,
-   PIPE_CAP_SHADER_CAN_READ_OUTPUTS,
    PIPE_CAP_NATIVE_FENCE_FD,
    PIPE_CAP_GLSL_TESS_LEVELS_AS_INPUTS,
    PIPE_CAP_FBFETCH,
    PIPE_CAP_LEGACY_MATH_RULES,
+   PIPE_CAP_FP16,
    PIPE_CAP_DOUBLES,
    PIPE_CAP_INT64,
    PIPE_CAP_TGSI_TEX_TXF_LZ,
@@ -852,7 +881,6 @@ enum pipe_cap
    PIPE_CAP_IMAGE_ATOMIC_FLOAT_ADD,
    PIPE_CAP_QUERY_PIPELINE_STATISTICS_SINGLE,
    PIPE_CAP_DEST_SURFACE_SRGB_CONTROL,
-   PIPE_CAP_NIR_COMPACT_ARRAYS,
    PIPE_CAP_MAX_VARYINGS,
    PIPE_CAP_COMPUTE_GRID_INFO_LAST_BLOCK,
    PIPE_CAP_COMPUTE_SHADER_DERIVATIVES,
@@ -860,6 +888,7 @@ enum pipe_cap
    PIPE_CAP_IMAGE_STORE_FORMATTED,
    PIPE_CAP_THROTTLE,
    PIPE_CAP_DMABUF,
+   PIPE_CAP_CL_GL_SHARING,
    PIPE_CAP_PREFER_COMPUTE_FOR_MULTIMEDIA,
    PIPE_CAP_FRAGMENT_SHADER_INTERLOCK,
    PIPE_CAP_FBFETCH_COHERENT,
@@ -936,8 +965,21 @@ enum pipe_cap
    PIPE_CAP_VALIDATE_ALL_DIRTY_STATES,
    PIPE_CAP_HAS_CONST_BW,
    PIPE_CAP_PERFORMANCE_MONITOR,
+   PIPE_CAP_TEXTURE_SAMPLER_INDEPENDENT,
+   PIPE_CAP_ASTC_DECODE_MODE,
+   /** For GL_KHR_shader_subgroup */
+   PIPE_CAP_SHADER_SUBGROUP_SIZE,
+   PIPE_CAP_SHADER_SUBGROUP_SUPPORTED_STAGES,
+   PIPE_CAP_SHADER_SUBGROUP_SUPPORTED_FEATURES,
+   PIPE_CAP_SHADER_SUBGROUP_QUAD_ALL_STAGES,
    PIPE_CAP_LAST,
    /* XXX do not add caps after PIPE_CAP_LAST! */
+};
+
+enum pipe_point_size_lower_mode {
+   PIPE_POINT_SIZE_LOWER_ALWAYS,
+   PIPE_POINT_SIZE_LOWER_NEVER,
+   PIPE_POINT_SIZE_LOWER_USER_ONLY,
 };
 
 enum pipe_texture_transfer_mode {
@@ -1101,13 +1143,10 @@ enum pipe_resource_param
  */
 enum pipe_context_param
 {
-   /* A hint for the driver that it should pin its execution threads to
-    * a group of cores sharing a specific L3 cache if the CPU has multiple
-    * L3 caches. This is needed for good multithreading performance on
-    * AMD Zen CPUs. "value" is the L3 cache index. Drivers that don't have
-    * any internal threads or don't run on affected CPUs can ignore this.
+   /* Call util_thread_sched_apply_policy() for each driver thread that
+    * benefits from it.
     */
-   PIPE_CONTEXT_PARAM_PIN_THREADS_TO_L3_CACHE,
+   PIPE_CONTEXT_PARAM_UPDATE_THREAD_SCHEDULING,
 };
 
 /**
@@ -1308,10 +1347,14 @@ enum pipe_perf_counter_data_type
    PIPE_PERF_COUNTER_DATA_TYPE_DOUBLE,
 };
 
+#define PIPE_ASTC_DECODE_FORMAT_FLOAT16 0
+#define PIPE_ASTC_DECODE_FORMAT_UNORM8  1
+#define PIPE_ASTC_DECODE_FORMAT_RGB9E5  2
+
 #define PIPE_UUID_SIZE 16
 #define PIPE_LUID_SIZE 8
 
-#if DETECT_OS_UNIX
+#if DETECT_OS_POSIX
 #define PIPE_MEMORY_FD
 #endif
 

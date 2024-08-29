@@ -173,6 +173,10 @@ ADDR_E_RETURNCODE Lib::Create(
         }
     }
 
+#if DEBUG
+    ApplyDebugPrinters(pCreateIn->callbacks.debugPrint, pCreateIn->hClient);
+#endif
+
     if ((returnCode == ADDR_OK)                    &&
         (pCreateIn->callbacks.allocSysMem != NULL) &&
         (pCreateIn->callbacks.freeSysMem != NULL))
@@ -190,10 +194,10 @@ ADDR_E_RETURNCODE Lib::Create(
                     case FAMILY_SI:
                         pLib = SiHwlInit(&client);
                         break;
-                    case FAMILY_VI:
-                    case FAMILY_CZ: // VI based fusion
                     case FAMILY_CI:
                     case FAMILY_KV: // CI based fusion
+                    case FAMILY_VI:
+                    case FAMILY_CZ: // VI based fusion
                         pLib = CiHwlInit(&client);
                         break;
                     default:
@@ -216,9 +220,12 @@ ADDR_E_RETURNCODE Lib::Create(
                         pLib = Gfx10HwlInit(&client);
                         break;
                     case FAMILY_NV3:
-                    case FAMILY_GFX1103:
                     case FAMILY_GFX1150:
+                    case FAMILY_GFX1103:
                         pLib = Gfx11HwlInit(&client);
+                        break;
+                    case FAMILY_GFX12:
+                        pLib = Gfx12HwlInit(&client);
                         break;
                     default:
                         ADDR_ASSERT_ALWAYS();
@@ -231,6 +238,10 @@ ADDR_E_RETURNCODE Lib::Create(
         }
     }
 
+    if(pLib == NULL)
+    {
+        returnCode = ADDR_OUTOFMEMORY;
+    }
     if (pLib != NULL)
     {
         BOOL_32 initValid;
@@ -269,6 +280,7 @@ ADDR_E_RETURNCODE Lib::Create(
         {
             delete pLib;
             pLib = NULL;
+            returnCode = ADDR_OUTOFMEMORY;
             ADDR_ASSERT_ALWAYS();
         }
         else
@@ -287,12 +299,6 @@ ADDR_E_RETURNCODE Lib::Create(
 
         pLib->SetMaxAlignments();
 
-    }
-    else if ((pLib == NULL) &&
-             (returnCode == ADDR_OK))
-    {
-        // Unknown failures, we return the general error code
-        returnCode = ADDR_ERROR;
     }
 
     return returnCode;
@@ -368,7 +374,14 @@ VOID Lib::SetMaxAlignments()
 Lib* Lib::GetLib(
     ADDR_HANDLE hLib)   ///< [in] handle of ADDR_HANDLE
 {
-    return static_cast<Addr::Lib*>(hLib);
+    Lib* pLib = static_cast<Addr::Lib*>(hLib);
+#if DEBUG
+    if (pLib != NULL)
+    {
+        pLib->SetDebugPrinters();
+    }
+#endif
+    return pLib;
 }
 
 /**

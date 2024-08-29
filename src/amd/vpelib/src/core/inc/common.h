@@ -67,11 +67,13 @@ bool vpe_is_fp16(enum vpe_surface_pixel_format format);
 // yuv 4:2:0 check
 bool vpe_is_yuv420_8(enum vpe_surface_pixel_format format);
 bool vpe_is_yuv420_10(enum vpe_surface_pixel_format format);
+bool vpe_is_yuv420_16(enum vpe_surface_pixel_format format);
 bool vpe_is_yuv420(enum vpe_surface_pixel_format format);
 
 // yuv 4:4:4 check
 bool vpe_is_yuv444_8(enum vpe_surface_pixel_format format);
 bool vpe_is_yuv444_10(enum vpe_surface_pixel_format format);
+bool vpe_is_yuv444(enum vpe_surface_pixel_format format);
 
 enum color_depth vpe_get_color_depth(enum vpe_surface_pixel_format format);
 
@@ -80,8 +82,6 @@ bool vpe_has_per_pixel_alpha(enum vpe_surface_pixel_format format);
 enum vpe_status vpe_check_output_support(struct vpe *vpe, const struct vpe_build_param *param);
 
 enum vpe_status vpe_check_input_support(struct vpe *vpe, const struct vpe_stream *stream);
-
-enum vpe_status vpe_cache_tone_map_params(struct stream_ctx *, const struct vpe_build_param *param);
 
 enum vpe_status vpe_check_tone_map_support(
     struct vpe *vpe, const struct vpe_stream *stream, const struct vpe_build_param *param);

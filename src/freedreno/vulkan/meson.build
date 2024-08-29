@@ -12,13 +12,17 @@ tu_entrypoints = custom_target(
     '--tmpl-prefix', 'tu', '--tmpl-param', 'chip CHIP',
     '--tmpl-variants', '<A6XX>', '<A7XX>',
     '--beta', with_vulkan_beta.to_string(),
+    '--device-prefix', 'tu_rmv',
   ],
   depend_files : vk_entrypoints_gen_depend_files,
 )
 
 
 libtu_files = files(
+  'layers/tu_rmv_layer.cc',
   'tu_autotune.cc',
+  'tu_buffer.cc',
+  'tu_buffer_view.cc',
   'tu_clear_blit.cc',
   'tu_cmd_buffer.cc',
   'tu_cs_breadcrumbs.cc',
@@ -26,6 +30,7 @@ libtu_files = files(
   'tu_device.cc',
   'tu_descriptor_set.cc',
   'tu_dynamic_rendering.cc',
+  'tu_event.cc',
   'tu_formats.cc',
   'tu_image.cc',
   'tu_knl.cc',
@@ -33,7 +38,9 @@ libtu_files = files(
   'tu_nir_lower_multiview.cc',
   'tu_pass.cc',
   'tu_pipeline.cc',
-  'tu_query.cc',
+  'tu_sampler.cc',
+  'tu_query_pool.cc',
+  'tu_rmv.cc',
   'tu_shader.cc',
   'tu_suballoc.cc',
   'tu_util.cc',
@@ -136,6 +143,7 @@ tu_cpp_args += cpp.get_supported_arguments([
   '-Wno-unused-function',
   '-Wno-writable-strings',
   '-Wno-write-strings',
+  '-Wno-vla-cxx-extension',
 ])
 
 # HACK compiler.get_supported_arguments()/has_argument() do not seem
@@ -225,4 +233,6 @@ _dev_icd = custom_target(
   build_by_default : true,
 )
 
+devenv.append('VK_DRIVER_FILES', _dev_icd.full_path())
+# Deprecated: replaced by VK_DRIVER_FILES above
 devenv.append('VK_ICD_FILENAMES', _dev_icd.full_path())

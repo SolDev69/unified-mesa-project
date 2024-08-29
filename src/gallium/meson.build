@@ -1,23 +1,6 @@
 # Copyright © 2017 Dylan Baker
 # Copyright © 2017-2018 Intel Corporation
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# SPDX-License-Identifier: MIT
 
 sym_config = configuration_data()
 
@@ -25,7 +8,7 @@ foreach d : [[with_gallium_r300 or with_gallium_radeonsi or with_gallium_r600, '
              [with_gallium_radeonsi, 'amdgpu_winsys_create'],
              [with_gallium_nouveau, 'nouveau_drm_screen_create'],
              [with_gallium_freedreno, 'fd_drm_screen_create_renderonly'],
-             [with_llvm and with_gallium_radeonsi, 'ac_init_shared_llvm_once']]
+             [amd_with_llvm and with_gallium_radeonsi, 'ac_init_shared_llvm_once']]
   if d[0]
     sym_config.set(d[1], d[1] + ';')
   else
@@ -61,12 +44,26 @@ if with_platform_haiku
 endif
 if with_gallium_softpipe
   subdir('drivers/softpipe')
-  if draw_with_llvm
-    subdir('drivers/llvmpipe')
-  endif
+else
+  driver_softpipe = declare_dependency()
+endif
+if with_any_llvmpipe
+  subdir('drivers/llvmpipe')
+else
+  driver_llvmpipe = declare_dependency()
+endif
+if with_gallium_llvmpipe and with_gallium_softpipe
+  driver_swrast = declare_dependency(
+    dependencies : [ driver_softpipe, driver_llvmpipe ],
+  )
+elif with_gallium_llvmpipe
+  driver_swrast = driver_llvmpipe
+elif with_gallium_softpipe
+  driver_swrast = driver_softpipe
 else
   driver_swrast = declare_dependency()
 endif
+
 if with_gallium_asahi
   subdir('winsys/asahi/drm')
   subdir('drivers/asahi')
@@ -167,8 +164,10 @@ else
 endif
 if with_gallium_virgl
   subdir('winsys/virgl/common')
-  subdir('winsys/virgl/drm')
-  subdir('winsys/virgl/vtest')
+  if not with_platform_windows
+    subdir('winsys/virgl/drm')
+    subdir('winsys/virgl/vtest')
+  endif
   subdir('drivers/virgl')
 else
   driver_virgl = declare_dependency()
@@ -189,11 +188,12 @@ if with_gallium_d3d12
 else
   driver_d3d12 = declare_dependency()
 endif
-if with_gallium_opencl
-  # TODO: this isn't really clover specific, but ATM clover is the only
-  # consumer
+if with_gallium_clover or with_tests
+  # At the moment, clover and gallium/tests are the only two consumers
+  # for pipe-loader
   subdir('targets/pipe-loader')
-
+endif
+if with_gallium_clover
   subdir('frontends/clover')
   subdir('targets/opencl')
 endif
@@ -239,7 +239,7 @@ if with_gallium_st_nine
 endif
 if with_gallium_st_d3d10umd
   subdir('frontends/d3d10umd')
-  subdir('targets/d3d10sw')
+  subdir('targets/d3d10umd')
 endif
 if with_platform_windows
   if with_opengl
@@ -259,4 +259,9 @@ endif
 if with_swrast_vk
   subdir('frontends/lavapipe')
   subdir('targets/lavapipe')
+endif
+
+if with_teflon
+  subdir('frontends/teflon')
+  subdir('targets/teflon')
 endif

@@ -1,24 +1,6 @@
 /*
- * Copyright (c) 2012 Rob Clark <robdclark@gmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright © 2012 Rob Clark <robdclark@gmail.com>
+ * SPDX-License-Identifier: MIT
  */
 
 #include <assert.h>
@@ -62,7 +44,7 @@ static inline unsigned
 regcnt(void)
 {
    if (options->info->chip >= 5)
-      return 0xffff;
+      return 0x3ffff;
    else
       return 0x7fff;
 }
@@ -293,7 +275,7 @@ parse_dword_addr(uint32_t dword, uint32_t *gpuaddr, uint32_t *flags,
    *flags = dword & mask;
 }
 
-static uint32_t type0_reg_vals[0xffff + 1];
+static uint32_t type0_reg_vals[0x3ffff + 1];
 static uint8_t type0_reg_rewritten[sizeof(type0_reg_vals) /
                                    8]; /* written since last draw */
 static uint8_t type0_reg_written[sizeof(type0_reg_vals) / 8];
@@ -1900,13 +1882,13 @@ static void dump_register_summary(int level);
 static void
 cp_event_write(uint32_t *dwords, uint32_t sizedwords, int level)
 {
-   const char *name = rnn_enumname(rnn, "vgt_event_type", dwords[0]);
+   const char *name = rnn_enumname(rnn, "vgt_event_type", dwords[0] & 0xff);
    printl(2, "%sevent %s\n", levels[level], name);
 
    if (name && (options->info->chip > 5)) {
       char eventname[64];
       snprintf(eventname, sizeof(eventname), "EVENT:%s", name);
-      if (!strcmp(name, "BLIT")) {
+      if (!strcmp(name, "BLIT") || !strcmp(name, "LRZ_CLEAR")) {
          do_query(eventname, 0);
          print_mode(level);
          dump_register_summary(level);
@@ -2955,6 +2937,7 @@ static const struct type3_op {
    /* for a7xx */
    CP(THREAD_CONTROL, cp_set_thread_control),
    CP(CONTEXT_REG_BUNCH2, cp_context_reg_bunch2),
+   CP(EVENT_WRITE7, cp_event_write),
 };
 
 static void

@@ -23,9 +23,10 @@
 #include "tu_device.h"
 #include "tu_dynamic_rendering.h"
 #include "tu_knl_drm.h"
+#include "tu_rmv.h"
 #include "redump.h"
 
-struct tu_queue_submit
+struct tu_msm_queue_submit
 {
    struct vk_queue_submit *vk_submit;
    struct tu_u_trace_submission_data *u_trace_submission_data;
@@ -430,6 +431,7 @@ tu_allocate_kernel_iova(struct tu_device *dev,
 
 static VkResult
 tu_bo_init(struct tu_device *dev,
+           struct vk_object_base *base,
            struct tu_bo *bo,
            uint32_t gem_handle,
            uint64_t size,
@@ -493,9 +495,12 @@ tu_bo_init(struct tu_device *dev,
       .name = name,
       .refcnt = 1,
       .bo_list_idx = idx,
+      .base = base,
    };
 
    mtx_unlock(&dev->bo_mutex);
+
+   TU_RMV(bo_allocate, dev, bo);
 
    return VK_SUCCESS;
 }
@@ -511,7 +516,7 @@ static void
 tu_bo_set_kernel_name(struct tu_device *dev, struct tu_bo *bo, const char *name)
 {
    bool kernel_bo_names = dev->bo_sizes != NULL;
-#ifdef DEBUG
+#if MESA_DEBUG
    kernel_bo_names = true;
 #endif
    if (!kernel_bo_names)
@@ -547,6 +552,7 @@ msm_vma_unlock(struct tu_device *dev)
 
 static VkResult
 msm_bo_init(struct tu_device *dev,
+            struct vk_object_base *base,
             struct tu_bo **out_bo,
             uint64_t size,
             uint64_t client_iova,
@@ -585,14 +591,18 @@ msm_bo_init(struct tu_device *dev,
    msm_vma_lock(dev);
 
    VkResult result =
-      tu_bo_init(dev, bo, req.handle, size, client_iova, flags, name);
+      tu_bo_init(dev, base, bo, req.handle, size, client_iova, flags, name);
 
    msm_vma_unlock(dev);
 
-   if (result != VK_SUCCESS)
-      memset(bo, 0, sizeof(*bo));
-   else
+   if (result == VK_SUCCESS) {
       *out_bo = bo;
+      if (flags & TU_BO_ALLOC_INTERNAL_RESOURCE) {
+         TU_RMV(internal_resource_create, dev, bo);
+         TU_RMV(resource_name, dev, bo, name);
+      }
+   } else
+      memset(bo, 0, sizeof(*bo));
 
    /* We don't use bo->name here because for the !TU_DEBUG=bo case bo->name is NULL. */
    tu_bo_set_kernel_name(dev, bo, name);
@@ -600,7 +610,7 @@ msm_bo_init(struct tu_device *dev,
    if (result == VK_SUCCESS &&
        (mem_property & VK_MEMORY_PROPERTY_HOST_CACHED_BIT) &&
        !(mem_property & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)) {
-      tu_bo_map(dev, bo);
+      tu_bo_map(dev, bo, NULL);
 
       /* Cached non-coherent memory may already have dirty cache lines,
        * we should clean the cache lines before GPU got the chance to
@@ -608,7 +618,7 @@ msm_bo_init(struct tu_device *dev,
        *
        * MSM already does this automatically for uncached (MSM_BO_WC) memory.
        */
-      tu_sync_cache_bo(dev, bo, 0, VK_WHOLE_SIZE, TU_MEM_SYNC_CACHE_TO_GPU);
+      tu_bo_sync_cache(dev, bo, 0, VK_WHOLE_SIZE, TU_MEM_SYNC_CACHE_TO_GPU);
    }
 
    return result;
@@ -659,7 +669,7 @@ msm_bo_init_dmabuf(struct tu_device *dev,
    }
 
    VkResult result =
-      tu_bo_init(dev, bo, gem_handle, size, 0, TU_BO_ALLOC_DMABUF, "dmabuf");
+      tu_bo_init(dev, NULL, bo, gem_handle, size, 0, TU_BO_ALLOC_DMABUF, "dmabuf");
 
    if (result != VK_SUCCESS)
       memset(bo, 0, sizeof(*bo));
@@ -673,22 +683,22 @@ msm_bo_init_dmabuf(struct tu_device *dev,
 }
 
 static VkResult
-msm_bo_map(struct tu_device *dev, struct tu_bo *bo)
+msm_bo_map(struct tu_device *dev, struct tu_bo *bo, void *placed_addr)
 {
-   if (bo->map)
-      return VK_SUCCESS;
-
    uint64_t offset = tu_gem_info(dev, bo->gem_handle, MSM_INFO_GET_OFFSET);
    if (!offset)
       return vk_error(dev, VK_ERROR_OUT_OF_DEVICE_MEMORY);
 
    /* TODO: Should we use the wrapper os_mmap() like Freedreno does? */
-   void *map = mmap(0, bo->size, PROT_READ | PROT_WRITE, MAP_SHARED,
+   void *map = mmap(placed_addr, bo->size, PROT_READ | PROT_WRITE,
+                    MAP_SHARED | (placed_addr != NULL ? MAP_FIXED : 0),
                     dev->fd, offset);
    if (map == MAP_FAILED)
       return vk_error(dev, VK_ERROR_MEMORY_MAP_FAILED);
 
    bo->map = map;
+   TU_RMV(bo_map, dev, bo);
+
    return VK_SUCCESS;
 }
 
@@ -745,7 +755,7 @@ tu_queue_submit_create_locked(struct tu_queue *queue,
                               const uint32_t nr_in_syncobjs,
                               const uint32_t nr_out_syncobjs,
                               uint32_t perf_pass_index,
-                              struct tu_queue_submit *new_submit)
+                              struct tu_msm_queue_submit *new_submit)
 {
    VkResult result;
 
@@ -754,7 +764,7 @@ tu_queue_submit_create_locked(struct tu_queue *queue,
 
    struct vk_command_buffer **vk_cmd_buffers = vk_submit->command_buffers;
 
-   memset(new_submit, 0, sizeof(struct tu_queue_submit));
+   memset(new_submit, 0, sizeof(struct tu_msm_queue_submit));
 
    new_submit->cmd_buffers = (struct tu_cmd_buffer **) vk_cmd_buffers;
    new_submit->nr_cmd_buffers = vk_submit->command_buffer_count;
@@ -847,7 +857,7 @@ fail_cmds:
 }
 
 static void
-tu_queue_submit_finish(struct tu_queue *queue, struct tu_queue_submit *submit)
+tu_queue_submit_finish(struct tu_queue *queue, struct tu_msm_queue_submit *submit)
 {
    vk_free(&queue->device->vk.alloc, submit->cmds);
    vk_free(&queue->device->vk.alloc, submit->in_syncobjs);
@@ -872,7 +882,7 @@ tu_fill_msm_gem_submit(struct tu_device *dev,
 
 static void
 tu_queue_build_msm_gem_submit_cmds(struct tu_queue *queue,
-                                   struct tu_queue_submit *submit,
+                                   struct tu_msm_queue_submit *submit,
                                    struct tu_cs *autotune_cs)
 {
    struct tu_device *dev = queue->device;
@@ -914,9 +924,9 @@ tu_queue_build_msm_gem_submit_cmds(struct tu_queue *queue,
 }
 
 static VkResult
-tu_queue_submit_locked(struct tu_queue *queue, struct tu_queue_submit *submit)
+tu_queue_submit_locked(struct tu_queue *queue, struct tu_msm_queue_submit *submit)
 {
-   queue->device->submit_count++;
+   uint32_t submit_idx = queue->device->submit_count++;
 
    struct tu_cs *autotune_cs = NULL;
    if (submit->autotune_fence) {
@@ -959,39 +969,44 @@ tu_queue_submit_locked(struct tu_queue *queue, struct tu_queue_submit *submit)
       .syncobj_stride = sizeof(struct drm_msm_gem_submit_syncobj),
    };
 
-   if (TU_DEBUG(RD)) {
+   if (req.nr_cmds && FD_RD_DUMP(ENABLE) &&
+       fd_rd_output_begin(&queue->device->rd_output, submit_idx)) {
       struct tu_device *device = queue->device;
-      static uint32_t submit_idx;
-      char path[32];
-      sprintf(path, "%.5d.rd", p_atomic_inc_return(&submit_idx));
-      int rd = open(path, O_CLOEXEC | O_WRONLY | O_CREAT | O_TRUNC, 0777);
-      if (rd >= 0) {
-         rd_write_section(rd, RD_CHIP_ID, &device->physical_device->dev_id.chip_id, 4);
+      struct fd_rd_output *rd_output = &device->rd_output;
 
-         rd_write_section(rd, RD_CMD, "tu-dump", 8);
-
-         for (unsigned i = 0; i < device->bo_count; i++) {
-            struct drm_msm_gem_submit_bo bo = device->bo_list[i];
-            struct tu_bo *tu_bo = tu_device_lookup_bo(device, bo.handle);
-            uint64_t iova = bo.presumed;
-
-            uint32_t buf[3] = { iova, tu_bo->size, iova >> 32 };
-            rd_write_section(rd, RD_GPUADDR, buf, 12);
-            if (bo.flags & MSM_SUBMIT_BO_DUMP) {
-               msm_bo_map(device, tu_bo); /* note: this would need locking to be safe */
-               rd_write_section(rd, RD_BUFFER_CONTENTS, tu_bo->map, tu_bo->size);
-            }
+      if (FD_RD_DUMP(FULL)) {
+         VkResult result = tu_wait_fence(device, queue->msm_queue_id, queue->fence, ~0);
+         if (result != VK_SUCCESS) {
+            mesa_loge("FD_RD_DUMP_FULL: wait on previous submission for device %u and queue %d failed: %u",
+                      device->device_idx, queue->msm_queue_id, 0);
          }
-
-         for (unsigned i = 0; i < req.nr_cmds; i++) {
-            struct drm_msm_gem_submit_cmd *cmd = &submit->cmds[i];
-            uint64_t iova = device->bo_list[cmd->submit_idx].presumed + cmd->submit_offset;
-            uint32_t size = cmd->size >> 2;
-            uint32_t buf[3] = { iova, size, iova >> 32 };
-            rd_write_section(rd, RD_CMDSTREAM_ADDR, buf, 12);
-         }
-         close(rd);
       }
+
+      fd_rd_output_write_section(rd_output, RD_CHIP_ID, &device->physical_device->dev_id.chip_id, 8);
+      fd_rd_output_write_section(rd_output, RD_CMD, "tu-dump", 8);
+
+      for (unsigned i = 0; i < device->bo_count; i++) {
+         struct drm_msm_gem_submit_bo bo = device->bo_list[i];
+         struct tu_bo *tu_bo = tu_device_lookup_bo(device, bo.handle);
+         uint64_t iova = bo.presumed;
+
+         uint32_t buf[3] = { iova, tu_bo->size, iova >> 32 };
+         fd_rd_output_write_section(rd_output, RD_GPUADDR, buf, 12);
+         if (bo.flags & MSM_SUBMIT_BO_DUMP || FD_RD_DUMP(FULL)) {
+            tu_bo_map(device, tu_bo, NULL); /* note: this would need locking to be safe */
+            fd_rd_output_write_section(rd_output, RD_BUFFER_CONTENTS, tu_bo->map, tu_bo->size);
+         }
+      }
+
+      for (unsigned i = 0; i < req.nr_cmds; i++) {
+         struct drm_msm_gem_submit_cmd *cmd = &submit->cmds[i];
+         uint64_t iova = device->bo_list[cmd->submit_idx].presumed + cmd->submit_offset;
+         uint32_t size = cmd->size >> 2;
+         uint32_t buf[3] = { iova, size, iova >> 32 };
+         fd_rd_output_write_section(rd_output, RD_CMDSTREAM_ADDR, buf, 12);
+      }
+
+      fd_rd_output_end(rd_output);
    }
 
    int ret = drmCommandWriteRead(queue->device->fd,
@@ -1032,7 +1047,8 @@ tu_queue_submit_locked(struct tu_queue *queue, struct tu_queue_submit *submit)
          bool free_data = i == submission_data->last_buffer_with_tracepoints;
          if (submission_data->cmd_trace_data[i].trace)
             u_trace_flush(submission_data->cmd_trace_data[i].trace,
-                          submission_data, free_data);
+                          submission_data, queue->device->vk.current_frame,
+                          free_data);
 
          if (!submission_data->cmd_trace_data[i].timestamp_copy_cs) {
             /* u_trace is owned by cmd_buffer */
@@ -1087,7 +1103,7 @@ msm_queue_submit(struct tu_queue *queue, struct vk_queue_submit *submit)
    MESA_TRACE_FUNC();
    uint32_t perf_pass_index = queue->device->perfcntrs_pass_cs ?
                               submit->perf_pass_index : ~0;
-   struct tu_queue_submit submit_req;
+   struct tu_msm_queue_submit submit_req;
 
    if (TU_DEBUG(LOG_SKIP_GMEM_OPS)) {
       tu_dbg_log_gmem_load_store_skips(queue->device);
@@ -1138,7 +1154,7 @@ msm_queue_submit(struct tu_queue *queue, struct vk_queue_submit *submit)
    if (ret != VK_SUCCESS)
        return ret;
 
-   u_trace_context_process(&queue->device->trace_context, true);
+   u_trace_context_process(&queue->device->trace_context, false);
 
    return VK_SUCCESS;
 }

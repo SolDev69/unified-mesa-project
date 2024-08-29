@@ -36,10 +36,17 @@
 #include "dpp.h"
 #include "mpc.h"
 #include "opp.h"
+#include "geometric_scaling.h"
+#include <stdlib.h>
+#include <time.h>
 
 static void override_debug_option(
     struct vpe_debug_options *debug, const struct vpe_debug_options *user_debug)
 {
+    if ((debug == NULL) || (user_debug == NULL)) {
+        return;
+    }
+
     if (user_debug->flags.bg_bit_depth)
         debug->bg_bit_depth = user_debug->bg_bit_depth;
 
@@ -88,9 +95,6 @@ static void override_debug_option(
     if (user_debug->flags.bypass_post_csc)
         debug->bypass_post_csc = user_debug->bypass_post_csc;
 
-    if (user_debug->flags.force_tf_calculation)
-        debug->force_tf_calculation = user_debug->force_tf_calculation;
-
     if (user_debug->flags.clamping_setting) {
         debug->clamping_setting = user_debug->clamping_setting;
         debug->clamping_params  = user_debug->clamping_params;
@@ -113,7 +117,32 @@ static void override_debug_option(
 
     if (user_debug->flags.visual_confirm)
         debug->visual_confirm_params = user_debug->visual_confirm_params;
+
+    if (user_debug->flags.skip_optimal_tap_check)
+        debug->skip_optimal_tap_check = user_debug->skip_optimal_tap_check;
+
+    if (user_debug->flags.bypass_blndgam)
+        debug->bypass_blndgam = user_debug->bypass_blndgam;
+
+    if (user_debug->flags.disable_3dlut_cache)
+        debug->disable_3dlut_cache = user_debug->disable_3dlut_cache;
 }
+
+#ifdef VPE_BUILD_1_1
+static void verify_collaboration_mode(struct vpe_priv *vpe_priv)
+{
+    if (vpe_priv->pub.level == VPE_IP_LEVEL_1_1) {
+        if (vpe_priv->collaboration_mode == true && vpe_priv->collaborate_sync_index == 0) {
+            srand((unsigned int)time(NULL)); // Initialization, should only be called once.
+            uint32_t randnum                 = (uint32_t)rand();
+            randnum                          = randnum & 0x0000f000;
+            vpe_priv->collaborate_sync_index = (int32_t)randnum;
+        }
+    } else if (vpe_priv->pub.level == VPE_IP_LEVEL_1_0) {
+        vpe_priv->collaboration_mode = false;
+    }
+}
+#endif
 
 struct vpe *vpe_create(const struct vpe_init_data *params)
 {
@@ -150,6 +179,11 @@ struct vpe *vpe_create(const struct vpe_init_data *params)
 
     vpe_priv->ops_support      = false;
     vpe_priv->scale_yuv_matrix = true;
+
+#ifdef VPE_BUILD_1_1
+    vpe_priv->collaborate_sync_index = 0;
+#endif
+
     return &vpe_priv->pub;
 }
 
@@ -179,130 +213,190 @@ void vpe_destroy(struct vpe **vpe)
     *vpe = NULL;
 }
 
+
 /*****************************************************************************************
- * handle_zero_input
- * handle any zero input stream but background output only
+ * populate_bg_stream
+ * populate virtual stream for background output only
  * struct vpe* vpe
  *      [input] vpe context
  * const struct vpe_build_param* org_param
  *      [input] original parameter from caller
- * struct vpe_build_param* dummy_input_param
- *      [output] caller provided param struct for filling with dummy input
- * struct struct vpe_stream* dummy_stream
- *      [output] caller provided vpe_stream struct for use in dummy_input_param->streams
+ * struct struct vpe_stream_ctx* stream_ctx
+ *      [input/output] caller provided vpe_stream_ctx struct to populate
  *****************************************************************************************/
-static enum vpe_status handle_zero_input(struct vpe *vpe, const struct vpe_build_param *in_param,
-    const struct vpe_build_param **out_param)
+static enum vpe_status populate_bg_stream(struct vpe_priv *vpe_priv, const struct vpe_build_param *param, struct stream_ctx *stream_ctx)
 {
-    struct vpe_priv                  *vpe_priv;
     struct vpe_surface_info          *surface_info;
     struct vpe_scaling_info          *scaling_info;
     struct vpe_scaling_filter_coeffs *polyphaseCoeffs;
     struct vpe_stream                *stream;
 
-    vpe_priv = container_of(vpe, struct vpe_priv, pub);
-
-    if (!in_param || !out_param)
+    if (!param || !stream_ctx)
         return VPE_STATUS_ERROR;
 
-    *out_param = NULL;
+    stream = &stream_ctx->stream;
+    stream_ctx->stream_type = VPE_STREAM_TYPE_BG_GEN;
 
-    if (in_param->num_streams == 0 || vpe_priv->init.debug.bg_color_fill_only) {
+    // if output surface is too small, don't use it as dummy input
+    // request 2x2 instead of 1x1 for bpc safety
+    // as we are to treat output as input for RGB 1x1, need 4bytes at least
+    // but if output is YUV, bpc will be smaller and need larger dimension
 
-        // if output surface is too small, don't use it as dummy input
-        // request 2x2 instead of 1x1 for bpc safety
-        // as we are to treat output as input for RGB 1x1, need 4bytes at least
-        // but if output is YUV, bpc will be smaller and need larger dimension
-
-        if (in_param->dst_surface.plane_size.surface_size.width < VPE_MIN_VIEWPORT_SIZE ||
-            in_param->dst_surface.plane_size.surface_size.height < VPE_MIN_VIEWPORT_SIZE ||
-            in_param->dst_surface.plane_size.surface_pitch < 256 / 4 || // 256bytes, 4bpp
-            in_param->target_rect.width < VPE_MIN_VIEWPORT_SIZE ||
-            in_param->target_rect.height < VPE_MIN_VIEWPORT_SIZE) {
-            return VPE_STATUS_ERROR;
-        }
-
-        if (!vpe_priv->dummy_input_param) {
-            vpe_priv->dummy_input_param = vpe_zalloc(sizeof(struct vpe_build_param));
-            if (!vpe_priv->dummy_input_param)
-                return VPE_STATUS_NO_MEMORY;
-        }
-
-        if (!vpe_priv->dummy_stream) {
-            vpe_priv->dummy_stream = vpe_zalloc(sizeof(struct vpe_stream));
-            if (!vpe_priv->dummy_stream)
-                return VPE_STATUS_NO_MEMORY;
-        }
-
-        *vpe_priv->dummy_input_param = *in_param;
-
-        vpe_priv->dummy_input_param->num_streams = 1;
-        vpe_priv->dummy_input_param->streams     = vpe_priv->dummy_stream;
-
-        // set output surface as our dummy input
-        stream                            = vpe_priv->dummy_stream;
-        surface_info                      = &stream->surface_info;
-        scaling_info                      = &stream->scaling_info;
-        polyphaseCoeffs                   = &stream->polyphase_scaling_coeffs;
-        surface_info->address.type        = VPE_PLN_ADDR_TYPE_GRAPHICS;
-        surface_info->address.tmz_surface = in_param->dst_surface.address.tmz_surface;
-        surface_info->address.grph.addr.quad_part =
-            in_param->dst_surface.address.grph.addr.quad_part;
-
-        surface_info->swizzle                   = VPE_SW_LINEAR; // treat it as linear for simple
-        surface_info->plane_size.surface_size.x = 0;
-        surface_info->plane_size.surface_size.y = 0;
-        surface_info->plane_size.surface_size.width = VPE_MIN_VIEWPORT_SIZE; // min width in pixels
-        surface_info->plane_size.surface_size.height =
-            VPE_MIN_VIEWPORT_SIZE;                                           // min height in pixels
-        surface_info->plane_size.surface_pitch          = 256 / 4;           // pitch in pixels
-        surface_info->plane_size.surface_aligned_height = VPE_MIN_VIEWPORT_SIZE;
-        surface_info->dcc.enable                        = false;
-        surface_info->format                            = VPE_SURFACE_PIXEL_FORMAT_GRPH_RGBA8888;
-        surface_info->cs.encoding                       = VPE_PIXEL_ENCODING_RGB;
-        surface_info->cs.range                          = VPE_COLOR_RANGE_FULL;
-        surface_info->cs.tf                             = VPE_TF_G22;
-        surface_info->cs.cositing                       = VPE_CHROMA_COSITING_NONE;
-        surface_info->cs.primaries                      = VPE_PRIMARIES_BT709;
-        scaling_info->src_rect.x                        = 0;
-        scaling_info->src_rect.y                        = 0;
-        scaling_info->src_rect.width                    = VPE_MIN_VIEWPORT_SIZE;
-        scaling_info->src_rect.height                   = VPE_MIN_VIEWPORT_SIZE;
-        scaling_info->dst_rect.x                        = in_param->target_rect.x;
-        scaling_info->dst_rect.y                        = in_param->target_rect.y;
-        scaling_info->dst_rect.width                    = VPE_MIN_VIEWPORT_SIZE;
-        scaling_info->dst_rect.height                   = VPE_MIN_VIEWPORT_SIZE;
-        scaling_info->taps.v_taps                       = 4;
-        scaling_info->taps.h_taps                       = 4;
-        scaling_info->taps.v_taps_c                     = 2;
-        scaling_info->taps.h_taps_c                     = 2;
-
-        polyphaseCoeffs->taps      = scaling_info->taps;
-        polyphaseCoeffs->nb_phases = 64;
-
-        stream->blend_info.blending             = true;
-        stream->blend_info.pre_multiplied_alpha = false;
-        stream->blend_info.global_alpha         = true; // hardcoded upon DAL request
-        stream->blend_info.global_alpha_value   = 0;    // transparent as we are dummy input
-
-        stream->color_adj.brightness        = 0.0f;
-        stream->color_adj.contrast          = 1.0f;
-        stream->color_adj.hue               = 0.0f;
-        stream->color_adj.saturation        = 1.0f;
-        stream->rotation                    = VPE_ROTATION_ANGLE_0;
-        stream->horizontal_mirror           = false;
-        stream->vertical_mirror             = false;
-        stream->enable_luma_key             = false;
-        stream->lower_luma_bound            = 0;
-        stream->upper_luma_bound            = 0;
-        stream->flags.hdr_metadata          = 0;
-        stream->use_external_scaling_coeffs = false;
-        *out_param                          = vpe_priv->dummy_input_param;
-    } else {
-        *out_param = in_param;
+    if (param->dst_surface.plane_size.surface_size.width < VPE_MIN_VIEWPORT_SIZE ||
+        param->dst_surface.plane_size.surface_size.height < VPE_MIN_VIEWPORT_SIZE ||
+        param->dst_surface.plane_size.surface_pitch < 256 / 4 || // 256bytes, 4bpp
+        param->target_rect.width < VPE_MIN_VIEWPORT_SIZE ||
+        param->target_rect.height < VPE_MIN_VIEWPORT_SIZE) {
+        return VPE_STATUS_ERROR;
     }
 
+    // set output surface as our dummy input
+    surface_info                      = &stream->surface_info;
+    scaling_info                      = &stream->scaling_info;
+    polyphaseCoeffs                   = &stream->polyphase_scaling_coeffs;
+    surface_info->address.type        = VPE_PLN_ADDR_TYPE_GRAPHICS;
+    surface_info->address.tmz_surface = param->dst_surface.address.tmz_surface;
+    surface_info->address.grph.addr.quad_part =
+        param->dst_surface.address.grph.addr.quad_part;
+
+    surface_info->swizzle                   = VPE_SW_LINEAR; // treat it as linear for simple
+    surface_info->plane_size.surface_size.x = 0;
+    surface_info->plane_size.surface_size.y = 0;
+    surface_info->plane_size.surface_size.width = VPE_MIN_VIEWPORT_SIZE; // min width in pixels
+    surface_info->plane_size.surface_size.height =
+        VPE_MIN_VIEWPORT_SIZE;                                           // min height in pixels
+    surface_info->plane_size.surface_pitch          = 256 / 4;           // pitch in pixels
+    surface_info->plane_size.surface_aligned_height = VPE_MIN_VIEWPORT_SIZE;
+    surface_info->dcc.enable                        = false;
+    surface_info->format                            = VPE_SURFACE_PIXEL_FORMAT_GRPH_RGBA8888;
+    surface_info->cs.encoding                       = VPE_PIXEL_ENCODING_RGB;
+    surface_info->cs.range                          = VPE_COLOR_RANGE_FULL;
+    surface_info->cs.tf                             = VPE_TF_G22;
+    surface_info->cs.cositing                       = VPE_CHROMA_COSITING_NONE;
+    surface_info->cs.primaries                      = VPE_PRIMARIES_BT709;
+    scaling_info->src_rect.x                        = 0;
+    scaling_info->src_rect.y                        = 0;
+    scaling_info->src_rect.width                    = VPE_MIN_VIEWPORT_SIZE;
+    scaling_info->src_rect.height                   = VPE_MIN_VIEWPORT_SIZE;
+    scaling_info->dst_rect.x                        = param->target_rect.x;
+    scaling_info->dst_rect.y                        = param->target_rect.y;
+    scaling_info->dst_rect.width                    = VPE_MIN_VIEWPORT_SIZE;
+    scaling_info->dst_rect.height                   = VPE_MIN_VIEWPORT_SIZE;
+    scaling_info->taps.v_taps                       = 4;
+    scaling_info->taps.h_taps                       = 4;
+    scaling_info->taps.v_taps_c                     = 2;
+    scaling_info->taps.h_taps_c                     = 2;
+
+    polyphaseCoeffs->taps      = scaling_info->taps;
+    polyphaseCoeffs->nb_phases = 64;
+
+    stream->blend_info.blending             = true;
+    stream->blend_info.pre_multiplied_alpha = false;
+    stream->blend_info.global_alpha         = true; // hardcoded upon DAL request
+    stream->blend_info.global_alpha_value   = 0;    // transparent as we are dummy input
+
+    stream->color_adj.brightness        = 0.0f;
+    stream->color_adj.contrast          = 1.0f;
+    stream->color_adj.hue               = 0.0f;
+    stream->color_adj.saturation        = 1.0f;
+    stream->rotation                    = VPE_ROTATION_ANGLE_0;
+    stream->horizontal_mirror           = false;
+    stream->vertical_mirror             = false;
+    stream->enable_luma_key             = false;
+    stream->lower_luma_bound            = 0;
+    stream->upper_luma_bound            = 0;
+    stream->flags.hdr_metadata          = 0;
+    stream->flags.geometric_scaling     = 0;
+    stream->use_external_scaling_coeffs = false;
+
     return VPE_STATUS_OK;
+}
+
+static uint32_t get_required_virtual_stream_count(struct vpe_priv *vpe_priv, const struct vpe_build_param *param)
+{
+    uint32_t result = 0;
+
+    // Check for zero-input background stream
+    // Normally we result++ instead of returning, but bg_color_fill_only removes other streams (and therefore other features)
+    if (param->num_streams == 0 || vpe_priv->init.debug.bg_color_fill_only)
+        return 1;
+
+    return result;
+}
+
+static enum vpe_status populate_input_streams(struct vpe_priv *vpe_priv, const struct vpe_build_param *param, struct stream_ctx *stream_ctx_base)
+{
+    enum vpe_status    result = VPE_STATUS_OK;
+    uint32_t           i;
+    struct stream_ctx* stream_ctx;
+    bool               input_h_mirror, output_h_mirror;
+
+    vpe_priv->resource.check_h_mirror_support(&input_h_mirror, &output_h_mirror);
+
+    for (i = 0; i < vpe_priv->num_input_streams; i++) {
+        stream_ctx = &stream_ctx_base[i];
+        stream_ctx->stream_type = VPE_STREAM_TYPE_INPUT;
+        stream_ctx->stream_idx = (int32_t)i;
+        stream_ctx->per_pixel_alpha =
+            vpe_has_per_pixel_alpha(param->streams[i].surface_info.format);
+        if (vpe_priv->init.debug.bypass_per_pixel_alpha) {
+            stream_ctx->per_pixel_alpha = false;
+        }
+        if (param->streams[i].horizontal_mirror && !input_h_mirror && output_h_mirror)
+            stream_ctx->flip_horizonal_output = true;
+        else
+            stream_ctx->flip_horizonal_output = false;
+
+        memcpy(&stream_ctx->stream, &param->streams[i], sizeof(struct vpe_stream));
+
+        /* if top-bottom blending is not supported,
+         * the 1st stream still can support blending with background,
+         * however, the 2nd stream and onward can't enable blending.
+         */
+        if (i && param->streams[i].blend_info.blending &&
+            !vpe_priv->pub.caps->color_caps.mpc.top_bottom_blending) {
+            result = VPE_STATUS_ALPHA_BLENDING_NOT_SUPPORTED;
+            break;
+        }
+    }
+
+    return result;
+}
+
+static enum vpe_status populate_virtual_streams(struct vpe_priv* vpe_priv, const struct vpe_build_param* param, struct stream_ctx* stream_ctx_base, uint32_t num_virtual_streams)
+{
+    enum vpe_status    result             = VPE_STATUS_OK;
+    uint32_t           virtual_stream_idx = 0;
+    struct stream_ctx *stream_ctx;
+    bool               input_h_mirror, output_h_mirror;
+
+    vpe_priv->resource.check_h_mirror_support(&input_h_mirror, &output_h_mirror);
+
+    if (param->num_streams == 0 || vpe_priv->init.debug.bg_color_fill_only) {
+        if (num_virtual_streams != 1)
+            result = VPE_STATUS_ERROR;
+        else
+            result = populate_bg_stream(vpe_priv, param, &vpe_priv->stream_ctx[virtual_stream_idx++]);
+    }
+
+    if (result != VPE_STATUS_OK)
+        return result;
+
+    for (virtual_stream_idx = 0; virtual_stream_idx < num_virtual_streams; virtual_stream_idx++) {
+        stream_ctx = &stream_ctx_base[virtual_stream_idx];
+        stream_ctx->stream_idx = virtual_stream_idx + vpe_priv->num_input_streams;
+        stream_ctx->per_pixel_alpha =
+            vpe_has_per_pixel_alpha(stream_ctx->stream.surface_info.format);
+        if (vpe_priv->init.debug.bypass_per_pixel_alpha) {
+            stream_ctx->per_pixel_alpha = false;
+        }
+        if (stream_ctx->stream.horizontal_mirror && !input_h_mirror && output_h_mirror)
+            stream_ctx->flip_horizonal_output = true;
+        else
+            stream_ctx->flip_horizonal_output = false;
+    }
+
+    return result;
 }
 
 enum vpe_status vpe_check_support(
@@ -312,38 +406,52 @@ enum vpe_status vpe_check_support(
     struct vpec       *vpec;
     struct dpp        *dpp;
     enum vpe_status    status;
-    struct stream_ctx *stream_ctx;
     struct output_ctx *output_ctx = NULL;
-    uint32_t           i;
-    bool               input_h_mirror, output_h_mirror;
+    uint32_t           i, required_virtual_streams;
 
-    vpe_priv = container_of(vpe, struct vpe_priv, pub);
-    vpec     = &vpe_priv->resource.vpec;
-    dpp      = vpe_priv->resource.dpp[0];
+    vpe_priv        = container_of(vpe, struct vpe_priv, pub);
+    vpec            = &vpe_priv->resource.vpec;
+    dpp             = vpe_priv->resource.dpp[0];
+    status          = VPE_STATUS_OK;
 
-    status = handle_zero_input(vpe, param, &param);
-    if (status != VPE_STATUS_OK)
-        status = VPE_STATUS_NUM_STREAM_NOT_SUPPORTED;
+#ifdef VPE_BUILD_1_1
+    vpe_priv->collaboration_mode = param->collaboration_mode;
+    vpe_priv->vpe_num_instance   = param->num_instances;
+    verify_collaboration_mode(vpe_priv);
+#endif
 
-    if (!vpe_priv->stream_ctx || vpe_priv->num_streams != param->num_streams) {
+    required_virtual_streams = get_required_virtual_stream_count(vpe_priv, param);
+
+    if (!vpe_priv->stream_ctx ||
+        vpe_priv->num_streams != (param->num_streams + vpe_priv->num_virtual_streams) ||
+        vpe_priv->num_virtual_streams != required_virtual_streams) {
         if (vpe_priv->stream_ctx)
             vpe_free_stream_ctx(vpe_priv);
 
-        vpe_priv->stream_ctx = vpe_alloc_stream_ctx(vpe_priv, param->num_streams);
+        vpe_priv->stream_ctx = vpe_alloc_stream_ctx(vpe_priv, param->num_streams + required_virtual_streams);
     }
 
     if (!vpe_priv->stream_ctx)
         status = VPE_STATUS_NO_MEMORY;
-
-    // VPElib needs to cache whether or not the 3DLUT has been updated
-    //  This is to deal with case when 3DLUT has been updated but VPE rejects the job.
-    //  Need a sticky bit to tell vpe to program the 3dlut on next jobs submission even
-    //  if 3dlut has not changed
-    for (i = 0; i < param->num_streams; i++) {
-        vpe_cache_tone_map_params(&vpe_priv->stream_ctx[i], param);
+    else {
+        vpe_priv->num_streams = param->num_streams + required_virtual_streams;
+        vpe_priv->num_virtual_streams = required_virtual_streams;
+        vpe_priv->num_input_streams = param->num_streams;
     }
 
-    if (status == VPE_STATUS_OK) {
+    if (param->num_streams == 0 || vpe_priv->init.debug.bg_color_fill_only) {
+        vpe_free_stream_ctx(vpe_priv);
+        vpe_priv->stream_ctx = vpe_alloc_stream_ctx(vpe_priv, 1);
+        vpe_priv->num_streams = required_virtual_streams;
+        vpe_priv->num_virtual_streams = required_virtual_streams;
+        vpe_priv->num_input_streams = 0;
+
+        if (!vpe_priv->stream_ctx)
+            status = VPE_STATUS_NO_MEMORY;
+    }
+
+
+    if (status == VPE_STATUS_OK) {  
         // output checking - check per asic support
         status = vpe_check_output_support(vpe, param);
         if (status != VPE_STATUS_OK) {
@@ -367,7 +475,7 @@ enum vpe_status vpe_check_support(
         for (i = 0; i < param->num_streams; i++) {
             status = vpe_check_tone_map_support(vpe, &param->streams[i], param);
             if (status != VPE_STATUS_OK) {
-                vpe_log("fail input support check. status %d\n", (int)status);
+                vpe_log("fail tone map support check. status %d\n", (int)status);
                 break;
             }
         }
@@ -385,39 +493,20 @@ enum vpe_status vpe_check_support(
 
         vpe_priv->num_vpe_cmds      = 0;
         output_ctx->clamping_params = vpe_priv->init.debug.clamping_params;
-
-        vpe_priv->num_streams = param->num_streams;
     }
+
 
     if (status == VPE_STATUS_OK) {
         // blending support check
-        vpe_priv->resource.check_h_mirror_support(&input_h_mirror, &output_h_mirror);
+        status = populate_input_streams(vpe_priv, param, vpe_priv->stream_ctx);
+        if (status != VPE_STATUS_OK)
+            vpe_log("fail input stream population. status %d\n", (int)status);
+    }
 
-        for (i = 0; i < param->num_streams; i++) {
-            stream_ctx             = &vpe_priv->stream_ctx[i];
-            stream_ctx->stream_idx = (int32_t)i;
-            stream_ctx->per_pixel_alpha =
-                vpe_has_per_pixel_alpha(param->streams[i].surface_info.format);
-            if (vpe_priv->init.debug.bypass_per_pixel_alpha) {
-                stream_ctx->per_pixel_alpha = false;
-            }
-            if (param->streams[i].horizontal_mirror && !input_h_mirror && output_h_mirror)
-                stream_ctx->flip_horizonal_output = true;
-            else
-                stream_ctx->flip_horizonal_output = false;
-
-            memcpy(&stream_ctx->stream, &param->streams[i], sizeof(struct vpe_stream));
-
-            /* if top-bottom blending is not supported,
-             * the 1st stream still can support blending with background,
-             * however, the 2nd stream and onward can't enable blending.
-             */
-            if (i && param->streams[i].blend_info.blending &&
-                !vpe_priv->pub.caps->color_caps.mpc.top_bottom_blending) {
-                status = VPE_STATUS_ALPHA_BLENDING_NOT_SUPPORTED;
-                break;
-            }
-        }
+    if (status == VPE_STATUS_OK) {
+        status = populate_virtual_streams(vpe_priv, param, vpe_priv->stream_ctx + vpe_priv->num_input_streams, vpe_priv->num_virtual_streams);
+        if (status != VPE_STATUS_OK)
+            vpe_log("fail virtual stream population. status %d\n", (int)status);
     }
 
     if (status == VPE_STATUS_OK) {
@@ -430,7 +519,7 @@ enum vpe_status vpe_check_support(
         // if the bg_color support is false, there is a flag to verify if the bg_color falls in the
         // output gamut
         if (!vpe_priv->pub.caps->bg_color_check_support) {
-            status = vpe_bg_color_outside_cs_gamut(&output_ctx->surface.cs, &output_ctx->bg_color);
+            status = vpe_priv->resource.check_bg_color_support(vpe_priv, &output_ctx->bg_color);
             if (status != VPE_STATUS_OK) {
                 vpe_log(
                     "failed in checking the background color versus the output color space %d\n",
@@ -444,6 +533,10 @@ enum vpe_status vpe_check_support(
         vpe_priv->resource.get_bufs_req(vpe_priv, &vpe_priv->bufs_required);
         *req                  = vpe_priv->bufs_required;
         vpe_priv->ops_support = true;
+    }
+
+    if (status == VPE_STATUS_OK) {
+        status = vpe_validate_geometric_scaling_support(param);
     }
 
     if (vpe_priv->init.debug.assert_when_not_support)
@@ -475,10 +568,19 @@ static bool validate_cached_param(struct vpe_priv *vpe_priv, const struct vpe_bu
     uint32_t           i;
     struct output_ctx *output_ctx;
 
-    if (vpe_priv->num_streams != param->num_streams)
+    if (vpe_priv->num_input_streams != param->num_streams &&
+       !(vpe_priv->init.debug.bg_color_fill_only == true && vpe_priv->num_streams == 1))
         return false;
 
-    for (i = 0; i < param->num_streams; i++) {
+#ifdef VPE_BUILD_1_1
+    if (vpe_priv->collaboration_mode != param->collaboration_mode)
+        return false;
+
+    if (param->num_instances > 0 && vpe_priv->vpe_num_instance != param->num_instances)
+        return false;
+#endif
+
+    for (i = 0; i < vpe_priv->num_input_streams; i++) {
         struct vpe_stream stream = param->streams[i];
 
         vpe_clip_stream(
@@ -500,28 +602,6 @@ static bool validate_cached_param(struct vpe_priv *vpe_priv, const struct vpe_bu
 
     if (memcmp(&output_ctx->surface, &param->dst_surface, sizeof(struct vpe_surface_info)))
         return false;
-
-    return true;
-}
-
-static bool validate_color_pipeline(struct vpe_priv *vpe_priv, const struct vpe_build_param *param)
-{
-    uint32_t           stream_idx;
-    struct stream_ctx *stream_ctx;
-    struct output_ctx *output_ctx;
-
-    output_ctx = &vpe_priv->output_ctx;
-
-    /* For BG color, we need to make sure degamm / regamm is not bypass,
-     * as we want to have input in the range of 0-1 in mpc,
-     * since mpc only allows 0-1 range for BG color
-     */
-    for (stream_idx = 0; stream_idx < param->num_streams; stream_idx++) {
-        stream_ctx = &vpe_priv->stream_ctx[stream_idx];
-        if (output_ctx->output_tf->type == TF_TYPE_BYPASS &&
-            stream_ctx->input_tf->type == TF_TYPE_BYPASS)
-            return false;
-    }
 
     return true;
 }
@@ -550,29 +630,27 @@ enum vpe_status vpe_build_commands(
     }
 
     if (status == VPE_STATUS_OK) {
-        status = handle_zero_input(vpe, param, &param);
-        if (status != VPE_STATUS_OK)
-            status = VPE_STATUS_NUM_STREAM_NOT_SUPPORTED;
-    }
-
-    if (status == VPE_STATUS_OK) {
         if (!validate_cached_param(vpe_priv, param)) {
             status = VPE_STATUS_PARAM_CHECK_ERROR;
         }
     }
 
     if (status == VPE_STATUS_OK) {
+        if (param->streams->flags.geometric_scaling) {
+            vpe_geometric_scaling_feature_skip(vpe_priv, param);
+        }
 
         if (bufs->cmd_buf.size == 0 || bufs->emb_buf.size == 0) {
             /* Here we directly return without setting ops_support to false
              *  becaues the supported check is already passed
              * and the caller can come again with correct buffer size.
              */
-            bufs->cmd_buf.size = (int64_t)vpe_priv->bufs_required.cmd_buf_size;
-            bufs->emb_buf.size = (int64_t)vpe_priv->bufs_required.emb_buf_size;
+            bufs->cmd_buf.size = vpe_priv->bufs_required.cmd_buf_size;
+            bufs->emb_buf.size = vpe_priv->bufs_required.emb_buf_size;
+
             return VPE_STATUS_OK;
-        } else if ((bufs->cmd_buf.size < (int32_t)vpe_priv->bufs_required.cmd_buf_size) ||
-                   (bufs->emb_buf.size < (int32_t)vpe_priv->bufs_required.emb_buf_size)) {
+        } else if ((bufs->cmd_buf.size < vpe_priv->bufs_required.cmd_buf_size) ||
+                   (bufs->emb_buf.size < vpe_priv->bufs_required.emb_buf_size)) {
             status = VPE_STATUS_INVALID_BUFFER_SIZE;
         }
     }
@@ -622,21 +700,55 @@ enum vpe_status vpe_build_commands(
             vpe_log("failed updating whitepoint gain %d\n", (int)status);
         }
     }
+
     if (status == VPE_STATUS_OK) {
-        VPE_ASSERT(validate_color_pipeline(vpe_priv, param));
-    }
-    if (status == VPE_STATUS_OK) {
+        /* since the background is generated by the first stream,
+         * the 3dlut enablement for the background color conversion
+         * is used based on the information of the first stream.
+         */
         vpe_bg_color_convert(vpe_priv->output_ctx.cs, vpe_priv->output_ctx.output_tf,
-            &vpe_priv->output_ctx.bg_color);
+            &vpe_priv->output_ctx.bg_color, vpe_priv->stream_ctx[0].enable_3dlut);
 
+#ifdef VPE_BUILD_1_1
+        if (vpe_priv->collaboration_mode == true) {
+            status = builder->build_collaborate_sync_cmd(vpe_priv, &curr_bufs);
+            if (status != VPE_STATUS_OK) {
+                vpe_log("failed in building collaborate sync cmd %d\n", (int)status);
+            }
+        }
+#endif
         for (cmd_idx = 0; cmd_idx < vpe_priv->num_vpe_cmds; cmd_idx++) {
-
             status = builder->build_vpe_cmd(vpe_priv, &curr_bufs, cmd_idx);
             if (status != VPE_STATUS_OK) {
                 vpe_log("failed in building vpe cmd %d\n", (int)status);
             }
 
+#ifdef VPE_BUILD_1_1
+            if ((vpe_priv->collaboration_mode == true) &&
+                (vpe_priv->vpe_cmd_info[cmd_idx].insert_end_csync == true)) {
+                status = builder->build_collaborate_sync_cmd(vpe_priv, &curr_bufs);
+                if (status != VPE_STATUS_OK) {
+                    vpe_log("failed in building collaborate sync cmd %d\n", (int)status);
+                }
+
+                // Add next collaborate sync start command when this vpe_cmd isn't the final one.
+                if (cmd_idx < (uint32_t)(vpe_priv->num_vpe_cmds - 1)) {
+                    status = builder->build_collaborate_sync_cmd(vpe_priv, &curr_bufs);
+                    if (status != VPE_STATUS_OK) {
+                        vpe_log("failed in building collaborate sync cmd %d\n", (int)status);
+                    }
+                }
+            }
+#endif
         }
+#ifdef VPE_BUILD_1_1
+        if (vpe_priv->collaboration_mode == true) {
+            status = builder->build_collaborate_sync_cmd(vpe_priv, &curr_bufs);
+            if (status != VPE_STATUS_OK) {
+                vpe_log("failed in building collaborate sync cmd %d\n", (int)status);
+            }
+        }
+#endif
     }
 
     if (status == VPE_STATUS_OK) {
@@ -655,4 +767,16 @@ enum vpe_status vpe_build_commands(
         VPE_ASSERT(status == VPE_STATUS_OK);
 
     return status;
+}
+
+void vpe_get_optimal_num_of_taps(struct vpe *vpe, struct vpe_scaling_info *scaling_info)
+{
+    struct vpe_priv *vpe_priv;
+    struct dpp      *dpp;
+
+    vpe_priv = container_of(vpe, struct vpe_priv, pub);
+    dpp      = vpe_priv->resource.dpp[0];
+
+    dpp->funcs->get_optimal_number_of_taps(
+        &scaling_info->src_rect, &scaling_info->dst_rect, &scaling_info->taps);
 }

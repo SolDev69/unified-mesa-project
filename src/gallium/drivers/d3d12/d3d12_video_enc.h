@@ -69,14 +69,6 @@ int d3d12_video_encoder_get_encode_headers(struct pipe_video_codec *codec,
                                            struct pipe_picture_desc *picture,
                                            void* bitstream_buf,
                                            unsigned *bitstream_buf_size);
-/**
- * Get feedback fence.
- *
- * Can be used to wait on the pipe_fence_handle directly instead
- * of waiting on the get_feedback blocking call
- */
-struct pipe_fence_handle*
-d3d12_video_encoder_get_feedback_fence(struct pipe_video_codec *codec, void *feedback);
 
 /**
  * get encoder feedback
@@ -90,7 +82,7 @@ d3d12_video_encoder_get_feedback(struct pipe_video_codec *codec,
 /**
  * end encoding of the current frame
  */
-void
+int
 d3d12_video_encoder_end_frame(struct pipe_video_codec * codec,
                               struct pipe_video_buffer *target,
                               struct pipe_picture_desc *picture);
@@ -356,12 +348,23 @@ struct EncodedBitstreamResolvedMetadata
    struct d3d12_fence m_FenceData;
 };
 
+enum d3d12_video_encoder_driver_workarounds
+{
+   d3d12_video_encoder_driver_workaround_none = 0x0,
+   // Workaround for drivers supporting rate control reconfiguration but not reporting it
+   // and having issues with encoder state/heap objects recreation
+   d3d12_video_encoder_driver_workaround_rate_control_reconfig = 0x1,
+};
+DEFINE_ENUM_FLAG_OPERATORS(d3d12_video_encoder_driver_workarounds);
+
 struct d3d12_video_encoder
 {
    struct pipe_video_codec base = {};
    struct pipe_screen *    m_screen = nullptr;
    struct d3d12_screen *   m_pD3D12Screen = nullptr;
    UINT max_quality_levels = 1;
+
+   enum d3d12_video_encoder_driver_workarounds driver_workarounds = d3d12_video_encoder_driver_workaround_none;
 
    ///
    /// D3D12 objects and context info

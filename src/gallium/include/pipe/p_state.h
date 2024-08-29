@@ -49,6 +49,7 @@
 #include "util/compiler.h"
 #include "p_defines.h"
 #include "util/format/u_formats.h"
+#include "util/box.h"
 
 
 #ifdef __cplusplus
@@ -482,7 +483,8 @@ struct pipe_sampler_view
    /* Put the refcount on its own cache line to prevent "False sharing". */
    EXCLUSIVE_CACHELINE(struct pipe_reference reference);
 
-   enum pipe_format format:14;      /**< typed PIPE_FORMAT_x */
+   enum pipe_format format:12;      /**< typed PIPE_FORMAT_x */
+   unsigned astc_decode_format:2;   /**< intermediate format used for ASTC textures */
    bool is_tex2d_from_buf:1;       /**< true if union is tex2d_from_buf */
    enum pipe_texture_target target:5; /**< PIPE_TEXTURE_x */
    unsigned swizzle_r:3;         /**< PIPE_SWIZZLE_x for red component */
@@ -548,23 +550,6 @@ struct pipe_image_view
 
 
 /**
- * Subregion of 1D/2D/3D image resource.
- */
-struct pipe_box
-{
-   /* Fields only used by textures use int16_t instead of int.
-    * x and width are used by buffers, so they need the full 32-bit range.
-    */
-   int x;
-   int16_t y;
-   int16_t z;
-   int width;
-   int16_t height;
-   int16_t depth;
-};
-
-
-/**
  * A memory object/resource such as a vertex buffer or texture.
  */
 struct pipe_resource
@@ -572,32 +557,34 @@ struct pipe_resource
    /* Put the refcount on its own cache line to prevent "False sharing". */
    EXCLUSIVE_CACHELINE(struct pipe_reference reference);
 
-   unsigned width0; /**< Used by both buffers and textures. */
+   uint32_t width0; /**< Used by both buffers and textures. */
    uint16_t height0; /* Textures: The maximum height/depth/array_size is 16k. */
    uint16_t depth0;
    uint16_t array_size;
 
    enum pipe_format format:16;         /**< PIPE_FORMAT_x */
    enum pipe_texture_target target:8; /**< PIPE_TEXTURE_x */
-   unsigned last_level:8;    /**< Index of last mipmap level present/defined */
+   uint8_t last_level;    /**< Index of last mipmap level present/defined */
 
    /** Number of samples determining quality, driving rasterizer, shading,
     *  and framebuffer.
     */
-   unsigned nr_samples:8;
+   uint8_t nr_samples;
 
    /** Multiple samples within a pixel can have the same value.
     *  nr_storage_samples determines how many slots for different values
     *  there are per pixel. Only color buffers can set this lower than
     *  nr_samples.
     */
-   unsigned nr_storage_samples:8;
+   uint8_t nr_storage_samples;
 
-   unsigned nr_sparse_levels:8; /**< Mipmap levels support partial resident */
+   uint8_t nr_sparse_levels; /**< Mipmap levels support partial resident */
 
-   unsigned usage:8;         /**< PIPE_USAGE_x (not a bitmask) */
-   unsigned bind;            /**< bitmask of PIPE_BIND_x */
-   unsigned flags;           /**< bitmask of PIPE_RESOURCE_FLAG_x */
+   unsigned compression_rate:4; /**< Fixed-rate compresion bitrate if any */
+
+   enum pipe_resource_usage usage:4;
+   uint32_t bind;            /**< bitmask of PIPE_BIND_x */
+   uint32_t flags;           /**< bitmask of PIPE_RESOURCE_FLAG_x */
 
    /**
     * For planar images, ie. YUV EGLImage external, etc, pointer to the
@@ -1018,6 +1005,148 @@ struct pipe_grid_info
    unsigned draw_count;
    unsigned indirect_draw_count_offset;
    struct pipe_resource *indirect_draw_count;
+};
+
+/**
+ * Encapsulates all info about a tensor. Only types supported are INT8 and UINT8.
+ */
+struct pipe_tensor {
+   /**
+    * Memory-backing for this tensor (use pipe_buffer_*).
+    */
+   struct pipe_resource *resource;
+   /**
+    * Index of this tensor in the subgraph that contains it.
+    */
+   unsigned index;
+   /**
+    * Dimensions of this tensor.
+    */
+   unsigned dims[4];
+   /**
+    * Scale used to quantize this tensor. Only per-tensor quantization is supported.
+    */
+   float scale;
+   /**
+    * Zero-point used to quantize this tensor.
+    */
+   int zero_point;
+   /**
+    * Whether the tensor contains data in INT8 or UINT8 format.
+    */
+   bool is_signed;
+};
+
+/**
+ * Type of a pipe_ml_operation.
+ */
+enum pipe_ml_operation_type {
+   PIPE_ML_OPERATION_TYPE_ADD,
+   PIPE_ML_OPERATION_TYPE_CONVOLUTION,
+   PIPE_ML_OPERATION_TYPE_POOLING,
+};
+
+/**
+ * Information about a single operation inside a ML subgraph.
+ */
+struct pipe_ml_operation
+{
+   /**
+    * Type of operation.
+    */
+   enum pipe_ml_operation_type type;
+
+   /**
+    * Tensor used as input.
+    */
+   struct pipe_tensor *input_tensor;
+
+   /**
+    * Tensor used as output.
+    */
+   struct pipe_tensor *output_tensor;
+
+   union {
+      struct {
+         /**
+          * For convolutions, tensor containing the weights.
+          */
+         struct pipe_tensor *weight_tensor;
+         /**
+          * For convolutions, tensor containing the biases.
+          */
+         struct pipe_tensor *bias_tensor;
+
+         /**
+          * Stride used to access the input tensor on the x axis.
+          */
+         unsigned stride_x;
+
+         /**
+          * Stride used to access the input tensor on the x axis.
+          */
+         unsigned stride_y;
+
+         /**
+          * Whether to use padding of type same when accessing the input tensor.
+          */
+         bool padding_same;
+
+         /**
+          * Whether this is a pointwise (1x1 kernels) convolution.
+          */
+         bool pointwise;
+
+         /**
+          * Whether this is a depthwise convolution.
+          */
+         bool depthwise;
+      } conv;
+      struct {
+         /**
+          * Stride used to access the input tensor on the x axis.
+          */
+         unsigned stride_x;
+
+         /**
+          * Stride used to access the input tensor on the x axis.
+          */
+         unsigned stride_y;
+
+         /**
+          * Width of the area used for pooling.
+          */
+         unsigned filter_width;
+
+         /**
+          * Height of the area used for pooling.
+          */
+         unsigned filter_height;
+
+         /**
+          * Whether to use padding of type same when accessing the input tensor.
+          */
+         bool padding_same;
+      } pooling;
+      struct {
+         /**
+          * Additional input tensor, to be added to the other one.
+          */
+         struct pipe_tensor *input_tensor;
+      } add;
+   };
+};
+
+/**
+ * Subgraph that drivers can subclass to keep the output of the subgraph
+ * compilation process.
+ */
+struct pipe_ml_subgraph
+{
+   /**
+    * pipe_context that owns this subgraph.
+    */
+   struct pipe_context *context;
 };
 
 /**

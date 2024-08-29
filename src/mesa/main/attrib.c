@@ -1124,7 +1124,11 @@ _mesa_PopAttrib(void)
                      AlphaToCoverageDitherControlNV);
    }
 
-   ctx->PopAttribState = attr->OldPopAttribStateMask;
+   /* Restore the previous PopAttribStateMask as well as any modified state
+    * that was not restored in the current pop.
+    */
+   ctx->PopAttribState = attr->OldPopAttribStateMask |
+                         (ctx->PopAttribState & ~attr->Mask);
 }
 
 
@@ -1208,6 +1212,7 @@ copy_array_object(struct gl_context *ctx,
    /* The bitmask of bound VBOs needs to match the VertexBinding array */
    dest->VertexAttribBufferMask = src->VertexAttribBufferMask;
    dest->NonZeroDivisorMask = src->NonZeroDivisorMask;
+   dest->NonIdentityBufferAttribMapping = src->NonIdentityBufferAttribMapping;
    dest->_AttributeMapMode = src->_AttributeMapMode;
    /* skip NumUpdates and IsDynamic because they can only increase, not decrease */
 }

@@ -1,24 +1,7 @@
 /*
  * Copyright © 2022 Bas Nieuwenhuizen
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT
  */
 
 #version 460
@@ -62,7 +45,8 @@ uint32_t
 prefix_scan(uvec4 ballot, REF(ploc_prefix_scan_partition) partitions, uint32_t task_index)
 {
    if (gl_LocalInvocationIndex == 0) {
-      exclusive_prefix_sum = 0;
+      /* Temporary copy of exclusive_prefix_sum to avoid reading+writing LDS each addition */
+      uint32_t local_exclusive_prefix_sum = 0;
       if (task_index >= gl_WorkGroupSize.x) {
          REF(ploc_prefix_scan_partition) current_partition =
             REF(ploc_prefix_scan_partition)(INDEX(ploc_prefix_scan_partition, partitions, task_index / gl_WorkGroupSize.x));
@@ -74,18 +58,19 @@ prefix_scan(uvec4 ballot, REF(ploc_prefix_scan_partition) partitions, uint32_t t
             if (atomicLoad(DEREF(previous_partition).inclusive_sum, gl_ScopeDevice,
                            gl_StorageSemanticsBuffer,
                            gl_SemanticsAcquire | gl_SemanticsMakeVisible) != 0xFFFFFFFF) {
-               atomicAdd(exclusive_prefix_sum, DEREF(previous_partition).inclusive_sum);
+               local_exclusive_prefix_sum += DEREF(previous_partition).inclusive_sum;
                break;
             } else {
-               atomicAdd(exclusive_prefix_sum, DEREF(previous_partition).aggregate);
+               local_exclusive_prefix_sum += DEREF(previous_partition).aggregate;
                previous_partition -= 1;
             }
          }
          /* Set the inclusive sum for the next workgroups */
          atomicStore(DEREF(current_partition).inclusive_sum,
-                     DEREF(current_partition).aggregate + exclusive_prefix_sum, gl_ScopeDevice,
+                     DEREF(current_partition).aggregate + local_exclusive_prefix_sum, gl_ScopeDevice,
                      gl_StorageSemanticsBuffer, gl_SemanticsRelease | gl_SemanticsMakeAvailable);
       }
+      exclusive_prefix_sum = local_exclusive_prefix_sum;
    }
 
    if (subgroupElect())
@@ -233,10 +218,16 @@ main(void)
       return;
    }
 
-   atomicCompSwap(DEREF(args.header).sync_data.task_counts[0], 0xFFFFFFFF,
-                  DEREF(args.header).active_leaf_count);
-   atomicCompSwap(DEREF(args.header).sync_data.current_phase_end_counter, 0xFFFFFFFF,
-                  DIV_ROUND_UP(DEREF(args.header).active_leaf_count, gl_WorkGroupSize.x));
+   /* Only initialize sync_data once per workgroup. For intra-workgroup synchronization,
+    * fetch_task contains a workgroup-scoped control+memory barrier.
+    */
+   if (gl_LocalInvocationIndex == 0) {
+      atomicCompSwap(DEREF(args.header).sync_data.task_counts[0], 0xFFFFFFFF,
+                     DEREF(args.header).active_leaf_count);
+      atomicCompSwap(DEREF(args.header).sync_data.current_phase_end_counter, 0xFFFFFFFF,
+                     DIV_ROUND_UP(DEREF(args.header).active_leaf_count, gl_WorkGroupSize.x));
+   }
+
    REF(ploc_prefix_scan_partition)
    partitions = REF(ploc_prefix_scan_partition)(args.prefix_scan_partitions);
 

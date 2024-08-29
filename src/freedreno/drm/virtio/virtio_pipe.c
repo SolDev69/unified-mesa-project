@@ -1,24 +1,6 @@
 /*
  * Copyright © 2022 Google, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "util/libsync.h"
@@ -110,6 +92,14 @@ virtio_pipe_get_param(struct fd_pipe *pipe, enum fd_param_id param,
       ERROR_MSG("invalid param id: %d", param);
       return -1;
    }
+}
+
+static void
+virtio_pipe_finish(struct fd_pipe *pipe)
+{
+   struct virtio_pipe *virtio_pipe = to_virtio_pipe(pipe);
+   if (util_queue_is_initialized(&virtio_pipe->retire_queue))
+      util_queue_finish(&virtio_pipe->retire_queue);
 }
 
 static int
@@ -208,6 +198,7 @@ static const struct fd_pipe_funcs funcs = {
    .ringbuffer_new_object = fd_ringbuffer_sp_new_object,
    .submit_new = virtio_submit_new,
    .flush = fd_pipe_sp_flush,
+   .finish = virtio_pipe_finish,
    .get_param = virtio_pipe_get_param,
    .wait = virtio_pipe_wait,
    .destroy = virtio_pipe_destroy,

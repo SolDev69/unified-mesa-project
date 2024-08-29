@@ -43,6 +43,7 @@
 #include "util/os_misc.h"
 #include "util/os_time.h"
 #include "util/u_helpers.h"
+#include "util/anon_file.h"
 #include "lp_texture.h"
 #include "lp_fence.h"
 #include "lp_jit.h"
@@ -59,6 +60,10 @@
 
 #include "nir.h"
 
+#ifdef HAVE_LIBDRM
+#include <xf86drm.h>
+#include <fcntl.h>
+#endif
 
 int LP_DEBUG = 0;
 
@@ -118,7 +123,20 @@ llvmpipe_get_name(struct pipe_screen *screen)
 static int
 llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
 {
+#if defined(HAVE_LIBDRM) && defined(HAVE_LINUX_UDMABUF_H)
+   struct llvmpipe_screen *lscreen = llvmpipe_screen(screen);
+#endif
+
    switch (param) {
+#if defined(HAVE_LIBDRM) && defined(HAVE_LINUX_UDMABUF_H)
+   case PIPE_CAP_DMABUF:
+      if (lscreen->udmabuf_fd != -1)
+         return DRM_PRIME_CAP_IMPORT | DRM_PRIME_CAP_EXPORT;
+      else
+         return DRM_PRIME_CAP_IMPORT;
+   case PIPE_CAP_NATIVE_FENCE_FD:
+      return lscreen->dummy_sync_fd != -1;
+#endif
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
    case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
@@ -583,7 +601,15 @@ static void
 llvmpipe_get_device_uuid(struct pipe_screen *pscreen, char *uuid)
 {
    memset(uuid, 0, PIPE_UUID_SIZE);
+#if defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif /* __clang__ */
    snprintf(uuid, PIPE_UUID_SIZE, "mesa" PACKAGE_VERSION);
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#endif /* __clang__ */
 }
 
 
@@ -637,6 +663,8 @@ static const struct nir_shader_compiler_options gallivm_nir_options = {
    .lower_fisnormal = true,
    .lower_fquantize2f16 = true,
    .driver_functions = true,
+   .has_ddx_intrinsics = true,
+   .scalarize_ddx = true,
 };
 
 
@@ -836,11 +864,20 @@ llvmpipe_is_format_supported(struct pipe_screen *_screen,
        format != PIPE_FORMAT_ETC1_RGB8)
       return false;
 
+   /* planar not supported natively */
    if ((format_desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED ||
         format_desc->layout == UTIL_FORMAT_LAYOUT_PLANAR2 ||
         format_desc->layout == UTIL_FORMAT_LAYOUT_PLANAR3) &&
        target == PIPE_BUFFER)
       return false;
+
+   if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_YUV) {
+      if (format == PIPE_FORMAT_UYVY ||
+          format == PIPE_FORMAT_YUYV ||
+          format == PIPE_FORMAT_NV12)
+         return true;
+      return false;
+   }
 
    /*
     * Everything can be supported by u_format
@@ -857,6 +894,7 @@ llvmpipe_flush_frontbuffer(struct pipe_screen *_screen,
                            struct pipe_resource *resource,
                            unsigned level, unsigned layer,
                            void *context_private,
+                           unsigned nboxes,
                            struct pipe_box *sub_box)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
@@ -870,7 +908,7 @@ llvmpipe_flush_frontbuffer(struct pipe_screen *_screen,
          llvmpipe_flush_resource(_pipe, resource, 0, true, true,
                                  false, "frontbuffer");
       winsys->displaytarget_display(winsys, texture->dt,
-                                    context_private, sub_box);
+                                    context_private, nboxes, sub_box);
    }
 }
 
@@ -892,6 +930,16 @@ llvmpipe_destroy_screen(struct pipe_screen *_screen)
 
    glsl_type_singleton_decref();
 
+#ifdef HAVE_LIBDRM
+   close(screen->udmabuf_fd);
+#endif
+
+#if DETECT_OS_LINUX
+   util_vma_heap_finish(&screen->mem_heap);
+
+   close(screen->fd_mem_alloc);
+   mtx_destroy(&screen->mem_mutex);
+#endif
    mtx_destroy(&screen->rast_mutex);
    mtx_destroy(&screen->cs_mutex);
    FREE(screen);
@@ -1129,6 +1177,22 @@ llvmpipe_create_screen(struct sw_winsys *winsys)
                                               screen->num_threads);
    screen->num_threads = MIN2(screen->num_threads, LP_MAX_THREADS);
 
+#if defined(HAVE_LIBDRM) && defined(HAVE_LINUX_UDMABUF_H)
+   screen->udmabuf_fd = open("/dev/udmabuf", O_RDWR);
+   llvmpipe_init_screen_fence_funcs(&screen->base);
+#endif
+
+   uint64_t alignment;
+   if (!os_get_page_size(&alignment))
+      alignment = 256;
+
+#if DETECT_OS_LINUX
+   (void) mtx_init(&screen->mem_mutex, mtx_plain);
+
+   util_vma_heap_init(&screen->mem_heap, alignment, UINT64_MAX - alignment);
+   screen->mem_heap.alloc_high = false;
+   screen->fd_mem_alloc = os_create_anonymous_file(0, "allocation fd");
+#endif
 
    snprintf(screen->renderer_string, sizeof(screen->renderer_string),
             "llvmpipe (LLVM " MESA_LLVM_VERSION_STRING ", %u bits)",

@@ -1,7 +1,10 @@
 // Copyright © 2022 Collabora, Ltd.
 // SPDX-License-Identifier: MIT
 
-use crate::ir::*;
+use crate::{
+    api::{GetDebugFlags, DEBUG},
+    ir::*,
+};
 
 use std::collections::HashMap;
 
@@ -86,7 +89,7 @@ fn cycle_use_swap(pc: &OpParCopy, file: RegFile) -> bool {
     }
 }
 
-fn lower_par_copy(pc: OpParCopy, sm: u8) -> MappedInstrs {
+fn lower_par_copy(pc: OpParCopy, sm: &dyn ShaderModel) -> MappedInstrs {
     let mut graph = CopyGraph::new();
     let mut vals = Vec::new();
     let mut reg_to_idx = HashMap::new();
@@ -143,8 +146,7 @@ fn lower_par_copy(pc: OpParCopy, sm: u8) -> MappedInstrs {
             ready.push(i);
         }
     }
-    while !ready.is_empty() {
-        let dst_idx = ready.pop().unwrap();
+    while let Some(dst_idx) = ready.pop() {
         if let Some(src_idx) = graph.src(dst_idx) {
             let dst = *vals[dst_idx].as_reg().unwrap();
             let src = vals[src_idx];
@@ -248,14 +250,37 @@ fn lower_par_copy(pc: OpParCopy, sm: u8) -> MappedInstrs {
     b.as_mapped_instrs()
 }
 
-impl Shader {
+impl Shader<'_> {
     pub fn lower_par_copies(&mut self) {
-        let sm = self.info.sm;
+        let sm = self.sm;
         self.map_instrs(|instr, _| -> MappedInstrs {
             match instr.op {
                 Op::ParCopy(pc) => {
                     assert!(instr.pred.is_true());
-                    lower_par_copy(pc, sm)
+                    let mut instrs = vec![];
+                    if DEBUG.annotate() {
+                        instrs.push(Instr::new_boxed(OpAnnotate {
+                            annotation: "par_copy lowered by lower_par_copy"
+                                .into(),
+                        }));
+                    }
+                    match lower_par_copy(pc, sm) {
+                        MappedInstrs::None => {
+                            if let Some(instr) = instrs.pop() {
+                                MappedInstrs::One(instr)
+                            } else {
+                                MappedInstrs::None
+                            }
+                        }
+                        MappedInstrs::One(i) => {
+                            instrs.push(i);
+                            MappedInstrs::Many(instrs)
+                        }
+                        MappedInstrs::Many(i) => {
+                            instrs.extend(i);
+                            MappedInstrs::Many(instrs)
+                        }
+                    }
                 }
                 _ => MappedInstrs::One(instr),
             }

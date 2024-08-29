@@ -26,6 +26,7 @@ import sys
 
 a = 'a'
 b = 'b'
+c = 'c'
 
 # common conditions to improve readability
 volta = 'nak->sm >= 70 && nak->sm < 75'
@@ -36,27 +37,29 @@ algebraic_lowering = [
     (('imax', 'a', 'b'), ('bcsel', ('ilt', a, b), b, a), volta),
     (('umin', 'a', 'b'), ('bcsel', ('ult', a, b), a, b), volta),
     (('umax', 'a', 'b'), ('bcsel', ('ult', a, b), b, a), volta),
+    (('iadd', 'a@64', ('ineg', 'b@64')), ('isub', a, b)),
 ]
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--out', required=True, help='Output file.')
     parser.add_argument('-p', '--import-path', required=True)
     args = parser.parse_args()
     sys.path.insert(0, args.import_path)
-    run()
 
-
-def run():
     import nir_algebraic  # pylint: disable=import-error
 
-    print('#include "nak_private.h"')
-
-    print(nir_algebraic.AlgebraicPass("nak_nir_lower_algebraic_late",
-                                      algebraic_lowering,
-                                      [
-                                          ("const struct nak_compiler *", "nak"),
-                                      ]).render())
-
+    try:
+        with open(args.out, 'w', encoding='utf-8') as f:
+            f.write('#include "nak_private.h"')
+            f.write(nir_algebraic.AlgebraicPass(
+                "nak_nir_lower_algebraic_late",
+                algebraic_lowering,
+                [
+                    ("const struct nak_compiler *", "nak"),
+                ]).render())
+    except Exception:
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

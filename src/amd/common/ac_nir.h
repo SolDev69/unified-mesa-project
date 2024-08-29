@@ -12,7 +12,6 @@
 #include "ac_shader_args.h"
 #include "ac_shader_util.h"
 #include "nir.h"
-#include "nir_builder.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,40 +69,6 @@ bool ac_nir_lower_intrinsics_to_args(nir_shader *shader, const enum amd_gfx_leve
                                      const enum ac_hw_stage hw_stage,
                                      const struct ac_shader_args *ac_args);
 
-void
-ac_nir_store_var_components(nir_builder *b, nir_variable *var, nir_def *value,
-                            unsigned component, unsigned writemask);
-
-void
-ac_nir_export_primitive(nir_builder *b, nir_def *prim, nir_def *row);
-
-void
-ac_nir_export_position(nir_builder *b,
-                       enum amd_gfx_level gfx_level,
-                       uint32_t clip_cull_mask,
-                       bool no_param_export,
-                       bool force_vrs,
-                       bool done,
-                       uint64_t outputs_written,
-                       nir_def *(*outputs)[4],
-                       nir_def *row);
-
-void
-ac_nir_export_parameters(nir_builder *b,
-                         const uint8_t *param_offsets,
-                         uint64_t outputs_written,
-                         uint16_t outputs_written_16bit,
-                         nir_def *(*outputs)[4],
-                         nir_def *(*outputs_16bit_lo)[4],
-                         nir_def *(*outputs_16bit_hi)[4]);
-
-nir_def *
-ac_nir_calc_io_offset(nir_builder *b,
-                      nir_intrinsic_instr *intrin,
-                      nir_def *base_stride,
-                      unsigned component_stride,
-                      ac_nir_map_io_driver_location map_io);
-
 bool ac_nir_optimize_outputs(nir_shader *nir, bool sprite_tex_disallowed,
                              int8_t slot_remap[NUM_TOTAL_VARYING_SLOTS],
                              uint8_t param_export_index[NUM_TOTAL_VARYING_SLOTS]);
@@ -112,6 +77,7 @@ void
 ac_nir_lower_ls_outputs_to_mem(nir_shader *ls,
                                ac_nir_map_io_driver_location map,
                                bool tcs_in_out_eq,
+                               uint64_t tcs_inputs_read,
                                uint64_t tcs_temp_only_inputs);
 
 void
@@ -123,15 +89,11 @@ void
 ac_nir_lower_hs_outputs_to_mem(nir_shader *shader,
                                ac_nir_map_io_driver_location map,
                                enum amd_gfx_level gfx_level,
-                               bool tes_reads_tessfactors,
                                uint64_t tes_inputs_read,
-                               uint64_t tes_patch_inputs_read,
-                               unsigned num_reserved_tcs_outputs,
-                               unsigned num_reserved_tcs_patch_outputs,
+                               uint32_t tes_patch_inputs_read,
                                unsigned wave_size,
                                bool no_inputs_in_lds,
-                               bool pass_tessfactors_by_reg,
-                               bool emit_tess_factor_write);
+                               bool pass_tessfactors_by_reg);
 
 void
 ac_nir_lower_tes_inputs_to_mem(nir_shader *shader,
@@ -141,7 +103,8 @@ void
 ac_nir_lower_es_outputs_to_mem(nir_shader *shader,
                                ac_nir_map_io_driver_location map,
                                enum amd_gfx_level gfx_level,
-                               unsigned esgs_itemsize);
+                               unsigned esgs_itemsize,
+                               uint64_t gs_inputs_read);
 
 void
 ac_nir_lower_gs_inputs_to_mem(nir_shader *shader,
@@ -159,13 +122,16 @@ typedef struct {
 
    unsigned max_workgroup_size;
    unsigned wave_size;
-   uint32_t clipdist_enable_mask;
+   uint8_t clip_cull_dist_mask;
    const uint8_t *vs_output_param_offset; /* GFX11+ */
    bool has_param_exports;
    bool can_cull;
    bool disable_streamout;
    bool has_gen_prim_query;
    bool has_xfb_prim_query;
+   bool use_gfx12_xfb_intrinsic;
+   bool has_gs_invocations_query;
+   bool has_gs_primitives_query;
    bool kill_pointsize;
    bool kill_layer;
    bool force_vrs;
@@ -212,14 +178,6 @@ void
 ac_nir_lower_mesh_inputs_to_mem(nir_shader *shader,
                                 unsigned task_payload_entry_bytes,
                                 unsigned task_num_entries);
-
-nir_def *
-ac_nir_cull_primitive(nir_builder *b,
-                      nir_def *initially_accepted,
-                      nir_def *pos[3][4],
-                      unsigned num_vertices,
-                      ac_nir_cull_accepted accept_func,
-                      void *state);
 
 bool
 ac_nir_lower_global_access(nir_shader *shader);
@@ -268,7 +226,8 @@ ac_nir_lower_legacy_vs(nir_shader *nir,
 bool
 ac_nir_gs_shader_query(nir_builder *b,
                        bool has_gen_prim_query,
-                       bool has_pipeline_stats_query,
+                       bool has_gs_invocations_query,
+                       bool has_gs_primitives_query,
                        unsigned num_vertices_per_primitive,
                        unsigned wave_size,
                        nir_def *vertex_count[4],
@@ -348,6 +307,12 @@ typedef struct {
 
 bool
 ac_nir_lower_tex(nir_shader *nir, const ac_nir_lower_tex_options *options);
+
+void
+ac_nir_store_debug_log_amd(nir_builder *b, nir_def *uvec4);
+
+bool
+ac_nir_opt_pack_half(nir_shader *shader, enum amd_gfx_level gfx_level);
 
 #ifdef __cplusplus
 }

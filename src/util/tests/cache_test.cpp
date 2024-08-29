@@ -36,7 +36,9 @@
 #include <limits.h>
 #include <time.h>
 #include <unistd.h>
+#include <utime.h>
 
+#include "util/detect_os.h"
 #include "util/mesa-sha1.h"
 #include "util/disk_cache.h"
 #include "util/disk_cache_os.h"
@@ -190,7 +192,7 @@ test_disk_cache_create(void *mem_ctx, const char *cache_dir_name,
 
    disk_cache_destroy(cache);
 
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
    /* Android doesn't try writing to disk (just calls the cache callbacks), so
     * the directory tests below don't apply.
     */
@@ -200,19 +202,8 @@ test_disk_cache_create(void *mem_ctx, const char *cache_dir_name,
    /* Test with XDG_CACHE_HOME set */
    setenv("XDG_CACHE_HOME", CACHE_TEST_TMP "/xdg-cache-home", 1);
    cache = disk_cache_create("test", driver_id, 0);
-   EXPECT_FALSE(cache_exists(cache))
-      << "disk_cache_create with XDG_CACHE_HOME set with a non-existing parent directory";
-
-   err = mkdir(CACHE_TEST_TMP, 0755);
-   if (err != 0) {
-      fprintf(stderr, "Error creating %s: %s\n", CACHE_TEST_TMP, strerror(errno));
-      GTEST_FAIL();
-   }
-   disk_cache_destroy(cache);
-
-   cache = disk_cache_create("test", driver_id, 0);
    EXPECT_TRUE(cache_exists(cache))
-      << "disk_cache_create with XDG_CACHE_HOME set";
+      << "disk_cache_create with XDG_CACHE_HOME set with a non-existing parent directory";
 
    char *path = ralloc_asprintf(
       mem_ctx, "%s%s", CACHE_TEST_TMP "/xdg-cache-home/", cache_dir_name);
@@ -699,6 +690,8 @@ TEST_F(Cache, MultiFile)
    bool compress = true;
 
 run_tests:
+   setenv("MESA_DISK_CACHE_MULTI_FILE", "true", 1);
+
    if (!compress)
       driver_id = "make_check_uncompressed";
    else
@@ -709,6 +702,8 @@ run_tests:
    test_put_and_get(true, driver_id);
 
    test_put_key_and_get_key(driver_id);
+
+   setenv("MESA_DISK_CACHE_MULTI_FILE", "false", 1);
 
    int err = rmrf_local(CACHE_TEST_TMP);
    EXPECT_EQ(err, 0) << "Removing " CACHE_TEST_TMP " again";
@@ -768,7 +763,6 @@ TEST_F(Cache, Database)
    GTEST_SKIP() << "ENABLE_SHADER_CACHE not defined.";
 #else
    setenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS", "1", 1);
-   setenv("MESA_DISK_CACHE_DATABASE", "true", 1);
 
    test_disk_cache_create(mem_ctx, CACHE_DIR_NAME_DB, driver_id);
 
@@ -792,7 +786,6 @@ TEST_F(Cache, Database)
 
    test_put_and_get_between_instances_with_eviction(driver_id);
 
-   setenv("MESA_DISK_CACHE_DATABASE", "false", 1);
    unsetenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS");
 
    err = rmrf_local(CACHE_TEST_TMP);
@@ -819,7 +812,7 @@ TEST_F(Cache, Combined)
    GTEST_SKIP() << "ENABLE_SHADER_CACHE not defined.";
 #else
    setenv("MESA_DISK_CACHE_SINGLE_FILE", "true", 1);
-   setenv("MESA_DISK_CACHE_DATABASE", "false", 1);
+   setenv("MESA_DISK_CACHE_MULTI_FILE", "true", 1);
 
 #ifdef SHADER_CACHE_DISABLE_BY_DEFAULT
    setenv("MESA_SHADER_CACHE_DISABLE", "false", 1);
@@ -889,7 +882,7 @@ TEST_F(Cache, Combined)
    EXPECT_EQ(unlink(foz_rw_idx_file), 0);
 
    setenv("MESA_DISK_CACHE_SINGLE_FILE", "false", 1);
-   setenv("MESA_DISK_CACHE_DATABASE", "true", 1);
+   setenv("MESA_DISK_CACHE_MULTI_FILE", "false", 1);
 
    /* Create MESA-DB cache with enabled retrieval from the read-only
     * cache. */
@@ -958,7 +951,7 @@ TEST_F(Cache, Combined)
    disk_cache_destroy(cache_mesa_db);
 
    /* Create default multi-file cache. */
-   setenv("MESA_DISK_CACHE_DATABASE", "false", 1);
+   setenv("MESA_DISK_CACHE_MULTI_FILE", "true", 1);
 
    /* Enable read-only cache. */
    setenv("MESA_DISK_CACHE_COMBINE_RW_WITH_RO_FOZ", "true", 1);
@@ -1015,6 +1008,8 @@ TEST_F(Cache, Combined)
    free(result);
 
    disk_cache_destroy(cache_multifile);
+
+   unsetenv("MESA_DISK_CACHE_MULTI_FILE");
 
    int err = rmrf_local(CACHE_TEST_TMP);
    EXPECT_EQ(err, 0) << "Removing " CACHE_TEST_TMP " again";
@@ -1268,14 +1263,12 @@ TEST_F(Cache, DatabaseMultipartEviction)
    GTEST_SKIP() << "ENABLE_SHADER_CACHE not defined.";
 #else
    setenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS", "3", 1);
-   setenv("MESA_DISK_CACHE_DATABASE", "true", 1);
 
    test_disk_cache_create(mem_ctx, CACHE_DIR_NAME_DB, driver_id);
 
    test_multipart_eviction(driver_id);
 
    unsetenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS");
-   unsetenv("MESA_DISK_CACHE_DATABASE");
 
    int err = rmrf_local(CACHE_TEST_TMP);
    EXPECT_EQ(err, 0) << "Removing " CACHE_TEST_TMP " again";
@@ -1339,5 +1332,117 @@ TEST_F(Cache, Disabled)
 
    int err = rmrf_local(CACHE_TEST_TMP);
    EXPECT_EQ(err, 0) << "Removing " CACHE_TEST_TMP " again";
+#endif
+}
+
+TEST_F(Cache, DoNotDeleteNewCache)
+{
+#ifndef ENABLE_SHADER_CACHE
+   GTEST_SKIP() << "ENABLE_SHADER_CACHE not defined.";
+#else
+
+#ifdef SHADER_CACHE_DISABLE_BY_DEFAULT
+   setenv("MESA_SHADER_CACHE_DISABLE", "false", 1);
+#endif /* SHADER_CACHE_DISABLE_BY_DEFAULT */
+
+   char dir_template[] = "/tmp/tmpdir.XXXXXX";
+   char *dir_name = mkdtemp(dir_template);
+   ASSERT_NE(dir_name, nullptr);
+
+   char cache_dir_name[256];
+   sprintf(cache_dir_name, "%s/mesa_shader_cache", dir_name);
+   mkdir(cache_dir_name, 0755);
+
+   setenv("MESA_SHADER_CACHE_DIR", dir_name, 1);
+
+   disk_cache_delete_old_cache();
+
+   struct stat st;
+   EXPECT_EQ(stat(cache_dir_name, &st), 0);
+
+   unsetenv("MESA_SHADER_CACHE_DIR");
+   rmdir(cache_dir_name);
+   rmdir(dir_name);
+#endif
+}
+
+TEST_F(Cache, DoNotDeleteCacheWithNewMarker)
+{
+#ifndef ENABLE_SHADER_CACHE
+   GTEST_SKIP() << "ENABLE_SHADER_CACHE not defined.";
+#else
+
+#ifdef SHADER_CACHE_DISABLE_BY_DEFAULT
+   setenv("MESA_SHADER_CACHE_DISABLE", "false", 1);
+#endif /* SHADER_CACHE_DISABLE_BY_DEFAULT */
+
+   char dir_template[] = "/tmp/tmpdir.XXXXXX";
+   char *dir_name = mkdtemp(dir_template);
+   ASSERT_NE(dir_name, nullptr);
+
+   char cache_dir_name[240];
+   sprintf(cache_dir_name, "%s/mesa_shader_cache", dir_name);
+   mkdir(cache_dir_name, 0755);
+
+   char file_name[256];
+   sprintf(file_name, "%s/marker", cache_dir_name);
+
+   FILE *file = fopen(file_name, "w");
+   fclose(file);
+
+   setenv("MESA_SHADER_CACHE_DIR", dir_name, 1);
+
+   disk_cache_delete_old_cache();
+
+   struct stat st;
+   EXPECT_EQ(stat(cache_dir_name, &st), 0);
+
+   unsetenv("MESA_SHADER_CACHE_DIR");
+   unlink(file_name);
+   rmdir(cache_dir_name);
+   rmdir(dir_name);
+#endif
+}
+
+TEST_F(Cache, DeleteOldCache)
+{
+#ifndef ENABLE_SHADER_CACHE
+   GTEST_SKIP() << "ENABLE_SHADER_CACHE not defined.";
+#else
+
+#ifdef SHADER_CACHE_DISABLE_BY_DEFAULT
+   setenv("MESA_SHADER_CACHE_DISABLE", "false", 1);
+#endif /* SHADER_CACHE_DISABLE_BY_DEFAULT */
+
+   char dir_template[] = "/tmp/tmpdir.XXXXXX";
+   char *dir_name = mkdtemp(dir_template);
+   ASSERT_NE(dir_name, nullptr) << "Creating temporary directory failed";
+
+   char cache_dir_name[240];
+   sprintf(cache_dir_name, "%s/mesa_shader_cache", dir_name);
+   mkdir(cache_dir_name, 0755);
+
+   char file_name[256];
+   sprintf(file_name, "%s/marker", cache_dir_name);
+
+   FILE *file = fopen(file_name, "w");
+   fclose(file);
+
+   struct utimbuf utime_buf = { };
+   EXPECT_EQ(utime(file_name, &utime_buf), 0);
+
+
+   setenv("MESA_SHADER_CACHE_DIR", dir_name, 1);
+
+   disk_cache_delete_old_cache();
+
+   struct stat st;
+   EXPECT_NE(stat(cache_dir_name, &st), 0);
+   EXPECT_EQ(errno, ENOENT);
+
+   unsetenv("MESA_SHADER_CACHE_DIR");
+   unlink(file_name);
+   rmdir(cache_dir_name);
+   rmdir(dir_name);
 #endif
 }

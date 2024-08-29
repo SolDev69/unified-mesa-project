@@ -535,6 +535,9 @@ static struct ruvd_h264 get_h264_msg(struct ruvd_decoder *dec, struct pipe_h264_
    case PIPE_VIDEO_CHROMA_FORMAT_444:
       result.chroma_format = 3;
       break;
+   case PIPE_VIDEO_CHROMA_FORMAT_440:
+      result.chroma_format = 4;
+      break;
    }
 
    result.pps_info_flags = 0;
@@ -1048,7 +1051,7 @@ static void ruvd_decode_bitstream(struct pipe_video_codec *decoder,
 
       if (new_size > buf->res->buf->size) {
          dec->ws->buffer_unmap(dec->ws, buf->res->buf);
-         if (!si_vid_resize_buffer(dec->screen, &dec->cs, buf, new_size, NULL)) {
+         if (!si_vid_resize_buffer(dec->base.context, &dec->cs, buf, new_size, NULL)) {
             RVID_ERR("Can't resize bitstream buffer!");
             return;
          }
@@ -1070,7 +1073,7 @@ static void ruvd_decode_bitstream(struct pipe_video_codec *decoder,
 /**
  * end decoding of the current frame
  */
-static void ruvd_end_frame(struct pipe_video_codec *decoder, struct pipe_video_buffer *target,
+static int ruvd_end_frame(struct pipe_video_codec *decoder, struct pipe_video_buffer *target,
                            struct pipe_picture_desc *picture)
 {
    struct ruvd_decoder *dec = (struct ruvd_decoder *)decoder;
@@ -1081,7 +1084,7 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder, struct pipe_video_b
    assert(decoder);
 
    if (!dec->bs_ptr)
-      return;
+      return 1;
 
    msg_fb_it_buf = &dec->msg_fb_it_buffers[dec->cur_buffer];
    bs_buf = &dec->bs_buffers[dec->cur_buffer];
@@ -1166,7 +1169,7 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder, struct pipe_video_b
 
    default:
       assert(0);
-      return;
+      return 1;
    }
 
    dec->msg->body.decode.db_surf_tile_config = dec->msg->body.decode.dt_surf_tile_config;
@@ -1194,8 +1197,9 @@ static void ruvd_end_frame(struct pipe_video_codec *decoder, struct pipe_video_b
                FB_BUFFER_OFFSET + dec->fb_size, RADEON_USAGE_READ, RADEON_DOMAIN_GTT);
    set_reg(dec, dec->reg.cntl, 1);
 
-   flush(dec, PIPE_FLUSH_ASYNC, picture->fence);
+   flush(dec, picture->flush_flags, picture->fence);
    next_buffer(dec);
+   return 0;
 }
 
 /**

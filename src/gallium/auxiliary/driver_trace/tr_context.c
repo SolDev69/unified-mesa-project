@@ -145,6 +145,7 @@ trace_context_draw_vbo(struct pipe_context *_pipe,
 
 static void
 trace_context_draw_mesh_tasks(struct pipe_context *_pipe,
+                              unsigned drawid_offset,
                               const struct pipe_grid_info *info)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
@@ -153,11 +154,12 @@ trace_context_draw_mesh_tasks(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "draw_mesh_tasks");
 
    trace_dump_arg(ptr,  pipe);
+   trace_dump_arg(uint,  drawid_offset);
    trace_dump_arg(grid_info, info);
 
    trace_dump_trace_flush();
 
-   pipe->draw_mesh_tasks(pipe, info);
+   pipe->draw_mesh_tasks(pipe, drawid_offset, info);
 
    trace_dump_call_end();
 }
@@ -1238,8 +1240,6 @@ trace_context_set_sampler_views(struct pipe_context *_pipe,
 static void
 trace_context_set_vertex_buffers(struct pipe_context *_pipe,
                                  unsigned num_buffers,
-                                 unsigned unbind_num_trailing_slots,
-                                 bool take_ownership,
                                  const struct pipe_vertex_buffer *buffers)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
@@ -1249,16 +1249,12 @@ trace_context_set_vertex_buffers(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, num_buffers);
-   trace_dump_arg(uint, unbind_num_trailing_slots);
-   trace_dump_arg(bool, take_ownership);
 
    trace_dump_arg_begin("buffers");
    trace_dump_struct_array(vertex_buffer, buffers, num_buffers);
    trace_dump_arg_end();
 
-   pipe->set_vertex_buffers(pipe, num_buffers,
-                            unbind_num_trailing_slots, take_ownership,
-                            buffers);
+   pipe->set_vertex_buffers(pipe, num_buffers, buffers);
 
    trace_dump_call_end();
 }

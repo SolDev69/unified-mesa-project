@@ -117,8 +117,7 @@ brw_nir_lower_shader_returns(nir_shader *shader)
       }
    }
 
-   nir_metadata_preserve(impl, nir_metadata_block_index |
-                               nir_metadata_dominance);
+   nir_metadata_preserve(impl, nir_metadata_control_flow);
 }
 
 static void
@@ -204,7 +203,7 @@ lower_shader_trace_ray_instr(struct nir_builder *b, nir_instr *instr, void *data
    nir_def *hit_sbt_stride_B =
       nir_load_ray_hit_sbt_stride_intel(b);
    nir_def *hit_sbt_offset_B =
-      nir_umul_32x16(b, sbt_offset, nir_u2u32(b, hit_sbt_stride_B));
+      nir_imul(b, sbt_offset, nir_u2u32(b, hit_sbt_stride_B));
    nir_def *hit_sbt_addr =
       nir_iadd(b, nir_load_ray_hit_sbt_addr_intel(b),
                   nir_u2u64(b, hit_sbt_offset_B));
@@ -213,7 +212,7 @@ lower_shader_trace_ray_instr(struct nir_builder *b, nir_instr *instr, void *data
    nir_def *miss_sbt_stride_B =
       nir_load_ray_miss_sbt_stride_intel(b);
    nir_def *miss_sbt_offset_B =
-      nir_umul_32x16(b, miss_index, nir_u2u32(b, miss_sbt_stride_B));
+      nir_imul(b, miss_index, nir_u2u32(b, miss_sbt_stride_B));
    nir_def *miss_sbt_addr =
       nir_iadd(b, nir_load_ray_miss_sbt_addr_intel(b),
                   nir_u2u64(b, miss_sbt_offset_B));
@@ -280,8 +279,7 @@ brw_nir_lower_shader_calls(nir_shader *shader, struct brw_bs_prog_key *key)
                                          nir_metadata_none,
                                          key);
    bool b = nir_shader_intrinsics_pass(shader, lower_shader_call_instr,
-                                         nir_metadata_block_index |
-                                         nir_metadata_dominance,
+                                         nir_metadata_control_flow,
                                          NULL);
    return a || b;
 }

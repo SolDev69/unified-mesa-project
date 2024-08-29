@@ -25,7 +25,7 @@
 #include "brw_fs_live_variables.h"
 #include "brw_cfg.h"
 
-/** @file brw_fs_dead_code_eliminate.cpp
+/** @file
  *
  * Dataflow-aware dead code elimination.
  *
@@ -72,17 +72,45 @@ can_omit_write(const fs_inst *inst)
    }
 }
 
-bool
-fs_visitor::dead_code_eliminate()
+static bool
+can_eliminate_conditional_mod(const intel_device_info *devinfo,
+                              const fs_inst *inst, BITSET_WORD *flag_live)
 {
+   /* CMP, CMPN, and CSEL must have a conditional modifier because the
+    * modifier determines what the instruction does. SEL with a conditional
+    * modifier has a special meaning (i.e., makes the instruction behave as
+    * MIN or MAX), so those cannot be eliminated either.
+    */
+   if (inst->conditional_mod == BRW_CONDITIONAL_NONE ||
+       inst->opcode == BRW_OPCODE_CMP ||
+       inst->opcode == BRW_OPCODE_CMPN ||
+       inst->opcode == BRW_OPCODE_SEL ||
+       inst->opcode == BRW_OPCODE_CSEL) {
+      return false;
+   }
+
+   /* The conditional modifier can be eliminated if none of the flags written
+    * are read.
+    */
+   const BITSET_WORD flags_written = inst->flags_written(devinfo);
+
+   assert(flags_written != 0);
+   return (flag_live[0] & flags_written) == 0;
+}
+
+bool
+brw_fs_opt_dead_code_eliminate(fs_visitor &s)
+{
+   const intel_device_info *devinfo = s.devinfo;
+
    bool progress = false;
 
-   const fs_live_variables &live_vars = live_analysis.require();
+   const fs_live_variables &live_vars = s.live_analysis.require();
    int num_vars = live_vars.num_vars;
    BITSET_WORD *live = rzalloc_array(NULL, BITSET_WORD, BITSET_WORDS(num_vars));
    BITSET_WORD *flag_live = rzalloc_array(NULL, BITSET_WORD, 1);
 
-   foreach_block_reverse_safe(block, cfg) {
+   foreach_block_reverse_safe(block, s.cfg) {
       memcpy(live, live_vars.block_data[block->num].liveout,
              sizeof(BITSET_WORD) * BITSET_WORDS(num_vars));
       memcpy(flag_live, live_vars.block_data[block->num].flag_liveout,
@@ -98,13 +126,18 @@ fs_visitor::dead_code_eliminate()
 
             if (!result_live &&
                 (can_omit_write(inst) || can_eliminate(devinfo, inst, flag_live))) {
-               inst->dst = fs_reg(spread(retype(brw_null_reg(), inst->dst.type),
-                                         inst->dst.stride));
+               inst->dst = brw_reg(spread(retype(brw_null_reg(), inst->dst.type),
+                                          inst->dst.stride));
                progress = true;
             }
          }
 
-         if (inst->dst.is_null() && can_eliminate(devinfo, inst, flag_live)) {
+         if (can_eliminate_conditional_mod(devinfo, inst, flag_live))
+            inst->conditional_mod = BRW_CONDITIONAL_NONE;
+
+         if (inst->dst.is_null() && can_eliminate(devinfo, inst, flag_live) &&
+             !(inst->opcode == BRW_OPCODE_NOP &&
+               exec_list_is_singular(&block->instructions))) {
             inst->opcode = BRW_OPCODE_NOP;
             progress = true;
          }
@@ -140,13 +173,13 @@ fs_visitor::dead_code_eliminate()
       }
    }
 
-   cfg->adjust_block_ips();
+   s.cfg->adjust_block_ips();
 
    ralloc_free(live);
    ralloc_free(flag_live);
 
    if (progress)
-      invalidate_analysis(DEPENDENCY_INSTRUCTIONS);
+      s.invalidate_analysis(DEPENDENCY_INSTRUCTIONS);
 
    return progress;
 }

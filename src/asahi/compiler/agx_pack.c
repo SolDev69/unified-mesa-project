@@ -493,6 +493,10 @@ agx_pack_alu(struct util_dynarray *emission, agx_instr *I)
       raw |= (uint64_t)(I->bfi_mask & 0x3) << 38;
       raw |= (uint64_t)((I->bfi_mask >> 2) & 0x3) << 50;
       raw |= (uint64_t)((I->bfi_mask >> 4) & 0x1) << 63;
+   } else if (info.immediates & AGX_IMMEDIATE_SIMD_OP) {
+      raw |= (uint64_t)(I->simd_op & 0x1) << 28;
+      raw |= (uint64_t)((I->simd_op >> 1) & 0x7) << 38;
+      raw |= (uint64_t)((I->simd_op >> 4) & 0x1) << 47;
    } else if (info.immediates & AGX_IMMEDIATE_SR) {
       raw |= (uint64_t)(I->sr & 0x3F) << 16;
       raw |= (uint64_t)(I->sr >> 6) << 26;
@@ -519,9 +523,18 @@ agx_pack_alu(struct util_dynarray *emission, agx_instr *I)
    if (length <= sizeof(uint64_t)) {
       unsigned extend_offset = ((length - sizeof(extend)) * 8);
 
-      /* XXX: This is a weird special case */
-      if (I->op == AGX_OPCODE_IADD)
+      /* XXX: Encode these special cases better */
+      switch (I->op) {
+      case AGX_OPCODE_IADD:
+      case AGX_OPCODE_ICMP_BALLOT:
+      case AGX_OPCODE_ICMP_QUAD_BALLOT:
+      case AGX_OPCODE_FCMP_BALLOT:
+      case AGX_OPCODE_FCMP_QUAD_BALLOT:
          extend_offset -= 16;
+         break;
+      default:
+         break;
+      }
 
       raw |= (uint64_t)extend << extend_offset;
       memcpy(util_dynarray_grow_bytes(emission, 1, length), &raw, length);
@@ -549,6 +562,7 @@ agx_pack_instr(struct util_dynarray *emission, struct util_dynarray *fixups,
       pack_assert(I, I->pixel_offset < 0x200);
 
       agx_index sample_index = load ? I->src[0] : I->src[1];
+      agx_index coords = load ? I->src[1] : I->src[2];
       pack_assert(I, sample_index.type == AGX_INDEX_REGISTER ||
                         sample_index.type == AGX_INDEX_IMMEDIATE);
       pack_assert(I, sample_index.size == AGX_SIZE_16);
@@ -556,14 +570,21 @@ agx_pack_instr(struct util_dynarray *emission, struct util_dynarray *fixups,
       unsigned S = sample_index.value;
       pack_assert(I, S < 0x100);
 
+      pack_assert(I, I->explicit_coords == (coords.type == AGX_INDEX_REGISTER));
+      unsigned C = I->explicit_coords ? coords.value : 0;
+
       uint64_t raw = agx_opcodes_info[I->op].encoding.exact |
                      ((uint64_t)(D & BITFIELD_MASK(8)) << 7) | (St << 22) |
                      ((uint64_t)(I->format) << 24) |
+                     ((uint64_t)(C & BITFIELD_MASK(6)) << 16) |
                      ((uint64_t)(I->pixel_offset & BITFIELD_MASK(7)) << 28) |
-                     (load ? (1ull << 35) : 0) | ((uint64_t)(I->mask) << 36) |
+                     (load || I->explicit_coords ? (1ull << 35) : 0) |
+                     ((uint64_t)(I->mask) << 36) |
                      ((uint64_t)(I->pixel_offset >> 7) << 40) |
                      ((uint64_t)(S & BITFIELD_MASK(6)) << 42) |
-                     ((uint64_t)(S >> 6) << 56) | (((uint64_t)(D >> 8)) << 60);
+                     (I->explicit_coords ? (1ull << 55) : 0) |
+                     ((uint64_t)(S >> 6) << 56) | ((uint64_t)(C >> 6) << 58) |
+                     (((uint64_t)(D >> 8)) << 60);
 
       unsigned size = 8;
       memcpy(util_dynarray_grow_bytes(emission, 1, size), &raw, size);
@@ -602,7 +623,8 @@ agx_pack_instr(struct util_dynarray *emission, struct util_dynarray *fixups,
       unsigned channels = (I->channels & 0x3);
 
       agx_index src_I = I->src[0];
-      pack_assert(I, src_I.type == AGX_INDEX_IMMEDIATE);
+      pack_assert(I, src_I.type == AGX_INDEX_IMMEDIATE ||
+                        src_I.type == AGX_INDEX_REGISTER);
 
       unsigned cf_I = src_I.value;
       unsigned cf_J = 0;
@@ -635,11 +657,13 @@ agx_pack_instr(struct util_dynarray *emission, struct util_dynarray *fixups,
       uint64_t raw =
          0x21 | (flat ? (1 << 7) : 0) | (perspective ? (1 << 6) : 0) |
          ((D & 0xFF) << 7) | (1ull << 15) | /* XXX */
-         ((cf_I & BITFIELD_MASK(6)) << 16) | ((cf_J & BITFIELD_MASK(6)) << 24) |
-         (((uint64_t)channels) << 30) | (((uint64_t)sample_index.value) << 32) |
-         (forward ? (1ull << 46) : 0) | (((uint64_t)interp) << 48) |
-         (kill ? (1ull << 52) : 0) | (((uint64_t)(D >> 8)) << 56) |
-         ((uint64_t)(cf_I >> 6) << 58) | ((uint64_t)(cf_J >> 6) << 60);
+         ((cf_I & BITFIELD_MASK(6)) << 16) |
+         ((src_I.type == AGX_INDEX_REGISTER) ? (1 << 23) : 0) |
+         ((cf_J & BITFIELD_MASK(6)) << 24) | (((uint64_t)channels) << 30) |
+         (((uint64_t)sample_index.value) << 32) | (forward ? (1ull << 46) : 0) |
+         (((uint64_t)interp) << 48) | (kill ? (1ull << 52) : 0) |
+         (((uint64_t)(D >> 8)) << 56) | ((uint64_t)(cf_I >> 6) << 58) |
+         ((uint64_t)(cf_J >> 6) << 60);
 
       unsigned size = 8;
       memcpy(util_dynarray_grow_bytes(emission, 1, size), &raw, size);
@@ -650,16 +674,18 @@ agx_pack_instr(struct util_dynarray *emission, struct util_dynarray *fixups,
       agx_index index_src = I->src[0];
       agx_index value = I->src[1];
 
-      pack_assert(I, index_src.type == AGX_INDEX_IMMEDIATE);
+      pack_assert(I, index_src.type == AGX_INDEX_IMMEDIATE ||
+                        index_src.type == AGX_INDEX_REGISTER);
       pack_assert(I, index_src.value < BITFIELD_MASK(8));
       pack_assert(I, value.type == AGX_INDEX_REGISTER);
       pack_assert(I, value.size == AGX_SIZE_32);
 
-      uint64_t raw =
-         0x11 | (I->last ? (1 << 7) : 0) | ((value.value & 0x3F) << 9) |
-         (((uint64_t)(index_src.value & 0x3F)) << 16) | (0x80 << 16) | /* XXX */
-         ((value.value >> 6) << 24) | ((index_src.value >> 6) << 26) |
-         (0x8u << 28); /* XXX */
+      uint64_t raw = 0x11 | (I->last ? (1 << 7) : 0) |
+                     ((value.value & 0x3F) << 9) |
+                     (((uint64_t)(index_src.value & 0x3F)) << 16) |
+                     (index_src.type == AGX_INDEX_IMMEDIATE ? (1 << 23) : 0) |
+                     ((value.value >> 6) << 24) |
+                     ((index_src.value >> 6) << 26) | (0x8u << 28); /* XXX */
 
       unsigned size = 4;
       memcpy(util_dynarray_grow_bytes(emission, 1, size), &raw, size);
@@ -674,16 +700,25 @@ agx_pack_instr(struct util_dynarray *emission, struct util_dynarray *fixups,
       bool is_store = is_device_store || is_uniform_store;
       bool has_base = !is_uniform_store;
 
-      /* Uniform stores internally packed as 16-bit. Fix up the format, mask,
-       * and size so we can use scalar 32-bit values in the IR and avoid
-       * special casing earlier in the compiler.
+      /* Uniform stores are required to be 16-bit. The encoding that should be
+       * 32-bit annoyingly doesn't work. Fix up the format and size so we can
+       * use scalar 32-bit values in the IR and avoid special casing earlier in
+       * the compiler.
        */
       enum agx_format format = is_uniform_store ? AGX_FORMAT_I16 : I->format;
       agx_index reg = is_store ? I->src[0] : I->dest[0];
       unsigned mask = I->mask;
 
-      if (is_uniform_store) {
-         mask = BITFIELD_MASK(agx_size_align_16(reg.size));
+      if (is_uniform_store && reg.size != AGX_SIZE_16) {
+         if (reg.size == AGX_SIZE_64) {
+            assert(mask == 1);
+            mask = BITFIELD_MASK(4);
+         } else {
+            assert(reg.size == AGX_SIZE_32);
+            assert(mask == 1 || mask == 3);
+            mask = BITFIELD_MASK(mask == 3 ? 4 : 2);
+         }
+
          reg.size = AGX_SIZE_16;
       }
 
@@ -926,15 +961,20 @@ agx_pack_instr(struct util_dynarray *emission, struct util_dynarray *fixups,
       unsigned R = offset.value;
 
       bool unk1 = true;
+
+      /* This bit has weird behaviour with the interaction of the texture state
+       * index and the tilebuffer offset. Probably best not to use it for now.
+       */
       unsigned unk3 = 1;
 
       uint32_t word0 = agx_opcodes_info[I->op].encoding.exact |
                        (1 << 15) /* we always set length bit for now */ |
                        ((F & 1) << 8) | ((R & BITFIELD_MASK(6)) << 9) |
                        ((C & BITFIELD_MASK(6)) << 16) | (Ct ? (1 << 22) : 0) |
+                       (I->explicit_coords ? (1 << 23) : 0) |
                        (unk1 ? (1u << 31) : 0);
 
-      uint32_t word1 = (T & BITFIELD_MASK(6)) | (Tt << 2) |
+      uint32_t word1 = (T & BITFIELD_MASK(6)) | (Tt << 6) |
                        ((I->dim & BITFIELD_MASK(3)) << 8) | (9 << 11) |
                        (Cs ? (1 << 15) : 0) |
                        ((I->dim & BITFIELD_BIT(3)) ? (1u << 23) : 0) |
@@ -1123,18 +1163,21 @@ agx_pack_binary(agx_context *ctx, struct util_dynarray *emission)
 
       agx_foreach_instr_in_block(block, ins) {
          block->last_offset = emission->size;
-         agx_pack_instr(emission, &fixups, ins, ctx->key->needs_g13x_coherency);
+         agx_pack_instr(emission, &fixups, ins,
+                        ctx->key->dev.needs_g13x_coherency);
       }
    }
 
    util_dynarray_foreach(&fixups, struct agx_branch_fixup, fixup)
       agx_fixup_branch(emission, *fixup);
 
-   /* Dougall calls the instruction in this footer "trap". Match the blob. */
-   for (unsigned i = 0; i < 8; ++i) {
-      uint16_t trap = agx_opcodes_info[AGX_OPCODE_TRAP].encoding.exact;
-      util_dynarray_append(emission, uint16_t, trap);
-   }
-
    util_dynarray_fini(&fixups);
+
+   /* Dougall calls the instruction in this footer "trap". Match the blob. */
+   if (!ctx->key->no_stop || ctx->is_preamble) {
+      for (unsigned i = 0; i < 8; ++i) {
+         uint16_t trap = agx_opcodes_info[AGX_OPCODE_TRAP].encoding.exact;
+         util_dynarray_append(emission, uint16_t, trap);
+      }
+   }
 }

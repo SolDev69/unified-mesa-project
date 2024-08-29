@@ -90,8 +90,10 @@ sysval_for_intrinsic(nir_intrinsic_instr *intr, unsigned *offset)
       *offset = 8;
       return PAN_SYSVAL_VERTEX_INSTANCE_OFFSETS;
 
+#if PAN_ARCH <= 7
    case nir_intrinsic_load_draw_id:
       return PAN_SYSVAL_DRAWID;
+#endif
 
    case nir_intrinsic_load_multisampled_pan:
       return PAN_SYSVAL_MULTISAMPLED;
@@ -198,7 +200,7 @@ panfrost_nir_lower_sysvals(nir_shader *shader, struct panfrost_sysvals *sysvals)
    memset(sysvals, 0, sizeof(*sysvals));
 
    nir_shader_instructions_pass(
-      shader, lower, nir_metadata_block_index | nir_metadata_dominance, &ctx);
+      shader, lower, nir_metadata_control_flow, &ctx);
 
    _mesa_hash_table_u64_destroy(ctx.sysval_to_id);
    return true;

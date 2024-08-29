@@ -45,14 +45,15 @@
 #include <sys/sysmacros.h>
 #endif
 #include <GL/gl.h>
-#include <GL/internal/dri_interface.h>
-#include <GL/internal/mesa_interface.h>
+#include "mesa_interface.h"
 #include "loader.h"
 #include "util/libdrm.h"
 #include "util/os_file.h"
 #include "util/os_misc.h"
 #include "util/u_debug.h"
 #include "git_sha1.h"
+
+#include "drm-uapi/nouveau_drm.h"
 
 #define MAX_DRM_DEVICES 64
 
@@ -123,7 +124,7 @@ loader_get_kernel_driver_name(int fd)
 }
 
 bool
-iris_predicate(int fd)
+iris_predicate(int fd, const char *driver)
 {
    char *kernel_driver = loader_get_kernel_driver_name(fd);
    bool ret = kernel_driver && (strcmp(kernel_driver, "i915") == 0 ||
@@ -132,6 +133,37 @@ iris_predicate(int fd)
    free(kernel_driver);
    return ret;
 }
+
+/* choose zink or nouveau GL */
+bool
+nouveau_zink_predicate(int fd, const char *driver)
+{
+#if !defined(HAVE_NVK) || !defined(HAVE_ZINK)
+   if (!strcmp(driver, "zink"))
+      return false;
+   return true;
+#else
+
+   bool prefer_zink = false;
+
+   /* enable this once zink is up to speed.
+    * struct drm_nouveau_getparam r = { .param = NOUVEAU_GETPARAM_CHIPSET_ID };
+    * int ret = drmCommandWriteRead(fd, DRM_NOUVEAU_GETPARAM, &r, sizeof(r));
+    * if (ret == 0 && (r.value & ~0xf) >= 0x160)
+    *    prefer_zink = true;
+    */
+
+   prefer_zink = debug_get_bool_option("NOUVEAU_USE_ZINK", prefer_zink);
+
+   if (prefer_zink && !strcmp(driver, "zink"))
+      return true;
+
+   if (!prefer_zink && !strcmp(driver, "nouveau"))
+      return true;
+   return false;
+#endif
+}
+
 
 /**
  * Goes through all the platform devices whose driver is on the given list and
@@ -643,7 +675,7 @@ loader_get_pci_driver(int fd)
       if (vendor_id != driver_map[i].vendor_id)
          continue;
 
-      if (driver_map[i].predicate && !driver_map[i].predicate(fd))
+      if (driver_map[i].predicate && !driver_map[i].predicate(fd, driver_map[i].driver))
          continue;
 
       if (driver_map[i].num_chips_ids == -1) {
@@ -698,23 +730,6 @@ void
 loader_set_logger(loader_logger *logger)
 {
    log_ = logger;
-}
-
-char *
-loader_get_extensions_name(const char *driver_name)
-{
-   char *name = NULL;
-
-   if (asprintf(&name, "%s_%s", __DRI_DRIVER_GET_EXTENSIONS, driver_name) < 0)
-      return NULL;
-
-   const size_t len = strlen(name);
-   for (size_t i = 0; i < len; i++) {
-      if (name[i] == '-')
-         name[i] = '_';
-   }
-
-   return name;
 }
 
 bool
@@ -782,7 +797,7 @@ loader_open_driver_lib(const char *driver_name,
    search_paths = NULL;
    if (__normal_user() && search_path_vars) {
       for (int i = 0; search_path_vars[i] != NULL; i++) {
-         search_paths = getenv(search_path_vars[i]);
+         search_paths = os_get_option(search_path_vars[i]);
          if (search_paths)
             break;
       }
@@ -830,51 +845,4 @@ loader_open_driver_lib(const char *driver_name,
    log_(_LOADER_DEBUG, "MESA-LOADER: dlopen(%s)\n", path);
 
    return driver;
-}
-
-/**
- * Opens a DRI driver using its driver name, returning the __DRIextension
- * entrypoints.
- *
- * \param driverName - a name like "i965", "radeon", "nouveau", etc.
- * \param out_driver - Address where the dlopen() return value will be stored.
- * \param search_path_vars - NULL-terminated list of env vars that can be used
- * to override the DEFAULT_DRIVER_DIR search path.
- */
-const struct __DRIextensionRec **
-loader_open_driver(const char *driver_name,
-                   void **out_driver_handle,
-                   const char **search_path_vars)
-{
-   char *get_extensions_name;
-   const struct __DRIextensionRec **extensions = NULL;
-   const struct __DRIextensionRec **(*get_extensions)(void);
-   void *driver = loader_open_driver_lib(driver_name, "_dri", search_path_vars,
-                                         DEFAULT_DRIVER_DIR, true);
-
-   if (!driver)
-      goto failed;
-
-   get_extensions_name = loader_get_extensions_name(driver_name);
-   if (get_extensions_name) {
-      get_extensions = dlsym(driver, get_extensions_name);
-      if (get_extensions) {
-         extensions = get_extensions();
-      } else {
-         log_(_LOADER_DEBUG, "MESA-LOADER: driver does not expose %s(): %s\n",
-              get_extensions_name, dlerror());
-      }
-      free(get_extensions_name);
-   }
-
-   if (extensions == NULL) {
-      log_(_LOADER_WARNING,
-           "MESA-LOADER: driver exports no extensions (%s)\n", dlerror());
-      dlclose(driver);
-      driver = NULL;
-   }
-
-failed:
-   *out_driver_handle = driver;
-   return extensions;
 }

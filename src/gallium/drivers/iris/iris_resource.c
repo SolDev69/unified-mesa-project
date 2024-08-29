@@ -34,6 +34,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
+#include "util/detect_os.h"
 #include "util/os_memory.h"
 #include "util/u_cpu_detect.h"
 #include "util/u_inlines.h"
@@ -45,6 +46,7 @@
 #include "util/u_transfer_helper.h"
 #include "util/u_upload_mgr.h"
 #include "util/ralloc.h"
+#include "i915/iris_bufmgr.h"
 #include "iris_batch.h"
 #include "iris_context.h"
 #include "iris_resource.h"
@@ -53,7 +55,6 @@
 #include "intel/dev/intel_debug.h"
 #include "isl/isl.h"
 #include "drm-uapi/drm_fourcc.h"
-#include "drm-uapi/i915_drm.h"
 
 enum modifier_priority {
    MODIFIER_PRIORITY_INVALID = 0,
@@ -124,7 +125,7 @@ modifier_is_supported(const struct intel_device_info *devinfo,
    case I915_FORMAT_MOD_4_TILED_MTL_RC_CCS:
    case I915_FORMAT_MOD_4_TILED_MTL_MC_CCS:
    case I915_FORMAT_MOD_4_TILED_MTL_RC_CCS_CC:
-      if (!intel_device_info_is_mtl(devinfo))
+      if (!intel_device_info_is_mtl_or_arl(devinfo))
          return false;
       break;
    case DRM_FORMAT_MOD_INVALID:
@@ -375,24 +376,13 @@ iris_memobj_create_from_handle(struct pipe_screen *pscreen,
 {
    struct iris_screen *screen = (struct iris_screen *)pscreen;
    struct iris_memory_object *memobj = CALLOC_STRUCT(iris_memory_object);
-   struct iris_bo *bo;
-
    if (!memobj)
       return NULL;
 
-   switch (whandle->type) {
-   case WINSYS_HANDLE_TYPE_SHARED:
-      bo = iris_bo_gem_create_from_name(screen->bufmgr, "winsys image",
-                                        whandle->handle);
-      break;
-   case WINSYS_HANDLE_TYPE_FD:
-      bo = iris_bo_import_dmabuf(screen->bufmgr, whandle->handle,
-                                 whandle->modifier);
-      break;
-   default:
-      unreachable("invalid winsys handle type");
-   }
-
+   assert(whandle->type == WINSYS_HANDLE_TYPE_FD);
+   assert(whandle->modifier == DRM_FORMAT_MOD_INVALID);
+   struct iris_bo *bo = iris_bo_import_dmabuf(screen->bufmgr, whandle->handle,
+                                              DRM_FORMAT_MOD_INVALID);
    if (!bo) {
       free(memobj);
       return NULL;
@@ -467,7 +457,6 @@ iris_resource_disable_aux(struct iris_resource *res)
    res->aux.usage = ISL_AUX_USAGE_NONE;
    res->aux.surf.size_B = 0;
    res->aux.bo = NULL;
-   res->aux.extra_aux.surf.size_B = 0;
    res->aux.clear_color_bo = NULL;
    res->aux.state = NULL;
 }
@@ -475,7 +464,7 @@ iris_resource_disable_aux(struct iris_resource *res)
 static unsigned
 iris_resource_alloc_flags(const struct iris_screen *screen,
                           const struct pipe_resource *templ,
-                          enum isl_aux_usage aux_usage)
+                          struct iris_resource *res)
 {
    if (templ->flags & IRIS_RESOURCE_FLAG_DEVICE_MEM)
       return BO_ALLOC_PLAIN;
@@ -504,9 +493,14 @@ iris_resource_alloc_flags(const struct iris_screen *screen,
       flags |= BO_ALLOC_SMEM | BO_ALLOC_COHERENT;
 
    if (screen->devinfo->verx10 >= 125 && screen->devinfo->has_local_mem &&
-       isl_aux_usage_has_ccs(aux_usage)) {
+       isl_aux_usage_has_ccs(res->aux.usage)) {
       assert((flags & BO_ALLOC_SMEM) == 0);
       flags |= BO_ALLOC_LMEM;
+      /* For displayable surfaces with clear color,
+       * the KMD will need to access the clear color via CPU.
+       */
+      if (res->mod_info && res->mod_info->supports_clear_color)
+         flags |= BO_ALLOC_CPU_VISIBLE;
    }
 
    if ((templ->bind & PIPE_BIND_SHARED) ||
@@ -641,8 +635,6 @@ map_aux_addresses(struct iris_screen *screen, struct iris_resource *res,
       return;
 
    if (isl_aux_usage_has_ccs(res->aux.usage)) {
-      const unsigned aux_offset = res->aux.extra_aux.surf.size_B > 0 ?
-         res->aux.extra_aux.offset : res->aux.offset;
       const enum isl_format format =
          iris_format_for_usage(screen->devinfo, pfmt, res->surf.usage).fmt;
       const uint64_t format_bits =
@@ -650,7 +642,8 @@ map_aux_addresses(struct iris_screen *screen, struct iris_resource *res,
       const bool mapped =
          intel_aux_map_add_mapping(aux_map_ctx,
                                    res->bo->address + res->offset,
-                                   res->aux.bo->address + aux_offset,
+                                   res->aux.bo->address +
+                                   res->aux.comp_ctrl_surf_offset,
                                    res->surf.size_B, format_bits);
       assert(mapped);
       res->bo->aux_map_address = res->aux.bo->address;
@@ -677,6 +670,26 @@ want_ccs_e_for_format(const struct intel_device_info *devinfo,
        fmtl->channels.r.bits == 32 && fmtl->channels.r.type == ISL_SFLOAT)
       return false;
 
+   return true;
+}
+
+static bool
+want_hiz_wt_for_res(const struct intel_device_info *devinfo,
+                    const struct iris_resource *res)
+{
+   /* Gen12 only supports single-sampled while Gen20+ supports
+    * multi-sampled images.
+    */
+   if (devinfo->ver < 20 && res->surf.samples > 1)
+      return false;
+
+   if (!(res->surf.usage & ISL_SURF_USAGE_TEXTURE_BIT))
+      return false;
+
+   /* If this resource has the maximum number of samples supported by
+    * running platform and will be used as a texture, put the HiZ surface
+    * in write-through mode so that we can sample from it.
+    */
    return true;
 }
 
@@ -767,6 +780,9 @@ iris_resource_configure_main(const struct iris_screen *screen,
    if (templ->bind & PIPE_BIND_SCANOUT)
       usage |= ISL_SURF_USAGE_DISPLAY_BIT;
 
+   else if (isl_drm_modifier_needs_display_layout(modifier))
+      usage |= ISL_SURF_USAGE_DISPLAY_BIT;
+
    if (templ->target == PIPE_TEXTURE_CUBE ||
        templ->target == PIPE_TEXTURE_CUBE_ARRAY) {
       usage |= ISL_SURF_USAGE_CUBE_BIT;
@@ -780,6 +796,23 @@ iris_resource_configure_main(const struct iris_screen *screen,
 
       usage |= templ->format == PIPE_FORMAT_S8_UINT ?
                ISL_SURF_USAGE_STENCIL_BIT : ISL_SURF_USAGE_DEPTH_BIT;
+   }
+
+   if ((usage & ISL_SURF_USAGE_TEXTURE_BIT) ||
+       !isl_surf_usage_is_depth_or_stencil(usage)) {
+      /* Notify ISL that iris may access this image from different engines.
+       * The reads and writes performed by the engines are guaranteed to be
+       * sequential with respect to each other. This is due to the
+       * implementation of flush_for_cross_batch_dependencies().
+       */
+      usage |= ISL_SURF_USAGE_MULTI_ENGINE_SEQ_BIT;
+   } else {
+      /* Depth/stencil render buffers are the only surfaces which are not
+       * accessed by compute shaders. Also, iris does not use the blitter on
+       * such surfaces.
+       */
+     assert(!(templ->bind & PIPE_BIND_SHADER_IMAGE));
+     assert(!(templ->bind & PIPE_BIND_PRIME_BLIT_DST));
    }
 
    const enum isl_format format =
@@ -808,37 +841,6 @@ iris_resource_configure_main(const struct iris_screen *screen,
    return true;
 }
 
-static bool
-iris_get_ccs_surf_or_support(const struct isl_device *dev,
-                             const struct isl_surf *surf,
-                             struct isl_surf *aux_surf,
-                             struct isl_surf *extra_aux_surf)
-{
-   assert(extra_aux_surf->size_B == 0);
-
-   struct isl_surf *ccs_surf;
-   const struct isl_surf *hiz_or_mcs_surf;
-   if (aux_surf->size_B > 0) {
-      assert(aux_surf->usage & (ISL_SURF_USAGE_HIZ_BIT |
-                                ISL_SURF_USAGE_MCS_BIT));
-      hiz_or_mcs_surf = aux_surf;
-      ccs_surf = extra_aux_surf;
-   } else {
-      hiz_or_mcs_surf = NULL;
-      ccs_surf = aux_surf;
-   }
-
-   if (dev->info->has_flat_ccs) {
-      /* CCS doesn't require VMA on XeHP. So, instead of creating a separate
-       * surface, we can just return whether CCS is supported for the given
-       * input surfaces.
-       */
-      return isl_surf_supports_ccs(dev, surf, hiz_or_mcs_surf);
-   } else  {
-      return isl_surf_get_ccs_surf(dev, surf, hiz_or_mcs_surf, ccs_surf, 0);
-   }
-}
-
 /**
  * Configure aux for the resource, but don't allocate it. For images which
  * might be shared with modifiers, we must allocate the image and aux data in
@@ -849,7 +851,7 @@ iris_get_ccs_surf_or_support(const struct isl_device *dev,
  */
 static bool
 iris_resource_configure_aux(struct iris_screen *screen,
-                            struct iris_resource *res, bool imported)
+                            struct iris_resource *res)
 {
    const struct intel_device_info *devinfo = screen->devinfo;
 
@@ -859,9 +861,9 @@ iris_resource_configure_aux(struct iris_screen *screen,
    const bool has_hiz =
       isl_surf_get_hiz_surf(&screen->isl_dev, &res->surf, &res->aux.surf);
 
-   const bool has_ccs =
-      iris_get_ccs_surf_or_support(&screen->isl_dev, &res->surf,
-                                   &res->aux.surf, &res->aux.extra_aux.surf);
+   const bool has_ccs = devinfo->has_aux_map || devinfo->has_flat_ccs ?
+      isl_surf_supports_ccs(&screen->isl_dev, &res->surf, &res->aux.surf) :
+      isl_surf_get_ccs_surf(&screen->isl_dev, &res->surf, &res->aux.surf, 0);
 
    if (has_mcs) {
       assert(!res->mod_info);
@@ -879,12 +881,7 @@ iris_resource_configure_aux(struct iris_screen *screen,
       assert(!has_mcs);
       if (!has_ccs) {
          res->aux.usage = ISL_AUX_USAGE_HIZ;
-      } else if (res->surf.samples == 1 &&
-                 (res->surf.usage & ISL_SURF_USAGE_TEXTURE_BIT)) {
-         /* If this resource is single-sampled and will be used as a texture,
-          * put the HiZ surface in write-through mode so that we can sample
-          * from it.
-          */
+      } else if (want_hiz_wt_for_res(devinfo, res)) {
          res->aux.usage = ISL_AUX_USAGE_HIZ_CCS_WT;
       } else {
          res->aux.usage = ISL_AUX_USAGE_HIZ_CCS;
@@ -896,90 +893,18 @@ iris_resource_configure_aux(struct iris_screen *screen,
       } else if (res->mod_info && res->mod_info->supports_media_compression) {
          res->aux.usage = ISL_AUX_USAGE_MC;
       } else if (want_ccs_e_for_format(devinfo, res->surf.format)) {
-         res->aux.usage = devinfo->ver < 12 ?
-            ISL_AUX_USAGE_CCS_E : ISL_AUX_USAGE_FCV_CCS_E;
+         res->aux.usage = intel_needs_workaround(devinfo, 1607794140) ?
+            ISL_AUX_USAGE_FCV_CCS_E : ISL_AUX_USAGE_CCS_E;
       } else {
          assert(isl_format_supports_ccs_d(devinfo, res->surf.format));
          res->aux.usage = ISL_AUX_USAGE_CCS_D;
       }
    }
 
-   enum isl_aux_state initial_state;
-   switch (res->aux.usage) {
-   case ISL_AUX_USAGE_NONE:
-      /* Having no aux buffer is only okay if there's no modifier with aux. */
-      return !res->mod_info ||
-             !isl_drm_modifier_has_aux(res->mod_info->modifier);
-   case ISL_AUX_USAGE_HIZ:
-   case ISL_AUX_USAGE_HIZ_CCS:
-   case ISL_AUX_USAGE_HIZ_CCS_WT:
-   case ISL_AUX_USAGE_MCS:
-   case ISL_AUX_USAGE_MCS_CCS:
-      /* Leave the auxiliary buffer uninitialized. We can ambiguate it before
-       * accessing it later on, if needed.
-       */
-      initial_state = ISL_AUX_STATE_AUX_INVALID;
-      break;
-   case ISL_AUX_USAGE_CCS_D:
-   case ISL_AUX_USAGE_CCS_E:
-   case ISL_AUX_USAGE_FCV_CCS_E:
-   case ISL_AUX_USAGE_STC_CCS:
-   case ISL_AUX_USAGE_MC:
-      if (imported) {
-         assert(res->aux.usage != ISL_AUX_USAGE_STC_CCS);
-         initial_state =
-            isl_drm_modifier_get_default_aux_state(res->mod_info->modifier);
-      } else if (devinfo->has_flat_ccs) {
-         assert(res->aux.surf.size_B == 0);
-         /* From Bspec 47709, "MCS/CCS Buffers for Render Target(s)":
-          *
-          *    "CCS surface does not require initialization. Illegal CCS
-          *     [values] are treated as uncompressed memory."
-          *
-          * The above quote is from the render target section, but we assume
-          * it applies to CCS in general (e.g., STC_CCS). The uninitialized
-          * CCS may be in any aux state. We choose the one which is most
-          * convenient.
-          *
-          * We avoid states with CLEAR because stencil does not support it.
-          * Those states also create a dependency on the clear color, which
-          * can have negative performance implications. Even though some
-          * blocks may actually be encoded with CLEAR, we can get away with
-          * ignoring them - there are no known issues that require fast
-          * cleared blocks to be tracked and avoided.
-          *
-          * We specifically avoid the AUX_INVALID state because it could
-          * trigger an ambiguate. BLORP does not have support for ambiguating
-          * stencil. Also, ambiguating some LODs of mipmapped 8bpp surfaces
-          * seems to stomp on neighboring miplevels.
-          *
-          * There is only one remaining aux state which can give us correct
-          * behavior, COMPRESSED_NO_CLEAR.
-          */
-         initial_state = ISL_AUX_STATE_COMPRESSED_NO_CLEAR;
-      } else {
-         assert(res->aux.surf.size_B > 0);
-         /* When CCS is used, we need to ensure that it starts off in a valid
-          * state. From the Sky Lake PRM, "MCS Buffer for Render Target(s)":
-          *
-          *    "If Software wants to enable Color Compression without Fast
-          *     clear, Software needs to initialize MCS with zeros."
-          *
-          * A CCS surface initialized to zero is in the pass-through state.
-          * This state can avoid the need to ambiguate in some cases. We'll
-          * map and zero the CCS later on in iris_resource_init_aux_buf.
-          */
-         initial_state = ISL_AUX_STATE_PASS_THROUGH;
-      }
-      break;
-   default:
-      unreachable("Unsupported aux mode");
-   }
-
-   /* Create the aux_state for the auxiliary buffer. */
-   res->aux.state = create_aux_state_map(res, initial_state);
-   if (!res->aux.state)
+   if (res->mod_info &&
+       isl_drm_modifier_has_aux(res->mod_info->modifier) != has_ccs) {
       return false;
+   }
 
    return true;
 }
@@ -993,38 +918,35 @@ static bool
 iris_resource_init_aux_buf(struct iris_screen *screen,
                            struct iris_resource *res)
 {
-   void *map = NULL;
+   const struct intel_device_info *devinfo = screen->devinfo;
 
-   if (iris_resource_get_aux_state(res, 0, 0) != ISL_AUX_STATE_AUX_INVALID &&
-       res->aux.surf.size_B > 0) {
-      if (!map)
-         map = iris_bo_map(NULL, res->bo, MAP_WRITE | MAP_RAW);
+   if (isl_aux_usage_has_ccs(res->aux.usage) && devinfo->ver <= 11) {
+      /* Initialize the CCS on BDW-ICL to the PASS_THROUGH state. This avoids
+       * the need to ambiguate in some cases.
+       */
+      void* map = iris_bo_map(NULL, res->bo, MAP_WRITE | MAP_RAW);
       if (!map)
          return false;
 
       memset((char*)map + res->aux.offset, 0, res->aux.surf.size_B);
-   }
-
-   if (res->aux.extra_aux.surf.size_B > 0) {
-      if (!map)
-         map = iris_bo_map(NULL, res->bo, MAP_WRITE | MAP_RAW);
-      if (!map)
-         return false;
-
-      memset((char*)map + res->aux.extra_aux.offset,
-             0, res->aux.extra_aux.surf.size_B);
-   }
-
-   if (map)
       iris_bo_unmap(res->bo);
 
-   if (res->aux.surf.size_B > 0) {
+      res->aux.state = create_aux_state_map(res, ISL_AUX_STATE_PASS_THROUGH);
+   } else {
+      const enum isl_aux_state initial_state =
+         isl_aux_get_initial_state(devinfo, res->aux.usage, res->bo->zeroed);
+      res->aux.state = create_aux_state_map(res, initial_state);
+   }
+   if (!res->aux.state)
+      return false;
+
+   if (res->aux.offset > 0 || res->aux.comp_ctrl_surf_offset > 0) {
       res->aux.bo = res->bo;
       iris_bo_reference(res->aux.bo);
       map_aux_addresses(screen, res, res->internal_format, 0);
    }
 
-   if (iris_get_aux_clear_color_state_size(screen, res) > 0) {
+   if (res->aux.clear_color_offset > 0) {
       res->aux.clear_color_bo = res->bo;
       iris_bo_reference(res->aux.clear_color_bo);
       res->aux.clear_color_unknown = !res->aux.clear_color_bo->zeroed;
@@ -1081,7 +1003,7 @@ iris_resource_create_for_buffer(struct pipe_screen *pscreen,
       name = "scratch surface state";
    }
 
-   unsigned flags = iris_resource_alloc_flags(screen, templ, res->aux.usage);
+   unsigned flags = iris_resource_alloc_flags(screen, templ, res);
 
    res->bo = iris_bo_alloc(screen->bufmgr, name, templ->width0,
                            iris_buffer_alignment(templ->width0),
@@ -1098,6 +1020,64 @@ iris_resource_create_for_buffer(struct pipe_screen *pscreen,
    }
 
    return &res->base.b;
+}
+
+static bool
+iris_resource_image_is_pat_compressible(const struct iris_screen *screen,
+                                        const struct pipe_resource *templ,
+                                        struct iris_resource *res,
+                                        unsigned flags)
+{
+   assert(templ->target != PIPE_BUFFER);
+
+   if (INTEL_DEBUG(DEBUG_NO_CCS))
+      return false;
+
+   if (screen->devinfo->ver < 20)
+      return false;
+
+   if (flags & (BO_ALLOC_PROTECTED |
+                BO_ALLOC_COHERENT |
+                BO_ALLOC_CPU_VISIBLE))
+      return false;
+
+   struct iris_bufmgr *bufmgr = screen->bufmgr;
+   if ((iris_bufmgr_vram_size(bufmgr) > 0) && (flags & BO_ALLOC_SMEM))
+      return false;
+
+   /* We don't have modifiers with compression enabled on Xe2 so far. */
+   if (res->mod_info) {
+      assert(!isl_drm_modifier_has_aux(res->mod_info->modifier));
+      return false;
+   }
+
+   /* Bspec 58797 (r58646):
+    *
+    *    Enabling compression is not legal for TileX surfaces.
+    */
+   if (res->surf.tiling == ISL_TILING_X)
+      return false;
+
+   /* Bspec 71650 (r59764):
+    *
+    *    3 SW  must disable or resolve compression
+    *       Display: Access to anything except Tile4 Framebuffers...
+    *          Display Page Tables
+    *          Display State Buffers
+    *          Linear/TileX Framebuffers
+    *          Display Write-Back Buffers
+    *          Etc.
+    *
+    * So far, we don't support resolving on Xe2 and may not want to enable
+    * compression under these conditions later, so we only enable it when
+    * a TILING_4 image is to display.
+    */
+   if ((flags & BO_ALLOC_SCANOUT) && res->surf.tiling != ISL_TILING_4) {
+      assert(res->surf.tiling == ISL_TILING_LINEAR);
+      return false;
+   }
+
+   return true;
 }
 
 static struct pipe_resource *
@@ -1139,13 +1119,16 @@ iris_resource_create_for_image(struct pipe_screen *pscreen,
        res->surf.size_B > (iris_bufmgr_sram_size(screen->bufmgr) / 2))
       goto fail;
 
-   if (!iris_resource_configure_aux(screen, res, false))
+   if (!iris_resource_configure_aux(screen, res))
       goto fail;
 
    const char *name = "miptree";
    enum iris_memory_zone memzone = IRIS_MEMZONE_OTHER;
 
-   unsigned flags = iris_resource_alloc_flags(screen, templ, res->aux.usage);
+   unsigned flags = iris_resource_alloc_flags(screen, templ, res);
+
+   if (iris_resource_image_is_pat_compressible(screen, templ, res, flags))
+      flags |= BO_ALLOC_COMPRESSED;
 
    /* These are for u_upload_mgr buffers only */
    assert(!(templ->flags & (IRIS_RESOURCE_FLAG_SHADER_MEMZONE |
@@ -1164,21 +1147,17 @@ iris_resource_create_for_image(struct pipe_screen *pscreen,
       bo_size = res->aux.offset + res->aux.surf.size_B;
    }
 
-   /* Allocate space for the extra aux buffer. */
-   if (res->aux.extra_aux.surf.size_B > 0) {
-      res->aux.extra_aux.offset =
-         (uint32_t)align64(bo_size, res->aux.extra_aux.surf.alignment_B);
-      bo_size = res->aux.extra_aux.offset + res->aux.extra_aux.surf.size_B;
+   /* Allocate space for the compression control surface. */
+   if (devinfo->has_aux_map && isl_aux_usage_has_ccs(res->aux.usage)) {
+      res->aux.comp_ctrl_surf_offset =
+         (uint32_t)align64(bo_size, INTEL_AUX_MAP_META_ALIGNMENT_B);
+      bo_size = res->aux.comp_ctrl_surf_offset +
+                res->surf.size_B / INTEL_AUX_MAP_MAIN_SIZE_SCALEDOWN;
    }
 
-   /* Allocate space for the indirect clear color.
-    *
-    * Also add some padding to make sure the fast clear color state buffer
-    * starts at a 4K alignment. We believe that 256B might be enough, but due
-    * to lack of testing we will leave this as 4K for now.
-    */
+   /* Allocate space for the indirect clear color. */
    if (iris_get_aux_clear_color_state_size(screen, res) > 0) {
-      res->aux.clear_color_offset = align64(bo_size, 4096);
+      res->aux.clear_color_offset = align64(bo_size, 64);
       bo_size = res->aux.clear_color_offset +
                 iris_get_aux_clear_color_state_size(screen, res);
    }
@@ -1230,17 +1209,14 @@ iris_resource_create(struct pipe_screen *pscreen,
 }
 
 static uint64_t
-tiling_to_modifier(uint32_t tiling)
+tiling_to_modifier(struct iris_bufmgr *bufmgr, uint32_t tiling)
 {
-   static const uint64_t map[] = {
-      [I915_TILING_NONE]   = DRM_FORMAT_MOD_LINEAR,
-      [I915_TILING_X]      = I915_FORMAT_MOD_X_TILED,
-      [I915_TILING_Y]      = I915_FORMAT_MOD_Y_TILED,
-   };
+   if (iris_bufmgr_get_device_info(bufmgr)->kmd_type != INTEL_KMD_TYPE_I915) {
+      assert(tiling == 0);
+      return DRM_FORMAT_MOD_LINEAR;
+   }
 
-   assert(tiling < ARRAY_SIZE(map));
-
-   return map[tiling];
+   return iris_i915_tiling_to_modifier(tiling);
 }
 
 static struct pipe_resource *
@@ -1284,7 +1260,7 @@ iris_resource_from_user_memory(struct pipe_screen *pscreen,
     * pointer.
     */
    size_t page_size = getpagesize();
-   assert(util_is_power_of_two_nonzero(page_size));
+   assert(util_is_power_of_two_nonzero_uintptr(page_size));
    size_t offset = (uintptr_t)user_memory & (page_size - 1);
    void *mem_start = (char *)user_memory - offset;
    size_t mem_size = offset + res_size;
@@ -1395,15 +1371,29 @@ iris_resource_from_handle(struct pipe_screen *pscreen,
             /* Fill out some aux surface fields. */
             assert(isl_drm_modifier_has_aux(whandle->modifier));
             assert(!devinfo->has_flat_ccs);
-            assert(plane_res->bo->size >= plane_res->offset +
-                   main_res->aux.surf.size_B);
-            assert(main_res->aux.surf.row_pitch_B ==
-                   plane_res->surf.row_pitch_B);
 
             iris_bo_reference(plane_res->bo);
-            main_res->aux.bo = plane_res->bo;
-            main_res->aux.offset = plane_res->offset;
-            map_aux_addresses(screen, main_res, whandle->format, main_plane);
+            res->aux.bo = plane_res->bo;
+
+            if (devinfo->has_aux_map) {
+               assert(plane_res->surf.row_pitch_B ==
+                      main_res->surf.row_pitch_B /
+                      INTEL_AUX_MAP_MAIN_PITCH_SCALEDOWN);
+               assert(plane_res->bo->size >= plane_res->offset +
+                      main_res->surf.size_B /
+                      INTEL_AUX_MAP_MAIN_SIZE_SCALEDOWN);
+
+               main_res->aux.comp_ctrl_surf_offset = plane_res->offset;
+               map_aux_addresses(screen, main_res, whandle->format,
+                                 main_plane);
+            } else {
+               assert(plane_res->surf.row_pitch_B ==
+                      main_res->aux.surf.row_pitch_B);
+               assert(plane_res->bo->size >= plane_res->offset +
+                      main_res->aux.surf.size_B);
+
+               main_res->aux.offset = plane_res->offset;
+            }
          } else {
             /* Fill out fields that are convenient to initialize now. */
             assert(plane == main_plane);
@@ -1420,7 +1410,7 @@ iris_resource_from_handle(struct pipe_screen *pscreen,
                /* We have no modifier; match whatever GEM_GET_TILING says */
                uint32_t tiling;
                iris_gem_get_tiling(main_res->bo, &tiling);
-               modifier = tiling_to_modifier(tiling);
+               modifier = tiling_to_modifier(bufmgr, tiling);
             } else {
                modifier = whandle->modifier;
             }
@@ -1435,21 +1425,25 @@ iris_resource_from_handle(struct pipe_screen *pscreen,
             assert(main_res->bo->size >= main_res->offset +
                    main_res->surf.size_B);
 
-            if (!iris_resource_configure_aux(screen, main_res, true))
+            if (!iris_resource_configure_aux(screen, main_res))
                goto fail;
 
-            /* Add on a clear color BO if needed.
-             *
-             * Also add some padding to make sure the fast clear color state
-             * buffer starts at a 4K alignment to avoid some unknown issues.
-             * See the matching comment in iris_resource_create_for_image().
-             */
+            if (res->aux.usage != ISL_AUX_USAGE_NONE) {
+               const enum isl_aux_state aux_state =
+                  isl_drm_modifier_get_default_aux_state(modifier);
+               main_res->aux.state =
+                  create_aux_state_map(main_res, aux_state);
+               if (!main_res->aux.state)
+                  goto fail;
+            }
+
+            /* Add on a clear color BO if needed. */
             if (!main_res->mod_info->supports_clear_color &&
                 iris_get_aux_clear_color_state_size(screen, main_res) > 0) {
                main_res->aux.clear_color_bo =
                   iris_bo_alloc(screen->bufmgr, "clear color buffer",
                                 screen->isl_dev.ss.clear_color_state_size,
-                                4096, IRIS_MEMZONE_OTHER, BO_ALLOC_ZEROED);
+                                64, IRIS_MEMZONE_OTHER, BO_ALLOC_ZEROED);
                if (!main_res->aux.clear_color_bo)
                   goto fail;
             }
@@ -1537,34 +1531,6 @@ iris_resource_from_memobj_wrapper(struct pipe_screen *pscreen,
    return prsc;
 }
 
-static void
-iris_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
-{
-   struct iris_context *ice = (struct iris_context *)ctx;
-   struct iris_resource *res = (void *) resource;
-   const struct isl_drm_modifier_info *mod = res->mod_info;
-
-   iris_resource_prepare_access(ice, res,
-                                0, INTEL_REMAINING_LEVELS,
-                                0, INTEL_REMAINING_LAYERS,
-                                mod ? res->aux.usage : ISL_AUX_USAGE_NONE,
-                                mod ? mod->supports_clear_color : false);
-
-   if (!res->mod_info && res->aux.usage != ISL_AUX_USAGE_NONE) {
-      /* flush_resource may be used to prepare an image for sharing external
-       * to the driver (e.g. via eglCreateImage). To account for this, make
-       * sure to get rid of any compression that a consumer wouldn't know how
-       * to handle.
-       */
-      iris_foreach_batch(ice, batch) {
-         if (iris_batch_references(batch, res->bo))
-            iris_batch_flush(batch);
-      }
-
-      iris_resource_disable_aux(res);
-   }
-}
-
 /**
  * Reallocate a (non-external) resource into new storage, copying the data
  * and modifying the original resource to point at the new storage.
@@ -1619,24 +1585,18 @@ iris_reallocate_resource_inplace(struct iris_context *ice,
       }
    }
 
-   iris_flush_resource(&ice->ctx, &new_res->base.b);
-   iris_foreach_batch(ice, batch) {
-      if (iris_batch_references(batch, new_res->bo))
-         iris_batch_flush(batch);
-   }
-
    struct iris_bo *old_bo = old_res->bo;
    struct iris_bo *old_aux_bo = old_res->aux.bo;
    struct iris_bo *old_clear_color_bo = old_res->aux.clear_color_bo;
 
    /* Replace the structure fields with the new ones */
    old_res->base.b.bind = templ.bind;
+   old_res->surf = new_res->surf;
    old_res->bo = new_res->bo;
    old_res->aux.surf = new_res->aux.surf;
    old_res->aux.bo = new_res->aux.bo;
    old_res->aux.offset = new_res->aux.offset;
-   old_res->aux.extra_aux.surf = new_res->aux.extra_aux.surf;
-   old_res->aux.extra_aux.offset = new_res->aux.extra_aux.offset;
+   old_res->aux.comp_ctrl_surf_offset = new_res->aux.comp_ctrl_surf_offset;
    old_res->aux.clear_color_bo = new_res->aux.clear_color_bo;
    old_res->aux.clear_color_offset = new_res->aux.clear_color_offset;
    old_res->aux.usage = new_res->aux.usage;
@@ -1664,41 +1624,43 @@ iris_reallocate_resource_inplace(struct iris_context *ice,
 }
 
 static void
-iris_resource_disable_suballoc_on_first_query(struct pipe_screen *pscreen,
-                                              struct pipe_context *ctx,
-                                              struct iris_resource *res)
+iris_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
 {
-   if (iris_bo_is_real(res->bo))
-      return;
+   struct iris_context *ice = (struct iris_context *)ctx;
+   struct iris_resource *res = (void *) resource;
+   const struct isl_drm_modifier_info *mod = res->mod_info;
+   bool newly_external = false;
 
-   assert(!(res->base.b.bind & PIPE_BIND_SHARED));
-
-   bool destroy_context;
-   if (ctx) {
-      ctx = threaded_context_unwrap_sync(ctx);
-      destroy_context = false;
-   } else {
-      /* We need to execute a blit on some GPU context, but the DRI layer
-       * often doesn't give us one.  So we have to invent a temporary one.
-       *
-       * We can't store a permanent context in the screen, as it would cause
-       * circular refcounting where screens reference contexts that reference
-       * resources, while resources reference screens...causing nothing to be
-       * freed.  So we just create and destroy a temporary one here.
-       */
-      ctx = iris_create_context(pscreen, NULL, 0);
-      destroy_context = true;
+   /* flush_resource() may be used to prepare an image for sharing externally
+    * with other clients (e.g. via eglCreateImage).  To account for this, we
+    * make sure to eliminate suballocation and any compression that a consumer
+    * wouldn't know how to handle.
+    */
+   if (!iris_bo_is_real(res->bo)) {
+      assert(!(res->base.b.bind & PIPE_BIND_SHARED));
+      iris_reallocate_resource_inplace(ice, res, PIPE_BIND_SHARED);
+      assert(res->base.b.bind & PIPE_BIND_SHARED);
+      newly_external = true;
    }
 
-   struct iris_context *ice = (struct iris_context *)ctx;
+   iris_resource_prepare_access(ice, res,
+                                0, INTEL_REMAINING_LEVELS,
+                                0, INTEL_REMAINING_LAYERS,
+                                mod ? res->aux.usage : ISL_AUX_USAGE_NONE,
+                                mod ? mod->supports_clear_color : false);
 
-   iris_reallocate_resource_inplace(ice, res, PIPE_BIND_SHARED);
-   assert(res->base.b.bind & PIPE_BIND_SHARED);
+   bool disable_aux = !res->mod_info && res->aux.usage != ISL_AUX_USAGE_NONE;
 
-   if (destroy_context)
-      iris_destroy_context(ctx);
+   if (newly_external || disable_aux) {
+      iris_foreach_batch(ice, batch) {
+         if (iris_batch_references(batch, res->bo))
+            iris_batch_flush(batch);
+      }
+   }
+
+   if (disable_aux)
+      iris_resource_disable_aux(res);
 }
-
 
 static void
 iris_resource_disable_aux_on_first_query(struct pipe_resource *resource,
@@ -1747,7 +1709,6 @@ iris_resource_get_param(struct pipe_screen *pscreen,
    unsigned handle;
 
    iris_resource_disable_aux_on_first_query(resource, handle_usage);
-   iris_resource_disable_suballoc_on_first_query(pscreen, ctx, res);
 
    struct iris_bo *bo = wants_cc ? res->aux.clear_color_bo :
                         wants_aux ? res->aux.bo : res->bo;
@@ -1765,27 +1726,64 @@ iris_resource_get_param(struct pipe_screen *pscreen,
       }
       return true;
    case PIPE_RESOURCE_PARAM_STRIDE:
-      *value = wants_cc ? 64 :
-               wants_aux ? res->aux.surf.row_pitch_B : res->surf.row_pitch_B;
+      if (wants_cc) {
+         *value = ISL_DRM_CC_PLANE_PITCH_B;
+      } else if (wants_aux) {
+         *value = screen->devinfo->has_aux_map ?
+                  res->surf.row_pitch_B / INTEL_AUX_MAP_MAIN_PITCH_SCALEDOWN :
+                  res->aux.surf.row_pitch_B;
+      } else {
+         *value = res->surf.row_pitch_B;
+      }
 
       /* Mesa's implementation of eglCreateImage rejects strides of zero (see
        * dri2_check_dma_buf_attribs). Ensure we return a non-zero stride as
        * this value may be queried from GBM and passed into EGL.
        *
-       * Also, although modifiers which use a clear color plane specify that
-       * the plane's pitch should be ignored, some kernels have been found to
-       * require 64-byte alignment.
+       * We make an exception for buffers. For OpenCL gl_sharing we have to
+       * support exporting buffers, for which we report a stride of 0 here.
        */
-      assert(*value != 0 && (!wants_cc || *value % 64 == 0));
+      assert(*value != 0 || resource->target == PIPE_BUFFER);
 
       return true;
    case PIPE_RESOURCE_PARAM_OFFSET:
-      *value = wants_cc ? res->aux.clear_color_offset :
-               wants_aux ? res->aux.offset : res->offset;
+      if (wants_cc) {
+         *value = res->aux.clear_color_offset;
+      } else if (wants_aux) {
+         *value = screen->devinfo->has_aux_map ?
+                  res->aux.comp_ctrl_surf_offset :
+                  res->aux.offset;
+      } else {
+         *value = res->offset;
+      }
       return true;
    case PIPE_RESOURCE_PARAM_MODIFIER:
-      *value = res->mod_info ? res->mod_info->modifier :
-               tiling_to_modifier(isl_tiling_to_i915_tiling(res->surf.tiling));
+      if (res->mod_info) {
+         *value = res->mod_info->modifier;
+      } else {
+         /* We restrict ourselves to modifiers without CCS for several
+          * reasons:
+          *
+          *    - Mesa's implementation of EGL_MESA_image_dma_buf_export
+          *      currently only exports a single plane (see
+          *      dri2_export_dma_buf_image_mesa), but for some modifiers,
+          *      CCS exists in a second plane.
+          *
+          *    - Even if we returned CCS modifiers, iris currently
+          *      resolves away compression during the export/flushing process
+          *      (see iris_flush_resource). So, only uncompressed data is
+          *      exposed anyways.
+          */
+         switch (res->surf.tiling) {
+         case ISL_TILING_4:      *value = I915_FORMAT_MOD_4_TILED; break;
+         case ISL_TILING_Y0:     *value = I915_FORMAT_MOD_Y_TILED; break;
+         case ISL_TILING_X:      *value = I915_FORMAT_MOD_X_TILED; break;
+         case ISL_TILING_LINEAR: *value =  DRM_FORMAT_MOD_LINEAR;  break;
+         default:
+            assert("no modifier mapped for resource's tiling");
+            return false;
+         }
+      }
       return true;
    case PIPE_RESOURCE_PARAM_HANDLE_TYPE_SHARED:
       if (!wants_aux)
@@ -1837,7 +1835,6 @@ iris_resource_get_handle(struct pipe_screen *pscreen,
       res->mod_info && isl_drm_modifier_has_aux(res->mod_info->modifier);
 
    iris_resource_disable_aux_on_first_query(resource, usage);
-   iris_resource_disable_suballoc_on_first_query(pscreen, ctx, res);
 
    assert(iris_bo_is_real(res->bo));
 
@@ -1846,21 +1843,28 @@ iris_resource_get_handle(struct pipe_screen *pscreen,
        isl_drm_modifier_plane_is_clear_color(res->mod_info->modifier,
                                              whandle->plane)) {
       bo = res->aux.clear_color_bo;
-      whandle->offset = res->aux.clear_color_offset;
    } else if (mod_with_aux && whandle->plane > 0) {
       bo = res->aux.bo;
-      whandle->stride = res->aux.surf.row_pitch_B;
-      whandle->offset = res->aux.offset;
    } else {
-      /* If this is a buffer, stride should be 0 - no need to special case */
-      whandle->stride = res->surf.row_pitch_B;
       bo = res->bo;
    }
 
+   uint64_t stride;
+   iris_resource_get_param(pscreen, ctx, resource, whandle->plane, 0, 0,
+                           PIPE_RESOURCE_PARAM_STRIDE, usage, &stride);
+
+   uint64_t offset;
+   iris_resource_get_param(pscreen, ctx, resource, whandle->plane, 0, 0,
+                           PIPE_RESOURCE_PARAM_OFFSET, usage, &offset);
+
+   uint64_t modifier;
+   iris_resource_get_param(pscreen, ctx, resource, whandle->plane, 0, 0,
+                           PIPE_RESOURCE_PARAM_MODIFIER, usage, &modifier);
+
+   whandle->stride = stride;
+   whandle->offset = offset;
+   whandle->modifier = modifier;
    whandle->format = res->external_format;
-   whandle->modifier =
-      res->mod_info ? res->mod_info->modifier
-                    : tiling_to_modifier(isl_tiling_to_i915_tiling(res->surf.tiling));
 
 #ifndef NDEBUG
    enum isl_aux_usage allowed_usage =
@@ -2085,7 +2089,7 @@ iris_map_copy_region(struct iris_transfer *map)
 
       unsigned row_pitch_B = 0;
 
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
       /* Staging buffers for stall-avoidance blits don't always have the
        * same restrictions on stride as the original buffer.  For example,
        * the original buffer may be used for scanout, while the staging
@@ -2591,7 +2595,7 @@ iris_transfer_map(struct pipe_context *ctx,
       usage |= PIPE_MAP_DIRECTLY;
 
    /* TODO: Teach iris_map_tiled_memcpy about Tile64... */
-   if (res->surf.tiling == ISL_TILING_64)
+   if (isl_tiling_is_64(res->surf.tiling))
       usage &= ~PIPE_MAP_DIRECTLY;
 
    if (!(usage & PIPE_MAP_DIRECTLY)) {
@@ -2719,7 +2723,7 @@ iris_texture_subdata(struct pipe_context *ctx,
     * TODO: Teach isl_memcpy_linear_to_tiled about Tile64...
     */
    if (surf->tiling == ISL_TILING_LINEAR ||
-       surf->tiling == ISL_TILING_64 ||
+       isl_tiling_is_64(res->surf.tiling) ||
        isl_aux_usage_has_compression(res->aux.usage) ||
        resource_is_busy(ice, res) ||
        iris_bo_mmap_mode(res->bo) == IRIS_MMAP_NONE) {

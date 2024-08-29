@@ -81,6 +81,7 @@ BFI_MASK = immediate("bfi_mask")
 LOD_MODE = immediate("lod_mode", "enum agx_lod_mode")
 PIXEL_OFFSET = immediate("pixel_offset")
 STACK_SIZE = immediate("stack_size", 'int16_t')
+EXPLICIT_COORDS = immediate("explicit_coords", "bool")
 
 DIM = enum("dim", {
     0: '1d',
@@ -123,7 +124,8 @@ SR = enum("sr", {
    8:  'dispatch_threads_per_threadgroup.x',
    9:  'dispatch_threads_per_threadgroup.y',
    10: 'dispatch_threads_per_threadgroup.z',
-   20: 'core_index',
+   14: 'samples_log2',
+   20: 'core_id',
    21: 'vm_slot',
    48: 'thread_position_in_threadgroup.x',
    49: 'thread_position_in_threadgroup.y',
@@ -132,7 +134,9 @@ SR = enum("sr", {
    52: 'thread_index_in_subgroup',
    53: 'subgroup_index_in_threadgroup',
    56: 'active_thread_index_in_quad',
+   57: 'total_active_threads_in_quad',
    58: 'active_thread_index_in_subgroup',
+   59: 'total_active_threads_in_subgroup',
    60: 'coverage_mask',
    62: 'backfacing',
    63: 'is_active_thread',
@@ -140,9 +144,9 @@ SR = enum("sr", {
    81: 'thread_position_in_grid.y',
    82: 'thread_position_in_grid.z',
    124: 'input_sample_mask',
-   144: 'opfifo_cmd',
-   146: 'opfifo_data_l',
-   147: 'opfifo_data_h',
+   144: 'helper_op',
+   146: 'helper_arg_l',
+   147: 'helper_arg_h',
 })
 
 ATOMIC_OPC = enum("atomic_opc", {
@@ -167,12 +171,27 @@ INTERPOLATION = enum("interpolation", {
     3: 'sample_register',
 })
 
+SIMD_OP = enum("simd_op", {
+    0b00000: 'and',
+    0b00001: 'fadd',
+    0b00010: 'or',
+    0b00011: 'fmul',
+    0b00100: 'xor',
+    0b00101: 'fmin',
+    0b00111: 'fmax',
+    0b10000: 'iadd',
+    0b10100: 'smin',
+    0b10110: 'smax',
+    0b11100: 'umin',
+    0b11110: 'umax',
+})
+
 FUNOP = lambda x: (x << 28)
 FUNOP_MASK = FUNOP((1 << 14) - 1)
 
 def funop(name, opcode, schedule_class = "none"):
-   op(name, (0x0A | L | (opcode << 28),
-      0x3F | L | (((1 << 14) - 1) << 28), 6, _),
+   op(name, (0x0A | (opcode << 28),
+      0x3F | (((1 << 14) - 1) << 28), 4, 6),
       srcs = 1, is_float = True, schedule_class = schedule_class)
 
 def iunop(name, opcode):
@@ -245,22 +264,28 @@ op("asr",
       encoding_32 = (0x2E | L | (0x1 << 26), 0x7F | L | (0x3 << 26), 8, _),
       srcs = 2)
 
-def subgroup_op(name, op1, op2):
-    exact      = 0b01101111 | L | (op1 << 47) | (op2 << 26)
-    exact_mask = 0b11111111 | L | (1   << 47) | (0xFFFF << 26)
+def subgroup_op(name, opc):
+    exact      = 0b01101111 | L | (opc << 29)
+    exact_mask = 0b11111111 | L | (0x3 << 29)
 
-    op(name, encoding_32 = (exact, exact_mask, 6, _), srcs = 1)
+    op(name, encoding_32 = (exact, exact_mask, 6, _), srcs = 1, imms = [SIMD_OP])
 
-subgroup_op("simd_prefix_iadd", 1, 0b0000000000011000)
-subgroup_op("simd_iadd", 1, 0b0000000000001000)
+subgroup_op("quad_reduce", 0x0)
+subgroup_op("simd_reduce", 0x1)
+subgroup_op("quad_prefix", 0x2)
+subgroup_op("simd_prefix", 0x3)
 
-op("simd_shuffle",
-    encoding_32 = (0b01101111 | (1 << 26),
-                   0xFF | L | (1 << 47) | (3 << 38) | (3 << 26), 6, _),
-    srcs = 2)
+for window, w_bit in [('quad_', 0), ('', 1)]:
+    for s, shuffle in enumerate(['', '_xor', '_up', '_down']):
+        op(f"{window}shuffle{shuffle}",
+            encoding_32 = (0b01101111 | (w_bit << 26) | (s << 38),
+                           0xFF | L | (1 << 47) | (3 << 38) | (3 << 26), 6, _),
+            srcs = 2)
 
-for T, T_bit, cond in [('f', 0, FCOND), ('i', 1, ICOND)]:
-    for window, w_bit in [('quad_', 0), ('', 1)]:
+    # Pseudo-instruction ballotting a boolean
+    op(f"{window}ballot", _, srcs = 1)
+
+    for T, T_bit, cond in [('f', 0, FCOND), ('i', 1, ICOND)]:
         op(f"{T}cmp_{window}ballot",
            encoding_32 = (0b0100010 | (T_bit << 4) | (w_bit << 48), 0, 8, _),
            srcs = 2, imms = [cond, INVERT_COND])
@@ -319,7 +344,7 @@ op("local_store",
 # TODO: Consider permitting the short form
 op("uniform_store",
       encoding_32 = ((0b111 << 27) | 0b1000101 | (1 << 47), 0, 8, _),
-      dests = 0, srcs = 2, can_eliminate = False)
+      dests = 0, srcs = 2, imms = [MASK], can_eliminate = False)
 
 # sources are value, base, index
 op("atomic",
@@ -336,7 +361,7 @@ op("local_atomic",
 op("wait", (0x38, 0xFF, 2, _), dests = 0,
       can_eliminate = False, imms = [SCOREBOARD], schedule_class = "invalid")
 
-for (suffix, schedule_class) in [("", "none"), ("_coverage", "coverage")]:
+for (suffix, schedule_class) in [("", "none"), ("_coverage", "coverage"), ("_barrier", "barrier")]:
     op(f"get_sr{suffix}", (0x72, 0x7F | L, 4, _), dests = 1, imms = [SR],
        schedule_class = schedule_class, can_reorder = schedule_class == "none")
 
@@ -347,13 +372,14 @@ op("sample_mask", (0x7fc1, 0xffff, 6, _), dests = 0, srcs = 2,
 op("zs_emit", (0x41, 0xFF | L, 4, _), dests = 0, srcs = 2,
               can_eliminate = False, imms = [ZS], schedule_class = "coverage")
 
-# Essentially same encoding. Last source is the sample mask
-op("ld_tile", (0x49, 0x7F, 8, _), dests = 1, srcs = 1,
-        imms = [FORMAT, MASK, PIXEL_OFFSET], can_reorder = False,
+# Sources: sample mask, explicit coords (if present)
+op("ld_tile", (0x49, 0x7F, 8, _), dests = 1, srcs = 2,
+        imms = [FORMAT, MASK, PIXEL_OFFSET, EXPLICIT_COORDS], can_reorder = False,
         schedule_class = "coverage")
 
-op("st_tile", (0x09, 0x7F, 8, _), dests = 0, srcs = 2,
-      can_eliminate = False, imms = [FORMAT, MASK, PIXEL_OFFSET],
+# Sources: value, sample mask, explicit coords (if present)
+op("st_tile", (0x09, 0x7F, 8, _), dests = 0, srcs = 3,
+      can_eliminate = False, imms = [FORMAT, MASK, PIXEL_OFFSET, EXPLICIT_COORDS],
       schedule_class = "coverage")
 
 for (name, exact) in [("any", 0xC000), ("none", 0xC020), ("none_after", 0xC020)]:
@@ -406,10 +432,11 @@ op("signal_pix", (0x58, 0xFF, 4, _), dests = 0, imms = [WRITEOUT],
 op("image_write", (0xF1 | (1 << 23) | (9 << 43), 0xFF, 6, 8), dests = 0, srcs = 5, imms
    = [DIM], can_eliminate = False, schedule_class = "store")
 
-# Sources are the image, the offset within shared memory, and the layer.
+# Sources are the image, the offset within shared memory, and the coordinates
+# (or just the layer if implicit).
 # TODO: Do we need the short encoding?
 op("block_image_store", (0xB1, 0xFF, 10, _), dests = 0, srcs = 3,
-   imms = [FORMAT, DIM], can_eliminate = False, schedule_class = "store")
+   imms = [FORMAT, DIM, EXPLICIT_COORDS], can_eliminate = False, schedule_class = "store")
 
 # Barriers
 op("threadgroup_barrier", (0x0068, 0xFFFF, 2, _), dests = 0, srcs = 0,
@@ -460,9 +487,6 @@ op("stack_store",
 # Convenient aliases.
 op("mov", _, srcs = 1)
 op("not", _, srcs = 1)
-op("xor", _, srcs = 2)
-op("and", _, srcs = 2)
-op("or", _, srcs = 2)
 
 op("collect", _, srcs = VARIABLE)
 op("split", _, srcs = 1, dests = VARIABLE)
@@ -473,6 +497,13 @@ op("unit_test", _, dests = 0, srcs = 1, can_eliminate = False)
 # Like mov, but takes a register and can only appear at the start. Guaranteed
 # to be coalesced during RA, rather than lowered to a real move. 
 op("preload", _, srcs = 1, schedule_class = "preload")
+
+# Opposite of preload. Exports a scalar value to a particular register at the
+# end of the shader part. Must only appear after the logical end of the exit
+# block, this avoids special casing the source's liveness. Logically all exports
+# happen in parallel at the end of the shader part.
+op("export", _, dests = 0, srcs = 1, imms = [IMM], can_eliminate = False,
+   schedule_class = "invalid")
 
 # Pseudo-instructions to set the nesting counter. Lowers to r0l writes after RA.
 op("begin_cf", _, dests = 0, can_eliminate = False)

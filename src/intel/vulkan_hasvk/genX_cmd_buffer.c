@@ -34,9 +34,8 @@
 #include "common/intel_l3_config.h"
 #include "genxml/gen_macros.h"
 #include "genxml/genX_pack.h"
-#include "genxml/genX_rt_pack.h"
 #include "common/intel_guardband.h"
-#include "compiler/brw_prim.h"
+#include "compiler/elk/elk_prim.h"
 
 #include "nir/nir_xfb_info.h"
 
@@ -415,18 +414,33 @@ anv_can_hiz_clear_ds_view(struct anv_device *device,
                               VK_IMAGE_ASPECT_DEPTH_BIT,
                               VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                               layout);
-   if (!blorp_can_hiz_clear_depth(device->info,
-                                  &iview->image->planes[0].primary_surface.isl,
-                                  clear_aux_usage,
-                                  iview->planes[0].isl.base_level,
-                                  iview->planes[0].isl.base_array_layer,
-                                  render_area.offset.x,
-                                  render_area.offset.y,
-                                  render_area.offset.x +
-                                  render_area.extent.width,
-                                  render_area.offset.y +
-                                  render_area.extent.height))
+   if (!isl_aux_usage_has_fast_clears(clear_aux_usage))
       return false;
+
+   assert(GFX_VER == 8);
+   assert(iview->vk.format != VK_FORMAT_D16_UNORM_S8_UINT);
+   if (iview->vk.format == VK_FORMAT_D16_UNORM) {
+      /* From the BDW PRM, Vol 7, "Depth Buffer Clear":
+       *
+       *   The following restrictions apply only if the depth buffer surface
+       *   type is D16_UNORM and software does not use the “full surf clear”:
+       *
+       *   If Number of Multisamples is NUMSAMPLES_1, the rectangle must be
+       *   aligned to an 8x4 pixel block relative to the upper left corner of
+       *   the depth buffer, and contain an integer number of these pixel
+       *   blocks, and all 8x4 pixels must be lit.
+       *
+       * Simply disable partial clears for D16 on BDW.
+       */
+      if (render_area.offset.x > 0 ||
+          render_area.offset.y > 0 ||
+          render_area.extent.width !=
+          u_minify(iview->vk.extent.width, iview->vk.base_mip_level) ||
+          render_area.extent.height !=
+          u_minify(iview->vk.extent.height, iview->vk.base_mip_level)) {
+         return false;
+      }
+   }
 
    if (depth_clear_value != ANV_HZ_FC_VAL)
       return false;
@@ -744,38 +758,53 @@ genX(cmd_buffer_mark_image_written)(struct anv_cmd_buffer *cmd_buffer,
 }
 
 static void
-init_fast_clear_color(struct anv_cmd_buffer *cmd_buffer,
+set_image_clear_color(struct anv_cmd_buffer *cmd_buffer,
                       const struct anv_image *image,
-                      VkImageAspectFlagBits aspect)
+                      const VkImageAspectFlags aspect,
+                      const union isl_color_value clear_color)
 {
-   assert(cmd_buffer && image);
-   assert(image->vk.aspects & VK_IMAGE_ASPECT_ANY_COLOR_BIT_ANV);
+   uint32_t plane = anv_image_aspect_to_plane(image, aspect);
+   enum isl_format format = image->planes[plane].primary_surface.isl.format;
 
-   set_image_fast_clear_state(cmd_buffer, image, aspect,
-                              ANV_FAST_CLEAR_NONE);
-
-   /* Initialize the struct fields that are accessed for fast-clears so that
-    * the HW restrictions on the field values are satisfied.
-    */
    struct anv_address addr =
       anv_image_get_clear_color_addr(cmd_buffer->device, image, aspect);
+   assert(!anv_address_is_null(addr));
 
    anv_batch_emit(&cmd_buffer->batch, GENX(MI_STORE_DATA_IMM), sdi) {
       sdi.Address = addr;
       if (GFX_VERx10 >= 75) {
-         /* Pre-SKL, the dword containing the clear values also contains
-          * other fields, so we need to initialize those fields to match the
-          * values that would be in a color attachment.
+         /* On HSW+, the RENDER_SURFACE_STATE dword containing the clear
+          * values also contains other fields. The dword constructed here
+          * will later be copied onto a surface state as-is. So, initialize
+          * those fields to match the values that we typically expect in a
+          * surface.
+          *
+          * XXX: Handle other values for ShaderChannelSelect and
+          *      ResourceMinLOD.
           */
          sdi.ImmediateData = ISL_CHANNEL_SELECT_RED   << 25 |
                              ISL_CHANNEL_SELECT_GREEN << 22 |
                              ISL_CHANNEL_SELECT_BLUE  << 19 |
                              ISL_CHANNEL_SELECT_ALPHA << 16;
-      } else if (GFX_VER == 7) {
-         /* On IVB, the dword containing the clear values also contains
-          * other fields that must be zero or can be zero.
-          */
-         sdi.ImmediateData = 0;
+      }
+      if (isl_format_has_int_channel(format)) {
+         for (unsigned i = 0; i < 4; i++) {
+            assert(clear_color.u32[i] == 0 ||
+                   clear_color.u32[i] == 1);
+         }
+         sdi.ImmediateData |= (clear_color.u32[0] != 0) << 31;
+         sdi.ImmediateData |= (clear_color.u32[1] != 0) << 30;
+         sdi.ImmediateData |= (clear_color.u32[2] != 0) << 29;
+         sdi.ImmediateData |= (clear_color.u32[3] != 0) << 28;
+      } else {
+         for (unsigned i = 0; i < 4; i++) {
+            assert(clear_color.f32[i] == 0.0f ||
+                   clear_color.f32[i] == 1.0f);
+         }
+         sdi.ImmediateData |= (clear_color.f32[0] != 0.0f) << 31;
+         sdi.ImmediateData |= (clear_color.f32[1] != 0.0f) << 30;
+         sdi.ImmediateData |= (clear_color.f32[2] != 0.0f) << 29;
+         sdi.ImmediateData |= (clear_color.f32[3] != 0.0f) << 28;
       }
    }
 }
@@ -996,8 +1025,12 @@ transition_color_buffer(struct anv_cmd_buffer *cmd_buffer,
    }
 
    if (must_init_fast_clear_state) {
-      if (base_level == 0 && base_layer == 0)
-         init_fast_clear_color(cmd_buffer, image, aspect);
+      if (base_level == 0 && base_layer == 0) {
+         const union isl_color_value zero_color = {};
+         set_image_clear_color(cmd_buffer, image, aspect, zero_color);
+         set_image_fast_clear_state(cmd_buffer, image, aspect,
+                                    ANV_FAST_CLEAR_NONE);
+      }
    }
 
    if (must_init_aux_surface) {
@@ -1899,7 +1932,8 @@ genX(cmd_buffer_apply_pipe_flushes)(struct anv_cmd_buffer *cmd_buffer)
 
    if (trace_flush) {
       trace_intel_end_stall(&cmd_buffer->trace, bits,
-                            anv_pipe_flush_bit_to_ds_stall_flag, NULL);
+                            anv_pipe_flush_bit_to_ds_stall_flag,
+                            NULL, NULL, NULL, NULL);
    }
 }
 
@@ -2888,7 +2922,7 @@ cmd_buffer_emit_clip(struct anv_cmd_buffer *cmd_buffer)
 
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
    if (anv_pipeline_is_primitive(pipeline)) {
-      const struct brw_vue_prog_data *last =
+      const struct elk_vue_prog_data *last =
          anv_pipeline_get_last_vue_prog_data(pipeline);
       if (last->vue_map.slots_valid & VARYING_BIT_VIEWPORT) {
          clip.MaximumVPIndex = dyn->vp.viewport_count > 0 ?
@@ -3481,7 +3515,7 @@ update_dirty_vbs_for_gfx8_vb_flush(struct anv_cmd_buffer *cmd_buffer,
                                    uint32_t access_type)
 {
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    uint64_t vb_used = pipeline->vb_used;
    if (vs_prog_data->uses_firstvertex ||
@@ -3497,7 +3531,7 @@ update_dirty_vbs_for_gfx8_vb_flush(struct anv_cmd_buffer *cmd_buffer,
 
 ALWAYS_INLINE static void
 cmd_buffer_emit_vertex_constants_and_flush(struct anv_cmd_buffer *cmd_buffer,
-                                           const struct brw_vs_prog_data *vs_prog_data,
+                                           const struct elk_vs_prog_data *vs_prog_data,
                                            uint32_t base_vertex,
                                            uint32_t base_instance,
                                            uint32_t draw_id,
@@ -3529,7 +3563,7 @@ void genX(CmdDraw)(
 {
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -3583,7 +3617,7 @@ void genX(CmdDrawMultiEXT)(
 {
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -3634,7 +3668,7 @@ void genX(CmdDrawIndexed)(
 {
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -3690,7 +3724,7 @@ void genX(CmdDrawMultiIndexedEXT)(
 {
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -3810,7 +3844,7 @@ void genX(CmdDrawIndirectByteCountEXT)(
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    ANV_FROM_HANDLE(anv_buffer, counter_buffer, counterBuffer);
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    /* firstVertex is always zero for this draw function */
    const uint32_t firstVertex = 0;
@@ -3921,7 +3955,7 @@ void genX(CmdDrawIndirect)(
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    ANV_FROM_HANDLE(anv_buffer, buffer, _buffer);
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -3978,7 +4012,7 @@ void genX(CmdDrawIndexedIndirect)(
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    ANV_FROM_HANDLE(anv_buffer, buffer, _buffer);
    struct anv_graphics_pipeline *pipeline = cmd_buffer->state.gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -4029,12 +4063,8 @@ void genX(CmdDrawIndexedIndirect)(
 static struct mi_value
 prepare_for_draw_count_predicate(struct anv_cmd_buffer *cmd_buffer,
                                  struct mi_builder *b,
-                                 struct anv_buffer *count_buffer,
-                                 uint64_t countBufferOffset)
+                                 struct anv_address count_address)
 {
-   struct anv_address count_address =
-         anv_address_add(count_buffer->address, countBufferOffset);
-
    struct mi_value ret = mi_imm(0);
 
    if (cmd_buffer->state.conditional_render_enabled) {
@@ -4145,7 +4175,7 @@ void genX(CmdDrawIndirectCount)(
    ANV_FROM_HANDLE(anv_buffer, count_buffer, _countBuffer);
    struct anv_cmd_state *cmd_state = &cmd_buffer->state;
    struct anv_graphics_pipeline *pipeline = cmd_state->gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -4160,9 +4190,10 @@ void genX(CmdDrawIndirectCount)(
 
    struct mi_builder b;
    mi_builder_init(&b, cmd_buffer->device->info, &cmd_buffer->batch);
+   struct anv_address count_address =
+      anv_address_add(count_buffer->address, countBufferOffset);
    struct mi_value max =
-      prepare_for_draw_count_predicate(cmd_buffer, &b,
-                                       count_buffer, countBufferOffset);
+      prepare_for_draw_count_predicate(cmd_buffer, &b, count_address);
 
    for (uint32_t i = 0; i < maxDrawCount; i++) {
       struct anv_address draw = anv_address_add(buffer->address, offset);
@@ -4196,7 +4227,8 @@ void genX(CmdDrawIndirectCount)(
 
    mi_value_unref(&b, max);
 
-   trace_intel_end_draw_indirect_count(&cmd_buffer->trace, maxDrawCount);
+   trace_intel_end_draw_indirect_count(&cmd_buffer->trace,
+                                       anv_address_utrace(count_address));
 }
 
 void genX(CmdDrawIndexedIndirectCount)(
@@ -4213,7 +4245,7 @@ void genX(CmdDrawIndexedIndirectCount)(
    ANV_FROM_HANDLE(anv_buffer, count_buffer, _countBuffer);
    struct anv_cmd_state *cmd_state = &cmd_buffer->state;
    struct anv_graphics_pipeline *pipeline = cmd_state->gfx.pipeline;
-   const struct brw_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
+   const struct elk_vs_prog_data *vs_prog_data = get_vs_prog_data(pipeline);
 
    if (anv_batch_has_error(&cmd_buffer->batch))
       return;
@@ -4228,9 +4260,10 @@ void genX(CmdDrawIndexedIndirectCount)(
 
    struct mi_builder b;
    mi_builder_init(&b, cmd_buffer->device->info, &cmd_buffer->batch);
+   struct anv_address count_address =
+      anv_address_add(count_buffer->address, countBufferOffset);
    struct mi_value max =
-      prepare_for_draw_count_predicate(cmd_buffer, &b,
-                                       count_buffer, countBufferOffset);
+      prepare_for_draw_count_predicate(cmd_buffer, &b, count_address);
 
    for (uint32_t i = 0; i < maxDrawCount; i++) {
       struct anv_address draw = anv_address_add(buffer->address, offset);
@@ -4265,8 +4298,8 @@ void genX(CmdDrawIndexedIndirectCount)(
 
    mi_value_unref(&b, max);
 
-   trace_intel_end_draw_indexed_indirect_count(&cmd_buffer->trace, maxDrawCount);
-
+   trace_intel_end_draw_indexed_indirect_count(&cmd_buffer->trace,
+                                               anv_address_utrace(count_address));
 }
 
 void genX(CmdBeginTransformFeedbackEXT)(
@@ -4507,7 +4540,7 @@ anv_cmd_buffer_push_base_group_id(struct anv_cmd_buffer *cmd_buffer,
 static inline void
 emit_gpgpu_walker(struct anv_cmd_buffer *cmd_buffer,
                   const struct anv_compute_pipeline *pipeline, bool indirect,
-                  const struct brw_cs_prog_data *prog_data,
+                  const struct elk_cs_prog_data *prog_data,
                   uint32_t groupCountX, uint32_t groupCountY,
                   uint32_t groupCountZ)
 {
@@ -4515,8 +4548,8 @@ emit_gpgpu_walker(struct anv_cmd_buffer *cmd_buffer,
       cmd_buffer->state.conditional_render_enabled;
 
    const struct intel_device_info *devinfo = pipeline->base.device->info;
-   const struct brw_cs_dispatch_info dispatch =
-      brw_cs_get_dispatch_info(devinfo, prog_data, NULL);
+   const struct intel_cs_dispatch_info dispatch =
+      elk_cs_get_dispatch_info(devinfo, prog_data, NULL);
 
    anv_batch_emit(&cmd_buffer->batch, GENX(GPGPU_WALKER), ggw) {
       ggw.IndirectParameterEnable      = indirect;
@@ -4538,7 +4571,7 @@ emit_gpgpu_walker(struct anv_cmd_buffer *cmd_buffer,
 static inline void
 emit_cs_walker(struct anv_cmd_buffer *cmd_buffer,
                const struct anv_compute_pipeline *pipeline, bool indirect,
-               const struct brw_cs_prog_data *prog_data,
+               const struct elk_cs_prog_data *prog_data,
                uint32_t groupCountX, uint32_t groupCountY,
                uint32_t groupCountZ)
 {
@@ -4557,7 +4590,7 @@ void genX(CmdDispatchBase)(
 {
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    struct anv_compute_pipeline *pipeline = cmd_buffer->state.compute.pipeline;
-   const struct brw_cs_prog_data *prog_data = get_cs_prog_data(pipeline);
+   const struct elk_cs_prog_data *prog_data = get_cs_prog_data(pipeline);
 
    anv_cmd_buffer_push_base_group_id(cmd_buffer, baseGroupX,
                                      baseGroupY, baseGroupZ);
@@ -4614,7 +4647,7 @@ void genX(CmdDispatchIndirect)(
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    ANV_FROM_HANDLE(anv_buffer, buffer, _buffer);
    struct anv_compute_pipeline *pipeline = cmd_buffer->state.compute.pipeline;
-   const struct brw_cs_prog_data *prog_data = get_cs_prog_data(pipeline);
+   const struct elk_cs_prog_data *prog_data = get_cs_prog_data(pipeline);
    struct anv_address addr = anv_address_add(buffer->address, offset);
    UNUSED struct anv_batch *batch = &cmd_buffer->batch;
 
@@ -5162,6 +5195,9 @@ void genX(CmdBeginRendering)(
             clear_view_mask &= ~1u;
             base_clear_layer++;
             clear_layer_count--;
+
+            set_image_clear_color(cmd_buffer, iview->image,
+                                  VK_IMAGE_ASPECT_COLOR_BIT, clear_color);
 
             if (isl_color_value_is_zero(clear_color,
                                         iview->planes[0].isl.format)) {
@@ -5937,20 +5973,6 @@ static uint32_t vk_to_intel_index_type(VkIndexType type)
    }
 }
 
-static uint32_t restart_index_for_type(VkIndexType type)
-{
-   switch (type) {
-   case VK_INDEX_TYPE_UINT8_EXT:
-      return UINT8_MAX;
-   case VK_INDEX_TYPE_UINT16:
-      return UINT16_MAX;
-   case VK_INDEX_TYPE_UINT32:
-      return UINT32_MAX;
-   default:
-      unreachable("invalid index type");
-   }
-}
-
 void genX(CmdBindIndexBuffer)(
     VkCommandBuffer                             commandBuffer,
     VkBuffer                                    _buffer,
@@ -5960,7 +5982,7 @@ void genX(CmdBindIndexBuffer)(
    ANV_FROM_HANDLE(anv_cmd_buffer, cmd_buffer, commandBuffer);
    ANV_FROM_HANDLE(anv_buffer, buffer, _buffer);
 
-   cmd_buffer->state.gfx.restart_index = restart_index_for_type(indexType);
+   cmd_buffer->state.gfx.restart_index = vk_index_to_restart(indexType);
    cmd_buffer->state.gfx.index_buffer = buffer;
    cmd_buffer->state.gfx.index_type = vk_to_intel_index_type(indexType);
    cmd_buffer->state.gfx.index_offset = offset;
@@ -6046,4 +6068,15 @@ void genX(cmd_emit_timestamp)(struct anv_batch *batch,
    default:
       unreachable("invalid");
    }
+}
+
+void genX(cmd_capture_data)(struct anv_batch *batch,
+                            struct anv_device *device,
+                            struct anv_address dst_addr,
+                            struct anv_address src_addr,
+                            uint32_t size_B)
+{
+   struct mi_builder b;
+   mi_builder_init(&b, device->info, batch);
+   mi_memcpy(&b, dst_addr, src_addr, size_B);
 }

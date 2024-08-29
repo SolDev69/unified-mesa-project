@@ -23,7 +23,7 @@
       when: on_success
 
 .intel-common-manual-rules:
-  stage: intel
+  stage: intel-postmerge
   rules:
     - changes:
         *intel_common_file_list
@@ -41,8 +41,8 @@
       when: on_success
 
 .i915g-manual-rules:
-  stage: intel
-  retry: !reference [.scheduled_pipeline-rules, retry]
+  stage: intel-postmerge
+  extends: .no-auto-retry
   rules:
     - !reference [.test, rules]
     - !reference [.gl-manual-rules, rules]
@@ -63,8 +63,8 @@
       when: on_success
 
 .crocus-manual-rules:
-  stage: intel
-  retry: !reference [.scheduled_pipeline-rules, retry]
+  stage: intel-postmerge
+  extends: .no-auto-retry
   rules:
     - !reference [.test, rules]
     - !reference [.anholt-farm-manual-rules, rules]
@@ -87,8 +87,8 @@
       when: on_success
 
 .iris-manual-rules:
-  stage: intel
-  retry: !reference [.scheduled_pipeline-rules, retry]
+  stage: intel-postmerge
+  extends: .no-auto-retry
   rules:
     - !reference [.test, rules]
     - !reference [.collabora-farm-manual-rules, rules]
@@ -101,8 +101,8 @@
 # to do duplicate the files lists to set the job to manual (see
 # .performance-rules)
 .iris-rules-performance:
-  stage: intel
-  retry: !reference [.scheduled_pipeline-rules, retry]
+  stage: performance
+  extends: .no-auto-retry
   rules:
     - !reference [.test, rules]
     - !reference [.collabora-farm-manual-rules, rules]
@@ -132,8 +132,8 @@
       when: on_success
 
 .anv-manual-rules:
-  stage: intel
-  retry: !reference [.scheduled_pipeline-rules, retry]
+  stage: intel-postmerge
+  extends: .no-auto-retry
   rules:
     - !reference [.test, rules]
     - !reference [.collabora-farm-manual-rules, rules]
@@ -155,8 +155,8 @@
       when: on_success
 
 .hasvk-manual-rules:
-  stage: intel
-  retry: !reference [.scheduled_pipeline-rules, retry]
+  stage: intel-postmerge
+  extends: .no-auto-retry
   rules:
     - !reference [.test, rules]
     - !reference [.anholt-farm-manual-rules, rules]
@@ -175,7 +175,7 @@
     - !reference [.anv-rules, rules]
 
 .intel-manual-rules:
-  stage: intel
+  stage: intel-postmerge
   rules:
     - !reference [.test, rules]
     - !reference [.iris-manual-rules, rules]
@@ -186,24 +186,39 @@
 .lava-acer-cb317-1h-c3z6-dedede:x86_64:
   variables:
     DEVICE_TYPE: acer-cb317-1h-c3z6-dedede
+    FARM: collabora
     FDO_CI_CONCURRENT: 3
     GPU_VERSION: iris-jsl
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-acer-cb317-1h-c3z6-dedede
+
+# Status: https://lava.collabora.dev/scheduler/device_type/acer-cbv514-1h-34uz-brya
+.lava-acer-cbv514-1h-34uz-brya:x86_64:
+  variables:
+    DEVICE_TYPE: acer-cbv514-1h-34uz-brya
+    FDO_CI_CONCURRENT: 9
+    GPU_VERSION: iris-adl
+    HWCI_KERNEL_MODULES: i915
+    RUNNER_TAG: mesa-ci-x86-64-lava-acer-cbv514-1h-34uz-brya
 
 # Status: https://lava.collabora.dev/scheduler/device_type/asus-C523NA-A20057-coral
 .lava-asus-C523NA-A20057-coral:x86_64:
   variables:
     DEVICE_TYPE: asus-C523NA-A20057-coral
+    FARM: collabora
     FDO_CI_CONCURRENT: 5
     GPU_VERSION: iris-apl
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-asus-C523NA-A20057-coral
 
 # Status: https://lava.collabora.dev/scheduler/device_type/hp-x360-12b-ca0010nr-n4020-octopus
 .lava-hp-x360-12b-ca0010nr-n4020-octopus:x86_64:
   variables:
     DEVICE_TYPE: hp-x360-12b-ca0010nr-n4020-octopus
+    FARM: collabora
     FDO_CI_CONCURRENT: 3
     GPU_VERSION: iris-glk
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-hp-x360-12b-ca0010nr-n4020-octopus
 
 # Status: https://lava.collabora.dev/scheduler/device_type/acer-cp514-2h-1130g7-volteer
@@ -211,8 +226,10 @@
   variables:
     BOOT_METHOD: depthcharge
     DEVICE_TYPE: acer-cp514-2h-1130g7-volteer
+    FARM: collabora
     FDO_CI_CONCURRENT: 9
     GPU_VERSION: anv-tgl
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-acer-cp514-2h-1130g7-volteer
 
 # Status: https://lava.collabora.dev/scheduler/device_type/acer-cp514-2h-1160g7-volteer
@@ -220,40 +237,50 @@
   variables:
     BOOT_METHOD: depthcharge
     DEVICE_TYPE: acer-cp514-2h-1160g7-volteer
+    FARM: collabora
     FDO_CI_CONCURRENT: 9
     GPU_VERSION: anv-tgl
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-acer-cp514-2h-1160g7-volteer
 
 # Status: https://lava.collabora.dev/scheduler/device_type/asus-C433TA-AJ0005-rammus
 .lava-asus-C433TA-AJ0005-rammus:x86_64:
   variables:
     DEVICE_TYPE: asus-C433TA-AJ0005-rammus
+    FARM: collabora
     FDO_CI_CONCURRENT: 5
     GPU_VERSION: iris-amly
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-asus-C433TA-AJ0005-rammus
 
 # Status: https://lava.collabora.dev/scheduler/device_type/hp-x360-14-G1-sona
 .lava-hp-x360-14-G1-sona:x86_64:
   variables:
     DEVICE_TYPE: hp-x360-14-G1-sona
+    FARM: collabora
     FDO_CI_CONCURRENT: 9
     GPU_VERSION: iris-kbl
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-hp-x360-14-G1-sona
 
 # Status: https://lava.collabora.dev/scheduler/device_type/dell-latitude-5400-8665U-sarien
 .lava-dell-latitude-5400-8665U-sarien:x86_64:
   variables:
     DEVICE_TYPE: dell-latitude-5400-8665U-sarien
+    FARM: collabora
     FDO_CI_CONCURRENT: 9
     GPU_VERSION: iris-whl
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-dell-latitude-5400-8665U-sarien
 
 # Status: https://lava.collabora.dev/scheduler/device_type/asus-C436FA-Flip-hatch
 .lava-asus-C436FA-Flip-hatch:x86_64:
   variables:
     DEVICE_TYPE: asus-C436FA-Flip-hatch
+    FARM: collabora
     FDO_CI_CONCURRENT: 9
     GPU_VERSION: iris-cml
+    HWCI_KERNEL_MODULES: i915
     RUNNER_TAG: mesa-ci-x86-64-lava-asus-C436FA-flip-hatch
 
 
@@ -389,6 +416,13 @@
     GPU_VERSION: intel-cml
 
 ## Intel (anv + iris)
+.intel-adl-test:
+  extends:
+    - .anv-test
+    - .intel-test
+  variables:
+    GPU_VERSION: intel-adl
+
 .intel-tgl-test:
   extends:
     - .anv-test

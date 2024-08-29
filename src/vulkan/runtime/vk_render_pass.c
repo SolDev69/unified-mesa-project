@@ -482,6 +482,11 @@ vk_common_CreateRenderPass2(VkDevice _device,
       subpass->attachment_count = num_subpass_attachments2(desc);
       subpass->attachments = next_subpass_attachment;
 
+      if (device->enabled_features.legacyDithering) {
+         subpass->legacy_dithering_enabled =
+            desc->flags & VK_SUBPASS_DESCRIPTION_ENABLE_LEGACY_DITHERING_BIT_EXT;
+      }
+
       /* From the Vulkan 1.3.204 spec:
        *
        *    VUID-VkRenderPassCreateInfo2-viewMask-03058
@@ -1586,6 +1591,7 @@ load_attachment(struct vk_command_buffer *cmd_buffer,
 
    VkRenderingInfo render = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .flags = VK_RENDERING_INPUT_ATTACHMENT_NO_CONCURRENT_WRITES_BIT_MESA,
       .renderArea = cmd_buffer->render_area,
       .layerCount = pass->is_multiview ? 1 : framebuffer->layers,
       .viewMask = pass->is_multiview ? view_mask : 0,
@@ -2107,6 +2113,7 @@ begin_subpass(struct vk_command_buffer *cmd_buffer,
 
    VkRenderingInfo rendering = {
       .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+      .flags = VK_RENDERING_INPUT_ATTACHMENT_NO_CONCURRENT_WRITES_BIT_MESA,
       .renderArea = cmd_buffer->render_area,
       .layerCount = pass->is_multiview ? 1 : framebuffer->layers,
       .viewMask = pass->is_multiview ? subpass->view_mask : 0,
@@ -2115,6 +2122,9 @@ begin_subpass(struct vk_command_buffer *cmd_buffer,
       .pDepthAttachment = &depth_attachment,
       .pStencilAttachment = &stencil_attachment,
    };
+
+   if (subpass->legacy_dithering_enabled)
+      rendering.flags |= VK_RENDERING_ENABLE_LEGACY_DITHERING_BIT_EXT;
 
    VkRenderingFragmentShadingRateAttachmentInfoKHR fsr_attachment;
    if (subpass->fragment_shading_rate_attachment) {

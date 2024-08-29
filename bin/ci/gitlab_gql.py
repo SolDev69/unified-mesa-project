@@ -9,7 +9,6 @@ from collections import OrderedDict
 from copy import deepcopy
 from dataclasses import dataclass, field
 from itertools import accumulate
-from os import getenv
 from pathlib import Path
 from subprocess import check_output
 from textwrap import dedent
@@ -17,6 +16,7 @@ from typing import Any, Iterable, Optional, Pattern, TypedDict, Union
 
 import yaml
 from filecache import DAY, filecache
+from gitlab_common import get_token_from_default_dir
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 from graphql import DocumentNode
@@ -34,18 +34,6 @@ Dag = dict[str, DagNode]
 
 
 StageSeq = OrderedDict[str, set[str]]
-TOKEN_DIR = Path(getenv("XDG_CONFIG_HOME") or Path.home() / ".config")
-
-
-def get_token_from_default_dir() -> str:
-    token_file = TOKEN_DIR / "gitlab-token"
-    try:
-        return str(token_file.resolve())
-    except FileNotFoundError as ex:
-        print(
-            f"Could not find {token_file}, please provide a token file as an argument"
-        )
-        raise ex
 
 
 def get_project_root_dir():
@@ -241,7 +229,7 @@ def traverse_dag_needs(jobs_metadata: Dag) -> None:
         partial = True
 
         while partial:
-            next_depth: set[str] = {n for dn in final_needs for n in jobs_metadata[dn]["needs"]}
+            next_depth: set[str] = {n for dn in final_needs if dn in jobs_metadata for n in jobs_metadata[dn]["needs"]}
             partial: bool = not final_needs.issuperset(next_depth)
             final_needs = final_needs.union(next_depth)
 
@@ -337,16 +325,24 @@ def create_job_needs_dag(gl_gql: GitlabGQL, params, disable_cache: bool = True) 
     return final_dag
 
 
-def filter_dag(dag: Dag, regex: Pattern) -> Dag:
-    jobs_with_regex: set[str] = {job for job in dag if regex.fullmatch(job)}
-    return Dag({job: data for job, data in dag.items() if job in sorted(jobs_with_regex)})
+def filter_dag(
+    dag: Dag, job_name_regex: Pattern, include_stage_regex: Pattern, exclude_stage_regex: Pattern
+) -> Dag:
+    filtered_jobs: Dag = Dag({})
+    for (job, data) in dag.items():
+        if not job_name_regex.fullmatch(job):
+            continue
+        if not include_stage_regex.fullmatch(data["stage"]):
+            continue
+        if exclude_stage_regex.fullmatch(data["stage"]):
+            continue
+        filtered_jobs[job] = data
+    return filtered_jobs
 
 
 def print_dag(dag: Dag) -> None:
-    for job, data in dag.items():
-        print(f"{job}:")
-        print(f"\t{' '.join(data['needs'])}")
-        print()
+    for job, data in sorted(dag.items()):
+        print(f"{job}:\n\t{' '.join(data['needs'])}\n")
 
 
 def fetch_merged_yaml(gl_gql: GitlabGQL, params) -> dict[str, Any]:
@@ -355,8 +351,12 @@ def fetch_merged_yaml(gl_gql: GitlabGQL, params) -> dict[str, Any]:
       - local: .gitlab-ci.yml
     """)
     raw_response = gl_gql.query("job_details.gql", params)
-    if merged_yaml := raw_response["ciConfig"]["mergedYaml"]:
+    ci_config = raw_response["ciConfig"]
+    if merged_yaml := ci_config["mergedYaml"]:
         return yaml.safe_load(merged_yaml)
+    if "errors" in ci_config:
+        for error in ci_config["errors"]:
+            print(error)
 
     gl_gql.invalidate_query_cache()
     raise ValueError(
@@ -482,7 +482,22 @@ def parse_args() -> Namespace:
         "--regex",
         type=str,
         required=False,
+        default=".*",
         help="Regex pattern for the job name to be considered",
+    )
+    parser.add_argument(
+        "--include-stage",
+        type=str,
+        required=False,
+        default=".*",
+        help="Regex pattern for the stage name to be considered",
+    )
+    parser.add_argument(
+        "--exclude-stage",
+        type=str,
+        required=False,
+        default="^$",
+        help="Regex pattern for the stage name to be excluded",
     )
     mutex_group_print = parser.add_mutually_exclusive_group()
     mutex_group_print.add_argument(
@@ -525,8 +540,7 @@ def main():
             gl_gql, {"projectPath": args.project_path, "iid": iid}, disable_cache=True
         )
 
-        if args.regex:
-            dag = filter_dag(dag, re.compile(args.regex))
+        dag = filter_dag(dag, re.compile(args.regex), re.compile(args.include_stage), re.compile(args.exclude_stage))
 
         print_dag(dag)
 

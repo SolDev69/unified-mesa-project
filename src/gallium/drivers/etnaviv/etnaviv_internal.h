@@ -63,8 +63,6 @@
 
 /* GPU chip 3D specs */
 struct etna_specs {
-   /* HALTI (gross architecture) level. -1 for pre-HALTI. */
-   int halti : 8;
    /* supports SUPERTILE (64x64) tiling? */
    unsigned can_supertile : 1;
    /* needs z=(z+w)/2, for older GCxxx */
@@ -143,6 +141,24 @@ struct etna_specs {
    unsigned pixel_pipes;
    /* number of constants */
    unsigned num_constants;
+   /* number of NN cores */
+   unsigned nn_core_count;
+   /* architecture version of NN cores */
+   unsigned nn_core_version;
+   /* number of MAD units per NN core */
+   unsigned nn_mad_per_core;
+   /* number of TP cores */
+   unsigned tp_core_count;
+   /* Size of on-chip SRAM */
+   unsigned on_chip_sram_size;
+   /* Size of SRAM behind AXI */
+   unsigned axi_sram_size;
+   /* Number of bits for zero run-length compression */
+   unsigned nn_zrl_bits;
+   /* Input buffer size, determines tile size */
+   unsigned nn_input_buffer_depth;
+   /* Accumulation buffer size, determines tile size */
+   unsigned nn_accum_buffer_depth;
 };
 
 /* Compiled Gallium state. All the different compiled state atoms are woven

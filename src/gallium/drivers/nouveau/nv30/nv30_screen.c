@@ -24,7 +24,7 @@
  */
 
 #include <xf86drm.h>
-#include <nouveau_drm.h>
+#include "drm-uapi/nouveau_drm.h"
 #include "util/format/u_format.h"
 #include "util/format/u_format_s3tc.h"
 #include "util/u_screen.h"
@@ -201,10 +201,6 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_BUFFER_SAMPLER_VIEW_RGBA_ONLY:
    case PIPE_CAP_SURFACE_REINTERPRET_BLOCKS:
    case PIPE_CAP_QUERY_BUFFER_OBJECT:
-   case PIPE_CAP_PCI_GROUP:
-   case PIPE_CAP_PCI_BUS:
-   case PIPE_CAP_PCI_DEVICE:
-   case PIPE_CAP_PCI_FUNCTION:
    case PIPE_CAP_FRAMEBUFFER_NO_ATTACHMENT:
    case PIPE_CAP_ROBUST_BUFFER_ACCESS_BEHAVIOR:
    case PIPE_CAP_CULL_DISTANCE:
@@ -214,7 +210,6 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_VIEWPORT_SUBPIXEL_BITS:
    case PIPE_CAP_MIXED_COLOR_DEPTH_BITS:
    case PIPE_CAP_SHADER_ARRAY_COMPONENTS:
-   case PIPE_CAP_SHADER_CAN_READ_OUTPUTS:
    case PIPE_CAP_NATIVE_FENCE_FD:
    case PIPE_CAP_FBFETCH:
    case PIPE_CAP_LEGACY_MATH_RULES:
@@ -254,20 +249,23 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_IMAGE_STORE_FORMATTED:
       return 0;
 
+   case PIPE_CAP_PCI_GROUP:
+      return dev->info.pci.domain;
+   case PIPE_CAP_PCI_BUS:
+      return dev->info.pci.bus;
+   case PIPE_CAP_PCI_DEVICE:
+      return dev->info.pci.dev;
+   case PIPE_CAP_PCI_FUNCTION:
+      return dev->info.pci.func;
+
    case PIPE_CAP_MAX_GS_INVOCATIONS:
       return 32;
    case PIPE_CAP_MAX_SHADER_BUFFER_SIZE_UINT:
       return 1 << 27;
    case PIPE_CAP_VENDOR_ID:
       return 0x10de;
-   case PIPE_CAP_DEVICE_ID: {
-      uint64_t device_id;
-      if (nouveau_getparam(dev, NOUVEAU_GETPARAM_PCI_DEVICE, &device_id)) {
-         NOUVEAU_ERR("NOUVEAU_GETPARAM_PCI_DEVICE failed.\n");
-         return -1;
-      }
-      return device_id;
-   }
+   case PIPE_CAP_DEVICE_ID:
+      return dev->info.device_id;
    case PIPE_CAP_ACCELERATED:
       return 1;
    case PIPE_CAP_VIDEO_MEMORY:
@@ -485,6 +483,7 @@ static const nir_shader_compiler_options nv30_base_compiler_options = {
    .no_integers = true,
 
    .use_interpolated_input_intrinsics = true,
+   .has_ddx_intrinsics = true,
 };
 
 static const void *
@@ -719,7 +718,7 @@ nv30_screen_create(struct nouveau_device *dev)
       nouveau_heap_init(&screen->vp_data_heap, 6, 468 - 6);
    }
 
-   ret = nouveau_bo_wrap(screen->base.device, fifo->notify, &screen->notify);
+   ret = nouveau_bo_wrap(screen->base.device, fifo->base.notify, &screen->notify);
    if (ret == 0)
       ret = BO_MAP(&screen->base, screen->notify, 0, screen->base.client);
    if (ret)

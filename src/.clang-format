@@ -57,6 +57,7 @@ ForEachMacros:
 
   - hash_table_foreach
   - hash_table_foreach_remove
+  - hash_table_u64_foreach
 
   - rb_tree_foreach
   - rb_tree_foreach_rev
@@ -185,16 +186,21 @@ ForEachMacros:
 # asahi
   - foreach_active
   - foreach_submitted
+  - hk_foreach_view
+  - hk_foreach_variant
   - AGX_BATCH_FOREACH_BO_HANDLE
   - agx_pack
   - agx_push
   - agx_usc_pack
   - agx_ppp_push
+  - agx_ppp_push_merged
   - agx_foreach_block
+  - agx_foreach_block_safe
   - agx_foreach_block_from
   - agx_foreach_block_from_rev
   - agx_foreach_block_rev
   - agx_foreach_dest
+  - agx_foreach_dest_rev
   - agx_foreach_instr_global
   - agx_foreach_instr_global_rev
   - agx_foreach_instr_global_safe
@@ -207,11 +213,16 @@ ForEachMacros:
   - agx_foreach_instr_in_block_safe_rev
   - agx_foreach_non_phi_in_block_rev
   - agx_foreach_phi_in_block
+  - agx_foreach_phi_in_block_safe
   - agx_foreach_predecessor
   - agx_foreach_src
+  - agx_foreach_src_rev
   - agx_foreach_ssa_dest
+  - agx_foreach_ssa_dest_rev
   - agx_foreach_ssa_src
+  - agx_foreach_ssa_src_rev
   - agx_foreach_successor
+  - foreach_next_use
 
 # radv
   - PHASE
@@ -225,8 +236,10 @@ ForEachMacros:
   - foreach_sched_node
   - foreach_src
   - foreach_src_n
+  - foreach_src_if
   - foreach_dst
   - foreach_dst_n
+  - foreach_dst_if
   - ra_foreach_dst
   - ra_foreach_src
   - ra_foreach_src_rev
@@ -262,6 +275,9 @@ ForEachMacros:
   - perf_time_ctx
   - foreach_submit
   - foreach_submit_safe
+  - foreach_instr_rpt
+  - foreach_instr_rpt_excl
+  - foreach_instr_rpt_excl_safe
 
 # panfrost
   - foreach_batch
@@ -293,8 +309,10 @@ ForEachMacros:
   - bi_foreach_instr_in_tuple
   - bi_foreach_predecessor
   - bi_foreach_src
+  - bi_foreach_ssa_dest
   - bi_foreach_ssa_src
   - bi_foreach_successor
+  - cs_emit
   - mir_foreach_block
   - mir_foreach_block_from
   - mir_foreach_bundle_in_block

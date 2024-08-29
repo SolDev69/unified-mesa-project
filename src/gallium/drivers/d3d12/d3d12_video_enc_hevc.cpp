@@ -35,26 +35,27 @@ void
 d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder *pD3D12Enc,
                                                      pipe_h265_enc_picture_desc *picture)
 {
+   struct D3D12EncodeRateControlState m_prevRCState = pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc;
    pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc = {};
    pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_FrameRate.Numerator =
-      picture->rc.frame_rate_num;
+      picture->rc[0].frame_rate_num;
    pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_FrameRate.Denominator =
-      picture->rc.frame_rate_den;
+      picture->rc[0].frame_rate_den;
    pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags = D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_NONE;
 
    if (picture->roi.num > 0)
       pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
          D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_DELTA_QP;
 
-   switch (picture->rc.rate_ctrl_method) {
+   switch (picture->rc[0].rate_ctrl_method) {
       case PIPE_H2645_ENC_RATE_CONTROL_METHOD_VARIABLE_SKIP:
       case PIPE_H2645_ENC_RATE_CONTROL_METHOD_VARIABLE:
       {
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Mode = D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_VBR;
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.TargetAvgBitRate =
-            picture->rc.target_bitrate;
+            picture->rc[0].target_bitrate;
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.PeakBitRate =
-            picture->rc.peak_bitrate;
+            picture->rc[0].peak_bitrate;
 
          if (D3D12_VIDEO_ENC_CBR_FORCE_VBV_EQUAL_BITRATE) {
             debug_printf("[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc D3D12_VIDEO_ENC_CBR_FORCE_VBV_EQUAL_BITRATE environment variable is set, "
@@ -65,23 +66,23 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.TargetBitRate;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.InitialVBVFullness =
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.TargetBitRate;
-         } else if (picture->rc.app_requested_hrd_buffer) {
+         } else if (picture->rc[0].app_requested_hrd_buffer) {
             debug_printf("[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc HRD required by app,"
-                       " setting VBV Size = %d (bits) - VBV Initial Capacity %d (bits)\n", picture->rc.vbv_buffer_size, picture->rc.vbv_buf_initial_size);
+                       " setting VBV Size = %d (bits) - VBV Initial Capacity %d (bits)\n", picture->rc[0].vbv_buffer_size, picture->rc[0].vbv_buf_initial_size);
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_VBV_SIZES;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.VBVCapacity =
-               picture->rc.vbv_buffer_size;
+               picture->rc[0].vbv_buffer_size;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.InitialVBVFullness =
-               picture->rc.vbv_buf_initial_size;
+               picture->rc[0].vbv_buf_initial_size;
          }
 
-         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.max_frame_size = picture->rc.max_au_size;
-         if (picture->rc.max_au_size > 0) {
+         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.max_frame_size = picture->rc[0].max_au_size;
+         if (picture->rc[0].max_au_size > 0) {
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_MAX_FRAME_SIZE;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.MaxFrameBitSize =
-               picture->rc.max_au_size;
+               picture->rc[0].max_au_size;
 
             debug_printf(
                "[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc "
@@ -89,17 +90,17 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.MaxFrameBitSize);
          }
 
-         if (picture->rc.app_requested_qp_range) {
+         if (picture->rc[0].app_requested_qp_range) {
             debug_printf(
                "[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc "
                "Upper layer requested explicit MinQP: %d MaxQP: %d\n",
-               picture->rc.min_qp, picture->rc.max_qp);
+               picture->rc[0].min_qp, picture->rc[0].max_qp);
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QP_RANGE;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.MinQP =
-               picture->rc.min_qp;
+               picture->rc[0].min_qp;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_VBR.MaxQP =
-               picture->rc.max_qp;
+               picture->rc[0].max_qp;
          }
 
          if (picture->quality_modes.level > 0) {
@@ -125,11 +126,11 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
       {
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Mode = D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_QVBR;
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR.TargetAvgBitRate =
-            picture->rc.target_bitrate;
+            picture->rc[0].target_bitrate;
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR.PeakBitRate =
-            picture->rc.peak_bitrate;
+            picture->rc[0].peak_bitrate;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR.ConstantQualityTarget =
-            picture->rc.vbr_quality_factor;
+            picture->rc[0].vbr_quality_factor;
          if (D3D12_VIDEO_ENC_CBR_FORCE_VBV_EQUAL_BITRATE) {
             debug_printf("[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc D3D12_VIDEO_ENC_CBR_FORCE_VBV_EQUAL_BITRATE environment variable is set, "
                        ", forcing VBV Size = VBV Initial Capacity = Target Bitrate = %" PRIu64 " (bits)\n", pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR1.TargetAvgBitRate);
@@ -141,24 +142,24 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR1.TargetAvgBitRate;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR1.InitialVBVFullness =
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR1.TargetAvgBitRate;
-         } else if (picture->rc.app_requested_hrd_buffer) {
+         } else if (picture->rc[0].app_requested_hrd_buffer) {
             debug_printf("[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc HRD required by app,"
-                       " setting VBV Size = %d (bits) - VBV Initial Capacity %d (bits)\n", picture->rc.vbv_buffer_size, picture->rc.vbv_buf_initial_size);
+                       " setting VBV Size = %d (bits) - VBV Initial Capacity %d (bits)\n", picture->rc[0].vbv_buffer_size, picture->rc[0].vbv_buf_initial_size);
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_VBV_SIZES;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_EXTENSION1_SUPPORT;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR1.VBVCapacity =
-               picture->rc.vbv_buffer_size;
+               picture->rc[0].vbv_buffer_size;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR1.InitialVBVFullness =
-               picture->rc.vbv_buf_initial_size;
+               picture->rc[0].vbv_buf_initial_size;
          }
-         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.max_frame_size = picture->rc.max_au_size;
-         if (picture->rc.max_au_size > 0) {
+         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.max_frame_size = picture->rc[0].max_au_size;
+         if (picture->rc[0].max_au_size > 0) {
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_MAX_FRAME_SIZE;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR.MaxFrameBitSize =
-               picture->rc.max_au_size;
+               picture->rc[0].max_au_size;
 
             debug_printf(
                "[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc "
@@ -166,17 +167,17 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR.MaxFrameBitSize);
          }
 
-         if (picture->rc.app_requested_qp_range) {
+         if (picture->rc[0].app_requested_qp_range) {
             debug_printf(
                "[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc "
                "Upper layer requested explicit MinQP: %d MaxQP: %d\n",
-               picture->rc.min_qp, picture->rc.max_qp);
+               picture->rc[0].min_qp, picture->rc[0].max_qp);
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QP_RANGE;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR.MinQP =
-               picture->rc.min_qp;
+               picture->rc[0].min_qp;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_QVBR.MaxQP =
-               picture->rc.max_qp;
+               picture->rc[0].max_qp;
          }
 
          if (picture->quality_modes.level > 0) {
@@ -203,7 +204,7 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
       {
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Mode = D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CBR;
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.TargetBitRate =
-            picture->rc.target_bitrate;
+            picture->rc[0].target_bitrate;
 
          /* For CBR mode, to guarantee bitrate of generated stream complies with
           * target bitrate (e.g. no over +/-10%), vbv_buffer_size and initial capacity should be same
@@ -218,23 +219,23 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.TargetBitRate;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.InitialVBVFullness =
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.TargetBitRate;
-         } else if (picture->rc.app_requested_hrd_buffer) {
+         } else if (picture->rc[0].app_requested_hrd_buffer) {
             debug_printf("[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc HRD required by app,"
-                       " setting VBV Size = %d (bits) - VBV Initial Capacity %d (bits)\n", picture->rc.vbv_buffer_size, picture->rc.vbv_buf_initial_size);
+                       " setting VBV Size = %d (bits) - VBV Initial Capacity %d (bits)\n", picture->rc[0].vbv_buffer_size, picture->rc[0].vbv_buf_initial_size);
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_VBV_SIZES;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.VBVCapacity =
-               picture->rc.vbv_buffer_size;
+               picture->rc[0].vbv_buffer_size;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.InitialVBVFullness =
-               picture->rc.vbv_buf_initial_size;
+               picture->rc[0].vbv_buf_initial_size;
          }
 
-         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.max_frame_size = picture->rc.max_au_size;
-         if (picture->rc.max_au_size > 0) {
+         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.max_frame_size = picture->rc[0].max_au_size;
+         if (picture->rc[0].max_au_size > 0) {
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_MAX_FRAME_SIZE;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.MaxFrameBitSize =
-               picture->rc.max_au_size;
+               picture->rc[0].max_au_size;
 
             debug_printf(
                "[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc "
@@ -242,17 +243,17 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
                pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.MaxFrameBitSize);
          }
 
-         if (picture->rc.app_requested_qp_range) {
+         if (picture->rc[0].app_requested_qp_range) {
             debug_printf(
                "[d3d12_video_encoder_hevc] d3d12_video_encoder_update_current_rate_control_hevc "
                "Upper layer requested explicit MinQP: %d MaxQP: %d\n",
-               picture->rc.min_qp, picture->rc.max_qp);
+               picture->rc[0].min_qp, picture->rc[0].max_qp);
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
                D3D12_VIDEO_ENCODER_RATE_CONTROL_FLAG_ENABLE_QP_RANGE;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.MinQP =
-               picture->rc.min_qp;
+               picture->rc[0].min_qp;
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CBR.MaxQP =
-               picture->rc.max_qp;
+               picture->rc[0].max_qp;
          }
 
          if (picture->quality_modes.level > 0) {
@@ -277,12 +278,31 @@ d3d12_video_encoder_update_current_rate_control_hevc(struct d3d12_video_encoder 
       case PIPE_H2645_ENC_RATE_CONTROL_METHOD_DISABLE:
       {
          pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Mode = D3D12_VIDEO_ENCODER_RATE_CONTROL_MODE_CQP;
-         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CQP
-            .ConstantQP_FullIntracodedFrame = picture->rc.quant_i_frames;
-         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CQP
-            .ConstantQP_InterPredictedFrame_PrevRefOnly = picture->rc.quant_p_frames;
-         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CQP
-            .ConstantQP_InterPredictedFrame_BiDirectionalRef = picture->rc.quant_b_frames;
+         // Load previous RC state for all frames and only update the current frame
+         pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CQP =
+                  m_prevRCState.m_Config.m_Configuration_CQP;
+         switch (picture->picture_type) {
+            case PIPE_H2645_ENC_PICTURE_TYPE_P:
+            {
+               pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CQP
+                  .ConstantQP_InterPredictedFrame_PrevRefOnly = picture->rc[0].quant_p_frames;
+            } break;
+            case PIPE_H2645_ENC_PICTURE_TYPE_B:
+            {
+               pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CQP
+                  .ConstantQP_InterPredictedFrame_BiDirectionalRef = picture->rc[0].quant_b_frames;
+            } break;
+            case PIPE_H2645_ENC_PICTURE_TYPE_I:
+            case PIPE_H2645_ENC_PICTURE_TYPE_IDR:
+            {
+               pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Config.m_Configuration_CQP
+                  .ConstantQP_FullIntracodedFrame = picture->rc[0].quant_i_frames;
+            } break;
+            default:
+            {
+               unreachable("Unsupported pipe_h2645_enc_picture_type");
+            } break;
+         }
 
          if (picture->quality_modes.level > 0) {
             pD3D12Enc->m_currentEncodeConfig.m_encoderRateControlDesc.m_Flags |=
@@ -331,7 +351,13 @@ d3d12_video_encoder_update_current_frame_pic_params_info_hevc(struct d3d12_video
 
    bUsedAsReference = !hevcPic->not_referenced;
 
-   picParams.pHEVCPicData->slice_pic_parameter_set_id = pHEVCBitstreamBuilder->get_active_pps_id();
+   if (pD3D12Enc->m_currentEncodeCapabilities.m_encoderCodecSpecificConfigCaps.m_HEVCCodecCaps.SupportFlags &
+       D3D12_VIDEO_ENCODER_CODEC_CONFIGURATION_SUPPORT_HEVC_FLAG_NUM_REF_IDX_ACTIVE_OVERRIDE_FLAG_SLICE_SUPPORT)
+   {
+      picParams.pHEVCPicData->Flags |= D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC_FLAG_REQUEST_NUM_REF_IDX_ACTIVE_OVERRIDE_FLAG_SLICE;
+   }
+
+   picParams.pHEVCPicData->slice_pic_parameter_set_id = pHEVCBitstreamBuilder->get_active_pps().pps_pic_parameter_set_id;
    picParams.pHEVCPicData->FrameType = d3d12_video_encoder_convert_frame_type_hevc(hevcPic->picture_type);
    picParams.pHEVCPicData->PictureOrderCountNumber = hevcPic->pic_order_cnt;
 
@@ -491,7 +517,7 @@ d3d12_video_encoder_negotiate_current_hevc_slices_configuration(struct d3d12_vid
                          "have the same number of macroblocks.\n");
          return false;
       }
-   } else if(picture->slice_mode == PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SICE) {
+   } else if(picture->slice_mode == PIPE_VIDEO_SLICE_MODE_MAX_SLICE_SIZE) {
       if ((picture->max_slice_bytes > 0) &&
                  d3d12_video_encoder_check_subregion_mode_support(
                     pD3D12Enc,
@@ -886,8 +912,13 @@ d3d12_video_encoder_update_current_encoder_config_state_hevc(struct d3d12_video_
    // try to fallback if any of them is not supported and return the negotiated d3d12 settings
    D3D12_FEATURE_DATA_VIDEO_ENCODER_SUPPORT1 capEncoderSupportData1 = {};
    // Get max number of slices per frame supported
-   pD3D12Enc->m_currentEncodeConfig.m_encoderSliceConfigMode =
-      D3D12_VIDEO_ENCODER_FRAME_SUBREGION_LAYOUT_MODE_UNIFORM_PARTITIONING_SUBREGIONS_PER_FRAME;
+   if (hevcPic->num_slice_descriptors > 1)
+      pD3D12Enc->m_currentEncodeConfig.m_encoderSliceConfigMode =
+         D3D12_VIDEO_ENCODER_FRAME_SUBREGION_LAYOUT_MODE_UNIFORM_PARTITIONING_SUBREGIONS_PER_FRAME;
+   else
+      pD3D12Enc->m_currentEncodeConfig.m_encoderSliceConfigMode =
+         D3D12_VIDEO_ENCODER_FRAME_SUBREGION_LAYOUT_MODE_FULL_FRAME;
+
    if (!d3d12_video_encoder_negotiate_requested_features_and_d3d12_driver_caps(pD3D12Enc, capEncoderSupportData1)) {
       debug_printf("[d3d12_video_encoder_hevc] After negotiating caps, D3D12_FEATURE_VIDEO_ENCODER_SUPPORT1 "
                       "arguments are not supported - "
@@ -1010,6 +1041,30 @@ d3d12_video_encoder_isequal_slice_config_hevc(
                   sizeof(D3D12_VIDEO_ENCODER_PICTURE_CONTROL_SUBREGIONS_LAYOUT_DATA_SLICES)) == 0);
 }
 
+static inline bool
+d3d12_video_encoder_needs_new_pps_hevc(struct d3d12_video_encoder *pD3D12Enc,
+                                       bool writeNewSPS,
+                                       HevcPicParameterSet &tentative_pps,
+                                       const HevcPicParameterSet &active_pps)
+{
+   bool bUseSliceL0L1Override = (pD3D12Enc->m_currentEncodeConfig.m_encoderPicParamsDesc.m_HEVCPicData.Flags &
+                                 D3D12_VIDEO_ENCODER_PICTURE_CONTROL_CODEC_DATA_HEVC_FLAG_REQUEST_NUM_REF_IDX_ACTIVE_OVERRIDE_FLAG_SLICE);
+
+   bool bDifferentL0L1Lists = !bUseSliceL0L1Override &&
+         ((tentative_pps.num_ref_idx_lx_default_active_minus1[0] != active_pps.num_ref_idx_lx_default_active_minus1[0]) ||
+         (tentative_pps.num_ref_idx_lx_default_active_minus1[1] != active_pps.num_ref_idx_lx_default_active_minus1[1]));
+
+   size_t offset_before_l0l1 = offsetof(HevcPicParameterSet, num_ref_idx_lx_default_active_minus1[0]);
+   size_t offset_after_l0l1 = offset_before_l0l1 + sizeof(HevcPicParameterSet::num_ref_idx_lx_default_active_minus1);
+   bool bDidPPSChange = memcmp(&tentative_pps, &active_pps, offset_before_l0l1) ||
+                        bDifferentL0L1Lists ||
+                        memcmp(reinterpret_cast<uint8_t*>(&tentative_pps) + offset_after_l0l1,
+                               reinterpret_cast<const uint8_t*>(&active_pps) + offset_after_l0l1,
+                               sizeof(HevcPicParameterSet) - offset_after_l0l1);
+
+   return writeNewSPS || bDidPPSChange;
+}
+
 uint32_t
 d3d12_video_encoder_build_codec_headers_hevc(struct d3d12_video_encoder *pD3D12Enc,
                                              std::vector<uint64_t> &pWrittenCodecUnitsSizes)
@@ -1029,24 +1084,24 @@ d3d12_video_encoder_build_codec_headers_hevc(struct d3d12_video_encoder *pD3D12E
       static_cast<d3d12_video_bitstream_builder_hevc *>(pD3D12Enc->m_upBitstreamBuilder.get());
    assert(pHEVCBitstreamBuilder);
 
-   uint32_t active_seq_parameter_set_id = pHEVCBitstreamBuilder->get_active_sps_id();
-   uint32_t active_video_parameter_set_id = pHEVCBitstreamBuilder->get_active_vps_id();
+   uint32_t active_seq_parameter_set_id = pHEVCBitstreamBuilder->get_active_sps().sps_seq_parameter_set_id;
+   uint32_t active_video_parameter_set_id = pHEVCBitstreamBuilder->get_active_vps().vps_video_parameter_set_id;
    
    bool writeNewVPS = isFirstFrame;
    
    size_t writtenVPSBytesCount = 0;
    if (writeNewVPS) {
       bool gopHasBFrames = (pD3D12Enc->m_currentEncodeConfig.m_encoderGOPConfigDesc.m_HEVCGroupOfPictures.PPicturePeriod > 1);
-      pHEVCBitstreamBuilder->build_vps(*profDesc.pHEVCProfile,
-                                       *levelDesc.pHEVCLevelSetting,
-                                       pD3D12Enc->m_currentEncodeConfig.m_encodeFormatInfo.Format,
-                                       MaxDPBCapacity,   // max_num_ref_frames
-                                       gopHasBFrames,
-                                       active_video_parameter_set_id,
-                                       pD3D12Enc->m_BitstreamHeadersBuffer,
-                                       pD3D12Enc->m_BitstreamHeadersBuffer.begin(),
-                                       writtenVPSBytesCount);      
-
+      HevcVideoParameterSet vps = pHEVCBitstreamBuilder->build_vps(*profDesc.pHEVCProfile,
+                                                                   *levelDesc.pHEVCLevelSetting,
+                                                                   pD3D12Enc->m_currentEncodeConfig.m_encodeFormatInfo.Format,
+                                                                   MaxDPBCapacity,   // max_num_ref_frames
+                                                                   gopHasBFrames,
+                                                                   active_video_parameter_set_id,
+                                                                   pD3D12Enc->m_BitstreamHeadersBuffer,
+                                                                   pD3D12Enc->m_BitstreamHeadersBuffer.begin(),
+                                                                   writtenVPSBytesCount);
+      pHEVCBitstreamBuilder->set_active_vps(vps);
       pWrittenCodecUnitsSizes.push_back(writtenVPSBytesCount);
    }
 
@@ -1058,37 +1113,34 @@ d3d12_video_encoder_build_codec_headers_hevc(struct d3d12_video_encoder *pD3D12E
 
    size_t writtenSPSBytesCount = 0;
    if (writeNewSPS) {
-      pHEVCBitstreamBuilder->build_sps(
-                           pHEVCBitstreamBuilder->get_latest_vps(),
-                           pD3D12Enc->m_currentEncodeConfig.m_encoderCodecSpecificSequenceStateDescH265,
-                           active_seq_parameter_set_id,
-                           pD3D12Enc->m_currentEncodeConfig.m_currentResolution,
-                           pD3D12Enc->m_currentEncodeConfig.m_FrameCroppingCodecConfig,
-                           pD3D12Enc->m_currentEncodeCapabilities.m_currentResolutionSupportCaps.SubregionBlockPixelsSize,
-                           pD3D12Enc->m_currentEncodeConfig.m_encodeFormatInfo.Format,
-                           *codecConfigDesc.pHEVCConfig,
-                           pD3D12Enc->m_currentEncodeConfig.m_encoderGOPConfigDesc.m_HEVCGroupOfPictures,
-                           pD3D12Enc->m_BitstreamHeadersBuffer,
-                           pD3D12Enc->m_BitstreamHeadersBuffer.begin() + writtenVPSBytesCount,
-                           writtenSPSBytesCount);
-
+      HevcSeqParameterSet sps = pHEVCBitstreamBuilder->build_sps(pHEVCBitstreamBuilder->get_active_vps(),
+                                                                 pD3D12Enc->m_currentEncodeConfig.m_encoderCodecSpecificSequenceStateDescH265,
+                                                                 active_seq_parameter_set_id,
+                                                                 pD3D12Enc->m_currentEncodeConfig.m_currentResolution,
+                                                                 pD3D12Enc->m_currentEncodeConfig.m_FrameCroppingCodecConfig,
+                                                                 pD3D12Enc->m_currentEncodeCapabilities.m_currentResolutionSupportCaps.SubregionBlockPixelsSize,
+                                                                 pD3D12Enc->m_currentEncodeConfig.m_encodeFormatInfo.Format,
+                                                                 *codecConfigDesc.pHEVCConfig,
+                                                                 pD3D12Enc->m_currentEncodeConfig.m_encoderGOPConfigDesc.m_HEVCGroupOfPictures,
+                                                                 pD3D12Enc->m_BitstreamHeadersBuffer,
+                                                                 pD3D12Enc->m_BitstreamHeadersBuffer.begin() + writtenVPSBytesCount,
+                                                                 writtenSPSBytesCount);
+      pHEVCBitstreamBuilder->set_active_sps(sps);
       pWrittenCodecUnitsSizes.push_back(writtenSPSBytesCount);
    }
 
    size_t writtenPPSBytesCount = 0;
-   pHEVCBitstreamBuilder->build_pps(pHEVCBitstreamBuilder->get_latest_sps(),
-                                    currentPicParams.pHEVCPicData->slice_pic_parameter_set_id,
-                                    *codecConfigDesc.pHEVCConfig,
-                                    *currentPicParams.pHEVCPicData,
-                                    pD3D12Enc->m_StagingHeadersBuffer,
-                                    pD3D12Enc->m_StagingHeadersBuffer.begin(),
-                                    writtenPPSBytesCount);
+   HevcPicParameterSet tentative_pps = pHEVCBitstreamBuilder->build_pps(pHEVCBitstreamBuilder->get_active_sps(),
+                                                                        currentPicParams.pHEVCPicData->slice_pic_parameter_set_id,
+                                                                        *codecConfigDesc.pHEVCConfig,
+                                                                        *currentPicParams.pHEVCPicData,
+                                                                        pD3D12Enc->m_StagingHeadersBuffer,
+                                                                        pD3D12Enc->m_StagingHeadersBuffer.begin(),
+                                                                        writtenPPSBytesCount);
 
-   std::vector<uint8_t>& active_pps = pHEVCBitstreamBuilder->get_active_pps();
-   if (writeNewSPS ||
-       (writtenPPSBytesCount != active_pps.size()) ||
-       memcmp(pD3D12Enc->m_StagingHeadersBuffer.data(), active_pps.data(), writtenPPSBytesCount)) {
-      active_pps = pD3D12Enc->m_StagingHeadersBuffer;
+   const HevcPicParameterSet &active_pps = pHEVCBitstreamBuilder->get_active_pps();
+   if (d3d12_video_encoder_needs_new_pps_hevc(pD3D12Enc, writeNewSPS, tentative_pps, active_pps)) {
+      pHEVCBitstreamBuilder->set_active_pps(tentative_pps);
       pD3D12Enc->m_BitstreamHeadersBuffer.resize(writtenSPSBytesCount + writtenVPSBytesCount + writtenPPSBytesCount);
       memcpy(&pD3D12Enc->m_BitstreamHeadersBuffer.data()[(writtenSPSBytesCount + writtenVPSBytesCount)], pD3D12Enc->m_StagingHeadersBuffer.data(), writtenPPSBytesCount);
       pWrittenCodecUnitsSizes.push_back(writtenPPSBytesCount);

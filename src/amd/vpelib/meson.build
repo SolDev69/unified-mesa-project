@@ -1,23 +1,5 @@
 # Copyright 2022 Advanced Micro Devices, Inc.
-# All Rights Reserved.
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# SPDX-License-Identifier: MIT
 
 c_args_vpe = cc.get_supported_arguments([
   '-Wall',
@@ -41,13 +23,13 @@ c_args_vpe += [
   '-DLITTLEENDIAN_CPU',
   '-DVPE_BUILD_1_0',
   '-DVPE_BUILD_1_X',
+  '-DVPE_BUILD_1_1',
 ]
 
 vpe_files = files(
   'src/core/inc/reg_helper.h',
   'src/core/inc/vpe_priv.h',
   'src/core/inc/vpe_command.h',
-  'src/core/inc/color_pwl.h',
   'src/core/inc/color_gamut.h',
   'src/core/inc/vpe_assert.h',
   'src/core/inc/vpec.h',
@@ -59,7 +41,6 @@ vpe_files = files(
   'src/core/inc/color_test_values.h',
   'src/core/inc/vpe_visual_confirm.h',
   'src/core/inc/color_cs.h',
-  'src/core/inc/diag_reg_helper.h',
   'src/core/inc/shaper_builder.h',
   'src/core/inc/color_bg.h',
   'src/core/inc/transform.h',
@@ -67,6 +48,7 @@ vpe_files = files(
   'src/core/inc/color.h',
   'src/core/inc/mpc.h',
   'src/core/inc/3dlut_builder.h',
+  'src/core/inc/geometric_scaling.h',
   'src/core/inc/cmd_builder.h',
   'src/core/inc/background.h',
   'src/core/inc/color_gamma.h',
@@ -81,11 +63,10 @@ vpe_files = files(
   'src/core/vpe_visual_confirm.c',
   'src/core/mpc.c',
   'src/core/config_writer.c',
-  'src/core/plane_desc_writer.c',
   'src/core/color_gamut.c',
   'src/core/vpelib.c',
-  'src/core/vpe_desc_writer.c',
   'src/core/3dlut_builder.c',
+  'src/core/geometric_scaling.c',
   'src/core/color_test_values.c',
   'src/core/resource.c',
   'src/core/color_table.c',
@@ -102,6 +83,9 @@ vpe_files = files(
   'src/utils/custom_float.c',
   'src/utils/conversion.c',
   'src/utils/fixpt31_32.c',
+  'src/chip/vpe10/inc/vpe10_command.h',
+  'src/chip/vpe10/inc/vpe10_plane_desc_writer.h',
+  'src/chip/vpe10/inc/vpe10_vpe_desc_writer.h',
   'src/chip/vpe10/inc/vpe10_background.h',
   'src/chip/vpe10/inc/vpe10_cm_common.h',
   'src/chip/vpe10/inc/vpe10_vpec.h',
@@ -115,6 +99,8 @@ vpe_files = files(
   'src/chip/vpe10/inc/vpe10_resource.h',
   'src/chip/vpe10/inc/vpe10_cdc.h',
   'src/chip/vpe10/inc/vpe10_dpp.h',
+  'src/chip/vpe10/vpe10_plane_desc_writer.c',
+  'src/chip/vpe10/vpe10_vpe_desc_writer.c',
   'src/chip/vpe10/vpe10_cm_common.c',
   'src/chip/vpe10/vpe10_dpp.c',
   'src/chip/vpe10/vpe10_resource.c',
@@ -126,6 +112,12 @@ vpe_files = files(
   'src/chip/vpe10/vpe10_background.c',
   'src/chip/vpe10/vpe10_cdc.c',
   'src/chip/vpe10/vpe10_vpec.c',
+  'src/chip/vpe11/inc/vpe11_cmd_builder.h',
+  'src/chip/vpe11/inc/vpe11_resource.h',
+  'src/chip/vpe11/inc/vpe11_vpe_desc_writer.h',
+  'src/chip/vpe11/vpe11_cmd_builder.c',
+  'src/chip/vpe11/vpe11_resource.c',
+  'src/chip/vpe11/vpe11_vpe_desc_writer.c',
 )
 
 inc_amd_vpe = include_directories(
@@ -135,6 +127,7 @@ inc_amd_vpe = include_directories(
   'src/chip',
   'src/utils/inc',
   'src/chip/vpe10/inc',
+  'src/chip/vpe11/inc',
 )
 
 libvpe = static_library(

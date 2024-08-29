@@ -32,8 +32,9 @@ struct gl_shader;
 struct gl_linked_shader;
 
 extern bool
-link_function_calls(gl_shader_program *prog, gl_linked_shader *main,
-                    gl_shader **shader_list, unsigned num_shaders);
+link_function_calls(gl_shader_program *prog, gl_linked_shader *main_linked,
+                    gl_shader *main, gl_shader **shader_list,
+                    unsigned num_shaders);
 
 bool
 validate_intrastage_arrays(struct gl_shader_program *prog,
@@ -45,15 +46,6 @@ void
 validate_intrastage_interface_blocks(struct gl_shader_program *prog,
                                      const gl_shader **shader_list,
                                      unsigned num_shaders);
-
-void
-validate_interstage_inout_blocks(struct gl_shader_program *prog,
-                                 const gl_linked_shader *producer,
-                                 const gl_linked_shader *consumer);
-
-void
-validate_interstage_uniform_blocks(struct gl_shader_program *prog,
-                                   gl_linked_shader **stages);
 
 extern struct gl_linked_shader *
 link_intrastage_shaders(void *mem_ctx,

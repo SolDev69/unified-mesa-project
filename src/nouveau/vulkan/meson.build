@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 nvk_files = files(
   '../../gallium/auxiliary/tgsi/tgsi_from_mesa.c',
+  'nvk_acceleration_structure.c',
   'nvk_buffer.c',
   'nvk_buffer.h',
   'nvk_buffer_view.c',
@@ -16,22 +17,24 @@ nvk_files = files(
   'nvk_cmd_pool.c',
   'nvk_cmd_pool.h',
   'nvk_codegen.c',
-  'nvk_compute_pipeline.c',
+  'nvk_debug.h',
   'nvk_descriptor_set.h',
   'nvk_descriptor_set.c',
   'nvk_descriptor_set_layout.c',
   'nvk_descriptor_set_layout.h',
   'nvk_descriptor_table.c',
   'nvk_descriptor_table.h',
+  'nvk_descriptor_types.h',
   'nvk_device.c',
   'nvk_device.h',
   'nvk_device_memory.c',
   'nvk_device_memory.h',
+  'nvk_edb_bview_cache.c',
+  'nvk_edb_bview_cache.h',
   'nvk_event.c',
   'nvk_event.h',
   'nvk_format.c',
   'nvk_format.h',
-  'nvk_graphics_pipeline.c',
   'nvk_heap.c',
   'nvk_heap.h',
   'nvk_image.c',
@@ -45,20 +48,27 @@ nvk_files = files(
   'nvk_nir_lower_descriptors.c',
   'nvk_physical_device.c',
   'nvk_physical_device.h',
-  'nvk_pipeline.c',
-  'nvk_pipeline.h',
   'nvk_private.h',
   'nvk_query_pool.c',
   'nvk_query_pool.h',
   'nvk_queue.c',
   'nvk_queue.h',
-  'nvk_queue_drm_nouveau.c',
   'nvk_sampler.c',
   'nvk_sampler.h',
   'nvk_shader.c',
   'nvk_shader.h',
+  'nvk_upload_queue.c',
+  'nvk_upload_queue.h',
   'nvk_wsi.c',
-  'nvk_wsi.h'
+  'nvk_wsi.h',
+  'nvkmd/nouveau/nvkmd_nouveau.h',
+  'nvkmd/nouveau/nvkmd_nouveau_ctx.c',
+  'nvkmd/nouveau/nvkmd_nouveau_dev.c',
+  'nvkmd/nouveau/nvkmd_nouveau_mem.c',
+  'nvkmd/nouveau/nvkmd_nouveau_pdev.c',
+  'nvkmd/nouveau/nvkmd_nouveau_va.c',
+  'nvkmd/nvkmd.c',
+  'nvkmd/nvkmd.h',
 )
 
 nvk_entrypoints = custom_target(
@@ -78,6 +88,7 @@ nvk_deps = [
   idep_nak,
   idep_nil,
   idep_nir,
+  idep_mesautil,
   idep_nouveau_mme,
   idep_nouveau_ws,
   idep_nvidia_headers,
@@ -93,6 +104,7 @@ libnvk = static_library(
     nvk_entrypoints,
     cl_generated,
     nvk_files,
+    sha1_h,
   ],
   include_directories : [
     inc_gallium,
@@ -116,7 +128,7 @@ libvulkan_nouveau = shared_library(
 icd_lib_path = join_paths(get_option('prefix'), get_option('libdir'))
 icd_file_name = 'libvulkan_nouveau.so'
 if with_platform_windows
-  icd_lib_path = join_paths(get_option('prefix'), get_option('bindir'))
+  icd_lib_path = import('fs').relative_to(get_option('bindir'), with_vulkan_icd_dir)
   icd_file_name = 'vulkan_nouveau.dll'
 endif
 
@@ -126,7 +138,7 @@ nouveau_icd = custom_target(
   output : 'nouveau_icd.@0@.json'.format(host_machine.cpu()),
   command : [
     prog_python, '@INPUT0@',
-    '--api-version', '1.1', '--xml', '@INPUT1@',
+    '--api-version', '1.3', '--xml', '@INPUT1@',
     '--lib-path', join_paths(icd_lib_path, icd_file_name),
     '--out', '@OUTPUT@',
   ],
@@ -136,23 +148,23 @@ nouveau_icd = custom_target(
   install : true,
 )
 
-if meson.version().version_compare('>= 0.58')
-  _dev_icdname = 'nouveau_devenv_icd.@0@.json'.format(host_machine.cpu())
-  custom_target(
-    'nouveau_devenv_icd',
-    input : [vk_icd_gen, vk_api_xml],
-    output : _dev_icdname,
-    command : [
-      prog_python, '@INPUT0@',
-      '--api-version', '1.1', '--xml', '@INPUT1@',
-      '--lib-path', meson.current_build_dir() / icd_file_name,
-      '--out', '@OUTPUT@',
-    ],
-    build_by_default : true,
-  )
+_dev_icdname = 'nouveau_devenv_icd.@0@.json'.format(host_machine.cpu())
+custom_target(
+  'nouveau_devenv_icd',
+  input : [vk_icd_gen, vk_api_xml],
+  output : _dev_icdname,
+  command : [
+    prog_python, '@INPUT0@',
+    '--api-version', '1.3', '--xml', '@INPUT1@',
+    '--lib-path', meson.current_build_dir() / icd_file_name,
+    '--out', '@OUTPUT@',
+  ],
+  build_by_default : true,
+)
 
-  devenv.append('VK_ICD_FILENAMES', meson.current_build_dir() / _dev_icdname)
-endif
+devenv.append('VK_DRIVER_FILES', meson.current_build_dir() / _dev_icdname)
+# Deprecated: replaced by VK_DRIVER_FILES above
+devenv.append('VK_ICD_FILENAMES', meson.current_build_dir() / _dev_icdname)
 
 if with_tests and not with_platform_android
   test(

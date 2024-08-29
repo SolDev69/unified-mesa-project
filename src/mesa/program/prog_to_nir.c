@@ -897,18 +897,17 @@ prog_to_nir(const struct gl_context *ctx, const struct gl_program *prog,
    s->info.separate_shader = true;
    s->info.io_lowered = false;
    s->info.internal = false;
-   memcpy(s->info.source_sha1, c->build.shader->info.source_sha1, 20);
 
    /* ARB_vp: */
    if (prog->arb.IsPositionInvariant) {
-      NIR_PASS_V(s, st_nir_lower_position_invariant,
+      NIR_PASS(_, s, st_nir_lower_position_invariant,
                  ctx->Const.ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS,
                  prog->Parameters);
    }
 
    /* Add OPTION ARB_fog_exp code */
    if (prog->arb.Fog)
-      NIR_PASS_V(s, st_nir_lower_fog, prog->arb.Fog, prog->Parameters);
+      NIR_PASS(_, s, st_nir_lower_fog, prog->arb.Fog, prog->Parameters);
 
 fail:
    if (c->error) {

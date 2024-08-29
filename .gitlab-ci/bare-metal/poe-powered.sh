@@ -199,7 +199,8 @@ while [ $((ATTEMPTS--)) -gt 0 ]; do
           --dev="$BM_SERIAL" \
           --powerup="$BM_POWERUP" \
           --powerdown="$BM_POWERDOWN" \
-          --test-timeout ${TEST_PHASE_TIMEOUT:-20}
+          --boot-timeout-seconds ${BOOT_PHASE_TIMEOUT_SECONDS:-300} \
+          --test-timeout-minutes ${TEST_PHASE_TIMEOUT_MINUTES:-$((CI_JOB_TIMEOUT/60 - ${TEST_SETUP_AND_UPLOAD_MARGIN_MINUTES:-5}))}
   ret=$?
 
   if [ $ret -eq 2 ]; then

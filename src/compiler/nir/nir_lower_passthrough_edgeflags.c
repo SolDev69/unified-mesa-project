@@ -69,8 +69,7 @@ lower_impl(nir_function_impl *impl)
                        .src_type = nir_type_float32,
                        .write_mask = 0x1);
 
-      nir_metadata_preserve(impl, nir_metadata_block_index |
-                                     nir_metadata_dominance);
+      nir_metadata_preserve(impl, nir_metadata_control_flow);
       return;
    }
 
@@ -85,11 +84,10 @@ lower_impl(nir_function_impl *impl)
    def = nir_load_var(&b, in);
    nir_store_var(&b, out, def, 0xf);
 
-   nir_metadata_preserve(impl, nir_metadata_block_index |
-                                  nir_metadata_dominance);
+   nir_metadata_preserve(impl, nir_metadata_control_flow);
 }
 
-void
+bool
 nir_lower_passthrough_edgeflags(nir_shader *shader)
 {
    assert(shader->info.stage == MESA_SHADER_VERTEX);
@@ -97,4 +95,5 @@ nir_lower_passthrough_edgeflags(nir_shader *shader)
    shader->info.vs.needs_edge_flag = true;
 
    lower_impl(nir_shader_get_entrypoint(shader));
+   return true;
 }

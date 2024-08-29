@@ -537,8 +537,15 @@ tu_render_pass_calc_hash(struct tu_render_pass *pass)
 }
 
 static void
-tu_render_pass_cond_config(struct tu_render_pass *pass)
+tu_render_pass_cond_config(struct tu_device *device,
+                           struct tu_render_pass *pass)
 {
+   /* With generic clears CmdClearAttachments isn't a draw and doesn't
+    * contribute to bin's geometry.
+    */
+   if (device->physical_device->info->a7xx.has_generic_clear)
+      return;
+
    for (uint32_t i = 0; i < pass->attachment_count; i++) {
       struct tu_render_pass_attachment *att = &pass->attachments[i];
 
@@ -617,7 +624,7 @@ tu_render_pass_gmem_config(struct tu_render_pass *pass,
        * optimal: nblocks = {13, 51}, pixels = 208896
        */
       uint32_t gmem_size = layout == TU_GMEM_LAYOUT_FULL
-                              ? phys_dev->gmem_size
+                              ? phys_dev->usable_gmem_size_gmem
                               : phys_dev->ccu_offset_gmem;
       uint32_t gmem_blocks = gmem_size / gmem_align;
       uint32_t offset = 0, pixels = ~0u, i;
@@ -726,6 +733,15 @@ attachment_set_ops(struct tu_device *device,
          att->load = true;
       if (stencil_store)
          att->store = true;
+      /* If depth or stencil is passthrough (STORE_OP_NONE), then we need to
+       * preserve the contents when storing by loading even if neither
+       * component needs to be loaded.
+       */
+      if ((store_op == VK_ATTACHMENT_STORE_OP_NONE_EXT ||
+           stencil_store_op == VK_ATTACHMENT_STORE_OP_NONE_EXT) &&
+          att->store) {
+         att->load = true;
+      }
       break;
    case VK_FORMAT_S8_UINT: /* replace load/store with stencil load/store */
       att->clear_mask = stencil_clear ? VK_IMAGE_ASPECT_COLOR_BIT : 0;
@@ -799,7 +815,7 @@ tu_CreateRenderPass2(VkDevice _device,
                      const VkAllocationCallbacks *pAllocator,
                      VkRenderPass *pRenderPass)
 {
-   TU_FROM_HANDLE(tu_device, device, _device);
+   VK_FROM_HANDLE(tu_device, device, _device);
 
    if (TU_DEBUG(DYNAMIC))
       return vk_common_CreateRenderPass2(_device, pCreateInfo, pAllocator,
@@ -904,6 +920,8 @@ tu_CreateRenderPass2(VkDevice _device,
       subpass->resolve_depth_stencil = is_depth_stencil_resolve_enabled(ds_resolve);
       subpass->samples = (VkSampleCountFlagBits) 0;
       subpass->srgb_cntl = 0;
+      subpass->legacy_dithering_enabled = desc->flags &
+         VK_SUBPASS_DESCRIPTION_ENABLE_LEGACY_DITHERING_BIT_EXT;
 
       const BITMASK_ENUM(VkSubpassDescriptionFlagBits) raster_order_access_bits =
          VK_SUBPASS_DESCRIPTION_RASTERIZATION_ORDER_ATTACHMENT_COLOR_ACCESS_BIT_EXT |
@@ -976,8 +994,11 @@ tu_CreateRenderPass2(VkDevice _device,
       uint32_t a = desc->pDepthStencilAttachment ?
          desc->pDepthStencilAttachment->attachment : VK_ATTACHMENT_UNUSED;
       subpass->depth_stencil_attachment.attachment = a;
-      if (a != VK_ATTACHMENT_UNUSED)
+      subpass->depth_used = a != VK_ATTACHMENT_UNUSED;
+      subpass->stencil_used = a != VK_ATTACHMENT_UNUSED;
+      if (a != VK_ATTACHMENT_UNUSED) {
          tu_subpass_use_attachment(pass, i, a, pCreateInfo);
+      }
    }
 
    tu_render_pass_patch_input_gmem(pass);
@@ -993,7 +1014,7 @@ tu_CreateRenderPass2(VkDevice _device,
       }
    }
 
-   tu_render_pass_cond_config(pass);
+   tu_render_pass_cond_config(device, pass);
    tu_render_pass_gmem_config(pass, device->physical_device);
    tu_render_pass_bandwidth_config(pass);
    tu_render_pass_calc_views(pass);
@@ -1015,14 +1036,14 @@ tu_DestroyRenderPass(VkDevice _device,
                      VkRenderPass _pass,
                      const VkAllocationCallbacks *pAllocator)
 {
-   TU_FROM_HANDLE(tu_device, device, _device);
+   VK_FROM_HANDLE(tu_device, device, _device);
 
    if (TU_DEBUG(DYNAMIC)) {
       vk_common_DestroyRenderPass(_device, _pass, pAllocator);
       return;
    }
 
-   TU_FROM_HANDLE(tu_render_pass, pass, _pass);
+   VK_FROM_HANDLE(tu_render_pass, pass, _pass);
 
    if (!_pass)
       return;
@@ -1066,6 +1087,8 @@ tu_setup_dynamic_render_pass(struct tu_cmd_buffer *cmd_buffer,
    subpass->color_attachments = cmd_buffer->dynamic_color_attachments;
    subpass->resolve_attachments = cmd_buffer->dynamic_resolve_attachments;
    subpass->multiview_mask = info->viewMask;
+   subpass->legacy_dithering_enabled = info->flags &
+      VK_RENDERING_ENABLE_LEGACY_DITHERING_BIT_EXT;
 
    uint32_t a = 0;
    for (uint32_t i = 0; i < info->colorAttachmentCount; i++) {
@@ -1078,7 +1101,7 @@ tu_setup_dynamic_render_pass(struct tu_cmd_buffer *cmd_buffer,
          continue;
       }
 
-      TU_FROM_HANDLE(tu_image_view, view, att_info->imageView);
+      VK_FROM_HANDLE(tu_image_view, view, att_info->imageView);
       tu_setup_dynamic_attachment(att, view);
       att->gmem = true;
       att->clear_views = info->viewMask;
@@ -1094,7 +1117,7 @@ tu_setup_dynamic_render_pass(struct tu_cmd_buffer *cmd_buffer,
 
       if (att_info->resolveMode != VK_RESOLVE_MODE_NONE) {
          struct tu_render_pass_attachment *resolve_att = &pass->attachments[a];
-         TU_FROM_HANDLE(tu_image_view, resolve_view, att_info->resolveImageView);
+         VK_FROM_HANDLE(tu_image_view, resolve_view, att_info->resolveImageView);
          tu_setup_dynamic_attachment(resolve_att, resolve_view);
          resolve_att->gmem = false;
          attachment_set_ops(
@@ -1117,7 +1140,7 @@ tu_setup_dynamic_render_pass(struct tu_cmd_buffer *cmd_buffer,
          info->pStencilAttachment;
 
       if (common_info && common_info->imageView != VK_NULL_HANDLE) {
-         TU_FROM_HANDLE(tu_image_view, view, common_info->imageView);
+         VK_FROM_HANDLE(tu_image_view, view, common_info->imageView);
 
          struct tu_render_pass_attachment *att = &pass->attachments[a];
          tu_setup_dynamic_attachment(att, view);
@@ -1125,23 +1148,26 @@ tu_setup_dynamic_render_pass(struct tu_cmd_buffer *cmd_buffer,
          att->clear_views = info->viewMask;
          subpass->depth_stencil_attachment.attachment = a++;
 
+         subpass->depth_used = (bool) info->pDepthAttachment;
+         subpass->stencil_used = (bool) info->pStencilAttachment;
+
          attachment_set_ops(
             device, att,
-            info->pDepthAttachment ? info->pDepthAttachment->loadOp
-                                   : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            info->pStencilAttachment ? info->pStencilAttachment->loadOp
-                                     : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            info->pDepthAttachment ? info->pDepthAttachment->storeOp
-                                   : VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            info->pStencilAttachment ? info->pStencilAttachment->storeOp
-                                     : VK_ATTACHMENT_STORE_OP_DONT_CARE);
+            (info->pDepthAttachment && info->pDepthAttachment->imageView) ?
+               info->pDepthAttachment->loadOp : VK_ATTACHMENT_LOAD_OP_NONE_EXT,
+            (info->pStencilAttachment && info->pStencilAttachment->imageView) ?
+               info->pStencilAttachment->loadOp : VK_ATTACHMENT_LOAD_OP_NONE_EXT,
+            (info->pDepthAttachment && info->pDepthAttachment->imageView) ?
+               info->pDepthAttachment->storeOp : VK_ATTACHMENT_STORE_OP_NONE_EXT,
+            (info->pStencilAttachment && info->pStencilAttachment->imageView) ?
+               info->pStencilAttachment->storeOp : VK_ATTACHMENT_STORE_OP_NONE_EXT);
 
          subpass->samples = (VkSampleCountFlagBits) view->image->layout->nr_samples;
 
          if (common_info->resolveMode != VK_RESOLVE_MODE_NONE) {
             unsigned i = subpass->resolve_count++;
             struct tu_render_pass_attachment *resolve_att = &pass->attachments[a];
-            TU_FROM_HANDLE(tu_image_view, resolve_view,
+            VK_FROM_HANDLE(tu_image_view, resolve_view,
                            common_info->resolveImageView);
             tu_setup_dynamic_attachment(resolve_att, resolve_view);
             resolve_att->gmem = false;
@@ -1170,7 +1196,7 @@ tu_setup_dynamic_render_pass(struct tu_cmd_buffer *cmd_buffer,
                            RENDERING_FRAGMENT_DENSITY_MAP_ATTACHMENT_INFO_EXT);
    if (fdm_info && fdm_info->imageView != VK_NULL_HANDLE &&
        !tu_render_pass_disable_fdm(pass)) {
-      TU_FROM_HANDLE(tu_image_view, view, fdm_info->imageView);
+      VK_FROM_HANDLE(tu_image_view, view, fdm_info->imageView);
 
       struct tu_render_pass_attachment *att = &pass->attachments[a];
       tu_setup_dynamic_attachment(att, view);
@@ -1191,7 +1217,7 @@ tu_setup_dynamic_render_pass(struct tu_cmd_buffer *cmd_buffer,
 
    pass->attachment_count = a;
 
-   tu_render_pass_cond_config(pass);
+   tu_render_pass_cond_config(device, pass);
    tu_render_pass_gmem_config(pass, device->physical_device);
    tu_render_pass_bandwidth_config(pass);
    tu_render_pass_calc_views(pass);
@@ -1251,9 +1277,15 @@ tu_setup_dynamic_inheritance(struct tu_cmd_buffer *cmd_buffer,
          info->depthAttachmentFormat : info->stencilAttachmentFormat;
       att->samples = info->rasterizationSamples;
       subpass->depth_stencil_attachment.attachment = a++;
+      subpass->depth_used =
+         info->depthAttachmentFormat != VK_FORMAT_UNDEFINED;
+      subpass->stencil_used =
+         info->stencilAttachmentFormat != VK_FORMAT_UNDEFINED;
       att->cond_load_allowed = att->cond_store_allowed = true;
    } else {
       subpass->depth_stencil_attachment.attachment = VK_ATTACHMENT_UNUSED;
+      subpass->depth_used = false;
+      subpass->stencil_used = false;
    }
 
    tu_render_pass_calc_views(pass);
@@ -1264,7 +1296,7 @@ tu_GetRenderAreaGranularity(VkDevice _device,
                             VkRenderPass renderPass,
                             VkExtent2D *pGranularity)
 {
-   TU_FROM_HANDLE(tu_device, device, _device);
+   VK_FROM_HANDLE(tu_device, device, _device);
    pGranularity->width = device->physical_device->info->gmem_align_w;
    pGranularity->height = device->physical_device->info->gmem_align_h;
 }
@@ -1274,7 +1306,7 @@ tu_GetRenderingAreaGranularityKHR(VkDevice _device,
                                   const VkRenderingAreaInfoKHR *pRenderingAreaInfo,
                                   VkExtent2D *pGranularity)
 {
-   TU_FROM_HANDLE(tu_device, device, _device);
+   VK_FROM_HANDLE(tu_device, device, _device);
    pGranularity->width = device->physical_device->info->gmem_align_w;
    pGranularity->height = device->physical_device->info->gmem_align_h;
 }

@@ -104,10 +104,11 @@ struct pipe_video_codec
 
    /**
     * end decoding of the current frame
+    * returns 0 on success
     */
-   void (*end_frame)(struct pipe_video_codec *codec,
-                     struct pipe_video_buffer *target,
-                     struct pipe_picture_desc *picture);
+   int (*end_frame)(struct pipe_video_codec *codec,
+                    struct pipe_video_buffer *target,
+                    struct pipe_picture_desc *picture);
 
    /**
     * flush any outstanding command buffers to the hardware
@@ -152,16 +153,18 @@ struct pipe_video_codec
                               uint64_t timeout);
 
    /**
-    * Gets a weak reference to a feedback fence.
+    * Get feedback fence.
     *
-    * Can be used to wait on the pipe_fence_handle directly instead
-    * of waiting on the get_feedback blocking call.
+    * Can be used to query the status of the previous process job denoted by
+    * 'fence' given 'timeout'.
     *
-    * Returns NULL if the feedback parameter does not have
-    * a valid in-flight submitted frame
+    * A pointer to a fence pointer can be passed to the codecs before the
+    * end_frame vfunc and the codec should then be responsible for allocating a
+    * fence on command stream submission.
     */
-   struct pipe_fence_handle* (*get_feedback_fence)(struct pipe_video_codec *codec,
-                                                   void *feedback);
+   int (*get_feedback_fence)(struct pipe_video_codec *codec,
+                             struct pipe_fence_handle *fence,
+                             uint64_t timeout);
 
    /**
     * Destroy fence.
@@ -212,6 +215,7 @@ struct pipe_video_buffer
    unsigned height;
    bool interlaced;
    unsigned bind;
+   bool contiguous_planes;
 
    /**
     * destroy this video buffer

@@ -380,8 +380,7 @@ nir_split_struct_vars(nir_shader *shader, nir_variable_mode modes)
          split_struct_derefs_impl(impl, var_field_map,
                                   modes, mem_ctx);
 
-         nir_metadata_preserve(impl, nir_metadata_block_index |
-                                        nir_metadata_dominance);
+         nir_metadata_preserve(impl, nir_metadata_control_flow);
          progress = true;
       } else {
          nir_metadata_preserve(impl, nir_metadata_all);
@@ -915,10 +914,8 @@ nir_split_array_vars(nir_shader *shader, nir_variable_mode modes)
    struct hash_table *var_info_map = _mesa_pointer_hash_table_create(mem_ctx);
    struct set *complex_vars = NULL;
 
-   assert((modes & (nir_var_shader_temp | nir_var_ray_hit_attrib | nir_var_function_temp)) == modes);
-
    bool has_global_array = false;
-   if (modes & (nir_var_shader_temp | nir_var_ray_hit_attrib)) {
+   if (modes & (~nir_var_function_temp)) {
       has_global_array = init_var_list_array_infos(shader,
                                                    &shader->variables,
                                                    modes,
@@ -953,7 +950,7 @@ nir_split_array_vars(nir_shader *shader, nir_variable_mode modes)
    }
 
    bool has_global_splits = false;
-   if (modes & (nir_var_shader_temp | nir_var_ray_hit_attrib)) {
+   if (modes & (~nir_var_function_temp)) {
       has_global_splits = split_var_list_arrays(shader, NULL,
                                                 &shader->variables,
                                                 modes,
@@ -974,8 +971,7 @@ nir_split_array_vars(nir_shader *shader, nir_variable_mode modes)
          split_array_copies_impl(impl, var_info_map, modes, mem_ctx);
          split_array_access_impl(impl, var_info_map, modes, mem_ctx);
 
-         nir_metadata_preserve(impl, nir_metadata_block_index |
-                                        nir_metadata_dominance);
+         nir_metadata_preserve(impl, nir_metadata_control_flow);
          progress = true;
       } else {
          nir_metadata_preserve(impl, nir_metadata_all);
@@ -1734,8 +1730,7 @@ nir_shrink_vec_array_vars(nir_shader *shader, nir_variable_mode modes)
       if (globals_shrunk || locals_shrunk) {
          shrink_vec_var_access_impl(impl, var_usage_map, modes);
 
-         nir_metadata_preserve(impl, nir_metadata_block_index |
-                                        nir_metadata_dominance);
+         nir_metadata_preserve(impl, nir_metadata_control_flow);
          progress = true;
       } else {
          nir_metadata_preserve(impl, nir_metadata_all);

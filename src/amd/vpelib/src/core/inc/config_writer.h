@@ -43,7 +43,7 @@ enum config_type {
 };
 
 typedef void (*config_callback_t)(
-    void *ctx, uint64_t cfg_base_gpu, uint64_t cfg_base_cpu, int64_t size);
+    void *ctx, uint64_t cfg_base_gpu, uint64_t cfg_base_cpu, uint64_t size);
 
 #define MAX_CONFIG_PACKET_DATA_SIZE_DWORD 0x01000
 
@@ -120,6 +120,20 @@ void config_writer_set_callback(
  * /param   type        config type
  */
 void config_writer_set_type(struct config_writer *writer, enum config_type type);
+
+/** force create new config with specific type
+ * if the config is empty, only type will be changed, otherwise create new one
+ *  1) direct config
+ *      VPEP_DIRECT_CONFIG_ARRAY_SIZE is finalized (in DW0) automatically.
+ *  2) indirect config
+ *      NUM_DST is finalized (in DW0) automatically.
+ * and run callback (if set) to notify the completion.
+ * A new config desc header DW0 will be generated.
+ *
+ * /param   writer      writer instance
+ * /param   type        config type
+ */
+void config_writer_force_new_with_type(struct config_writer *writer, enum config_type type);
 
 /** fill the value to the buffer.
  * If the dword exceeds the config packet size limit,

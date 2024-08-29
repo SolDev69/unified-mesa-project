@@ -435,37 +435,6 @@ can_fast_clear_with_non_zero_color(const struct intel_device_info *devinfo,
    return true;
 }
 
-static enum isl_format
-anv_get_isl_format_with_usage(const struct intel_device_info *devinfo,
-                              VkFormat vk_format,
-                              VkImageAspectFlagBits vk_aspect,
-                              VkImageUsageFlags vk_usage,
-                              VkImageTiling vk_tiling)
-{
-   assert(util_bitcount(vk_usage) == 1);
-   struct anv_format_plane format =
-      anv_get_format_aspect(devinfo, vk_format, vk_aspect,
-                            vk_tiling);
-
-   if ((vk_usage == VK_IMAGE_USAGE_STORAGE_BIT) &&
-       isl_is_storage_image_format(devinfo, format.isl_format)) {
-      enum isl_format lowered_format =
-         isl_lower_storage_image_format(devinfo, format.isl_format);
-
-      /* If we lower the format, we should ensure either they both match in
-       * bits per channel or that there is no swizzle, because we can't use
-       * the swizzle for a different bit pattern.
-       */
-      assert(isl_formats_have_same_bits_per_channel(lowered_format,
-                                                    format.isl_format) ||
-             isl_swizzle_is_identity(format.swizzle));
-
-      format.isl_format = lowered_format;
-   }
-
-   return format.isl_format;
-}
-
 /**
  * For color images that have an auxiliary surface, request allocation for an
  * additional buffer that mainly stores fast-clear values. Use of this buffer
@@ -645,7 +614,6 @@ add_aux_surface_if_supported(struct anv_device *device,
 
       ok = isl_surf_get_ccs_surf(&device->isl_dev,
                                  &image->planes[plane].primary_surface.isl,
-                                 NULL,
                                  &image->planes[plane].aux_surface.isl,
                                  stride);
       if (!ok)
@@ -833,7 +801,7 @@ static void
 check_memory_bindings(const struct anv_device *device,
                      const struct anv_image *image)
 {
-#ifdef DEBUG
+#if MESA_DEBUG
    /* As we inspect each part of the image, we merge the part's memory range
     * into these accumulation ranges.
     */
@@ -1253,7 +1221,7 @@ anv_image_init(struct anv_device *device, struct anv_image *image,
    if (image->vk.external_handle_types &
        VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID) {
       image->from_ahb = true;
-#ifdef ANDROID
+#if DETECT_OS_ANDROID
       image->vk.ahb_format = anv_ahb_format_for_vk_format(image->vk.format);
 #endif
       return VK_SUCCESS;
@@ -1447,7 +1415,7 @@ resolve_ahw_image(struct anv_device *device,
                   struct anv_image *image,
                   struct anv_device_memory *mem)
 {
-#if defined(ANDROID) && ANDROID_API_LEVEL >= 26
+#if DETECT_OS_ANDROID && ANDROID_API_LEVEL >= 26
    assert(mem->ahw);
    AHardwareBuffer_Desc desc;
    AHardwareBuffer_describe(mem->ahw, &desc);
@@ -1533,7 +1501,7 @@ anv_image_get_memory_requirements(struct anv_device *device,
       }
 
       default:
-         anv_debug_ignored_stype(ext->sType);
+         vk_debug_ignored_stype(ext->sType);
          break;
       }
    }
@@ -1586,7 +1554,7 @@ void anv_GetImageMemoryRequirements2(
       }
 
       default:
-         anv_debug_ignored_stype(ext->sType);
+         vk_debug_ignored_stype(ext->sType);
          break;
       }
    }
@@ -1734,7 +1702,7 @@ VkResult anv_BindImageMemory2(
          }
 #pragma GCC diagnostic pop
          default:
-            anv_debug_ignored_stype(s->sType);
+            vk_debug_ignored_stype(s->sType);
             break;
          }
       }
@@ -2182,7 +2150,7 @@ anv_image_fill_surface_state(struct anv_device *device,
                              const union isl_color_value *clear_color,
                              enum anv_image_view_state_flags flags,
                              struct anv_surface_state *state_inout,
-                             struct brw_image_param *image_param_out)
+                             struct isl_image_param *image_param_out)
 {
    const uint32_t plane = anv_image_aspect_to_plane(image, aspect);
 

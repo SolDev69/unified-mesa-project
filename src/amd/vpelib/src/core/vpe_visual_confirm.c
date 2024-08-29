@@ -48,7 +48,7 @@ static uint16_t vpe_get_visual_confirm_total_seg_count(
     struct stream_ctx *stream_ctx;
 
     if (vpe_priv->init.debug.visual_confirm_params.input_format) {
-        for (stream_idx = 0; stream_idx < params->num_streams; stream_idx++) {
+        for (stream_idx = 0; stream_idx < vpe_priv->num_streams; stream_idx++) {
             stream_ctx = &vpe_priv->stream_ctx[stream_idx];
             total_visual_confirm_segs += get_visual_confirm_segs_count(
                 max_seg_width, stream_ctx->stream.scaling_info.dst_rect.width);
@@ -65,7 +65,7 @@ static uint16_t vpe_get_visual_confirm_total_seg_count(
 
 struct vpe_color vpe_get_visual_confirm_color(enum vpe_surface_pixel_format format,
     struct vpe_color_space cs, enum color_space output_cs, struct transfer_func *output_tf,
-    bool enable_3dlut)
+    enum vpe_surface_pixel_format output_format, bool enable_3dlut)
 {
     struct vpe_color visual_confirm_color;
     visual_confirm_color.is_ycbcr = false;
@@ -145,10 +145,10 @@ struct vpe_color vpe_get_visual_confirm_color(enum vpe_surface_pixel_format form
     }
 
     // Due to there will be regamma (ogam), need convert the bg color for visual confirm
-    vpe_bg_color_convert(output_cs, output_tf, &visual_confirm_color);
+    vpe_bg_color_convert(output_cs, output_tf, &visual_confirm_color, enable_3dlut);
 
     // Experimental: To make FP16 Linear color looks more visually ok
-    if (output_tf->tf == TRANSFER_FUNC_LINEAR_0_125) {
+    if (vpe_is_fp16(output_format)) {
         visual_confirm_color.rgba.r /= 125;
         visual_confirm_color.rgba.g /= 125;
         visual_confirm_color.rgba.b /= 125;

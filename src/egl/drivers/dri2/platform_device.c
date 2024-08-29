@@ -43,24 +43,22 @@
 #include "egl_dri2.h"
 #include "kopper_interface.h"
 #include "loader.h"
+#include "dri_util.h"
 
 static __DRIimage *
 device_alloc_image(struct dri2_egl_display *dri2_dpy,
                    struct dri2_egl_surface *dri2_surf)
 {
-   return dri2_dpy->image->createImage(
+   return dri_create_image(
       dri2_dpy->dri_screen_render_gpu, dri2_surf->base.Width,
-      dri2_surf->base.Height, dri2_surf->visual, 0, NULL);
+      dri2_surf->base.Height, dri2_surf->visual, NULL, 0, 0, NULL);
 }
 
 static void
 device_free_images(struct dri2_egl_surface *dri2_surf)
 {
-   struct dri2_egl_display *dri2_dpy =
-      dri2_egl_display(dri2_surf->base.Resource.Display);
-
    if (dri2_surf->front) {
-      dri2_dpy->image->destroyImage(dri2_surf->front);
+      dri2_destroy_image(dri2_surf->front);
       dri2_surf->front = NULL;
    }
 
@@ -139,7 +137,7 @@ dri2_device_create_surface(_EGLDisplay *disp, EGLint type, _EGLConfig *conf,
    }
 
    dri2_surf->visual = dri2_image_format_for_pbuffer_config(dri2_dpy, config);
-   if (dri2_surf->visual == __DRI_IMAGE_FORMAT_NONE)
+   if (dri2_surf->visual == PIPE_FORMAT_NONE)
       goto cleanup_surface;
 
    if (!dri2_create_drawable(dri2_dpy, config, dri2_surf, dri2_surf))
@@ -155,12 +153,11 @@ cleanup_surface:
 static EGLBoolean
 device_destroy_surface(_EGLDisplay *disp, _EGLSurface *surf)
 {
-   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
 
    device_free_images(dri2_surf);
 
-   dri2_dpy->core->destroyDrawable(dri2_surf->dri_drawable);
+   driDestroyDrawable(dri2_surf->dri_drawable);
 
    dri2_fini_surface(surf);
    free(dri2_surf);
@@ -299,7 +296,7 @@ device_probe_device(_EGLDisplay *disp)
       dri2_dpy->driver_name = strdup("kms_swrast");
    }
 
-   if (!dri2_load_driver_dri3(disp))
+   if (!dri2_load_driver(disp))
       goto err_load;
 
    dri2_dpy->loader_extensions = image_loader_extensions;
@@ -327,7 +324,7 @@ device_probe_device_sw(_EGLDisplay *disp)
       return false;
 
    /* HACK: should be driver_swrast_null */
-   if (!dri2_load_driver_swrast(disp)) {
+   if (!dri2_load_driver(disp)) {
       free(dri2_dpy->driver_name);
       dri2_dpy->driver_name = NULL;
       return false;
@@ -340,22 +337,20 @@ device_probe_device_sw(_EGLDisplay *disp)
 EGLBoolean
 dri2_initialize_device(_EGLDisplay *disp)
 {
-   _EGLDevice *dev;
    const char *err;
    struct dri2_egl_display *dri2_dpy = dri2_display_create();
    if (!dri2_dpy)
       return EGL_FALSE;
 
    /* Extension requires a PlatformDisplay - the EGLDevice. */
-   dev = disp->PlatformDisplay;
+   disp->Device = disp->PlatformDisplay;
 
-   disp->Device = dev;
    disp->DriverData = (void *)dri2_dpy;
    err = "DRI2: failed to load driver";
-   if (_eglDeviceSupports(dev, _EGL_DEVICE_DRM)) {
+   if (_eglDeviceSupports(disp->Device, _EGL_DEVICE_DRM)) {
       if (!device_probe_device(disp))
          goto cleanup;
-   } else if (_eglDeviceSupports(dev, _EGL_DEVICE_SOFTWARE)) {
+   } else if (_eglDeviceSupports(disp->Device, _EGL_DEVICE_SOFTWARE)) {
       if (!device_probe_device_sw(disp))
          goto cleanup;
    } else {
@@ -369,11 +364,6 @@ dri2_initialize_device(_EGLDisplay *disp)
       goto cleanup;
    }
 
-   if (!dri2_setup_extensions(disp)) {
-      err = "DRI2: failed to find required DRI extensions";
-      goto cleanup;
-   }
-
    dri2_setup_screen(disp);
 #ifdef HAVE_WAYLAND_PLATFORM
    dri2_dpy->device_name =
@@ -381,10 +371,7 @@ dri2_initialize_device(_EGLDisplay *disp)
 #endif
    dri2_set_WL_bind_wayland_display(disp);
 
-   if (!dri2_add_pbuffer_configs_for_visuals(disp)) {
-      err = "DRI2: failed to add configs";
-      goto cleanup;
-   }
+   dri2_add_pbuffer_configs_for_visuals(disp);
 
    /* Fill vtbl last to prevent accidentally calling virtual function during
     * initialization.

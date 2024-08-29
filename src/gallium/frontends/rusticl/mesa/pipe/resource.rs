@@ -1,16 +1,49 @@
 use mesa_rust_gen::*;
 
-use std::ptr;
+use std::{mem, ptr};
 
 #[derive(PartialEq, Eq, Hash)]
+#[repr(transparent)]
 pub struct PipeResource {
     pipe: *mut pipe_resource,
-    pub is_user: bool,
 }
+
+const PIPE_RESOURCE_FLAG_RUSTICL_IS_USER: u32 = PIPE_RESOURCE_FLAG_FRONTEND_PRIV;
 
 // SAFETY: pipe_resource is considered a thread safe type
 unsafe impl Send for PipeResource {}
 unsafe impl Sync for PipeResource {}
+
+/// A thread safe wrapper around [pipe_image_view]. It's purpose is to increase the reference count
+/// on the [pipe_resource] this view belongs to.
+#[repr(transparent)]
+pub struct PipeImageView {
+    pub(super) pipe: pipe_image_view,
+}
+
+impl PipeImageView {
+    fn new(pipe: pipe_image_view) -> Self {
+        unsafe { pipe_resource_reference(&mut ptr::null_mut(), pipe.resource) }
+        Self { pipe: pipe }
+    }
+
+    pub fn slice_to_pipe(slice: &[PipeImageView]) -> &[pipe_image_view] {
+        // SAFETY: `PipeImageView` is a transparent wrapper around `pipe_image_view`, so transmute
+        //         on the slice is safe.
+        unsafe { mem::transmute(slice) }
+    }
+}
+
+impl Drop for PipeImageView {
+    fn drop(&mut self) {
+        unsafe { pipe_resource_reference(&mut self.pipe.resource, ptr::null_mut()) }
+    }
+}
+
+// SAFETY: pipe_image_view is just static data around a pipe_resource, which itself is a thread-safe
+//         type.
+unsafe impl Send for PipeImageView {}
+unsafe impl Sync for PipeImageView {}
 
 // Image dimensions provide by application to be used in both
 // image and sampler views when image is created from buffer
@@ -37,10 +70,13 @@ impl PipeResource {
             return None;
         }
 
-        Some(Self {
-            pipe: res,
-            is_user: is_user,
-        })
+        if is_user {
+            unsafe {
+                res.as_mut().unwrap().flags |= PIPE_RESOURCE_FLAG_RUSTICL_IS_USER;
+            }
+        }
+
+        Some(Self { pipe: res })
     }
 
     pub(super) fn pipe(&self) -> *mut pipe_resource {
@@ -76,7 +112,11 @@ impl PipeResource {
     }
 
     pub fn is_staging(&self) -> bool {
-        self.as_ref().usage() & pipe_resource_usage::PIPE_USAGE_STAGING.0 != 0
+        self.as_ref().usage() == pipe_resource_usage::PIPE_USAGE_STAGING
+    }
+
+    pub fn is_user(&self) -> bool {
+        self.as_ref().flags & PIPE_RESOURCE_FLAG_RUSTICL_IS_USER != 0
     }
 
     pub fn pipe_image_view(
@@ -85,7 +125,8 @@ impl PipeResource {
         read_write: bool,
         host_access: u16,
         app_img_info: Option<&AppImgInfo>,
-    ) -> pipe_image_view {
+    ) -> PipeImageView {
+        let pipe = PipeResource::as_ref(self);
         let u = if let Some(app_img_info) = app_img_info {
             pipe_image_view__bindgen_ty_1 {
                 tex2d_from_buf: pipe_image_view__bindgen_ty_1__bindgen_ty_3 {
@@ -99,17 +140,17 @@ impl PipeResource {
             pipe_image_view__bindgen_ty_1 {
                 buf: pipe_image_view__bindgen_ty_1__bindgen_ty_2 {
                     offset: 0,
-                    size: self.as_ref().width0,
+                    size: pipe.width0,
                 },
             }
         } else {
             let mut tex = pipe_image_view__bindgen_ty_1__bindgen_ty_1::default();
             tex.set_level(0);
             tex.set_first_layer(0);
-            if self.as_ref().target() == pipe_texture_target::PIPE_TEXTURE_3D {
-                tex.set_last_layer((self.as_ref().depth0 - 1).into());
-            } else if self.as_ref().array_size > 0 {
-                tex.set_last_layer((self.as_ref().array_size - 1).into());
+            if pipe.target() == pipe_texture_target::PIPE_TEXTURE_3D {
+                tex.set_last_layer((pipe.depth0 - 1).into());
+            } else if pipe.array_size > 0 {
+                tex.set_last_layer((pipe.array_size - 1).into());
             } else {
                 tex.set_last_layer(0);
             }
@@ -129,13 +170,13 @@ impl PipeResource {
             0
         } as u16;
 
-        pipe_image_view {
+        PipeImageView::new(pipe_image_view {
             resource: self.pipe(),
             format: format,
             access: access | host_access,
             shader_access: shader_access,
             u: u,
-        }
+        })
     }
 
     pub fn pipe_sampler_view_template(

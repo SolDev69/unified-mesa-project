@@ -1778,6 +1778,59 @@ vn_encode_VkPipelineDynamicStateCreateInfo(struct vn_cs_encoder *enc, const VkPi
     vn_encode_VkPipelineDynamicStateCreateInfo_self(enc, val);
 }
 
+/* struct VkPipelineCreateFlags2CreateInfoKHR chain */
+
+static inline size_t
+vn_sizeof_VkPipelineCreateFlags2CreateInfoKHR_pnext(const void *val)
+{
+    /* no known/supported struct */
+    return vn_sizeof_simple_pointer(NULL);
+}
+
+static inline size_t
+vn_sizeof_VkPipelineCreateFlags2CreateInfoKHR_self(const VkPipelineCreateFlags2CreateInfoKHR *val)
+{
+    size_t size = 0;
+    /* skip val->{sType,pNext} */
+    size += vn_sizeof_VkFlags64(&val->flags);
+    return size;
+}
+
+static inline size_t
+vn_sizeof_VkPipelineCreateFlags2CreateInfoKHR(const VkPipelineCreateFlags2CreateInfoKHR *val)
+{
+    size_t size = 0;
+
+    size += vn_sizeof_VkStructureType(&val->sType);
+    size += vn_sizeof_VkPipelineCreateFlags2CreateInfoKHR_pnext(val->pNext);
+    size += vn_sizeof_VkPipelineCreateFlags2CreateInfoKHR_self(val);
+
+    return size;
+}
+
+static inline void
+vn_encode_VkPipelineCreateFlags2CreateInfoKHR_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPipelineCreateFlags2CreateInfoKHR_self(struct vn_cs_encoder *enc, const VkPipelineCreateFlags2CreateInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_VkFlags64(enc, &val->flags);
+}
+
+static inline void
+vn_encode_VkPipelineCreateFlags2CreateInfoKHR(struct vn_cs_encoder *enc, const VkPipelineCreateFlags2CreateInfoKHR *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR });
+    vn_encode_VkPipelineCreateFlags2CreateInfoKHR_pnext(enc, val->pNext);
+    vn_encode_VkPipelineCreateFlags2CreateInfoKHR_self(enc, val);
+}
+
 /* struct VkPipelineLibraryCreateInfoKHR chain */
 
 static inline size_t
@@ -1935,6 +1988,63 @@ vn_encode_VkPipelineCreationFeedbackCreateInfo(struct vn_cs_encoder *enc, const 
     vn_encode_VkPipelineCreationFeedbackCreateInfo_self(enc, val);
 }
 
+/* struct VkPipelineFragmentShadingRateStateCreateInfoKHR chain */
+
+static inline size_t
+vn_sizeof_VkPipelineFragmentShadingRateStateCreateInfoKHR_pnext(const void *val)
+{
+    /* no known/supported struct */
+    return vn_sizeof_simple_pointer(NULL);
+}
+
+static inline size_t
+vn_sizeof_VkPipelineFragmentShadingRateStateCreateInfoKHR_self(const VkPipelineFragmentShadingRateStateCreateInfoKHR *val)
+{
+    size_t size = 0;
+    /* skip val->{sType,pNext} */
+    size += vn_sizeof_VkExtent2D(&val->fragmentSize);
+    size += vn_sizeof_array_size(2);
+    size += vn_sizeof_VkFragmentShadingRateCombinerOpKHR_array(val->combinerOps, 2);
+    return size;
+}
+
+static inline size_t
+vn_sizeof_VkPipelineFragmentShadingRateStateCreateInfoKHR(const VkPipelineFragmentShadingRateStateCreateInfoKHR *val)
+{
+    size_t size = 0;
+
+    size += vn_sizeof_VkStructureType(&val->sType);
+    size += vn_sizeof_VkPipelineFragmentShadingRateStateCreateInfoKHR_pnext(val->pNext);
+    size += vn_sizeof_VkPipelineFragmentShadingRateStateCreateInfoKHR_self(val);
+
+    return size;
+}
+
+static inline void
+vn_encode_VkPipelineFragmentShadingRateStateCreateInfoKHR_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPipelineFragmentShadingRateStateCreateInfoKHR_self(struct vn_cs_encoder *enc, const VkPipelineFragmentShadingRateStateCreateInfoKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_VkExtent2D(enc, &val->fragmentSize);
+    vn_encode_array_size(enc, 2);
+    vn_encode_VkFragmentShadingRateCombinerOpKHR_array(enc, val->combinerOps, 2);
+}
+
+static inline void
+vn_encode_VkPipelineFragmentShadingRateStateCreateInfoKHR(struct vn_cs_encoder *enc, const VkPipelineFragmentShadingRateStateCreateInfoKHR *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR });
+    vn_encode_VkPipelineFragmentShadingRateStateCreateInfoKHR_pnext(enc, val->pNext);
+    vn_encode_VkPipelineFragmentShadingRateStateCreateInfoKHR_self(enc, val);
+}
+
 /* struct VkPipelineRenderingCreateInfo chain */
 
 static inline size_t
@@ -2069,6 +2179,14 @@ vn_sizeof_VkGraphicsPipelineCreateInfo_pnext(const void *val)
 
     while (pnext) {
         switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR:
+            if (!vn_cs_renderer_protocol_has_extension(471 /* VK_KHR_maintenance5 */))
+                break;
+            size += vn_sizeof_simple_pointer(pnext);
+            size += vn_sizeof_VkStructureType(&pnext->sType);
+            size += vn_sizeof_VkGraphicsPipelineCreateInfo_pnext(pnext->pNext);
+            size += vn_sizeof_VkPipelineCreateFlags2CreateInfoKHR_self((const VkPipelineCreateFlags2CreateInfoKHR *)pnext);
+            return size;
         case VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR:
             if (!vn_cs_renderer_protocol_has_extension(291 /* VK_KHR_pipeline_library */))
                 break;
@@ -2084,6 +2202,14 @@ vn_sizeof_VkGraphicsPipelineCreateInfo_pnext(const void *val)
             size += vn_sizeof_VkStructureType(&pnext->sType);
             size += vn_sizeof_VkGraphicsPipelineCreateInfo_pnext(pnext->pNext);
             size += vn_sizeof_VkPipelineCreationFeedbackCreateInfo_self((const VkPipelineCreationFeedbackCreateInfo *)pnext);
+            return size;
+        case VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR:
+            if (!vn_cs_renderer_protocol_has_extension(227 /* VK_KHR_fragment_shading_rate */))
+                break;
+            size += vn_sizeof_simple_pointer(pnext);
+            size += vn_sizeof_VkStructureType(&pnext->sType);
+            size += vn_sizeof_VkGraphicsPipelineCreateInfo_pnext(pnext->pNext);
+            size += vn_sizeof_VkPipelineFragmentShadingRateStateCreateInfoKHR_self((const VkPipelineFragmentShadingRateStateCreateInfoKHR *)pnext);
             return size;
         case VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO:
             if (!vn_cs_renderer_protocol_has_extension(45 /* VK_KHR_dynamic_rendering */))
@@ -2179,6 +2305,14 @@ vn_encode_VkGraphicsPipelineCreateInfo_pnext(struct vn_cs_encoder *enc, const vo
 
     while (pnext) {
         switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR:
+            if (!vn_cs_renderer_protocol_has_extension(471 /* VK_KHR_maintenance5 */))
+                break;
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkGraphicsPipelineCreateInfo_pnext(enc, pnext->pNext);
+            vn_encode_VkPipelineCreateFlags2CreateInfoKHR_self(enc, (const VkPipelineCreateFlags2CreateInfoKHR *)pnext);
+            return;
         case VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR:
             if (!vn_cs_renderer_protocol_has_extension(291 /* VK_KHR_pipeline_library */))
                 break;
@@ -2194,6 +2328,14 @@ vn_encode_VkGraphicsPipelineCreateInfo_pnext(struct vn_cs_encoder *enc, const vo
             vn_encode_VkStructureType(enc, &pnext->sType);
             vn_encode_VkGraphicsPipelineCreateInfo_pnext(enc, pnext->pNext);
             vn_encode_VkPipelineCreationFeedbackCreateInfo_self(enc, (const VkPipelineCreationFeedbackCreateInfo *)pnext);
+            return;
+        case VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR:
+            if (!vn_cs_renderer_protocol_has_extension(227 /* VK_KHR_fragment_shading_rate */))
+                break;
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkGraphicsPipelineCreateInfo_pnext(enc, pnext->pNext);
+            vn_encode_VkPipelineFragmentShadingRateStateCreateInfoKHR_self(enc, (const VkPipelineFragmentShadingRateStateCreateInfoKHR *)pnext);
             return;
         case VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO:
             if (!vn_cs_renderer_protocol_has_extension(45 /* VK_KHR_dynamic_rendering */))
@@ -2278,6 +2420,14 @@ vn_sizeof_VkComputePipelineCreateInfo_pnext(const void *val)
 
     while (pnext) {
         switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR:
+            if (!vn_cs_renderer_protocol_has_extension(471 /* VK_KHR_maintenance5 */))
+                break;
+            size += vn_sizeof_simple_pointer(pnext);
+            size += vn_sizeof_VkStructureType(&pnext->sType);
+            size += vn_sizeof_VkComputePipelineCreateInfo_pnext(pnext->pNext);
+            size += vn_sizeof_VkPipelineCreateFlags2CreateInfoKHR_self((const VkPipelineCreateFlags2CreateInfoKHR *)pnext);
+            return size;
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
             if (!vn_cs_renderer_protocol_has_extension(193 /* VK_EXT_pipeline_creation_feedback */))
                 break;
@@ -2328,6 +2478,14 @@ vn_encode_VkComputePipelineCreateInfo_pnext(struct vn_cs_encoder *enc, const voi
 
     while (pnext) {
         switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATE_FLAGS_2_CREATE_INFO_KHR:
+            if (!vn_cs_renderer_protocol_has_extension(471 /* VK_KHR_maintenance5 */))
+                break;
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkComputePipelineCreateInfo_pnext(enc, pnext->pNext);
+            vn_encode_VkPipelineCreateFlags2CreateInfoKHR_self(enc, (const VkPipelineCreateFlags2CreateInfoKHR *)pnext);
+            return;
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
             if (!vn_cs_renderer_protocol_has_extension(193 /* VK_EXT_pipeline_creation_feedback */))
                 break;

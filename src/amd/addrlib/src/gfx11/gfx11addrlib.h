@@ -121,12 +121,11 @@ const UINT_32 Gfx11Rsrc2dSwModeMask = Gfx11LinearSwModeMask  |
                                       Gfx11ZSwModeMask       |
                                       Gfx11RenderSwModeMask;
 
-const UINT_32 Gfx11Rsrc3dSwModeMask = Gfx11LinearSwModeMask    |
-                                      Gfx11StandardSwModeMask  |
-                                      Gfx11ZSwModeMask         |
-                                      Gfx11RenderSwModeMask    |
-                                      (1u << ADDR_SW_64KB_D_X) |
-                                      (1u << ADDR_SW_256KB_D_X);
+const UINT_32 Gfx11Rsrc3dSwModeMask = Gfx11LinearSwModeMask   |
+                                      Gfx11StandardSwModeMask |
+                                      Gfx11ZSwModeMask        |
+                                      Gfx11RenderSwModeMask   |
+                                      (1u << ADDR_SW_64KB_D_X);
 
 const UINT_32 Gfx11Rsrc2dPrtSwModeMask =
     (Gfx11Blk4KBSwModeMask | Gfx11Blk64KBSwModeMask) & ~Gfx11XSwModeMask & Gfx11Rsrc2dSwModeMask;
@@ -141,6 +140,8 @@ const UINT_32 Gfx11Rsrc3dThin256KBSwModeMask = (1u << ADDR_SW_256KB_Z_X) |
                                                (1u << ADDR_SW_256KB_R_X);
 
 const UINT_32 Gfx11Rsrc3dThinSwModeMask = Gfx11Rsrc3dThin64KBSwModeMask | Gfx11Rsrc3dThin256KBSwModeMask;
+
+const UINT_32 Gfx11Rsrc3dViewAs2dSwModeMask = Gfx11Rsrc3dThinSwModeMask | Gfx11LinearSwModeMask;
 
 const UINT_32 Gfx11Rsrc3dThickSwModeMask = Gfx11Rsrc3dSwModeMask & ~(Gfx11Rsrc3dThinSwModeMask | Gfx11LinearSwModeMask);
 

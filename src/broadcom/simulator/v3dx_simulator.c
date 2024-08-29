@@ -31,7 +31,7 @@
  * we support.
  */
 
-#ifdef USE_V3D_SIMULATOR
+#if USE_V3D_SIMULATOR
 
 #include <assert.h>
 #include <stdbool.h>
@@ -49,7 +49,7 @@
 #define HW_REGISTER_RO(x) (x)
 #define HW_REGISTER_RW(x) (x)
 #if V3D_VERSION == 71
-#include "libs/core/v3d/registers/7.1.6.0/v3d.h"
+#include "libs/core/v3d/registers/7.1.7.0/v3d.h"
 #else
 #if V3D_VERSION == 42
 #include "libs/core/v3d/registers/4.2.14.0/v3d.h"
@@ -181,7 +181,7 @@ int
 v3dX(simulator_submit_tfu_ioctl)(struct v3d_hw *v3d,
                                  struct drm_v3d_submit_tfu *args)
 {
-        int last_vtct = V3D_READ(TFU_REG(CS)) & V3D_TFU_CS_CVTCT_SET;
+        int last_vtct = V3D_READ(TFU_REG(CS)) & TFU_REG(CS_CVTCT_SET);
 
         V3D_WRITE(TFU_REG(IIA), args->iia);
         V3D_WRITE(TFU_REG(IIS), args->iis);
@@ -199,7 +199,7 @@ v3dX(simulator_submit_tfu_ioctl)(struct v3d_hw *v3d,
 
         V3D_WRITE(TFU_REG(ICFG), args->icfg);
 
-        while ((V3D_READ(TFU_REG(CS)) & V3D_TFU_CS_CVTCT_SET) == last_vtct) {
+        while ((V3D_READ(TFU_REG(CS)) & TFU_REG(CS_CVTCT_SET)) == last_vtct) {
                 v3d_hw_tick(v3d);
         }
 
@@ -251,10 +251,15 @@ v3dX(simulator_submit_csd_ioctl)(struct v3d_hw *v3d,
 
 int
 v3dX(simulator_get_param_ioctl)(struct v3d_hw *v3d,
+                                uint32_t perfcnt_total,
                                 struct drm_v3d_get_param *args)
 {
         static const uint32_t reg_map[] = {
+#if V3D_VERSION >= 71
+                [DRM_V3D_PARAM_V3D_UIFCFG] = V3D_HUB_CTL_IDENT0,
+#else
                 [DRM_V3D_PARAM_V3D_UIFCFG] = V3D_HUB_CTL_UIFCFG,
+#endif
                 [DRM_V3D_PARAM_V3D_HUB_IDENT1] = V3D_HUB_CTL_IDENT1,
                 [DRM_V3D_PARAM_V3D_HUB_IDENT2] = V3D_HUB_CTL_IDENT2,
                 [DRM_V3D_PARAM_V3D_HUB_IDENT3] = V3D_HUB_CTL_IDENT3,
@@ -282,6 +287,9 @@ v3dX(simulator_get_param_ioctl)(struct v3d_hw *v3d,
 	case DRM_V3D_PARAM_SUPPORTS_CPU_QUEUE:
 		args->value = 1;
 		return 0;
+	case DRM_V3D_PARAM_MAX_PERF_COUNTERS:
+		args->value = perfcnt_total;
+		return 0;
         }
 
         if (args->param < ARRAY_SIZE(reg_map) && reg_map[args->param]) {
@@ -292,6 +300,30 @@ v3dX(simulator_get_param_ioctl)(struct v3d_hw *v3d,
         fprintf(stderr, "Unknown DRM_IOCTL_V3D_GET_PARAM(%lld)\n",
                 (long long)args->value);
         abort();
+}
+
+int
+v3dX(simulator_perfmon_get_counter_ioctl)(uint32_t perfcnt_total,
+                                          struct drm_v3d_perfmon_get_counter *args)
+{
+        const char **counter = NULL;
+
+        /* Make sure that the counter ID is valid */
+        if (args->counter >= perfcnt_total)
+                return -1;
+
+        counter = v3d_performance_counters[args->counter];
+
+        memcpy(args->name, counter[V3D_PERFCNT_NAME],
+               DRM_V3D_PERFCNT_MAX_NAME);
+
+        memcpy(args->category, counter[V3D_PERFCNT_CATEGORY],
+               DRM_V3D_PERFCNT_MAX_CATEGORY);
+
+        memcpy(args->description, counter[V3D_PERFCNT_DESCRIPTION],
+               DRM_V3D_PERFCNT_MAX_DESCRIPTION);
+
+        return 0;
 }
 
 static struct v3d_hw *v3d_isr_hw;
@@ -345,7 +377,7 @@ handle_mmu_interruptions(struct v3d_hw *v3d,
                 return;
 
         const char *client = "?";
-        uint32_t axi_id = V3D_READ(V3D_MMU_VIO_ID);
+        uint32_t axi_id = V3D_READ(V3D_MMU0_VIO_ID);
         uint32_t va_width = 30;
 
         static const char *const v3d42_axi_ids[] = {
@@ -363,15 +395,15 @@ handle_mmu_interruptions(struct v3d_hw *v3d,
         if (axi_id < ARRAY_SIZE(v3d42_axi_ids))
                 client = v3d42_axi_ids[axi_id];
 
-        uint32_t mmu_debug = V3D_READ(V3D_MMU_DEBUG_INFO);
+        uint32_t mmu_debug = V3D_READ(V3D_MMU0_DEBUG_INFO);
 
-        va_width += ((mmu_debug & V3D_MMU_DEBUG_INFO_VA_WIDTH_SET)
-                     >> V3D_MMU_DEBUG_INFO_VA_WIDTH_LSB);
+        va_width += ((mmu_debug & V3D_MMU0_DEBUG_INFO_VA_WIDTH_SET)
+                     >> V3D_MMU0_DEBUG_INFO_VA_WIDTH_LSB);
 
         /* Only the top bits (final number depends on the gen) of the virtual
          * address are reported in the MMU VIO_ADDR register.
          */
-        uint64_t vio_addr = ((uint64_t)V3D_READ(V3D_MMU_VIO_ADDR) <<
+        uint64_t vio_addr = ((uint64_t)V3D_READ(V3D_MMU0_VIO_ADDR) <<
                              (va_width - 32));
 
         /* Difference with the kernel: here were are going to abort after

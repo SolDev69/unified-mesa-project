@@ -72,6 +72,11 @@ enum vpe_cmd_type {
     VPE_CMD_TYPE_COUNT
 };
 
+enum vpe_stream_type {
+    VPE_STREAM_TYPE_INPUT,
+    VPE_STREAM_TYPE_BG_GEN,
+};
+
 /** this represents a segement context.
  * each segment has its own version of data */
 struct segment_ctx {
@@ -85,6 +90,11 @@ struct vpe_cmd_input {
     struct scaler_data scaler_data;
 };
 
+struct vpe_cmd_output {
+    struct vpe_rect dst_viewport;
+    struct vpe_rect dst_viewport_c;
+};
+
 struct vpe_cmd_info {
     enum vpe_cmd_ops ops;
     uint8_t          cd; // count down value
@@ -94,25 +104,34 @@ struct vpe_cmd_info {
     struct vpe_cmd_input inputs[MAX_PIPE];
 
     // output
-    struct vpe_rect dst_viewport;
-    struct vpe_rect dst_viewport_c;
+    uint16_t              num_outputs;
+    struct vpe_cmd_output outputs[MAX_OUTPUT_PIPE];
 
     bool tm_enabled;
-    bool is_begin;
-    bool is_end;
+    bool insert_start_csync;
+    bool insert_end_csync;
 };
 
 struct config_record {
     uint64_t config_base_addr;
-    int64_t  config_size;
+    uint64_t config_size;
+};
+
+#define VPE_3DLUT_CACHE_SIZE 81920
+
+struct vpe_3dlut_cache {
+    uint64_t uid;
+    uint8_t  cache_buf[VPE_3DLUT_CACHE_SIZE];
+    uint64_t buffer_size;
 };
 
 /** represents a stream input, i.e. common to all segments */
 struct stream_ctx {
     struct vpe_priv *vpe_priv;
 
-    int32_t           stream_idx;
-    struct vpe_stream stream; /**< stores all the input data */
+    enum vpe_stream_type stream_type;
+    int32_t              stream_idx;
+    struct vpe_stream    stream; /**< stores all the input data */
 
     uint16_t            num_segments;
     struct segment_ctx *segment_ctx;
@@ -128,7 +147,9 @@ struct stream_ctx {
     enum color_transfer_func tf;
     enum color_space         cs;
     bool                     enable_3dlut;
-    bool                     update_3dlut;
+    uint64_t                 uid_3dlut;                 // UID for current 3D LUT params
+    bool                     geometric_scaling;
+    bool                     is_yuv_input;
 
     union {
         struct {
@@ -146,6 +167,7 @@ struct stream_ctx {
     struct colorspace_transform *gamut_remap;
     struct transfer_func        *in_shaper_func; // for shaper lut
     struct vpe_3dlut            *lut3d_func;     // for 3dlut
+    struct vpe_3dlut_cache      *lut3d_cache;    // for 3dlut cache
     struct transfer_func        *blend_tf;       // for 1dlut
     white_point_gain             white_point_gain;
 
@@ -239,8 +261,10 @@ struct vpe_priv {
     struct config_backend_cb_ctx  be_cb_ctx;
 
     // input ctx
-    uint32_t           num_streams;
-    struct stream_ctx *stream_ctx;
+    uint32_t           num_virtual_streams; // streams created by VPE
+    uint32_t           num_input_streams;   // streams inputed from build params
+    uint32_t           num_streams;         // input streams + virtual streams
+    struct stream_ctx *stream_ctx;          // input streams allocated first, then virtual streams
 
     // output ctx
     struct output_ctx output_ctx;
@@ -254,6 +278,12 @@ struct vpe_priv {
     bool scale_yuv_matrix; // this is a flag that forces scaling the yuv->rgb matrix
                            //  when embedding the color adjustments
 
+#ifdef VPE_BUILD_1_1
+    // collaborate sync data counter
+    int32_t  collaborate_sync_index;
+    uint16_t vpe_num_instance;
+    bool     collaboration_mode;
+#endif
     enum vpe_expansion_mode expansion_mode;
 };
 

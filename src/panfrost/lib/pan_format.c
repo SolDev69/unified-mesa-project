@@ -30,30 +30,33 @@
 
 /* Convenience */
 
-#define MALI_BLEND_AU_R8G8B8A8    (MALI_RGBA8_TB << 12)
-#define MALI_BLEND_PU_R8G8B8A8    (MALI_RGBA8_TB << 12)
-#define MALI_BLEND_AU_R10G10B10A2 (MALI_RGB10_A2_TB << 12)
-#define MALI_BLEND_PU_R10G10B10A2 (MALI_RGB10_A2_TB << 12)
-#define MALI_BLEND_AU_R8G8B8A2    (MALI_RGB8_A2_AU << 12)
-#define MALI_BLEND_PU_R8G8B8A2    (MALI_RGB8_A2_PU << 12)
-#define MALI_BLEND_AU_R4G4B4A4    (MALI_RGBA4_AU << 12)
-#define MALI_BLEND_PU_R4G4B4A4    (MALI_RGBA4_PU << 12)
-#define MALI_BLEND_AU_R5G6B5A0    (MALI_R5G6B5_AU << 12)
-#define MALI_BLEND_PU_R5G6B5A0    (MALI_R5G6B5_PU << 12)
-#define MALI_BLEND_AU_R5G5B5A1    (MALI_RGB5_A1_AU << 12)
-#define MALI_BLEND_PU_R5G5B5A1    (MALI_RGB5_A1_PU << 12)
+#if PAN_ARCH == 6
+#define MALI_RGBA_SWIZZLE         PAN_V6_SWIZZLE(R, G, B, A)
+#define MALI_RGB1_SWIZZLE         PAN_V6_SWIZZLE(R, G, B, A)
+#else
+#define MALI_RGBA_SWIZZLE         MALI_RGB_COMPONENT_ORDER_RGBA
+#define MALI_RGB1_SWIZZLE         MALI_RGB_COMPONENT_ORDER_RGB1
+#endif
 
-#if PAN_ARCH <= 6
+#define MALI_BLEND_AU_R8G8B8A8    (MALI_RGBA8_TB << 12)    | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_PU_R8G8B8A8    (MALI_RGBA8_TB << 12)    | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_AU_R10G10B10A2 (MALI_RGB10_A2_TB << 12) | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_PU_R10G10B10A2 (MALI_RGB10_A2_TB << 12) | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_AU_R8G8B8A2    (MALI_RGB8_A2_AU << 12)  | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_PU_R8G8B8A2    (MALI_RGB8_A2_PU << 12)  | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_AU_R4G4B4A4    (MALI_RGBA4_AU << 12)    | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_PU_R4G4B4A4    (MALI_RGBA4_PU << 12)    | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_AU_R5G6B5A0    (MALI_R5G6B5_AU << 12)   | MALI_RGB1_SWIZZLE
+#define MALI_BLEND_PU_R5G6B5A0    (MALI_R5G6B5_PU << 12)   | MALI_RGB1_SWIZZLE
+#define MALI_BLEND_AU_R5G5B5A1    (MALI_RGB5_A1_AU << 12)  | MALI_RGBA_SWIZZLE
+#define MALI_BLEND_PU_R5G5B5A1    (MALI_RGB5_A1_PU << 12)  | MALI_RGBA_SWIZZLE
+
+#if PAN_ARCH <= 5
 #define BFMT2(pipe, internal, writeback, srgb)                                 \
    [PIPE_FORMAT_##pipe] = {                                                    \
       MALI_COLOR_BUFFER_INTERNAL_FORMAT_##internal,                            \
       MALI_COLOR_FORMAT_##writeback,                                           \
-      {                                                                        \
-         MALI_BLEND_PU_##internal | (srgb ? (1 << 20) : 0) |                   \
-            PAN_V6_SWIZZLE(R, G, B, A),                                        \
-         MALI_BLEND_AU_##internal | (srgb ? (1 << 20) : 0) |                   \
-            PAN_V6_SWIZZLE(R, G, B, A),                                        \
-      },                                                                       \
+      { 0, 0 },                                                                \
    }
 #else
 #define BFMT2(pipe, internal, writeback, srgb)                                 \
@@ -265,8 +268,8 @@ const struct panfrost_format GENX(panfrost_pipe_format)[PIPE_FORMAT_COUNT] = {
    FMT(BPTC_RGBA_UNORM,         RGBA8_UNORM,     RGBA, L, _T__),
    FMT(BPTC_SRGBA,              RGBA8_UNORM,     RGBA, S, _T__),
 
-   /* Mesa does not yet support astc_decode_mode extensions, so non-sRGB
-    * formats must be assumed to be wide.
+   /* If astc decode mode is set to RGBA8, the hardware format
+    * will be overriden to RGBA8_UNORM later on.
     */
    FMT(ASTC_4x4,                RGBA16F,         RGBA, L, _T__),
    FMT(ASTC_5x4,                RGBA16F,         RGBA, L, _T__),
@@ -389,6 +392,7 @@ const struct panfrost_format GENX(panfrost_pipe_format)[PIPE_FORMAT_COUNT] = {
    FMT(R16G16_SNORM,            RG16_SNORM,      RG01, L, VTR_),
    FMT(R8G8B8_SNORM,            RGB8_SNORM,      RGB1, L, VTR_),
    FMT(R8G8B8A8_SNORM,          RGBA8_SNORM,     RGBA, L, VTR_),
+   FMT(B8G8R8A8_SNORM,          RGBA8_SNORM,     BGRA, L, VTR_),
    FMT(R16G16B16A16_SNORM,      RGBA16_SNORM,    RGBA, L, VTR_),
 #else
    /* So far we haven't needed SNORM rendering on Midgard */
@@ -398,6 +402,7 @@ const struct panfrost_format GENX(panfrost_pipe_format)[PIPE_FORMAT_COUNT] = {
    FMT(R16G16_SNORM,            RG16_SNORM,      RG01, L, VT__),
    FMT(R8G8B8_SNORM,            RGB8_SNORM,      RGB1, L, VT__),
    FMT(R8G8B8A8_SNORM,          RGBA8_SNORM,     RGBA, L, VT__),
+   FMT(B8G8R8A8_SNORM,          RGBA8_SNORM,     BGRA, L, VT__),
    FMT(R16G16B16A16_SNORM,      RGBA16_SNORM,    RGBA, L, VT__),
 #endif
    FMT(I8_SINT,                 R8I,             RRRR, L, VTR_),
@@ -592,7 +597,7 @@ const struct panfrost_format GENX(panfrost_pipe_format)[PIPE_FORMAT_COUNT] = {
 };
 /* clang-format on */
 
-#if PAN_ARCH == 7
+#if PAN_ARCH == 7 || PAN_ARCH >= 10
 /*
  * Decompose a component ordering swizzle into a component ordering (applied
  * first) and a swizzle (applied second). The output ordering "pre" is allowed

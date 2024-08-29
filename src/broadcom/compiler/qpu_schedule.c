@@ -85,6 +85,7 @@ struct schedule_state {
         struct schedule_node *last_unif;
         struct schedule_node *last_rtop;
         struct schedule_node *last_unifa;
+        struct schedule_node *last_setmsf;
         enum direction dir;
         /* Estimated cycle when the current instruction would start. */
         uint32_t time;
@@ -378,13 +379,22 @@ calculate_deps(struct schedule_state *state, struct schedule_node *n)
 
         case V3D_QPU_A_MSF:
                 add_read_dep(state, state->last_tlb, n);
+                add_read_dep(state, state->last_setmsf, n);
                 break;
 
         case V3D_QPU_A_SETMSF:
+                add_write_dep(state, &state->last_setmsf, n);
                 add_write_dep(state, &state->last_tmu_write, n);
                 FALLTHROUGH;
         case V3D_QPU_A_SETREVF:
                 add_write_dep(state, &state->last_tlb, n);
+                break;
+
+        case V3D_QPU_A_BALLOT:
+        case V3D_QPU_A_BCASTF:
+        case V3D_QPU_A_ALLEQ:
+        case V3D_QPU_A_ALLFEQ:
+                add_read_dep(state, state->last_setmsf, n);
                 break;
 
         default:
@@ -935,13 +945,13 @@ qpu_raddrs_used(const struct v3d_qpu_instr *a,
 
         uint64_t raddrs_used = 0;
         if (v3d_qpu_uses_mux(a, V3D_QPU_MUX_A))
-                raddrs_used |= (1ll << a->raddr_a);
+                raddrs_used |= (UINT64_C(1) << a->raddr_a);
         if (!a->sig.small_imm_b && v3d_qpu_uses_mux(a, V3D_QPU_MUX_B))
-                raddrs_used |= (1ll << a->raddr_b);
+                raddrs_used |= (UINT64_C(1) << a->raddr_b);
         if (v3d_qpu_uses_mux(b, V3D_QPU_MUX_A))
-                raddrs_used |= (1ll << b->raddr_a);
+                raddrs_used |= (UINT64_C(1) << b->raddr_a);
         if (!b->sig.small_imm_b && v3d_qpu_uses_mux(b, V3D_QPU_MUX_B))
-                raddrs_used |= (1ll << b->raddr_b);
+                raddrs_used |= (UINT64_C(1) << b->raddr_b);
 
         return raddrs_used;
 }
@@ -1004,7 +1014,7 @@ qpu_merge_raddrs(struct v3d_qpu_instr *result,
                 return true;
 
         int raddr_a = ffsll(raddrs_used) - 1;
-        raddrs_used &= ~(1ll << raddr_a);
+        raddrs_used &= ~(UINT64_C(1) << raddr_a);
         result->raddr_a = raddr_a;
 
         if (!result->sig.small_imm_b) {
@@ -2022,8 +2032,12 @@ qpu_inst_before_thrsw_valid_in_delay_slot(struct v3d_compile *c,
          * thread.  The simulator complains for safety, though it
          * would only occur for dead code in our case.
          */
-        if (slot > 0 && v3d_qpu_instr_is_legacy_sfu(&qinst->qpu))
-                return false;
+        if (slot > 0) {
+                if (c->devinfo->ver == 42 && v3d_qpu_instr_is_legacy_sfu(&qinst->qpu))
+                        return false;
+                if (c->devinfo->ver >= 71 && v3d_qpu_instr_is_sfu(&qinst->qpu))
+                        return false;
+        }
 
         if (qinst->qpu.sig.ldvary) {
                 if (c->devinfo->ver == 42 && slot > 0)

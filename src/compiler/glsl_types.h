@@ -611,6 +611,12 @@ glsl_type_is_integer_16_32_64(const glsl_type *t)
 }
 
 static inline bool
+glsl_type_is_float_16(const glsl_type *t)
+{
+   return t->base_type == GLSL_TYPE_FLOAT16;
+}
+
+static inline bool
 glsl_type_is_float_16_32(const glsl_type *t)
 {
    return t->base_type == GLSL_TYPE_FLOAT16 || glsl_type_is_float(t);
@@ -818,6 +824,7 @@ unsigned glsl_atomic_size(const glsl_type *type);
  * Type A contains type B if A is B or A is a composite type (struct,
  * interface, array) that has an element that contains B.
  */
+bool glsl_type_contains_32bit(const glsl_type *t);
 bool glsl_type_contains_64bit(const glsl_type *t);
 bool glsl_type_contains_image(const glsl_type *t);
 bool glsl_contains_atomic(const glsl_type *t);
@@ -1343,6 +1350,9 @@ glsl_get_explicit_interface_type(const glsl_type *t, bool supports_std430)
    }
 }
 
+void glsl_size_align_handle_array_and_structs(const glsl_type *type,
+                                              glsl_type_size_align_func size_align,
+                                              unsigned *size, unsigned *align);
 void glsl_get_natural_size_align_bytes(const glsl_type *t, unsigned *size, unsigned *align);
 void glsl_get_vec4_size_align_bytes(const glsl_type *type, unsigned *size, unsigned *align);
 

@@ -3,7 +3,16 @@ Release Notes
 
 The release notes summarize what's new or changed in each Mesa release.
 
+-  :doc:`24.2.1 release notes <relnotes/24.2.1>`
+-  :doc:`24.1.6 release notes <relnotes/24.1.6>`
+-  :doc:`24.2.0 release notes <relnotes/24.2.0>`
+-  :doc:`24.1.5 release notes <relnotes/24.1.5>`
+-  :doc:`24.1.4 release notes <relnotes/24.1.4>`
+-  :doc:`24.1.3 release notes <relnotes/24.1.3>`
+-  :doc:`24.1.2 release notes <relnotes/24.1.2>`
 -  :doc:`24.0.9 release notes <relnotes/24.0.9>`
+-  :doc:`24.1.1 release notes <relnotes/24.1.1>`
+-  :doc:`24.1.0 release notes <relnotes/24.1.0>`
 -  :doc:`24.0.8 release notes <relnotes/24.0.8>`
 -  :doc:`24.0.7 release notes <relnotes/24.0.7>`
 -  :doc:`24.0.6 release notes <relnotes/24.0.6>`
@@ -11,8 +20,11 @@ The release notes summarize what's new or changed in each Mesa release.
 -  :doc:`24.0.4 release notes <relnotes/24.0.4>`
 -  :doc:`24.0.3 release notes <relnotes/24.0.3>`
 -  :doc:`24.0.2 release notes <relnotes/24.0.2>`
+-  :doc:`23.3.6 release notes <relnotes/23.3.6>`
 -  :doc:`24.0.1 release notes <relnotes/24.0.1>`
 -  :doc:`24.0.0 release notes <relnotes/24.0.0>`
+-  :doc:`23.3.5 release notes <relnotes/23.3.5>`
+-  :doc:`23.3.4 release notes <relnotes/23.3.4>`
 -  :doc:`23.3.3 release notes <relnotes/23.3.3>`
 -  :doc:`23.3.2 release notes <relnotes/23.3.2>`
 -  :doc:`23.3.1 release notes <relnotes/23.3.1>`
@@ -417,7 +429,16 @@ The release notes summarize what's new or changed in each Mesa release.
    :maxdepth: 1
    :hidden:
 
+   24.2.1 <relnotes/24.2.1>
+   24.1.6 <relnotes/24.1.6>
+   24.2.0 <relnotes/24.2.0>
+   24.1.5 <relnotes/24.1.5>
+   24.1.4 <relnotes/24.1.4>
+   24.1.3 <relnotes/24.1.3>
+   24.1.2 <relnotes/24.1.2>
    24.0.9 <relnotes/24.0.9>
+   24.1.1 <relnotes/24.1.1>
+   24.1.0 <relnotes/24.1.0>
    24.0.8 <relnotes/24.0.8>
    24.0.7 <relnotes/24.0.7>
    24.0.6 <relnotes/24.0.6>
@@ -425,8 +446,11 @@ The release notes summarize what's new or changed in each Mesa release.
    24.0.4 <relnotes/24.0.4>
    24.0.3 <relnotes/24.0.3>
    24.0.2 <relnotes/24.0.2>
+   23.3.6 <relnotes/23.3.6>
    24.0.1 <relnotes/24.0.1>
    24.0.0 <relnotes/24.0.0>
+   23.3.5 <relnotes/23.3.5>
+   23.3.4 <relnotes/23.3.4>
    23.3.3 <relnotes/23.3.3>
    23.3.2 <relnotes/23.3.2>
    23.3.1 <relnotes/23.3.1>

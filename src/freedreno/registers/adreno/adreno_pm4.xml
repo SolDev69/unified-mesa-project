@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <database xmlns="http://nouveau.freedesktop.org/"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://nouveau.freedesktop.org/ rules-ng.xsd">
+xsi:schemaLocation="https://gitlab.freedesktop.org/freedreno/ rules-fd.xsd">
+<import file="freedreno_copyright.xml"/>
 <import file="adreno/adreno_common.xml"/>
 
 <enum name="vgt_event_type" varset="chip">
@@ -20,9 +21,9 @@ xsi:schemaLocation="http://nouveau.freedesktop.org/ rules-ng.xsd">
 	<value name="HLSQ_FLUSH" value="7" variants="A3XX-A4XX"/>
 	<value name="VIZQUERY_END" value="8" variants="A2XX"/>
 	<value name="SC_WAIT_WC" value="9" variants="A2XX"/>
-	<value name="WRITE_PRIMITIVE_COUNTS" value="9" variants="A6XX"/>
-	<value name="START_PRIMITIVE_CTRS" value="11" variants="A6XX"/>
-	<value name="STOP_PRIMITIVE_CTRS" value="12" variants="A6XX"/>
+	<value name="WRITE_PRIMITIVE_COUNTS" value="9" variants="A6XX-"/>
+	<value name="START_PRIMITIVE_CTRS" value="11" variants="A6XX-"/>
+	<value name="STOP_PRIMITIVE_CTRS" value="12" variants="A6XX-"/>
 	<!-- Not sure that these 4 events don't have the same meaning as on A5XX+ -->
 	<value name="RST_PIX_CNT" value="13" variants="A2XX-A4XX"/>
 	<value name="RST_VTX_CNT" value="14" variants="A2XX-A4XX"/>
@@ -95,6 +96,13 @@ xsi:schemaLocation="http://nouveau.freedesktop.org/ rules-ng.xsd">
 		more general blitting.
 	</doc>
 	<value name="BLIT" value="30" variants="A5XX-"/>
+
+	<doc>
+	Flip between the primary and secondary LRZ buffers. This is used
+	for concurrent binning, so that BV can write to one buffer while
+	BR reads from the other.
+	</doc>
+	<value name="LRZ_FLIP_BUFFER" value="36" variants="A7XX"/>
 
 	<doc>
 		Clears based on GRAS_LRZ_CNTL configuration, could clear
@@ -324,7 +332,7 @@ xsi:schemaLocation="http://nouveau.freedesktop.org/ rules-ng.xsd">
 	<doc>fetch state sub-blocks and initiate shader code DMAs</doc>
 	<value name="CP_SET_STATE" value="0x25"/>
 	<doc>load constant into chip and to memory</doc>
-	<value name="CP_SET_CONSTANT" value="0x2d"/>
+	<value name="CP_SET_CONSTANT" value="0x2d" variants="A2XX"/>
 	<doc>load sequencer instruction memory (pointer-based)</doc>
 	<value name="CP_IM_LOAD" value="0x27"/>
 	<doc>load sequencer instruction memory (code embedded in packet)</doc>
@@ -573,6 +581,8 @@ xsi:schemaLocation="http://nouveau.freedesktop.org/ rules-ng.xsd">
 	<value name="CP_WAIT_TWO_REGS" value="0x70" variants="A6XX"/>
 	<value name="CP_MEMCPY" value="0x75" variants="A6XX-"/>
 	<value name="CP_SET_BIN_DATA5_OFFSET" value="0x2e" variants="A6XX-"/>
+	<!-- A750+, set in place of CP_SET_BIN_DATA5_OFFSET but has different values -->
+	<value name="CP_SET_UNK_BIN_DATA" value="0x2d" variants="A7XX-"/>
 	<doc>
                 Write CP_CONTEXT_SWITCH_*_INFO from CP to the following dwords,
                 and forcibly switch to the indicated context.
@@ -1656,8 +1666,8 @@ opcode: CP_LOAD_STATE4 (30) (4 dwords)
 		<bitfield name="WRITE_SAMPLE_COUNT" pos="12" type="boolean"/>
 		<!-- Write sample count at (iova + 16) -->
 		<bitfield name="SAMPLE_COUNT_END_OFFSET" pos="13" type="boolean"/>
-		<!-- *(iova + 8) = *(iova + 16) - *iova -->
-		<bitfield name="WRITE_SAMPLE_COUNT_DIFF" pos="14" type="boolean"/>
+		<!-- *(iova + 8) += *(iova + 16) - *iova -->
+		<bitfield name="WRITE_ACCUM_SAMPLE_COUNT_DIFF" pos="14" type="boolean"/>
 
 		<!-- Next 4 flags are valid to set only when concurrent binning is enabled -->
 		<!-- Increment 16b BV counter. Valid only in BV pipe -->
@@ -1674,12 +1684,7 @@ opcode: CP_LOAD_STATE4 (30) (4 dwords)
 	</reg32>
 
 	<stripe varset="event_write_dst" variants="EV_DST_RAM">
-		<reg32 offset="1" name="1">
-			<bitfield name="ADDR_0_LO" low="0" high="31"/>
-		</reg32>
-		<reg32 offset="2" name="2">
-			<bitfield name="ADDR_0_HI" low="0" high="31"/>
-		</reg32>
+		<reg64 offset="1" name="1" type="waddress"/>
 		<reg32 offset="3" name="3">
 			<bitfield name="PAYLOAD_0" low="0" high="31"/>
 		</reg32>

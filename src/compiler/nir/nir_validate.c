@@ -613,6 +613,7 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
 
    case nir_intrinsic_load_uniform:
    case nir_intrinsic_load_input:
+   case nir_intrinsic_load_per_primitive_input:
    case nir_intrinsic_load_per_vertex_input:
    case nir_intrinsic_load_interpolated_input:
    case nir_intrinsic_load_output:
@@ -623,6 +624,19 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
       validate_assert(state, instr->def.bit_size >= 8);
       break;
 
+   case nir_intrinsic_load_barycentric_pixel:
+   case nir_intrinsic_load_barycentric_centroid:
+   case nir_intrinsic_load_barycentric_sample:
+   case nir_intrinsic_load_barycentric_at_offset:
+   case nir_intrinsic_load_barycentric_at_sample: {
+      enum glsl_interp_mode mode = nir_intrinsic_interp_mode(instr);
+      validate_assert(state,
+                      mode == INTERP_MODE_NONE ||
+                      mode == INTERP_MODE_SMOOTH ||
+                      mode == INTERP_MODE_NOPERSPECTIVE);
+      break;
+   }
+
    case nir_intrinsic_store_ssbo:
    case nir_intrinsic_store_shared:
    case nir_intrinsic_store_global:
@@ -632,12 +646,19 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
                       util_is_power_of_two_nonzero(nir_intrinsic_align_mul(instr)));
       validate_assert(state, nir_intrinsic_align_offset(instr) <
                                 nir_intrinsic_align_mul(instr));
-      FALLTHROUGH;
+      /* All memory store operations must store at least a byte */
+      validate_assert(state, nir_src_bit_size(instr->src[0]) >= 8);
+      break;
 
    case nir_intrinsic_store_output:
    case nir_intrinsic_store_per_vertex_output:
-      /* All memory store operations must store at least a byte */
-      validate_assert(state, nir_src_bit_size(instr->src[0]) >= 8);
+      if (state->shader->info.stage == MESA_SHADER_FRAGMENT)
+         validate_assert(state, nir_src_bit_size(instr->src[0]) >= 8);
+      else
+         validate_assert(state, nir_src_bit_size(instr->src[0]) >= 16);
+      validate_assert(state,
+                      nir_src_bit_size(instr->src[0]) ==
+                      nir_alu_type_get_type_size(nir_intrinsic_src_type(instr)));
       break;
 
    case nir_intrinsic_deref_mode_is:
@@ -760,8 +781,65 @@ validate_intrinsic_instr(nir_intrinsic_instr *instr, validate_state *state)
       validate_assert(state,
                       (nir_slot_is_sysval_output(sem.location, MESA_SHADER_NONE) &&
                        !sem.no_sysval_output) ||
-                         (nir_slot_is_varying(sem.location) && !sem.no_varying) ||
-                         nir_instr_xfb_write_mask(instr));
+                      (nir_slot_is_varying(sem.location) && !sem.no_varying) ||
+                      nir_instr_xfb_write_mask(instr) ||
+                      /* TCS can set no_varying and no_sysval_output, meaning
+                       * that the output is only read by TCS and not TES.
+                       */
+                      state->shader->info.stage == MESA_SHADER_TESS_CTRL);
+      validate_assert(state,
+                      (!sem.dual_source_blend_index &&
+                       !sem.fb_fetch_output) ||
+                      state->shader->info.stage == MESA_SHADER_FRAGMENT);
+      validate_assert(state,
+                      !sem.gs_streams ||
+                      state->shader->info.stage == MESA_SHADER_GEOMETRY);
+      validate_assert(state,
+                      !sem.high_dvec2 ||
+                      (state->shader->info.stage == MESA_SHADER_VERTEX &&
+                       instr->intrinsic == nir_intrinsic_load_input));
+      validate_assert(state,
+                      !sem.interp_explicit_strict ||
+                      (state->shader->info.stage == MESA_SHADER_FRAGMENT &&
+                       instr->intrinsic == nir_intrinsic_load_input_vertex));
+   }
+}
+
+static void
+validate_tex_src_texture_deref(nir_tex_instr *instr, validate_state *state,
+                               nir_deref_instr *deref)
+{
+   validate_assert(state, glsl_type_is_image(deref->type) ||
+                             glsl_type_is_texture(deref->type) ||
+                             glsl_type_is_sampler(deref->type));
+
+   switch (instr->op) {
+   case nir_texop_descriptor_amd:
+   case nir_texop_sampler_descriptor_amd:
+   case nir_texop_custom_border_color_agx:
+      break;
+   case nir_texop_lod:
+   case nir_texop_lod_bias_agx:
+      validate_assert(state, nir_alu_type_get_base_type(instr->dest_type) == nir_type_float);
+      break;
+   case nir_texop_samples_identical:
+   case nir_texop_has_custom_border_color_agx:
+      validate_assert(state, nir_alu_type_get_base_type(instr->dest_type) == nir_type_bool);
+      break;
+   case nir_texop_txs:
+   case nir_texop_texture_samples:
+   case nir_texop_query_levels:
+   case nir_texop_fragment_mask_fetch_amd:
+   case nir_texop_txf_ms_mcs_intel:
+      validate_assert(state, nir_alu_type_get_base_type(instr->dest_type) == nir_type_int ||
+                             nir_alu_type_get_base_type(instr->dest_type) == nir_type_uint);
+      break;
+   default:
+      validate_assert(state,
+                      glsl_get_sampler_result_type(deref->type) == GLSL_TYPE_VOID ||
+                      glsl_base_type_is_integer(glsl_get_sampler_result_type(deref->type)) ==
+                         (nir_alu_type_get_base_type(instr->dest_type) == nir_type_int ||
+                          nir_alu_type_get_base_type(instr->dest_type) == nir_type_uint));
    }
 }
 
@@ -807,36 +885,7 @@ validate_tex_instr(nir_tex_instr *instr, validate_state *state)
          if (!validate_assert(state, deref))
             break;
 
-         validate_assert(state, glsl_type_is_image(deref->type) ||
-                                   glsl_type_is_texture(deref->type) ||
-                                   glsl_type_is_sampler(deref->type));
-         switch (instr->op) {
-         case nir_texop_descriptor_amd:
-         case nir_texop_sampler_descriptor_amd:
-            break;
-         case nir_texop_lod:
-         case nir_texop_lod_bias_agx:
-            validate_assert(state, nir_alu_type_get_base_type(instr->dest_type) == nir_type_float);
-            break;
-         case nir_texop_samples_identical:
-            validate_assert(state, nir_alu_type_get_base_type(instr->dest_type) == nir_type_bool);
-            break;
-         case nir_texop_txs:
-         case nir_texop_texture_samples:
-         case nir_texop_query_levels:
-         case nir_texop_fragment_mask_fetch_amd:
-         case nir_texop_txf_ms_mcs_intel:
-            validate_assert(state, nir_alu_type_get_base_type(instr->dest_type) == nir_type_int ||
-                                      nir_alu_type_get_base_type(instr->dest_type) == nir_type_uint);
-
-            break;
-         default:
-            validate_assert(state,
-                            glsl_get_sampler_result_type(deref->type) == GLSL_TYPE_VOID ||
-                               glsl_base_type_is_integer(glsl_get_sampler_result_type(deref->type)) ==
-                                  (nir_alu_type_get_base_type(instr->dest_type) == nir_type_int ||
-                                   nir_alu_type_get_base_type(instr->dest_type) == nir_type_uint));
-         }
+         validate_tex_src_texture_deref(instr, state, deref);
          break;
       }
 
@@ -846,6 +895,23 @@ validate_tex_instr(nir_tex_instr *instr, validate_state *state)
             break;
 
          validate_assert(state, glsl_type_is_sampler(deref->type));
+         break;
+      }
+
+      case nir_tex_src_sampler_deref_intrinsic:
+      case nir_tex_src_texture_deref_intrinsic: {
+         nir_intrinsic_instr *intrin =
+            nir_instr_as_intrinsic(instr->src[i].src.ssa->parent_instr);
+         nir_deref_instr *deref =
+            nir_instr_as_deref(intrin->src[0].ssa->parent_instr);
+         if (!validate_assert(state, deref))
+            break;
+
+         if (instr->src[i].src_type == nir_tex_src_sampler_deref_intrinsic)
+            validate_assert(state, glsl_type_is_sampler(deref->type));
+         else
+            validate_tex_src_texture_deref(instr, state, deref);
+
          break;
       }
 
@@ -1079,6 +1145,9 @@ validate_instr(nir_instr *instr, validate_state *state)
       validate_jump_instr(nir_instr_as_jump(instr), state);
       break;
 
+   case nir_instr_type_debug_info:
+      break;
+
    default:
       validate_assert(state, !"Invalid ALU instruction type");
       break;
@@ -1119,17 +1188,14 @@ collect_blocks(struct exec_list *cf_list, validate_state *state)
    /* We walk the blocks manually here rather than using nir_foreach_block for
     * a few reasons:
     *
-    *  1. nir_foreach_block() doesn't work properly for unstructured NIR and
-    *     we need to be able to handle all forms of NIR here.
-    *
-    *  2. We want to call exec_list_validate() on every linked list in the IR
+    *  1. We want to call exec_list_validate() on every linked list in the IR
     *     which means we need to touch every linked and just walking blocks
     *     with nir_foreach_block() would make that difficult.  In particular,
     *     we want to validate each list before the first time we walk it so
     *     that we catch broken lists in exec_list_validate() instead of
     *     getting stuck in a hard-to-debug infinite loop in the validator.
     *
-    *  3. nir_foreach_block() depends on several invariants of the CF node
+    *  2. nir_foreach_block() depends on several invariants of the CF node
     *     hierarchy which nir_validate_shader() is responsible for verifying.
     *     If we used nir_foreach_block() in nir_validate_shader(), we could
     *     end up blowing up on a bad list walk instead of throwing the much
@@ -1156,6 +1222,43 @@ collect_blocks(struct exec_list *cf_list, validate_state *state)
          unreachable("Invalid CF node type");
       }
    }
+}
+
+static void
+collect_blocks_pdfs(nir_function_impl *impl, nir_block *block,
+                    uint32_t *count, validate_state *state)
+{
+   if (block == impl->end_block)
+      return;
+
+   if (_mesa_set_search(state->blocks, block))
+      return;
+
+   _mesa_set_add(state->blocks, block);
+
+   for (uint32_t i = 0; i < ARRAY_SIZE(block->successors); i++) {
+      if (block->successors[i] != NULL)
+         collect_blocks_pdfs(impl, block->successors[i], count, state);
+   }
+
+   /* Assert that the blocks are indexed in reverse PDFS order */
+   validate_assert(state, block->index == --(*count));
+}
+
+static void
+collect_unstructured_blocks(nir_function_impl *impl, validate_state *state)
+{
+   exec_list_validate(&impl->body);
+
+   /* Assert that the blocks are properly indexed */
+   uint32_t count = 0;
+   foreach_list_typed(nir_cf_node, node, node, &impl->body) {
+      nir_block *block = nir_cf_node_as_block(node);
+      validate_assert(state, block->index == count++);
+   }
+   validate_assert(state, impl->end_block->index == count);
+
+   collect_blocks_pdfs(impl, nir_start_block(impl), &count, state);
 }
 
 static void validate_cf_node(nir_cf_node *node, validate_state *state);
@@ -1547,7 +1650,10 @@ validate_function_impl(nir_function_impl *impl, validate_state *state)
 
    _mesa_set_clear(state->blocks, NULL);
    _mesa_set_resize(state->blocks, impl->num_blocks);
-   collect_blocks(&impl->body, state);
+   if (impl->structured)
+      collect_blocks(&impl->body, state);
+   else
+      collect_unstructured_blocks(impl, state);
    _mesa_set_add(state->blocks, impl->end_block);
    validate_assert(state, !exec_list_is_empty(&impl->body));
    foreach_list_typed(nir_cf_node, node, node, &impl->body) {

@@ -1,24 +1,6 @@
 /*
- * Copyright (C) 2012-2018 Rob Clark <robclark@freedesktop.org>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright © 2012-2018 Rob Clark <robclark@freedesktop.org>
+ * SPDX-License-Identifier: MIT
  *
  * Authors:
  *    Rob Clark <robclark@freedesktop.org>
@@ -153,6 +135,20 @@ int fd_fence_wait(struct fd_fence *f);
 
 /* internal bo flags: */
 #define _FD_BO_NOSYNC             BITSET_BIT(7) /* Avoid userspace fencing on control buffers */
+
+/* Additional flags hinting usage, only used for tracing.  Buffers without
+ * one of these flags set will be presumed to be driver internal.
+ */
+#define FD_BO_HINT_BUFFER         BITSET_BIT(8)
+#define FD_BO_HINT_IMAGE          BITSET_BIT(9)
+#define FD_BO_HINT_COMMAND        BITSET_BIT(10)
+#define _FD_BO_HINT_HEAP          BITSET_BIT(11)
+#define _FD_BO_HINTS              ( \
+   FD_BO_HINT_BUFFER | \
+   FD_BO_HINT_IMAGE | \
+   FD_BO_HINT_COMMAND | \
+   _FD_BO_HINT_HEAP | \
+   0)
 
 /*
  * bo access flags: (keep aligned to MSM_PREP_x)

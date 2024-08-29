@@ -21,7 +21,7 @@
  * IN THE SOFTWARE.
  */
 
-/** @file brw_fs_bank_conflicts.cpp
+/** @file
  *
  * This file contains a GRF bank conflict mitigation pass.  The pass is
  * intended to be run after register allocation and works by rearranging the
@@ -480,7 +480,7 @@ namespace {
     * possibly incur bank conflicts.
     */
    bool
-   is_grf(const fs_reg &r)
+   is_grf(const brw_reg &r)
    {
       return r.file == VGRF || r.file == FIXED_GRF;
    }
@@ -492,7 +492,7 @@ namespace {
     * allocation or whether it was part of a VGRF allocation.
     */
    unsigned
-   reg_of(const fs_reg &r)
+   reg_of(const brw_reg &r)
    {
       assert(is_grf(r));
       if (r.file == VGRF)
@@ -549,8 +549,7 @@ namespace {
        * Register allocation ensures that, so don't move 127 around to avoid
        * breaking that property.
        */
-      if (v->devinfo->ver >= 8)
-         constrained[p.atom_of_reg(127)] = true;
+      constrained[p.atom_of_reg(127)] = true;
 
       foreach_block_and_inst(block, fs_inst, inst, v->cfg) {
          /* Assume that anything referenced via fixed GRFs is baked into the
@@ -566,26 +565,6 @@ namespace {
                 (is_grf(inst->src[i]) && inst->eot))
                constrained[p.atom_of_reg(reg_of(inst->src[i]))] = true;
          }
-
-         /* Preserve the original allocation of VGRFs used by the barycentric
-          * source of the LINTERP instruction on Gfx6, since pair-aligned
-          * barycentrics allow the PLN instruction to be used.
-          */
-         if (v->devinfo->has_pln && v->devinfo->ver <= 6 &&
-             inst->opcode == FS_OPCODE_LINTERP)
-            constrained[p.atom_of_reg(reg_of(inst->src[0]))] = true;
-
-         /* The location of the Gfx7 MRF hack registers is hard-coded in the
-          * rest of the compiler back-end.  Don't attempt to move them around.
-          */
-         if (v->devinfo->ver >= 7) {
-            assert(inst->dst.file != MRF);
-
-            for (unsigned i = 0; i < inst->implied_mrf_writes(); i++) {
-               const unsigned reg = GFX7_MRF_HACK_START + inst->base_mrf + i;
-               constrained[p.atom_of_reg(reg)] = true;
-            }
-         }
       }
 
       return constrained;
@@ -600,10 +579,10 @@ namespace {
    is_conflict_optimized_out(const intel_device_info *devinfo,
                              const fs_inst *inst)
    {
-      return devinfo->ver >= 9 &&
-         ((is_grf(inst->src[0]) && (reg_of(inst->src[0]) == reg_of(inst->src[1]) ||
-                                    reg_of(inst->src[0]) == reg_of(inst->src[2]))) ||
-          reg_of(inst->src[1]) == reg_of(inst->src[2]));
+      return
+         (is_grf(inst->src[0]) && (reg_of(inst->src[0]) == reg_of(inst->src[1]) ||
+                                   reg_of(inst->src[0]) == reg_of(inst->src[2]))) ||
+          reg_of(inst->src[1]) == reg_of(inst->src[2]);
    }
 
    /**
@@ -892,8 +871,8 @@ namespace {
     * Apply the GRF atom permutation given by \p map to register \p r and
     * return the result.
     */
-   fs_reg
-   transform(const partitioning &p, const permutation &map, fs_reg r)
+   brw_reg
+   transform(const partitioning &p, const permutation &map, brw_reg r)
    {
       if (r.file == VGRF) {
          const unsigned reg = reg_of(r);
@@ -907,23 +886,23 @@ namespace {
 }
 
 bool
-fs_visitor::opt_bank_conflicts()
+brw_fs_opt_bank_conflicts(fs_visitor &s)
 {
-   assert(grf_used || !"Must be called after register allocation");
+   assert(s.grf_used || !"Must be called after register allocation");
 
-   /* No ternary instructions -- No bank conflicts. */
-   if (devinfo->ver < 6)
+   /* TODO: Re-work this pass for Gfx20+. */
+   if (s.devinfo->ver >= 20)
       return false;
 
-   const partitioning p = shader_reg_partitioning(this);
-   const bool *constrained = shader_reg_constraints(this, p);
+   const partitioning p = shader_reg_partitioning(&s);
+   const bool *constrained = shader_reg_constraints(&s, p);
    const weight_vector_type *conflicts =
-      shader_conflict_weight_matrix(this, p);
+      shader_conflict_weight_matrix(&s, p);
    const permutation map =
       optimize_reg_permutation(p, constrained, conflicts,
                                identity_reg_permutation(p));
 
-   foreach_block_and_inst(block, fs_inst, inst, cfg) {
+   foreach_block_and_inst(block, fs_inst, inst, s.cfg) {
       inst->dst = transform(p, map, inst->dst);
 
       for (int i = 0; i < inst->sources; i++)

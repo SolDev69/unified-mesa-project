@@ -9,18 +9,25 @@ libasahi_lib_files = files(
   'agx_bo.c',
   'agx_border.c',
   'agx_device.c',
+  'agx_device_virtio.c',
   'agx_formats.c',
-  'agx_meta.c',
+  'agx_linker.c',
+  'agx_bg_eot.c',
   'agx_tilebuffer.c',
   'agx_nir_lower_alpha.c',
   'agx_nir_lower_gs.c',
   'agx_nir_lower_ia.c',
   'agx_nir_lower_msaa.c',
   'agx_nir_lower_sample_intrinsics.c',
+  'agx_nir_lower_tess.c',
+  'agx_nir_lower_texture.c',
   'agx_nir_lower_tilebuffer.c',
+  'agx_nir_lower_uvs.c',
   'agx_nir_lower_vbo.c',
-  'agx_nir_predicate_layer_id.c',
+  'agx_nir_prolog_epilog.c',
   'agx_ppp.h',
+  'agx_scratch.c',
+  'agx_va.c',
   'pool.c',
 )
 
@@ -30,23 +37,17 @@ libasahi_decode_files = files(
 
 libagx_shader_files = files(
   'shaders/libagx.h',
+  'shaders/draws.cl',
+  'shaders/draws.h',
   'shaders/geometry.cl',
   'shaders/geometry.h',
+  'shaders/query.cl',
+  'shaders/query.h',
+  'shaders/tessellation.cl',
+  'shaders/tessellator.cl',
+  'shaders/tessellator.h',
   'shaders/texture.cl',
-)
-
-agx_pack = custom_target(
-  'agx_pack.h',
-  input : ['gen_pack.py', 'cmdbuf.xml'],
-  output : 'agx_pack.h',
-  command : [prog_python, '@INPUT@'],
-  capture : true,
-)
-
-idep_agx_pack = declare_dependency(
-  sources : [agx_pack],
-  dependencies : dep_valgrind,
-  include_directories : include_directories('.'),
+  'shaders/helper.cl',
 )
 
 libasahi_decode = static_library(
@@ -81,7 +82,7 @@ libagx_shaders = custom_target(
     '-I' + join_paths(meson.current_source_dir(), '.'),
     '-I' + join_paths(meson.current_source_dir(), '../../'),
     '-I' + join_paths(meson.current_source_dir(), 'shaders'),
-    '-I' + join_paths(meson.current_build_dir(), '.'),
+    '-I' + join_paths(meson.current_build_dir(), '../genxml'),
     ],
   env: ['MESA_SHADER_CACHE_DISABLE=true'],
   depends : [prog_asahi_clc, agx_pack],
@@ -89,12 +90,12 @@ libagx_shaders = custom_target(
 
 libasahi_lib = static_library(
   'asahi_lib',
-  [libasahi_lib_files, libagx_shaders, agx_pack],
-  include_directories : inc_asahi,
+  [libasahi_lib_files, libagx_shaders, agx_pack, sha1_h],
+  include_directories : [inc_asahi, inc_virtio_gpu, inc_virtio_vdrm],
   c_args : [no_override_init_args],
   gnu_symbol_visibility : 'hidden',
-  link_with: [libasahi_decode],
-  dependencies: [dep_libdrm, dep_valgrind, idep_nir],
+  link_with: [libasahi_decode, libvdrm],
+  dependencies: [dep_libdrm, dep_valgrind, idep_nir, idep_mesautil],
   build_by_default : false,
 )
 

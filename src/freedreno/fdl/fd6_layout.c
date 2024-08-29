@@ -1,25 +1,7 @@
 /*
- * Copyright (C) 2018 Rob Clark <robclark@freedesktop.org>
+ * Copyright © 2018 Rob Clark <robclark@freedesktop.org>
  * Copyright © 2018-2019 Google, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * SPDX-License-Identifier: MIT
  *
  * Authors:
  *    Rob Clark <robclark@freedesktop.org>
@@ -105,7 +87,7 @@ fdl6_tile_alignment(struct fdl_layout *layout, uint32_t *heightalign)
     * looser alignment requirements, however the validity of alignment is
     * heavily undertested and the "officially" supported alignment is 4096b.
     */
-   if (layout->ubwc)
+   if (layout->ubwc || util_format_is_depth_or_stencil(layout->format))
       layout->base_align = 4096;
    else if (layout->cpp == 1)
       layout->base_align = 64;
@@ -273,7 +255,7 @@ fdl6_layout(struct fdl_layout *layout, enum pipe_format format,
 
       if (layout->ubwc) {
          /* with UBWC every level is aligned to 4K */
-         layout->size = align(layout->size, 4096);
+         layout->size = align64(layout->size, 4096);
 
          uint32_t meta_pitch = fdl_ubwc_pitch(layout, level);
          uint32_t meta_height =
@@ -287,7 +269,7 @@ fdl6_layout(struct fdl_layout *layout, enum pipe_format format,
    }
 
    if (layout->layer_first) {
-      layout->layer_size = align(layout->size, 4096);
+      layout->layer_size = align64(layout->size, 4096);
       layout->size = layout->layer_size * array_size;
    }
 

@@ -27,8 +27,10 @@
 #include "state_tracker/st_texture.h"
 #include "state_tracker/st_context.h"
 #include "main/texobj.h"
+#include "util/libsync.h"
 
 #include "dri_helpers.h"
+#include "loader_dri_helper.h"
 
 static bool
 dri2_is_opencl_interop_loaded_locked(struct dri_screen *screen)
@@ -75,7 +77,8 @@ struct dri2_fence {
    void *cl_event;
 };
 
-static unsigned dri2_fence_get_caps(__DRIscreen *_screen)
+unsigned
+dri_fence_get_caps(__DRIscreen *_screen)
 {
    struct dri_screen *driscreen = dri_screen(_screen);
    struct pipe_screen *screen = driscreen->base.screen;
@@ -87,8 +90,8 @@ static unsigned dri2_fence_get_caps(__DRIscreen *_screen)
    return caps;
 }
 
-static void *
-dri2_create_fence(__DRIcontext *_ctx)
+void *
+dri_create_fence(__DRIcontext *_ctx)
 {
    struct dri_context *ctx = dri_context(_ctx);
    struct st_context *st = ctx->st;
@@ -113,8 +116,8 @@ dri2_create_fence(__DRIcontext *_ctx)
    return fence;
 }
 
-static void *
-dri2_create_fence_fd(__DRIcontext *_ctx, int fd)
+void *
+dri_create_fence_fd(__DRIcontext *_ctx, int fd)
 {
    struct dri_context *dri_ctx = dri_context(_ctx);
    struct st_context *st = dri_ctx->st;
@@ -142,8 +145,8 @@ dri2_create_fence_fd(__DRIcontext *_ctx, int fd)
    return fence;
 }
 
-static int
-dri2_get_fence_fd(__DRIscreen *_screen, void *_fence)
+int
+dri_get_fence_fd(__DRIscreen *_screen, void *_fence)
 {
    struct dri_screen *driscreen = dri_screen(_screen);
    struct pipe_screen *screen = driscreen->base.screen;
@@ -152,8 +155,8 @@ dri2_get_fence_fd(__DRIscreen *_screen, void *_fence)
    return screen->fence_get_fd(screen, fence->pipe_fence);
 }
 
-static void *
-dri2_get_fence_from_cl_event(__DRIscreen *_screen, intptr_t cl_event)
+void *
+dri_get_fence_from_cl_event(__DRIscreen *_screen, intptr_t cl_event)
 {
    struct dri_screen *driscreen = dri_screen(_screen);
    struct dri2_fence *fence;
@@ -176,8 +179,8 @@ dri2_get_fence_from_cl_event(__DRIscreen *_screen, intptr_t cl_event)
    return fence;
 }
 
-static void
-dri2_destroy_fence(__DRIscreen *_screen, void *_fence)
+void
+dri_destroy_fence(__DRIscreen *_screen, void *_fence)
 {
    struct dri_screen *driscreen = dri_screen(_screen);
    struct pipe_screen *screen = driscreen->base.screen;
@@ -193,8 +196,8 @@ dri2_destroy_fence(__DRIscreen *_screen, void *_fence)
    FREE(fence);
 }
 
-static GLboolean
-dri2_client_wait_sync(__DRIcontext *_ctx, void *_fence, unsigned flags,
+GLboolean
+dri_client_wait_sync(__DRIcontext *_ctx, void *_fence, unsigned flags,
                       uint64_t timeout)
 {
    struct dri2_fence *fence = (struct dri2_fence*)_fence;
@@ -220,8 +223,8 @@ dri2_client_wait_sync(__DRIcontext *_ctx, void *_fence, unsigned flags,
    }
 }
 
-static void
-dri2_server_wait_sync(__DRIcontext *_ctx, void *_fence, unsigned flags)
+void
+dri_server_wait_sync(__DRIcontext *_ctx, void *_fence, unsigned flags)
 {
    struct st_context *st = dri_context(_ctx)->st;
    struct pipe_context *ctx = st->pipe;
@@ -245,49 +248,18 @@ dri2_server_wait_sync(__DRIcontext *_ctx, void *_fence, unsigned flags)
 const __DRI2fenceExtension dri2FenceExtension = {
    .base = { __DRI2_FENCE, 2 },
 
-   .create_fence = dri2_create_fence,
-   .get_fence_from_cl_event = dri2_get_fence_from_cl_event,
-   .destroy_fence = dri2_destroy_fence,
-   .client_wait_sync = dri2_client_wait_sync,
-   .server_wait_sync = dri2_server_wait_sync,
-   .get_capabilities = dri2_fence_get_caps,
-   .create_fence_fd = dri2_create_fence_fd,
-   .get_fence_fd = dri2_get_fence_fd,
+   .create_fence = dri_create_fence,
+   .get_fence_from_cl_event = dri_get_fence_from_cl_event,
+   .destroy_fence = dri_destroy_fence,
+   .client_wait_sync = dri_client_wait_sync,
+   .server_wait_sync = dri_server_wait_sync,
+   .get_capabilities = dri_fence_get_caps,
+   .create_fence_fd = dri_create_fence_fd,
+   .get_fence_fd = dri_get_fence_fd,
 };
 
 __DRIimage *
-dri2_lookup_egl_image(struct dri_screen *screen, void *handle)
-{
-   const __DRIimageLookupExtension *loader = screen->dri2.image;
-   __DRIimage *img;
-
-   if (!loader->lookupEGLImage)
-      return NULL;
-
-   img = loader->lookupEGLImage(opaque_dri_screen(screen),
-				handle, screen->loaderPrivate);
-
-   return img;
-}
-
-bool
-dri2_validate_egl_image(struct dri_screen *screen, void *handle)
-{
-   const __DRIimageLookupExtension *loader = screen->dri2.image;
-
-   return loader->validateEGLImage(handle, screen->loaderPrivate);
-}
-
-__DRIimage *
-dri2_lookup_egl_image_validated(struct dri_screen *screen, void *handle)
-{
-   const __DRIimageLookupExtension *loader = screen->dri2.image;
-
-   return loader->lookupEGLImageValidated(handle, screen->loaderPrivate);
-}
-
-__DRIimage *
-dri2_create_image_from_renderbuffer2(__DRIcontext *context,
+dri_create_image_from_renderbuffer(__DRIcontext *context,
 				     int renderbuffer, void *loaderPrivate,
                                      unsigned *error)
 {
@@ -333,7 +305,7 @@ dri2_create_image_from_renderbuffer2(__DRIcontext *context,
       return NULL;
    }
 
-   img->dri_format = driGLFormatToImageFormat(rb->Format);
+   img->dri_format = tex->format;
    img->internal_format = rb->InternalFormat;
    img->loader_private = loaderPrivate;
    img->screen = dri_ctx->screen;
@@ -345,21 +317,14 @@ dri2_create_image_from_renderbuffer2(__DRIcontext *context,
     * it's in a shareable state. Do this now while we still have the access to
     * the context.
     */
-   if (dri2_get_mapping_by_format(img->dri_format))
+   if (dri2_get_mapping_by_format(img->dri_format)) {
       p_ctx->flush_resource(p_ctx, tex);
+      st_context_flush(st, 0, NULL, NULL, NULL);
+   }
 
    ctx->Shared->HasExternallySharedImages = true;
    *error = __DRI_IMAGE_ERROR_SUCCESS;
    return img;
-}
-
-__DRIimage *
-dri2_create_image_from_renderbuffer(__DRIcontext *context,
-				    int renderbuffer, void *loaderPrivate)
-{
-   unsigned error;
-   return dri2_create_image_from_renderbuffer2(context, renderbuffer,
-                                               loaderPrivate, &error);
 }
 
 void
@@ -396,7 +361,7 @@ dri2_create_from_texture(__DRIcontext *context, int target, unsigned texture,
    struct gl_context *ctx = st->ctx;
    struct pipe_context *p_ctx = st->pipe;
    struct gl_texture_object *obj;
-   struct pipe_resource *tex;
+   struct gl_texture_image *glimg;
    GLuint face = 0;
 
    /* Wait for glthread to finish to get up-to-date GL object lookups. */
@@ -404,12 +369,6 @@ dri2_create_from_texture(__DRIcontext *context, int target, unsigned texture,
 
    obj = _mesa_lookup_texture(ctx, texture);
    if (!obj || obj->Target != target) {
-      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
-      return NULL;
-   }
-
-   tex = st_get_texobj_resource(obj);
-   if (!tex) {
       *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
       return NULL;
    }
@@ -428,7 +387,13 @@ dri2_create_from_texture(__DRIcontext *context, int target, unsigned texture,
       return NULL;
    }
 
-   if (target == GL_TEXTURE_3D && obj->Image[face][level]->Depth < depth) {
+   glimg = obj->Image[face][level];
+   if (!glimg || !glimg->pt) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      return NULL;
+   }
+
+   if (target == GL_TEXTURE_3D && glimg->Depth < depth) {
       *error = __DRI_IMAGE_ERROR_BAD_MATCH;
       return NULL;
    }
@@ -442,20 +407,22 @@ dri2_create_from_texture(__DRIcontext *context, int target, unsigned texture,
    img->level = level;
    img->layer = depth;
    img->in_fence_fd = -1;
-   img->dri_format = driGLFormatToImageFormat(obj->Image[face][level]->TexFormat);
-   img->internal_format = obj->Image[face][level]->InternalFormat;
+   img->dri_format = glimg->pt->format;
+   img->internal_format = glimg->InternalFormat;
 
    img->loader_private = loaderPrivate;
    img->screen = dri_ctx->screen;
 
-   pipe_resource_reference(&img->texture, tex);
+   pipe_resource_reference(&img->texture, glimg->pt);
 
    /* If the resource supports EGL_MESA_image_dma_buf_export, make sure that
     * it's in a shareable state. Do this now while we still have the access to
     * the context.
     */
-   if (dri2_get_mapping_by_format(img->dri_format))
-      p_ctx->flush_resource(p_ctx, tex);
+   if (dri2_get_mapping_by_format(img->dri_format)) {
+      p_ctx->flush_resource(p_ctx, glimg->pt);
+      st_context_flush(st, 0, NULL, NULL, NULL);
+   }
 
    ctx->Shared->HasExternallySharedImages = true;
    *error = __DRI_IMAGE_ERROR_SUCCESS;
@@ -735,7 +702,7 @@ dri2_yuv_dma_buf_supported(struct dri_screen *screen,
 }
 
 bool
-dri2_query_dma_buf_formats(__DRIscreen *_screen, int max, int *formats,
+dri_query_dma_buf_formats(__DRIscreen *_screen, int max, int *formats,
                            int *count)
 {
    struct dri_screen *screen = dri_screen(_screen);
@@ -767,4 +734,58 @@ dri2_query_dma_buf_formats(__DRIscreen *_screen, int max, int *formats,
    return true;
 }
 
+
+__DRIimage *
+dri_create_image_with_modifiers(__DRIscreen *screen,
+                                 uint32_t width, uint32_t height,
+                                 uint32_t dri_format, uint32_t dri_usage,
+                                 const uint64_t *modifiers,
+                                 unsigned int modifiers_count,
+                                 void *loaderPrivate)
+{
+   if (modifiers && modifiers_count > 0) {
+      bool has_valid_modifier = false;
+      int i;
+
+      /* It's acceptable to create an image with INVALID modifier in the list,
+       * but it cannot be on the only modifier (since it will certainly fail
+       * later). While we could easily catch this after modifier creation, doing
+       * the check here is a convenient debug check likely pointing at whatever
+       * interface the client is using to build its modifier list.
+       */
+      for (i = 0; i < modifiers_count; i++) {
+         if (modifiers[i] != DRM_FORMAT_MOD_INVALID) {
+            has_valid_modifier = true;
+            break;
+         }
+      }
+      if (!has_valid_modifier)
+         return NULL;
+   }
+
+   return dri_create_image(screen, width, height, dri_format,
+                           modifiers, modifiers_count, dri_usage,
+                           loaderPrivate);
+}
+
+void
+dri_image_fence_sync(struct dri_context *ctx, __DRIimage *img)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_fence_handle *fence;
+   int fd = img->in_fence_fd;
+
+   if (fd == -1)
+      return;
+
+   validate_fence_fd(fd);
+
+   img->in_fence_fd = -1;
+
+   pipe->create_fence_fd(pipe, &fence, fd, PIPE_FD_TYPE_NATIVE_SYNC);
+   pipe->fence_server_sync(pipe, fence);
+   pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+
+   close(fd);
+}
 /* vim: set sw=3 ts=8 sts=3 expandtab: */

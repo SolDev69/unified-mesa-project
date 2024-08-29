@@ -63,6 +63,10 @@ struct stw_winsys_framebuffer
    struct pipe_resource *
    (*get_resource)(struct stw_winsys_framebuffer *fb,
                    enum st_attachment_type statt);
+
+   void
+   (*flush_frontbuffer)(struct stw_winsys_framebuffer *fb,
+                        struct pipe_context *context);
 };
 
 struct stw_winsys
@@ -119,13 +123,6 @@ struct stw_winsys
                struct stw_shared_surface *dest,
                LPCRECT pRect,
                ULONGLONG PresentHistoryToken );
-
-   /**
-    * Query whether the driver can support GDI and/or double-buffering in its
-    * pixel formats (optional).
-    */
-   unsigned
-   (*get_pfd_flags)( struct pipe_screen *screen );
 
    /**
     * Create a winsys-specific object for a given DC's framebuffer

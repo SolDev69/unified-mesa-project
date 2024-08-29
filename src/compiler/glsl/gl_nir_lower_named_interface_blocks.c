@@ -102,6 +102,8 @@ process_derefs(nir_builder *b, nir_deref_instr **p, nir_deref_instr *parent)
          } else {
             parent = nir_build_deref_struct(b, parent, (*p)->strct.index);
          }
+      } else if ((*p)->deref_type == nir_deref_type_array_wildcard) {
+         parent = nir_build_deref_array_wildcard(b, parent);
       }
    }
 
@@ -305,8 +307,7 @@ lower_named_interface_blocks(struct gl_linked_shader *sh)
    state.mem_ctx = mem_ctx;
    state.interface_namespace = interface_namespace;
    nir_shader_intrinsics_pass(sh->Program->nir, flatten_named_interface_derefs,
-                              nir_metadata_block_index |
-                              nir_metadata_dominance, &state);
+                              nir_metadata_control_flow, &state);
 
    /* Third pass: Mark now lowered blks as ordinary globals to be dead code
     * eliminated. Also use this oppotunity to set the compact flag where
@@ -362,8 +363,10 @@ void
 gl_nir_lower_named_interface_blocks(struct gl_shader_program *prog)
 {
    for (unsigned int i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (prog->_LinkedShaders[i] != NULL)
+      if (prog->_LinkedShaders[i] != NULL) {
+         NIR_PASS(_, prog->_LinkedShaders[i]->Program->nir, nir_split_var_copies);
          lower_named_interface_blocks(prog->_LinkedShaders[i]);
+      }
    }
 }
 

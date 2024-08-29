@@ -23,14 +23,6 @@
 
 #include "amdgpu_asic_addr.h"
 
-#ifndef CIASICIDGFXENGINE_R600
-#define CIASICIDGFXENGINE_R600 0x00000006
-#endif
-
-#ifndef CIASICIDGFXENGINE_R800
-#define CIASICIDGFXENGINE_R800 0x00000008
-#endif
-
 #ifndef CIASICIDGFXENGINE_SOUTHERNISLAND
 #define CIASICIDGFXENGINE_SOUTHERNISLAND 0x0000000A
 #endif
@@ -407,6 +399,7 @@ Lib* CiHwlInit   (const Client* pClient);
 Lib* Gfx9HwlInit (const Client* pClient);
 Lib* Gfx10HwlInit(const Client* pClient);
 Lib* Gfx11HwlInit(const Client* pClient);
+Lib* Gfx12HwlInit(const Client* pClient);
 } // Addr
 
 #endif

@@ -31,8 +31,11 @@
 #include <llvm/ADT/ArrayRef.h>
 #include <llvm/IR/DiagnosticPrinter.h>
 #include <llvm/IR/DiagnosticInfo.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/Target/TargetMachine.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Bitcode/BitcodeReader.h>
@@ -58,15 +61,13 @@
 
 #include "spirv.h"
 
-#if DETECT_OS_UNIX
+#if DETECT_OS_POSIX
 #include <dlfcn.h>
 #endif
 
 #ifdef USE_STATIC_OPENCL_C_H
-#if LLVM_VERSION_MAJOR < 15
-#include "opencl-c.h.h"
-#endif
 #include "opencl-c-base.h.h"
+#include "opencl-c.h.h"
 #endif
 
 #include "clc_helpers.h"
@@ -79,22 +80,32 @@ constexpr spv_target_env spirv_target = SPV_ENV_UNIVERSAL_1_5;
 constexpr SPIRV::VersionNumber invalid_spirv_trans_version = static_cast<SPIRV::VersionNumber>(0);
 
 using ::llvm::Function;
+using ::llvm::legacy::PassManager;
 using ::llvm::LLVMContext;
 using ::llvm::Module;
 using ::llvm::raw_string_ostream;
+using ::llvm::TargetRegistry;
 using ::clang::driver::Driver;
 
 static void
 clc_dump_llvm(const llvm::Module *mod, FILE *f);
 
 static void
+#if LLVM_VERSION_MAJOR >= 19
+llvm_log_handler(const ::llvm::DiagnosticInfo *di, void *data) {
+#else
 llvm_log_handler(const ::llvm::DiagnosticInfo &di, void *data) {
+#endif
    const clc_logger *logger = static_cast<clc_logger *>(data);
 
    std::string log;
    raw_string_ostream os { log };
    ::llvm::DiagnosticPrinterRawOStream printer { os };
+#if LLVM_VERSION_MAJOR >= 19
+   di->print(printer);
+#else
    di.print(printer);
+#endif
 
    clc_error(logger, "%s", log.c_str());
 }
@@ -477,10 +488,12 @@ public:
                kernel.localSize[0] = ins->words[ins->operands[2].offset];
                kernel.localSize[1] = ins->words[ins->operands[3].offset];
                kernel.localSize[2] = ins->words[ins->operands[4].offset];
+               break;
             case SpvExecutionModeLocalSizeHint:
                kernel.localSizeHint[0] = ins->words[ins->operands[2].offset];
                kernel.localSizeHint[1] = ins->words[ins->operands[3].offset];
                kernel.localSizeHint[2] = ins->words[ins->operands[4].offset];
+               break;
             default:
                return;
             }
@@ -780,19 +793,19 @@ clc_compile_to_llvm_module(LLVMContext &llvm_ctx,
                                        &c->getDiagnosticOpts())
    };
 
+#if LLVM_VERSION_MAJOR >= 17
+   const char *triple = args->address_bits == 32 ? "spir-unknown-unknown" : "spirv64-unknown-unknown";
+#else
    const char *triple = args->address_bits == 32 ? "spir-unknown-unknown" : "spir64-unknown-unknown";
+#endif
 
    std::vector<const char *> clang_opts = {
       args->source.name,
       "-triple", triple,
       // By default, clang prefers to use modules to pull in the default headers,
       // which doesn't work with our technique of embedding the headers in our binary
-#if LLVM_VERSION_MAJOR >= 15
       "-fdeclare-opencl-builtins",
-#else
-      "-finclude-default-header",
-#endif
-#if LLVM_VERSION_MAJOR >= 15 && LLVM_VERSION_MAJOR < 17
+#if LLVM_VERSION_MAJOR < 17
       "-no-opaque-pointers",
 #endif
       // Add a default CL compiler version. Clang will pick the last one specified
@@ -850,20 +863,14 @@ clc_compile_to_llvm_module(LLVMContext &llvm_ctx,
                                        clang::frontend::Angled,
                                        false, false);
 
-#if LLVM_VERSION_MAJOR < 15
-      ::llvm::sys::path::append(system_header_path, "opencl-c.h");
-      c->getPreprocessorOpts().addRemappedFile(system_header_path.str(),
-         ::llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(opencl_c_source, ARRAY_SIZE(opencl_c_source) - 1)).release());
-      ::llvm::sys::path::remove_filename(system_header_path);
-#endif
-
       ::llvm::sys::path::append(system_header_path, "opencl-c-base.h");
       c->getPreprocessorOpts().addRemappedFile(system_header_path.str(),
          ::llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(opencl_c_base_source, ARRAY_SIZE(opencl_c_base_source) - 1)).release());
-
-#if LLVM_VERSION_MAJOR >= 15
-      c->getPreprocessorOpts().Includes.push_back("opencl-c-base.h");
-#endif
+      // this line is actually important to make it include `opencl-c.h`
+      ::llvm::sys::path::remove_filename(system_header_path);
+      ::llvm::sys::path::append(system_header_path, "opencl-c.h");
+      c->getPreprocessorOpts().addRemappedFile(system_header_path.str(),
+         ::llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(opencl_c_source, ARRAY_SIZE(opencl_c_source) - 1)).release());
    }
 #else
 
@@ -893,31 +900,24 @@ clc_compile_to_llvm_module(LLVMContext &llvm_ctx,
    c->getHeaderSearchOpts().AddPath(clang_res_path.string(),
                                     clang::frontend::Angled,
                                     false, false);
-   // Add opencl include
-#if LLVM_VERSION_MAJOR >= 15
-   c->getPreprocessorOpts().Includes.push_back("opencl-c-base.h");
-#else
-   c->getPreprocessorOpts().Includes.push_back("opencl-c.h");
 #endif
-#endif
+
+   // Enable/Disable optional OpenCL C features. Some can be toggled via `OpenCLExtensionsAsWritten`
+   // others we have to (un)define via macros ourselves.
 
    // Undefine clang added SPIR(V) defines so we don't magically enable extensions
    c->getPreprocessorOpts().addMacroUndef("__SPIR__");
    c->getPreprocessorOpts().addMacroUndef("__SPIRV__");
 
-   // clang defines those unconditionally, we need to fix that.
-   if (!args->features.int64)
-      c->getPreprocessorOpts().addMacroUndef("__opencl_c_int64");
-   if (!args->features.images)
-      c->getPreprocessorOpts().addMacroUndef("__IMAGE_SUPPORT__");
-
-#if LLVM_VERSION_MAJOR >= 14
    c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("-all");
    c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_byte_addressable_store");
    c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_global_int32_base_atomics");
    c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_global_int32_extended_atomics");
    c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_local_int32_base_atomics");
    c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_local_int32_extended_atomics");
+   c->getPreprocessorOpts().addMacroDef("cl_khr_expect_assume=1");
+
+   bool needs_opencl_c_h = false;
    if (args->features.fp16) {
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_fp16");
    }
@@ -928,9 +928,15 @@ clc_compile_to_llvm_module(LLVMContext &llvm_ctx,
    if (args->features.int64) {
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cles_khr_int64");
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+__opencl_c_int64");
+   } else {
+      // clang defines this unconditionally, we need to fix that.
+      c->getPreprocessorOpts().addMacroUndef("__opencl_c_int64");
    }
    if (args->features.images) {
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+__opencl_c_images");
+   } else {
+      // clang defines this unconditionally, we need to fix that.
+      c->getPreprocessorOpts().addMacroUndef("__IMAGE_SUPPORT__");
    }
    if (args->features.images_read_write) {
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+__opencl_c_read_write_images");
@@ -939,32 +945,48 @@ clc_compile_to_llvm_module(LLVMContext &llvm_ctx,
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_3d_image_writes");
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+__opencl_c_3d_image_writes");
    }
+   if (args->features.images_depth) {
+      c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_depth_images");
+   }
+   if (args->features.images_gl_depth) {
+      c->getPreprocessorOpts().addMacroDef("cl_khr_gl_depth_images=1");
+   }
+   if (args->features.images_mipmap) {
+      c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_mipmap_image");
+   }
+   if (args->features.images_mipmap_writes) {
+      c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_mipmap_image_writes");
+   }
+   if (args->features.images_gl_msaa) {
+      c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_gl_msaa_sharing");
+   }
    if (args->features.intel_subgroups) {
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_intel_subgroups");
+      needs_opencl_c_h = true;
    }
    if (args->features.subgroups) {
       c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+__opencl_c_subgroups");
-   }
-   if (args->features.subgroups_ifp) {
-      assert(args->features.subgroups);
-      c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_subgroups");
-   }
-#endif
-
-   // llvm handles these extensions differently so we have to pass those flags instead to expose the clc functions
-   c->getPreprocessorOpts().addMacroDef("cl_khr_expect_assume=1");
-   if (args->features.integer_dot_product) {
-      c->getPreprocessorOpts().addMacroDef("cl_khr_integer_dot_product=1");
-      c->getPreprocessorOpts().addMacroDef("__opencl_c_integer_dot_product_input_4x8bit_packed=1");
-      c->getPreprocessorOpts().addMacroDef("__opencl_c_integer_dot_product_input_4x8bit=1");
-   }
-   if (args->features.subgroups) {
       if (args->features.subgroups_shuffle) {
          c->getPreprocessorOpts().addMacroDef("cl_khr_subgroup_shuffle=1");
       }
       if (args->features.subgroups_shuffle_relative) {
          c->getPreprocessorOpts().addMacroDef("cl_khr_subgroup_shuffle_relative=1");
       }
+   }
+   if (args->features.subgroups_ifp) {
+      assert(args->features.subgroups);
+      c->getTargetOpts().OpenCLExtensionsAsWritten.push_back("+cl_khr_subgroups");
+   }
+   if (args->features.integer_dot_product) {
+      c->getPreprocessorOpts().addMacroDef("cl_khr_integer_dot_product=1");
+      c->getPreprocessorOpts().addMacroDef("__opencl_c_integer_dot_product_input_4x8bit_packed=1");
+      c->getPreprocessorOpts().addMacroDef("__opencl_c_integer_dot_product_input_4x8bit=1");
+   }
+
+   // Add opencl include
+   c->getPreprocessorOpts().Includes.push_back("opencl-c-base.h");
+   if (needs_opencl_c_h) {
+      c->getPreprocessorOpts().Includes.push_back("opencl-c.h");
    }
 
    if (args->num_headers) {
@@ -1013,9 +1035,7 @@ spirv_version_to_llvm_spirv_translator_version(enum clc_spirv_version version)
    case CLC_SPIRV_VERSION_1_1: return SPIRV::VersionNumber::SPIRV_1_1;
    case CLC_SPIRV_VERSION_1_2: return SPIRV::VersionNumber::SPIRV_1_2;
    case CLC_SPIRV_VERSION_1_3: return SPIRV::VersionNumber::SPIRV_1_3;
-#ifdef HAS_SPIRV_1_4
    case CLC_SPIRV_VERSION_1_4: return SPIRV::VersionNumber::SPIRV_1_4;
-#endif
    default:      return invalid_spirv_trans_version;
    }
 }
@@ -1036,9 +1056,7 @@ llvm_mod_to_spirv(std::unique_ptr<::llvm::Module> mod,
       return -1;
    }
 
-   const char *const *extensions = NULL;
-   if (args)
-      extensions = args->allowed_spirv_extensions;
+   const char *const *extensions = args->allowed_spirv_extensions;
    if (!extensions) {
       /* The SPIR-V parser doesn't handle all extensions */
       static const char *default_extensions[] = {
@@ -1060,9 +1078,47 @@ llvm_mod_to_spirv(std::unique_ptr<::llvm::Module> mod,
    }
    SPIRV::TranslatorOpts spirv_opts = SPIRV::TranslatorOpts(version, ext_map);
 
-#if LLVM_VERSION_MAJOR >= 13
    /* This was the default in 12.0 and older, but currently we'll fail to parse without this */
    spirv_opts.setPreserveOCLKernelArgTypeMetadataThroughString(true);
+
+#if LLVM_VERSION_MAJOR >= 17
+   if (args->use_llvm_spirv_target) {
+      const char *triple = args->address_bits == 32 ? "spirv-unknown-unknown" : "spirv64-unknown-unknown";
+      std::string error_msg("");
+      auto target = TargetRegistry::lookupTarget(triple, error_msg);
+      if (target) {
+         auto TM = target->createTargetMachine(
+            triple, "", "", {}, std::nullopt, std::nullopt,
+#if LLVM_VERSION_MAJOR >= 18
+            ::llvm::CodeGenOptLevel::None
+#else
+            ::llvm::CodeGenOpt::None
+#endif
+         );
+
+         auto PM = PassManager();
+         ::llvm::SmallVector<char> buf;
+         auto OS = ::llvm::raw_svector_ostream(buf);
+         TM->addPassesToEmitFile(
+            PM, OS, nullptr,
+#if LLVM_VERSION_MAJOR >= 18
+            ::llvm::CodeGenFileType::ObjectFile
+#else
+            ::llvm::CGFT_ObjectFile
+#endif
+         );
+
+         PM.run(*mod);
+
+         out_spirv->size = buf.size_in_bytes();
+         out_spirv->data = malloc(out_spirv->size);
+         memcpy(out_spirv->data, buf.data(), out_spirv->size);
+         return 0;
+      } else {
+         clc_error(logger, "LLVM SPIR-V target not found.\n");
+         return -1;
+      }
+   }
 #endif
 
    std::ostringstream spv_stream;
@@ -1187,10 +1243,17 @@ clc_link_spirv_binaries(const struct clc_linker_args *args,
    context.SetMessageConsumer(msgconsumer);
    spvtools::LinkerOptions options;
    options.SetAllowPartialLinkage(args->create_library);
+   #if defined(HAS_SPIRV_LINK_LLVM_WORKAROUND) && LLVM_VERSION_MAJOR >= 17
+      options.SetAllowPtrTypeMismatch(true);
+   #endif
    options.SetCreateLibrary(args->create_library);
    std::vector<uint32_t> linkingResult;
    spv_result_t status = spvtools::Link(context, binaries, &linkingResult, options);
    if (status != SPV_SUCCESS) {
+      #if !defined(HAS_SPIRV_LINK_LLVM_WORKAROUND) && LLVM_VERSION_MAJOR >= 17
+        clc_warning(logger, "SPIRV-Tools doesn't contain https://github.com/KhronosGroup/SPIRV-Tools/pull/5534\n");
+        clc_warning(logger, "Please update in order to prevent spurious linking failures\n");
+      #endif
       return -1;
    }
 

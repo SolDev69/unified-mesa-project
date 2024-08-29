@@ -96,7 +96,7 @@ struct ttn_compile {
    bool cap_point_is_sysval;
    bool cap_samplers_as_deref;
    bool cap_integers;
-   bool cap_compact_arrays;
+   bool cap_tg4_component_in_swizzle;
 };
 
 #define ttn_swizzle(b, src, x, y, z, w) \
@@ -413,7 +413,7 @@ ttn_emit_declaration(struct ttn_compile *c)
                   var->type = glsl_float_type();
                } else if (var->data.location == VARYING_SLOT_LAYER) {
                   var->type = glsl_int_type();
-               } else if (c->cap_compact_arrays &&
+               } else if (b->shader->options->compact_arrays &&
                           var->data.location == VARYING_SLOT_CLIP_DIST0) {
                   var->type = glsl_array_type(glsl_float_type(),
                                               b->shader->info.clip_distance_array_size,
@@ -435,7 +435,7 @@ ttn_emit_declaration(struct ttn_compile *c)
 
             c->outputs[idx] = var;
 
-            if (c->cap_compact_arrays && var->data.location == VARYING_SLOT_CLIP_DIST1) {
+            if (b->shader->options->compact_arrays && var->data.location == VARYING_SLOT_CLIP_DIST1) {
                /* ignore this entirely */
                continue;
             }
@@ -1229,6 +1229,13 @@ ttn_tex(struct ttn_compile *c, nir_def **src)
       op = nir_texop_lod;
       num_srcs = 1;
       break;
+   case TGSI_OPCODE_TG4:
+      /* TODO: Shadow cube samplers unsupported. */
+      assert(tgsi_inst->Texture.Texture != TGSI_TEXTURE_SHADOWCUBE_ARRAY);
+      op = nir_texop_tg4;
+      num_srcs = 1;
+      samp = 2;
+      break;
 
    default:
       fprintf(stderr, "unknown TGSI tex op %d\n", tgsi_inst->Instruction.Opcode);
@@ -1360,6 +1367,13 @@ ttn_tex(struct ttn_compile *c, nir_def **src)
          nir_tex_src_for_ssa(nir_tex_src_ddy,
                nir_trim_vector(b, src[2], nir_tex_instr_src_size(instr, src_number)));
       src_number++;
+   }
+
+   if (tgsi_inst->Instruction.Opcode == TGSI_OPCODE_TG4) {
+      if (c->cap_tg4_component_in_swizzle)
+         instr->component = tgsi_inst->Src[samp].Register.SwizzleX;
+      else
+         instr->component = nir_scalar_as_uint(nir_scalar_resolved(src[1], 0));
    }
 
    if (instr->is_shadow) {
@@ -1661,8 +1675,6 @@ static const nir_op op_trans[TGSI_OPCODE_LAST] = {
    [TGSI_OPCODE_LG2] = nir_op_flog2,
    [TGSI_OPCODE_POW] = nir_op_fpow,
    [TGSI_OPCODE_COS] = nir_op_fcos,
-   [TGSI_OPCODE_DDX] = nir_op_fddx,
-   [TGSI_OPCODE_DDY] = nir_op_fddy,
    [TGSI_OPCODE_KILL] = 0,
    [TGSI_OPCODE_PK2H] = 0, /* XXX */
    [TGSI_OPCODE_PK2US] = 0, /* XXX */
@@ -1698,9 +1710,6 @@ static const nir_op op_trans[TGSI_OPCODE_LAST] = {
    [TGSI_OPCODE_UIF] = 0,
    [TGSI_OPCODE_ELSE] = 0,
    [TGSI_OPCODE_ENDIF] = 0,
-
-   [TGSI_OPCODE_DDX_FINE] = nir_op_fddx_fine,
-   [TGSI_OPCODE_DDY_FINE] = nir_op_fddy_fine,
 
    [TGSI_OPCODE_CEIL] = nir_op_fceil,
    [TGSI_OPCODE_I2F] = nir_op_i2f32,
@@ -2008,6 +2017,22 @@ ttn_emit_instruction(struct ttn_compile *c)
       ttn_barrier(b);
       break;
 
+   case TGSI_OPCODE_DDX:
+      dst = nir_ddx(b, src[0]);
+      break;
+
+   case TGSI_OPCODE_DDX_FINE:
+      dst = nir_ddx_fine(b, src[0]);
+      break;
+
+   case TGSI_OPCODE_DDY:
+      dst = nir_ddy(b, src[0]);
+      break;
+
+   case TGSI_OPCODE_DDY_FINE:
+      dst = nir_ddy_fine(b, src[0]);
+      break;
+
    default:
       if (op_trans[tgsi_op] != 0 || tgsi_op == TGSI_OPCODE_MOV) {
          dst = ttn_alu(b, op_trans[tgsi_op], dst_bitsize, src);
@@ -2122,7 +2147,7 @@ ttn_add_output_stores(struct ttn_compile *c)
          }
       }
 
-      if (c->cap_compact_arrays &&
+      if (b->shader->options->compact_arrays &&
           (var->data.location == VARYING_SLOT_CLIP_DIST0 ||
            var->data.location == VARYING_SLOT_CLIP_DIST1)) {
          if (!store_mask)
@@ -2191,7 +2216,8 @@ ttn_read_pipe_caps(struct ttn_compile *c,
    c->cap_position_is_sysval = screen->get_param(screen, PIPE_CAP_FS_POSITION_IS_SYSVAL);
    c->cap_point_is_sysval = screen->get_param(screen, PIPE_CAP_FS_POINT_IS_SYSVAL);
    c->cap_integers = screen->get_shader_param(screen, c->scan->processor, PIPE_SHADER_CAP_INTEGERS);
-   c->cap_compact_arrays = screen->get_param(screen, PIPE_CAP_NIR_COMPACT_ARRAYS);
+   c->cap_tg4_component_in_swizzle =
+       screen->get_param(screen, PIPE_CAP_TGSI_TG4_COMPONENT_IN_SWIZZLE);
 }
 
 #define BITSET_SET32(bitset, u32_mask) do { \
@@ -2514,7 +2540,7 @@ ttn_finalize_nir(struct ttn_compile *c, struct pipe_screen *screen)
    /* driver needs clipdistance as array<float> */
    if ((nir->info.outputs_written &
         (BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST0) | BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST1))) &&
-       screen->get_param(screen, PIPE_CAP_NIR_COMPACT_ARRAYS)) {
+        nir->options->compact_arrays) {
       NIR_PASS_V(nir, lower_clipdistance_to_array);
    }
 
@@ -2585,6 +2611,7 @@ load_nir_from_disk_cache(struct disk_cache *cache,
     * However we do still check if the first element is indeed the size,
     * as we cannot fully trust disk_cache_get (EGL_ANDROID_blob_cache) */
    if (buffer[0] != size) {
+      free(buffer);
       return NULL;
    }
 
@@ -2662,4 +2689,3 @@ tgsi_to_nir_noscreen(const void *tgsi_tokens,
 
    return s;
 }
-

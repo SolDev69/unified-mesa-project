@@ -1,22 +1,5 @@
 # Copyright © 2017-2019 Intel Corporation
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# SPDX-License-Identifier: MIT
 
 files_libiris = files(
   'i915/iris_batch.c',
@@ -74,7 +57,7 @@ iris_per_hw_ver_libs = []
 foreach v : ['80', '90', '110', '120', '125', '200']
   iris_per_hw_ver_libs += static_library(
     'iris_per_hw_ver@0@'.format(v),
-    ['iris_blorp.c', 'iris_query.c', 'iris_state.c', gen_xml_pack],
+    ['iris_blorp.c', 'iris_query.c', 'iris_state.c', 'iris_indirect_gen.c', gen_xml_pack],
     include_directories : [inc_include, inc_src, inc_mapi, inc_mesa, inc_gallium, inc_gallium_aux, inc_intel],
     c_args : [
       no_override_init_args, sse2_args,
@@ -82,7 +65,8 @@ foreach v : ['80', '90', '110', '120', '125', '200']
     ],
     gnu_symbol_visibility : 'hidden',
     dependencies : [dep_libdrm, dep_valgrind, idep_genxml, idep_nir_headers,
-                    idep_intel_driver_ds_headers, ],
+                    idep_intel_driver_ds_headers, idep_intel_shaders,
+                    idep_intel_blorp, idep_mesautil],
   )
 endforeach
 
@@ -99,10 +83,14 @@ libiris = static_library(
   cpp_args : [sse2_args],
   gnu_symbol_visibility : 'hidden',
   dependencies : [dep_libdrm, dep_valgrind, idep_genxml, idep_nir_headers,
-                  idep_libintel_common, idep_intel_driver_ds, idep_intel_dev],
+                  idep_libintel_common, idep_intel_driver_ds, idep_intel_dev,
+                  idep_intel_blorp_elk, idep_intel_decoder_elk,
+                  idep_intel_blorp, idep_intel_decoder_brw,
+                  idep_intel_compiler_elk, idep_intel_compiler_brw,
+                  idep_mesautil],
   link_with : [
-    iris_per_hw_ver_libs, libintel_compiler, libisl,
-    libblorp, libintel_perf
+    iris_per_hw_ver_libs, libisl,
+    libintel_perf
   ],
 )
 

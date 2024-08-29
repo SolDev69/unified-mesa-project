@@ -32,9 +32,14 @@
 extern "C" {
 #endif
 
-#define SDR_VIDEO_WHITE_POINT 100 // nits
-#define SDR_WHITE_POINT       80  // nits
-#define HDR_PEAK_WHITE        10000
+#define SDR_VIDEO_WHITE_POINT  100 // nits
+#define SDR_WHITE_POINT        80  // nits
+#define HDR_PEAK_WHITE         10000
+#define CCCS_NORM              HDR_PEAK_WHITE/SDR_WHITE_POINT
+#define STUDIO_RANGE_FOOT_ROOM_10_BIT  vpe_fixpt_from_fraction(64, 1023)
+#define STUDIO_RANGE_SCALE_10_BIT      vpe_fixpt_from_fraction(940 - 64, 1023)
+#define STUDIO_RANGE_FOOT_ROOM_8_BIT  vpe_fixpt_from_fraction(16, 255)
+#define STUDIO_RANGE_SCALE_8_BIT      vpe_fixpt_from_fraction(235 - 16, 255)
 
 struct vpe_priv;
 struct stream_ctx;
@@ -52,14 +57,15 @@ enum color_depth {
     COLOR_DEPTH_COUNT
 };
 
-enum color_transfer_func {
+ enum color_transfer_func {
     TRANSFER_FUNC_UNKNOWN,
     TRANSFER_FUNC_SRGB,
     TRANSFER_FUNC_BT709,
     TRANSFER_FUNC_BT1886,
     TRANSFER_FUNC_PQ2084,
-    TRANSFER_FUNC_LINEAR_0_125,
-    TRANSFER_FUNC_NORMALIZED_PQ
+    TRANSFER_FUNC_LINEAR,
+    TRANSFER_FUNC_NORMALIZED_PQ,
+    TRANSFER_FUNC_HLG
 };
 
 enum dither_option {
@@ -97,8 +103,11 @@ enum color_space {
     COLOR_SPACE_SRGB_LIMITED,
     COLOR_SPACE_MSREF_SCRGB,
     COLOR_SPACE_YCBCR601,
+    COLOR_SPACE_RGB601,
+    COLOR_SPACE_RGB601_LIMITED,
     COLOR_SPACE_YCBCR709,
-    COLOR_SPACE_JFIF,
+    COLOR_SPACE_YCBCR_JFIF,
+    COLOR_SPACE_RGB_JFIF,
     COLOR_SPACE_YCBCR601_LIMITED,
     COLOR_SPACE_YCBCR709_LIMITED,
     COLOR_SPACE_2020_RGB_FULLRANGE,
@@ -113,6 +122,11 @@ enum transfer_func_type {
     TF_TYPE_DISTRIBUTED_POINTS,
     TF_TYPE_BYPASS,
     TF_TYPE_HWPWL
+};
+
+enum cm_type {
+    CM_DEGAM,
+    CM_REGAM,
 };
 
 enum {
@@ -135,6 +149,8 @@ struct transfer_func_distributed_points {
 struct transfer_func {
     enum transfer_func_type  type;
     enum color_transfer_func tf;
+    enum cm_type             cm_gamma_type;
+    struct fixed31_32        start_base; //Used to clamp curve start
 
     /* FP16 1.0 reference level in nits, default is 80 nits, only for PQ*/
     uint32_t sdr_ref_white_level;
@@ -142,7 +158,6 @@ struct transfer_func {
         struct pwl_params                       pwl;
         struct transfer_func_distributed_points tf_pts;
     };
-    bool use_pre_calculated_table;
 };
 
 enum color_white_point_type {
@@ -234,10 +249,6 @@ enum vpe_status vpe_color_tm_update_hdr_mult(uint16_t shaper_in_exp_max, uint32_
 
 enum vpe_status vpe_color_update_shaper(
     uint16_t shaper_in_exp_max, struct transfer_func *shaper_func, bool enable_3dlut);
-
-enum vpe_status vpe_color_update_blnd_gam(struct vpe_priv *vpe_priv,
-    const struct vpe_build_param *param, const struct vpe_tonemap_params *tm_params,
-    struct transfer_func *blnd_tf_func, bool enable_3dlut);
 
 enum vpe_status vpe_color_build_tm_cs(const struct vpe_tonemap_params *tm_params,
     struct vpe_surface_info surface_info, struct vpe_color_space *vcs);

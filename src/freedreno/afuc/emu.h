@@ -1,24 +1,6 @@
 /*
  * Copyright © 2021 Google, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef _EMU_H_
@@ -108,6 +90,17 @@ emu_queue_pop(struct emu_queue *q, uint32_t *val)
    return true;
 }
 
+static inline bool
+emu_queue_peek(struct emu_queue *q, uint32_t *val)
+{
+   if (!q->count)
+      return false;
+
+   *val = q->fifo[q->tail];
+
+   return true;
+}
+
 /**
  * Draw-state (ie. CP_SET_DRAW_STATE) related emulation
  */
@@ -169,7 +162,7 @@ struct emu {
 
    uint32_t *instrs;
    unsigned sizedwords;
-   unsigned gpu_id;
+   unsigned fw_id;
 
    struct emu_control_regs control_regs;
    struct emu_sqe_regs     sqe_regs;
@@ -191,6 +184,14 @@ struct emu {
 
    /* (r)un mode, don't stop for input until next waitin: */
    bool run_mode;
+
+   /* Don't prompt on a read from $data with an empty queue and instead assume
+    * the bootstrap routine has finished and return a dummy value while
+    * setting bootstrap_finished.
+    */
+   bool bootstrap_mode;
+
+   bool bootstrap_finished;
 
    /* carry-bits for add/sub for addhi/subhi
     * TODO: this is probably in a SQE register somewhere
@@ -249,6 +250,7 @@ void emu_dump_state_change(struct emu *emu);
 /* Registers: */
 uint32_t emu_get_gpr_reg(struct emu *emu, unsigned n);
 void emu_set_gpr_reg(struct emu *emu, unsigned n, uint32_t val);
+uint32_t emu_get_gpr_reg_alu(struct emu *emu, unsigned n, bool peek);
 
 void emu_set_gpu_reg(struct emu *emu, unsigned n, uint32_t val);
 

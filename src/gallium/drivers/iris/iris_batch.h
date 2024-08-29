@@ -31,7 +31,7 @@
 #include "util/u_dynarray.h"
 #include "util/perf/u_trace.h"
 
-#include "common/intel_decoder.h"
+#include "decoder/intel_decoder.h"
 #include "ds/intel_driver_ds.h"
 #include "ds/intel_tracepoints.h"
 
@@ -51,7 +51,7 @@ struct iris_context;
 #define BATCH_RESERVED 60
 
 /* Our target batch size - flush approximately at this point. */
-#define BATCH_SZ (64 * 1024 - BATCH_RESERVED)
+#define BATCH_SZ (128 * 1024 - BATCH_RESERVED)
 
 enum iris_batch_name {
    IRIS_BATCH_RENDER,
@@ -92,6 +92,9 @@ struct iris_batch {
 
    /** Last binder address set in this hardware context. */
    uint64_t last_binder_address;
+
+   /** Write fencing status for mi_builder. */
+   bool write_fence_status;
 
    union {
       struct {
@@ -241,6 +244,12 @@ static inline unsigned
 iris_batch_bytes_used(struct iris_batch *batch)
 {
    return batch->map_next - batch->map;
+}
+
+static inline uint64_t
+iris_batch_current_address_u64(struct iris_batch *batch)
+{
+   return batch->bo->address + (batch->map_next - batch->map);
 }
 
 /**

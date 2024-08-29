@@ -1,4 +1,4 @@
-use crate::api::icd::CLResult;
+use crate::api::icd::{ArcedCLObject, CLResult};
 use crate::api::types::*;
 use crate::core::event::*;
 use crate::core::queue::*;
@@ -26,7 +26,7 @@ pub trait CLInfo<I> {
         param_value: *mut ::std::os::raw::c_void,
         param_value_size_ret: *mut usize,
     ) -> CLResult<()> {
-        let arr = if !param_value.is_null() {
+        let arr = if !param_value.is_null() && param_value_size != 0 {
             unsafe { slice::from_raw_parts(param_value.cast(), param_value_size) }
         } else {
             &[]
@@ -97,7 +97,7 @@ macro_rules! cl_prop_for_type {
     ($ty: ty) => {
         impl CLProp for $ty {
             fn cl_vec(&self) -> Vec<MaybeUninit<u8>> {
-                unsafe { slice::from_raw_parts((self as *const Self).cast(), size_of::<Self>()) }
+                unsafe { slice::from_raw_parts(std::ptr::from_ref(self).cast(), size_of::<Self>()) }
                     .to_vec()
             }
         }
@@ -224,9 +224,9 @@ where
     }
 }
 
-pub fn cl_prop<T: CLProp>(v: T) -> Vec<MaybeUninit<u8>>
+pub fn cl_prop<T>(v: T) -> Vec<MaybeUninit<u8>>
 where
-    T: Sized,
+    T: CLProp + Sized,
 {
     v.cl_vec()
 }
@@ -270,13 +270,7 @@ pub fn event_list_from_cl(
     // CL_INVALID_EVENT_WAIT_LIST if event_wait_list is NULL and num_events_in_wait_list > 0, or
     // event_wait_list is not NULL and num_events_in_wait_list is 0, or if event objects in
     // event_wait_list are not valid events.
-    if event_wait_list.is_null() && num_events_in_wait_list > 0
-        || !event_wait_list.is_null() && num_events_in_wait_list == 0
-    {
-        return Err(CL_INVALID_EVENT_WAIT_LIST);
-    }
-
-    let res = Event::from_cl_arr(event_wait_list, num_events_in_wait_list)
+    let res = Event::arcs_from_arr(event_wait_list, num_events_in_wait_list)
         .map_err(|_| CL_INVALID_EVENT_WAIT_LIST)?;
 
     // CL_INVALID_CONTEXT if context associated with command_queue and events in event_list are not

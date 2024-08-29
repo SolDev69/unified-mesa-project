@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+struct spirv_capabilities;
+
 struct nir_spirv_specialization {
    uint32_t id;
    nir_const_value value;
@@ -79,7 +81,19 @@ struct spirv_to_nir_options {
     */
    bool mediump_16bit_derivatives;
 
-   struct spirv_supported_capabilities caps;
+   /* These really early AMD extensions don't have capabilities */
+   bool amd_gcn_shader;
+   bool amd_shader_ballot;
+   bool amd_trinary_minmax;
+   bool amd_shader_explicit_vertex_parameter;
+
+   /* Whether or not printf is supported */
+   bool printf;
+
+   /* Whether or not the driver wants consume debug information (Debugging purposes). */
+   bool debug_info;
+
+   const struct spirv_capabilities *capabilities;
 
    /* Address format for various kinds of pointers. */
    nir_address_format ubo_addr_format;
@@ -151,6 +165,8 @@ nir_shader *spirv_to_nir(const uint32_t *words, size_t word_count,
 bool
 spirv_library_to_nir_builder(FILE *fp, const uint32_t *words, size_t word_count,
                              const struct spirv_to_nir_options *options);
+
+void spirv_print_asm(FILE *fp, const uint32_t *words, size_t word_count);
 
 #ifdef __cplusplus
 }

@@ -913,7 +913,7 @@ vtn_get_builtin_location(struct vtn_builder *b,
          *mode = nir_var_shader_in;
       else if (b->shader->info.stage == MESA_SHADER_GEOMETRY)
          *mode = nir_var_shader_out;
-      else if (b->options && b->options->caps.shader_viewport_index_layer &&
+      else if (b->supported_capabilities.ShaderViewportIndexLayerEXT &&
                (b->shader->info.stage == MESA_SHADER_VERTEX ||
                 b->shader->info.stage == MESA_SHADER_TESS_EVAL ||
                 b->shader->info.stage == MESA_SHADER_MESH))
@@ -925,7 +925,7 @@ vtn_get_builtin_location(struct vtn_builder *b,
       *location = VARYING_SLOT_VIEWPORT;
       if (b->shader->info.stage == MESA_SHADER_GEOMETRY)
          *mode = nir_var_shader_out;
-      else if (b->options && b->options->caps.shader_viewport_index_layer &&
+      else if (b->supported_capabilities.ShaderViewportIndexLayerEXT &&
                (b->shader->info.stage == MESA_SHADER_VERTEX ||
                 b->shader->info.stage == MESA_SHADER_TESS_EVAL ||
                 b->shader->info.stage == MESA_SHADER_MESH))
@@ -1269,6 +1269,26 @@ vtn_get_builtin_location(struct vtn_builder *b,
       set_mode_system_value(b, mode);
       break;
 
+   case SpvBuiltInWarpsPerSMNV:
+      *location = SYSTEM_VALUE_WARPS_PER_SM_NV;
+      set_mode_system_value(b, mode);
+      break;
+
+   case SpvBuiltInSMCountNV:
+      *location = SYSTEM_VALUE_SM_COUNT_NV;
+      set_mode_system_value(b, mode);
+      break;
+
+   case SpvBuiltInWarpIDNV:
+      *location = SYSTEM_VALUE_WARP_ID_NV;
+      set_mode_system_value(b, mode);
+      break;
+
+   case SpvBuiltInSMIDNV:
+      *location = SYSTEM_VALUE_SM_ID_NV;
+      set_mode_system_value(b, mode);
+      break;
+
    default:
       vtn_fail("Unsupported builtin: %s (%u)",
                spirv_builtin_to_string(builtin), builtin);
@@ -1419,12 +1439,15 @@ apply_var_decoration(struct vtn_builder *b,
    case SpvDecorationSaturatedConversion:
    case SpvDecorationFuncParamAttr:
    case SpvDecorationFPRoundingMode:
-   case SpvDecorationFPFastMathMode:
    case SpvDecorationAlignment:
       if (b->shader->info.stage != MESA_SHADER_KERNEL) {
          vtn_warn("Decoration only allowed for CL-style kernels: %s",
                   spirv_decoration_to_string(dec->decoration));
       }
+      break;
+
+   case SpvDecorationFPFastMathMode:
+      /* See handle_fp_fast_math(). */
       break;
 
    case SpvDecorationUserSemantic:
@@ -1469,7 +1492,7 @@ apply_var_decoration(struct vtn_builder *b,
       vtn_fail_if(b->shader->info.stage != MESA_SHADER_COMPUTE,
                   "NodeMaxPayloadsAMDX decoration only allowed in compute shaders");
       break;
-   
+
    case SpvDecorationNodeSharesPayloadLimitsWithAMDX:
       vtn_fail_if(b->shader->info.stage != MESA_SHADER_COMPUTE,
                   "NodeMaxPayloadsAMDX decoration only allowed in compute shaders");
@@ -1580,6 +1603,15 @@ var_decoration_cb(struct vtn_builder *b, struct vtn_value *val, int member,
    case SpvDecorationCounterBuffer:
       /* Counter buffer decorations can safely be ignored by the driver. */
       return;
+   case SpvDecorationBuiltIn:
+      /* Non-volatile gl_HelperInvocation after demote is undefined.
+       * In order to avoid application bugs, make it volatile if we use demote.
+       */
+      if (dec->operands[0] == SpvBuiltInHelperInvocation &&
+          (b->enabled_capabilities.DemoteToHelperInvocation ||
+           b->convert_discard_to_demote))
+         vtn_var->access |= ACCESS_VOLATILE;
+      break;
    default:
       break;
    }
@@ -2072,7 +2104,8 @@ vtn_create_variable(struct vtn_builder *b, struct vtn_value *val,
    case vtn_variable_mode_ssbo:
       if (storage_class == SpvStorageClassStorageBuffer &&
           !without_array->block) {
-         if (b->variable_pointers) {
+         if (!b->enabled_capabilities.VariablePointers &&
+             !b->enabled_capabilities.VariablePointersStorageBuffer) {
             vtn_fail("Variables in the StorageBuffer storage class must "
                      "have a struct type with the Block decoration");
          } else {

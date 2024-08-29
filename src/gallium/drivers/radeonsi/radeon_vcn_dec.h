@@ -15,11 +15,13 @@
 #include "ac_vcn_dec.h"
 
 #define NUM_BUFFERS                                         4
+#define MAX_JPEG_INST                                       64
 
 struct rvcn_dec_dynamic_dpb_t2 {
    struct list_head list;
    uint8_t index;
    struct rvid_buffer dpb;
+   struct pipe_video_buffer *vbuf;
 };
 
 struct jpeg_registers {
@@ -136,6 +138,8 @@ struct radeon_decoder {
    unsigned njctx;
    struct pipe_fence_handle *prev_fence;
    struct pipe_fence_handle *destroy_fence;
+   bool dpb_use_surf;
+   uint64_t dpb_modifier;
 };
 
 void send_cmd_dec(struct radeon_decoder *dec, struct pipe_video_buffer *target,

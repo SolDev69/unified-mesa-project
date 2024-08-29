@@ -1,24 +1,6 @@
 /*
- * Copyright (C) 2017 Rob Clark <robclark@freedesktop.org>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright © 2017 Rob Clark <robclark@freedesktop.org>
+ * SPDX-License-Identifier: MIT
  *
  * Authors:
  *    Rob Clark <robclark@freedesktop.org>
@@ -79,7 +61,9 @@ default_src_texture(struct pipe_sampler_view *src_templ,
 static void
 fd_blitter_pipe_begin(struct fd_context *ctx, bool render_cond) assert_dt
 {
-   util_blitter_save_vertex_buffer_slot(ctx->blitter, ctx->vtx.vertexbuf.vb);
+   util_blitter_save_vertex_buffers(
+      ctx->blitter, ctx->vtx.vertexbuf.vb,
+      util_last_bit(ctx->vtx.vertexbuf.enabled_mask));
    util_blitter_save_vertex_elements(ctx->blitter, ctx->vtx.vtx);
    util_blitter_save_vertex_shader(ctx->blitter, ctx->prog.vs);
    util_blitter_save_tessctrl_shader(ctx->blitter, ctx->prog.hs);
@@ -102,6 +86,8 @@ fd_blitter_pipe_begin(struct fd_context *ctx, bool render_cond) assert_dt
    util_blitter_save_fragment_sampler_views(
       ctx->blitter, ctx->tex[PIPE_SHADER_FRAGMENT].num_textures,
       ctx->tex[PIPE_SHADER_FRAGMENT].textures);
+   util_blitter_save_fragment_constant_buffer_slot(ctx->blitter,
+                                                   ctx->constbuf[PIPE_SHADER_FRAGMENT].cb);
    if (!render_cond)
       util_blitter_save_render_condition(ctx->blitter, ctx->cond_query,
                                          ctx->cond_cond, ctx->cond_mode);
@@ -115,22 +101,20 @@ fd_blitter_pipe_end(struct fd_context *ctx) assert_dt
 {
 }
 
-bool
-fd_blitter_blit(struct fd_context *ctx, const struct pipe_blit_info *info)
+static void
+fd_blitter_prep(struct fd_context *ctx, const struct pipe_blit_info *info)
+   assert_dt
 {
-   struct pipe_context *pctx = &ctx->base;
    struct pipe_resource *dst = info->dst.resource;
    struct pipe_resource *src = info->src.resource;
    struct pipe_context *pipe = &ctx->base;
-   struct pipe_surface *dst_view, dst_templ;
-   struct pipe_sampler_view src_templ, *src_view;
 
    /* If the blit is updating the whole contents of the resource,
     * invalidate it so we don't trigger any unnecessary tile loads in the 3D
     * path.
     */
    if (util_blit_covers_whole_resource(info))
-      pctx->invalidate_resource(pctx, info->dst.resource);
+      pipe->invalidate_resource(pipe, info->dst.resource);
 
    /* The blit format may not match the resource format in this path, so
     * we need to validate that we can use the src/dst resource with the
@@ -151,6 +135,18 @@ fd_blitter_blit(struct fd_context *ctx, const struct pipe_blit_info *info)
    DBG_BLIT(info, NULL);
 
    fd_blitter_pipe_begin(ctx, info->render_condition_enable);
+}
+
+bool
+fd_blitter_blit(struct fd_context *ctx, const struct pipe_blit_info *info)
+{
+   struct pipe_resource *dst = info->dst.resource;
+   struct pipe_resource *src = info->src.resource;
+   struct pipe_context *pipe = &ctx->base;
+   struct pipe_surface *dst_view, dst_templ;
+   struct pipe_sampler_view src_templ, *src_view;
+
+   fd_blitter_prep(ctx, info);
 
    /* Initialize the surface. */
    default_dst_texture(&dst_templ, dst, info->dst.level, info->dst.box.z);
@@ -166,7 +162,8 @@ fd_blitter_blit(struct fd_context *ctx, const struct pipe_blit_info *info)
    util_blitter_blit_generic(
       ctx->blitter, dst_view, &info->dst.box, src_view, &info->src.box,
       src->width0, src->height0, info->mask, info->filter,
-      info->scissor_enable ? &info->scissor : NULL, info->alpha_blend, false, 0);
+      info->scissor_enable ? &info->scissor : NULL, info->alpha_blend, false, 0,
+      NULL);
 
    pipe_surface_reference(&dst_view, NULL);
    pipe_sampler_view_reference(&src_view, NULL);
@@ -235,8 +232,8 @@ fd_blitter_clear(struct pipe_context *pctx, unsigned buffers,
    pctx->set_viewport_states(pctx, 0, 1, &vp);
 
    pctx->bind_vertex_elements_state(pctx, ctx->solid_vbuf_state.vtx);
-   pctx->set_vertex_buffers(pctx, 1, 0, false,
-                            &ctx->solid_vbuf_state.vertexbuf.vb[0]);
+   util_set_vertex_buffers(pctx, 1, false,
+                           &ctx->solid_vbuf_state.vertexbuf.vb[0]);
    pctx->set_stream_output_targets(pctx, 0, NULL, NULL);
 
    if (pfb->layers > 1)
@@ -308,6 +305,34 @@ fd_blitter_clear_depth_stencil(struct pipe_context *pctx, struct pipe_surface *p
    fd_blitter_pipe_end(ctx);
 }
 
+static void
+fd_blit_stencil_fallback(struct fd_context *ctx, const struct pipe_blit_info *info)
+   assert_dt
+{
+   struct pipe_context *pctx = &ctx->base;
+   struct pipe_surface *dst_view, dst_templ;
+
+   util_blitter_default_dst_texture(&dst_templ, info->dst.resource,
+                                    info->dst.level, info->dst.box.z);
+
+   dst_view = pctx->create_surface(pctx, info->dst.resource, &dst_templ);
+
+   fd_blitter_prep(ctx, info);
+
+   util_blitter_clear_depth_stencil(ctx->blitter, dst_view, PIPE_CLEAR_STENCIL,
+                                    0, 0, info->dst.box.x, info->dst.box.y,
+                                    info->dst.box.width, info->dst.box.height);
+
+   fd_blitter_prep(ctx, info);
+
+   util_blitter_stencil_fallback(
+      ctx->blitter, info->dst.resource, info->dst.level, &info->dst.box,
+      info->src.resource, info->src.level, &info->src.box,
+      info->scissor_enable ? &info->scissor : NULL);
+
+   pipe_surface_release(pctx, &dst_view);
+}
+
 /**
  * Optimal hardware path for blitting pixels.
  * Scaling, format conversion, up- and downsampling (resolve) are allowed.
@@ -325,8 +350,10 @@ fd_blit(struct pipe_context *pctx, const struct pipe_blit_info *blit_info)
       return true;
 
    if (info.mask & PIPE_MASK_S) {
-      DBG("cannot blit stencil, skipping");
+      fd_blit_stencil_fallback(ctx, &info);
       info.mask &= ~PIPE_MASK_S;
+      if (!info.mask)
+         return true;
    }
 
    if (!util_blitter_is_blit_supported(ctx->blitter, &info)) {

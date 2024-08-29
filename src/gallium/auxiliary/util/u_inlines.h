@@ -39,7 +39,7 @@
 #include "util/u_debug_describe.h"
 #include "util/u_debug_refcnt.h"
 #include "util/u_atomic.h"
-#include "util/u_box.h"
+#include "util/box.h"
 #include "util/u_math.h"
 
 
@@ -128,7 +128,8 @@ pipe_surface_release(struct pipe_context *pipe, struct pipe_surface **ptr)
 {
    struct pipe_surface *old = *ptr;
 
-   if (pipe_reference_described(&old->reference, NULL,
+   if (pipe_reference_described(old ? &old->reference : NULL,
+                                NULL,
                                 (debug_reference_descriptor)
                                 debug_describe_surface))
       pipe->surface_destroy(pipe, old);
@@ -492,9 +493,7 @@ pipe_buffer_copy(struct pipe_context *pipe,
                  unsigned size)
 {
    struct pipe_box box;
-   /* only these fields are used */
-   box.x = (int)src_offset;
-   box.width = (int)size;
+   u_box_1d(src_offset, size, &box);
    pipe->resource_copy_region(pipe, dst, 0, dst_offset, 0, 0, src, 0, &box);
 }
 
@@ -908,15 +907,36 @@ pipe_create_multimedia_context(struct pipe_screen *screen)
 {
    unsigned flags = 0;
 
-   if (!screen->get_param(screen, PIPE_CAP_GRAPHICS))
+   if (!screen->get_param(screen, PIPE_CAP_GRAPHICS) &&
+      !screen->get_param(screen, PIPE_CAP_COMPUTE))
+      flags |= PIPE_CONTEXT_MEDIA_ONLY;
+   else if (!screen->get_param(screen, PIPE_CAP_GRAPHICS))
       flags |= PIPE_CONTEXT_COMPUTE_ONLY;
 
    return screen->context_create(screen, NULL, flags);
 }
 
-static inline unsigned util_res_sample_count(struct pipe_resource *res)
+static inline unsigned util_res_sample_count(const struct pipe_resource *res)
 {
    return res->nr_samples > 0 ? res->nr_samples : 1;
+}
+
+static inline void
+util_set_vertex_buffers(struct pipe_context *pipe,
+                        unsigned num_buffers, bool take_ownership,
+                        const struct pipe_vertex_buffer *buffers)
+{
+   /* set_vertex_buffers requires that reference counts are incremented
+    * by the caller.
+    */
+   if (!take_ownership) {
+      for (unsigned i = 0; i < num_buffers; i++) {
+         if (!buffers[i].is_user_buffer && buffers[i].buffer.resource)
+            p_atomic_inc(&buffers[i].buffer.resource->reference.count);
+      }
+   }
+
+   pipe->set_vertex_buffers(pipe, num_buffers, buffers);
 }
 
 #ifdef __cplusplus

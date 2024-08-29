@@ -138,16 +138,29 @@ bool vpe_is_yuv420_10(enum vpe_surface_pixel_format format)
         return false;
     }
 }
+bool vpe_is_yuv420_16(enum vpe_surface_pixel_format format)
+{
+    switch (format) {
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_420_16bpc_YCrCb:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_420_16bpc_YCbCr:
+        return true;
+    default:
+        return false;
+    }
+}
 
 bool vpe_is_yuv420(enum vpe_surface_pixel_format format)
 {
-    return (vpe_is_yuv420_8(format) || vpe_is_yuv420_10(format));
+    return (vpe_is_yuv420_8(format) || vpe_is_yuv420_10(format) || vpe_is_yuv420_16(format));
 }
 
 bool vpe_is_yuv444_8(enum vpe_surface_pixel_format format)
 {
     switch (format) {
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_AYCrCb8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_YCrCbA8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_ACrYCb8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_CrYCbA8888:
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_AYCbCr8888:
         return true;
     default:
@@ -164,6 +177,11 @@ bool vpe_is_yuv444_10(enum vpe_surface_pixel_format format)
     default:
         return false;
     }
+}
+
+bool vpe_is_yuv444(enum vpe_surface_pixel_format format)
+{
+    return (vpe_is_yuv444_8(format) || vpe_is_yuv444_10(format));
 }
 
 static uint8_t vpe_get_element_size_in_bytes(enum vpe_surface_pixel_format format, int plane_idx)
@@ -215,6 +233,9 @@ enum color_depth vpe_get_color_depth(enum vpe_surface_pixel_format format)
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_AYCrCb8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_YCrCbA8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_ACrYCb8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_CrYCbA8888:
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_AYCbCr8888:
         c_depth = COLOR_DEPTH_888;
         break;
@@ -233,6 +254,7 @@ enum color_depth vpe_get_color_depth(enum vpe_surface_pixel_format format)
     case VPE_SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
     case VPE_SURFACE_PIXEL_FORMAT_GRPH_RGBA16161616F:
     case VPE_SURFACE_PIXEL_FORMAT_GRPH_BGRA16161616F:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_420_16bpc_YCrCb:
         c_depth = COLOR_DEPTH_161616;
         break;
     default:
@@ -265,6 +287,9 @@ bool vpe_has_per_pixel_alpha(enum vpe_surface_pixel_format format)
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_ACrYCb2101010:
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_CrYCbA1010102:
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_AYCrCb8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_YCrCbA8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_ACrYCb8888:
+    case VPE_SURFACE_PIXEL_FORMAT_VIDEO_CrYCbA8888:
     case VPE_SURFACE_PIXEL_FORMAT_VIDEO_AYCbCr8888:
         alpha = true;
         break;
@@ -295,7 +320,7 @@ bool vpe_has_per_pixel_alpha(enum vpe_surface_pixel_format format)
 // another function is needed here.
 static bool is_HDR(enum vpe_transfer_function tf)
 {
-    return (tf == VPE_TF_PQ || tf == VPE_TF_G10);
+    return (tf == VPE_TF_PQ || tf == VPE_TF_G10 || tf == VPE_TF_HLG);
 }
 
 enum vpe_status vpe_check_output_support(struct vpe *vpe, const struct vpe_build_param *param)
@@ -305,8 +330,8 @@ enum vpe_status vpe_check_output_support(struct vpe *vpe, const struct vpe_build
     struct dpp                    *dpp;
     struct cdc                    *cdc;
     const struct vpe_surface_info *surface_info = &param->dst_surface;
-    struct vpe_dcc_surface_param   input;
-    struct vpe_surface_dcc_cap     output;
+    struct vpe_dcc_surface_param   params;
+    struct vpe_surface_dcc_cap     cap;
     bool                           support;
 
     vpec = &vpe_priv->resource.vpec;
@@ -321,12 +346,9 @@ enum vpe_status vpe_check_output_support(struct vpe *vpe, const struct vpe_build
     }
 
     // pitch
-    if ((surface_info->plane_size.surface_pitch *
-            vpe_get_element_size_in_bytes(surface_info->format, 0) %
-            vpe->caps->plane_caps.pitch_alignment) ||
-        ((uint32_t)(surface_info->plane_size.surface_size.x +
-                    (int32_t)surface_info->plane_size.surface_size.width) >
-            surface_info->plane_size.surface_pitch)) {
+    if ((uint32_t)(surface_info->plane_size.surface_size.x +
+                   (int32_t)surface_info->plane_size.surface_size.width) >
+        surface_info->plane_size.surface_pitch) {
         vpe_log("pitch alignment not supported %lu. %lu\n", surface_info->plane_size.surface_pitch,
             vpe->caps->plane_caps.pitch_alignment);
         return VPE_STATUS_PITCH_ALIGNMENT_NOT_SUPPORTED;
@@ -356,30 +378,27 @@ enum vpe_status vpe_check_output_support(struct vpe *vpe, const struct vpe_build
     }
 
     if (surface_info->address.type == VPE_PLN_ADDR_TYPE_VIDEO_PROGRESSIVE) {
-        if (((uint32_t)surface_info->plane_size.chroma_pitch *
-                vpe_get_element_size_in_bytes(surface_info->format, 1) %
-                vpe->caps->plane_caps.pitch_alignment) ||
-            ((uint32_t)(surface_info->plane_size.chroma_size.x +
-                        (int32_t)surface_info->plane_size.chroma_size.width) >
-                surface_info->plane_size.chroma_pitch)) {
+        if ((uint32_t)(surface_info->plane_size.chroma_size.x +
+                       (int32_t)surface_info->plane_size.chroma_size.width) >
+            surface_info->plane_size.chroma_pitch) {
             vpe_log("chroma pitch alignment not supported %u. %u\n",
                 surface_info->plane_size.chroma_pitch, vpe->caps->plane_caps.pitch_alignment);
             return VPE_STATUS_PITCH_ALIGNMENT_NOT_SUPPORTED;
         }
     }
 
-    // dcc
+    // output dcc
     if (surface_info->dcc.enable) {
-        input.surface_size.width  = surface_info->plane_size.surface_size.width;
-        input.surface_size.height = surface_info->plane_size.surface_size.height;
-        input.format              = surface_info->format;
-        input.swizzle_mode        = surface_info->swizzle;
-        input.scan                = VPE_SCAN_DIRECTION_HORIZONTAL;
 
-        support = vpec->funcs->get_dcc_compression_cap(vpec, &input, &output);
+        params.surface_size.width  = surface_info->plane_size.surface_size.width;
+        params.surface_size.height = surface_info->plane_size.surface_size.height;
+        params.format              = surface_info->format;
+        params.swizzle_mode        = surface_info->swizzle;
+        params.scan                = VPE_SCAN_PATTERN_0_DEGREE;
+        support = vpe->cap_funcs->get_dcc_compression_output_cap(vpe, &params, &cap);
         if (!support) {
             vpe_log("output dcc not supported\n");
-            return VPE_STATUS_DCC_NOT_SUPPORTED;
+            return VPE_STATUS_OUTPUT_DCC_NOT_SUPPORTED;
         }
     }
 
@@ -412,8 +431,8 @@ enum vpe_status vpe_check_input_support(struct vpe *vpe, const struct vpe_stream
     struct dpp                    *dpp;
     struct cdc                    *cdc;
     const struct vpe_surface_info *surface_info = &stream->surface_info;
-    struct vpe_dcc_surface_param   input;
-    struct vpe_surface_dcc_cap     output;
+    struct vpe_dcc_surface_param   params;
+    struct vpe_surface_dcc_cap     cap;
     bool                           support;
     const PHYSICAL_ADDRESS_LOC    *addrloc;
     bool                           use_adj = vpe_use_csc_adjust(&stream->color_adj);
@@ -430,12 +449,9 @@ enum vpe_status vpe_check_input_support(struct vpe *vpe, const struct vpe_stream
     }
 
     // pitch & address
-    if ((surface_info->plane_size.surface_pitch *
-            vpe_get_element_size_in_bytes(surface_info->format, 0) %
-            vpe->caps->plane_caps.pitch_alignment) ||
-        ((uint32_t)(surface_info->plane_size.surface_size.x +
-                    (int32_t)surface_info->plane_size.surface_size.width) >
-            surface_info->plane_size.surface_pitch)) {
+    if ((uint32_t)(surface_info->plane_size.surface_size.x +
+                   (int32_t)surface_info->plane_size.surface_size.width) >
+        surface_info->plane_size.surface_pitch) {
 
         vpe_log("pitch alignment not supported %d. %d\n", surface_info->plane_size.surface_pitch,
             vpe->caps->plane_caps.pitch_alignment);
@@ -451,12 +467,9 @@ enum vpe_status vpe_check_input_support(struct vpe *vpe, const struct vpe_stream
         }
 
         if (vpe_is_dual_plane_format(surface_info->format)) {
-            if ((surface_info->plane_size.chroma_pitch *
-                    vpe_get_element_size_in_bytes(surface_info->format, 1) %
-                    vpe->caps->plane_caps.pitch_alignment) ||
-                ((uint32_t)(surface_info->plane_size.chroma_size.x +
-                            (int32_t)surface_info->plane_size.chroma_size.width) >
-                    surface_info->plane_size.chroma_pitch)) {
+            if ((uint32_t)(surface_info->plane_size.chroma_size.x +
+                           (int32_t)surface_info->plane_size.chroma_size.width) >
+                surface_info->plane_size.chroma_pitch) {
                 vpe_log("chroma pitch alignment not supported %d. %d\n",
                     surface_info->plane_size.chroma_pitch, vpe->caps->plane_caps.pitch_alignment);
                 return VPE_STATUS_PITCH_ALIGNMENT_NOT_SUPPORTED;
@@ -476,26 +489,19 @@ enum vpe_status vpe_check_input_support(struct vpe *vpe, const struct vpe_stream
         }
     }
 
-    // dcc
+    // input dcc
     if (surface_info->dcc.enable) {
 
-        input.surface_size.width  = surface_info->plane_size.surface_size.width;
-        input.surface_size.height = surface_info->plane_size.surface_size.height;
-        input.format              = surface_info->format;
-        input.swizzle_mode        = surface_info->swizzle;
+        params.surface_size.width  = surface_info->plane_size.surface_size.width;
+        params.surface_size.height = surface_info->plane_size.surface_size.height;
+        params.format              = surface_info->format;
+        params.swizzle_mode        = surface_info->swizzle;
 
-        if (stream->rotation == VPE_ROTATION_ANGLE_0 || stream->rotation == VPE_ROTATION_ANGLE_180)
-            input.scan = VPE_SCAN_DIRECTION_HORIZONTAL;
-        else if (stream->rotation == VPE_ROTATION_ANGLE_90 ||
-                 stream->rotation == VPE_ROTATION_ANGLE_270)
-            input.scan = VPE_SCAN_DIRECTION_VERTICAL;
-        else
-            input.scan = VPE_SCAN_DIRECTION_UNKNOWN;
-
-        support = vpec->funcs->get_dcc_compression_cap(vpec, &input, &output);
+        support = vpe->cap_funcs->get_dcc_compression_input_cap(vpe, &params, &cap);
+        //only support non dual plane formats
         if (!support) {
-            vpe_log("input dcc not supported\n");
-            return VPE_STATUS_DCC_NOT_SUPPORTED;
+            vpe_log("input internal dcc not supported\n");
+            return VPE_STATUS_INPUT_DCC_NOT_SUPPORTED;
         }
     }
 
@@ -529,7 +535,7 @@ enum vpe_status vpe_check_input_support(struct vpe *vpe, const struct vpe_stream
 
     // rotation
     if ((stream->rotation != VPE_ROTATION_ANGLE_0) && !vpe->caps->rotation_support) {
-        vpe_log("output rotation not supported\n");
+        vpe_log("rotation not supported\n");
         return VPE_STATUS_ROTATION_NOT_SUPPORTED;
     }
 
@@ -552,40 +558,28 @@ enum vpe_status vpe_check_input_support(struct vpe *vpe, const struct vpe_stream
     return VPE_STATUS_OK;
 }
 
-enum vpe_status vpe_cache_tone_map_params(
-    struct stream_ctx *stream_ctx, const struct vpe_build_param *param)
-{
-
-    stream_ctx->update_3dlut = stream_ctx->update_3dlut || param->streams->tm_params.update_3dlut;
-
-    return VPE_STATUS_OK;
-}
-
 enum vpe_status vpe_check_tone_map_support(
     struct vpe *vpe, const struct vpe_stream *stream, const struct vpe_build_param *param)
 {
     enum vpe_status status = VPE_STATUS_OK;
+    bool input_is_hdr = is_HDR(stream->surface_info.cs.tf);
+    bool is_3D_lut_enabled = stream->tm_params.enable_3dlut || stream->tm_params.UID;
+    bool is_hlg = stream->tm_params.shaper_tf == VPE_TF_HLG;
+    bool is_in_lum_greater_than_out_lum = stream->hdr_metadata.max_mastering > param->hdr_metadata.max_mastering;
 
-    // If tone map enabled but bad luminance reject.
-    if (stream->tm_params.enable_3dlut &&
-        stream->hdr_metadata.max_mastering <= param->hdr_metadata.max_mastering) {
-        status = VPE_STATUS_BAD_TONE_MAP_PARAMS;
-        goto exit;
+    // Check if Tone Mapping parameters are valid
+    if (is_3D_lut_enabled) {
+        if ((stream->tm_params.lut_data == NULL) ||
+            (!input_is_hdr) ||
+            (!is_hlg && !is_in_lum_greater_than_out_lum)) {
+            status = VPE_STATUS_BAD_TONE_MAP_PARAMS;
+        }
+    } else {
+        if (is_hlg ||
+            (input_is_hdr && is_in_lum_greater_than_out_lum)) {
+            status = VPE_STATUS_BAD_TONE_MAP_PARAMS;
+        }
     }
 
-    // If tone map enabled but input is not HDR, reject.
-    if (stream->tm_params.enable_3dlut && !is_HDR(stream->surface_info.cs.tf)) {
-        status = VPE_STATUS_BAD_TONE_MAP_PARAMS;
-        goto exit;
-    }
-
-    // If tone map case but enable tm flag is not set or 3dlut pointer is null reject.
-    if (stream->hdr_metadata.max_mastering > param->hdr_metadata.max_mastering &&
-        is_HDR(stream->surface_info.cs.tf) &&
-        (!stream->tm_params.enable_3dlut || stream->tm_params.lut_data == NULL)) {
-        status = VPE_STATUS_BAD_HDR_METADATA;
-    }
-
-exit:
     return status;
 }

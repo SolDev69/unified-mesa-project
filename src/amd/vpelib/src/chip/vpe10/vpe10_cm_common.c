@@ -61,23 +61,21 @@ static bool cm_helper_convert_to_custom_float(struct pwl_result_data *rgb_result
         VPE_ASSERT(0);
         return false;
     }
-
     if (!vpe_convert_to_custom_float_format(
-            corner_points[0].red.offset, &fmt, &corner_points[0].red.custom_float_offset)) {
+            corner_points[0].red.y, &fmt, &corner_points[0].red.custom_float_y)) {
         VPE_ASSERT(0);
         return false;
     }
     if (!vpe_convert_to_custom_float_format(
-            corner_points[0].green.offset, &fmt, &corner_points[0].green.custom_float_offset)) {
+            corner_points[0].green.y, &fmt, &corner_points[0].green.custom_float_y)) {
         VPE_ASSERT(0);
         return false;
     }
     if (!vpe_convert_to_custom_float_format(
-            corner_points[0].blue.offset, &fmt, &corner_points[0].blue.custom_float_offset)) {
+            corner_points[0].blue.y, &fmt, &corner_points[0].blue.custom_float_y)) {
         VPE_ASSERT(0);
         return false;
     }
-
     if (!vpe_convert_to_custom_float_format(
             corner_points[0].red.slope, &fmt, &corner_points[0].red.custom_float_slope)) {
         VPE_ASSERT(0);
@@ -191,6 +189,27 @@ static bool cm_helper_convert_to_custom_float(struct pwl_result_data *rgb_result
         ++i;
     }
 
+    fmt.exponenta_bits = 6;
+    fmt.mantissa_bits = 12;
+    fmt.sign = 1;
+
+    if (!vpe_convert_to_custom_float_format(
+        corner_points[0].red.offset, &fmt, &corner_points[0].red.custom_float_offset)) {
+        VPE_ASSERT(0);
+        return false;
+    }
+
+    if (!vpe_convert_to_custom_float_format(
+        corner_points[0].green.offset, &fmt, &corner_points[0].green.custom_float_offset)) {
+        VPE_ASSERT(0);
+        return false;
+    }
+
+    if (!vpe_convert_to_custom_float_format(
+        corner_points[0].blue.offset, &fmt, &corner_points[0].blue.custom_float_offset)) {
+        VPE_ASSERT(0);
+        return false;
+    }
     return true;
 }
 
@@ -232,7 +251,7 @@ bool vpe10_cm_helper_translate_curve_to_hw_format(
         seg_distr[i] = 1;
         region_start = -MAX_LOW_POINT;
         region_end   = 1;
-    } else if (output_tf->tf == TRANSFER_FUNC_LINEAR_0_125) {
+    } else if (output_tf->tf == TRANSFER_FUNC_LINEAR) {
 
         int num_regions_linear = MAX_LOW_POINT + 3;
 
@@ -369,6 +388,14 @@ bool vpe10_cm_helper_translate_curve_to_hw_format(
         ++rgb;
         ++i;
     }
+
+    corner_points[0].red.y        = vpe_fixpt_zero;
+    corner_points[0].green.y      = vpe_fixpt_zero;
+    corner_points[0].blue.y       = vpe_fixpt_zero;
+    corner_points[0].red.offset   = output_tf->start_base;
+    corner_points[0].green.offset = output_tf->start_base;
+    corner_points[0].blue.offset  = output_tf->start_base;
+
     cm_helper_convert_to_custom_float(rgb_resulted, lut_params->corner_points, hw_points, fixpoint);
 
     return true;
@@ -480,35 +507,16 @@ bool vpe10_cm_helper_translate_curve_to_degamma_hw_format(
         ++i;
     }
 
+    corner_points[0].red.y        = vpe_fixpt_zero;
+    corner_points[0].green.y      = vpe_fixpt_zero;
+    corner_points[0].blue.y       = vpe_fixpt_zero;
+    corner_points[0].red.offset   = output_tf->start_base;
+    corner_points[0].green.offset = output_tf->start_base;
+    corner_points[0].blue.offset  = output_tf->start_base;
+
     cm_helper_convert_to_custom_float(rgb_resulted, lut_params->corner_points, hw_points, false);
 
     return true;
-}
-
-void vpe10_cm_get_tf_pwl_params(
-    const struct transfer_func *output_tf, struct pwl_params **lut_params, enum cm_type vpe_cm_type)
-{
-    int table_index = 0;
-
-    switch (output_tf->tf) {
-    case TRANSFER_FUNC_SRGB:
-        table_index = 0;
-        break;
-    case TRANSFER_FUNC_BT1886:
-        table_index = 1;
-        break;
-    case TRANSFER_FUNC_PQ2084:
-        table_index = 2;
-        break;
-    case TRANSFER_FUNC_BT709:
-    case TRANSFER_FUNC_LINEAR_0_125:
-        table_index = 3;
-        break;
-    default:
-        *lut_params = NULL;
-        return;
-    }
-    *lut_params = &tf_pwl_param_table[vpe_cm_type][table_index];
 }
 
 #define REG_FIELD_VALUE_CM(field, value)                                                           \
@@ -560,6 +568,20 @@ void vpe10_cm_helper_program_gamcor_xfer_func(struct config_writer *config_write
         params->corner_points[0].green.custom_float_x, exp_region_start_segment, 0);
     REG_SET_2_CM(reg->start_cntl_r, 0, exp_region_start,
         params->corner_points[0].red.custom_float_x, exp_region_start_segment, 0);
+
+    REG_SET_CM(reg->start_base_cntl_r, 0, field_region_start_base,
+        params->corner_points[0].red.custom_float_y);
+    REG_SET_CM(reg->start_base_cntl_g, 0, field_region_start_base,
+        params->corner_points[0].green.custom_float_y);
+    REG_SET_CM(reg->start_base_cntl_b, 0, field_region_start_base,
+        params->corner_points[0].blue.custom_float_y);
+
+    REG_SET_CM(reg->offset_r, 0, field_offset,
+        params->corner_points[0].red.custom_float_offset);
+    REG_SET_CM(reg->offset_g, 0, field_offset,
+        params->corner_points[0].green.custom_float_offset);
+    REG_SET_CM(reg->offset_b, 0, field_offset,
+        params->corner_points[0].blue.custom_float_offset);
 
     REG_SET_CM(reg->start_slope_cntl_b, 0, // linear slope at start of curve
         field_region_linear_slope, params->corner_points[0].blue.custom_float_slope);

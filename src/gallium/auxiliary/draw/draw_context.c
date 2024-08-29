@@ -77,7 +77,7 @@ draw_create_context(struct pipe_context *pipe, void *context,
 
 #if DRAW_LLVM_AVAILABLE
    if (try_llvm && draw_get_option_use_llvm()) {
-      draw->llvm = draw_llvm_create(draw, (LLVMContextRef)context);
+      draw->llvm = draw_llvm_create(draw, (lp_context_ref *)context);
    }
 #endif
 
@@ -405,15 +405,13 @@ draw_set_viewport_states(struct draw_context *draw,
 void
 draw_set_vertex_buffers(struct draw_context *draw,
                         unsigned count,
-                        unsigned unbind_num_trailing_slots,
                         const struct pipe_vertex_buffer *buffers)
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
    util_set_vertex_buffers_count(draw->pt.vertex_buffer,
                                  &draw->pt.nr_vertex_buffers,
-                                 buffers, count,
-                                 unbind_num_trailing_slots, false);
+                                 buffers, count, false);
 }
 
 

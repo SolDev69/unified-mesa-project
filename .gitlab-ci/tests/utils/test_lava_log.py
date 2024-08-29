@@ -16,8 +16,21 @@ from lava.utils import (
     fix_lava_gitlab_section_log,
     hide_sensitive_data,
 )
+from lava.utils.constants import (
+    KNOWN_ISSUE_R8152_MAX_CONSECUTIVE_COUNTER,
+    A6XX_GPU_RECOVERY_WATCH_PERIOD_MIN,
+    A6XX_GPU_RECOVERY_FAILURE_MESSAGE,
+    A6XX_GPU_RECOVERY_FAILURE_MAX_COUNT,
+)
+from lava.utils.lava_log_hints import LAVALogHints
 
-from ..lava.helpers import create_lava_yaml_msg, does_not_raise, lava_yaml, yaml_dump
+from ..lava.helpers import (
+    create_lava_yaml_msg,
+    does_not_raise,
+    lava_yaml,
+    mock_lava_signal,
+    yaml_dump,
+)
 
 GITLAB_SECTION_SCENARIOS = {
     "start collapsed": (
@@ -311,47 +324,56 @@ def test_gitlab_section_id(case_name, expected_id):
     assert gl.id == expected_id
 
 
-A618_NETWORK_ISSUE_LOGS = [
-    create_lava_yaml_msg(
-        msg="[ 1733.599402] r8152 2-1.3:1.0 eth0: Tx status -71", lvl="target"
-    ),
-    create_lava_yaml_msg(
-        msg="[ 1733.604506] nfs: server 192.168.201.1 not responding, still trying",
-        lvl="target",
-    ),
-]
-TEST_PHASE_LAVA_SIGNAL = create_lava_yaml_msg(
-    msg="Received signal: <STARTTC> mesa-ci_a618_vk", lvl="debug"
-)
+def a618_network_issue_logs(level: str = "target") -> list:
+    net_error = create_lava_yaml_msg(
+            msg="[ 1733.599402] r8152 2-1.3:1.0 eth0: Tx status -71", lvl=level)
+
+    nfs_error = create_lava_yaml_msg(
+            msg="[ 1733.604506] nfs: server 192.168.201.1 not responding, still trying",
+            lvl=level,
+        )
+
+    return [
+        *(KNOWN_ISSUE_R8152_MAX_CONSECUTIVE_COUNTER*[net_error]),
+        nfs_error
+    ]
+
+
+TEST_PHASE_LAVA_SIGNAL = mock_lava_signal(LogSectionType.TEST_CASE)
+A618_NET_ISSUE_BOOT = a618_network_issue_logs(level="feedback")
+A618_NET_ISSUE_TEST = [TEST_PHASE_LAVA_SIGNAL, *a618_network_issue_logs(level="target")]
 
 
 A618_NETWORK_ISSUE_SCENARIOS = {
-    "Pass - R8152 kmsg during boot": (A618_NETWORK_ISSUE_LOGS, does_not_raise()),
+    "Fail - R8152 kmsg during boot phase": (
+        A618_NET_ISSUE_BOOT,
+        pytest.raises(MesaCIKnownIssueException),
+    ),
     "Fail - R8152 kmsg during test phase": (
-        [TEST_PHASE_LAVA_SIGNAL, *A618_NETWORK_ISSUE_LOGS],
+        A618_NET_ISSUE_TEST,
         pytest.raises(MesaCIKnownIssueException),
     ),
     "Pass - Partial (1) R8152 kmsg during test phase": (
-        [TEST_PHASE_LAVA_SIGNAL, A618_NETWORK_ISSUE_LOGS[0]],
+        A618_NET_ISSUE_TEST[:1],
         does_not_raise(),
     ),
     "Pass - Partial (2) R8152 kmsg during test phase": (
-        [TEST_PHASE_LAVA_SIGNAL, A618_NETWORK_ISSUE_LOGS[1]],
+        A618_NET_ISSUE_TEST[:2],
         does_not_raise(),
     ),
-    "Pass - Partial subsequent (3) R8152 kmsg during test phase": (
+    "Pass - Partial (3) subsequent R8152 kmsg during test phase": (
         [
             TEST_PHASE_LAVA_SIGNAL,
-            A618_NETWORK_ISSUE_LOGS[0],
-            A618_NETWORK_ISSUE_LOGS[0],
+            A618_NET_ISSUE_TEST[1],
+            A618_NET_ISSUE_TEST[1],
         ],
         does_not_raise(),
     ),
-    "Pass - Partial subsequent (4) R8152 kmsg during test phase": (
+    "Pass - Partial (4) subsequent nfs kmsg during test phase": (
         [
             TEST_PHASE_LAVA_SIGNAL,
-            A618_NETWORK_ISSUE_LOGS[1],
-            A618_NETWORK_ISSUE_LOGS[1],
+            A618_NET_ISSUE_TEST[-1],
+            A618_NET_ISSUE_TEST[-1],
         ],
         does_not_raise(),
     ),
@@ -364,6 +386,54 @@ A618_NETWORK_ISSUE_SCENARIOS = {
     ids=A618_NETWORK_ISSUE_SCENARIOS.keys(),
 )
 def test_detect_failure(messages, expectation):
-    lf = LogFollower()
+    boot_section = GitlabSection(
+        id="lava_boot",
+        header="LAVA boot",
+        type=LogSectionType.LAVA_BOOT,
+        start_collapsed=True,
+    )
+    boot_section.start()
+    lf = LogFollower(starting_section=boot_section)
     with expectation:
         lf.feed(messages)
+
+def test_detect_a6xx_gpu_recovery_failure(frozen_time):
+    log_follower = LogFollower()
+    lava_log_hints = LAVALogHints(log_follower=log_follower)
+    failure_message = {
+        "dt": datetime.now().isoformat(),
+        "msg": A6XX_GPU_RECOVERY_FAILURE_MESSAGE[0],
+        "lvl": "feedback",
+    }
+    with pytest.raises(MesaCIKnownIssueException):
+        for _ in range(A6XX_GPU_RECOVERY_FAILURE_MAX_COUNT):
+            lava_log_hints.detect_a6xx_gpu_recovery_failure(failure_message)
+            # Simulate the passage of time within the watch period
+            frozen_time.tick(1)
+            failure_message["dt"] = datetime.now().isoformat()
+
+def test_detect_a6xx_gpu_recovery_success(frozen_time):
+    log_follower = LogFollower()
+    lava_log_hints = LAVALogHints(log_follower=log_follower)
+    failure_message = {
+        "dt": datetime.now().isoformat(),
+        "msg": A6XX_GPU_RECOVERY_FAILURE_MESSAGE[0],
+        "lvl": "feedback",
+    }
+    # Simulate sending a tolerable number of failure messages
+    for _ in range(A6XX_GPU_RECOVERY_FAILURE_MAX_COUNT - 1):
+        lava_log_hints.detect_a6xx_gpu_recovery_failure(failure_message)
+        frozen_time.tick(1)
+        failure_message["dt"] = datetime.now().isoformat()
+
+    # Simulate the passage of time outside of the watch period
+    frozen_time.tick(60 * A6XX_GPU_RECOVERY_WATCH_PERIOD_MIN + 1)
+    failure_message = {
+        "dt": datetime.now().isoformat(),
+        "msg": A6XX_GPU_RECOVERY_FAILURE_MESSAGE[1],
+        "lvl": "feedback",
+    }
+    with does_not_raise():
+        lava_log_hints.detect_a6xx_gpu_recovery_failure(failure_message)
+    assert lava_log_hints.a6xx_gpu_first_fail_time is None, "a6xx_gpu_first_fail_time is not None"
+    assert lava_log_hints.a6xx_gpu_recovery_fail_counter == 0, "a6xx_gpu_recovery_fail_counter is not 0"

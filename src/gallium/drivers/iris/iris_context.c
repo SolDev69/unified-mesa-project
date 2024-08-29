@@ -29,8 +29,8 @@
 #include "util/u_inlines.h"
 #include "util/format/u_format.h"
 #include "util/u_upload_mgr.h"
-#include "drm-uapi/i915_drm.h"
 #include "iris_context.h"
+#include "iris_perf.h"
 #include "iris_resource.h"
 #include "iris_screen.h"
 #include "iris_utrace.h"
@@ -217,6 +217,9 @@ iris_destroy_context(struct pipe_context *ctx)
    struct iris_context *ice = (struct iris_context *)ctx;
    struct iris_screen *screen = (struct iris_screen *)ctx->screen;
 
+   blorp_finish(&ice->blorp);
+
+   intel_perf_free_context(ice->perf_ctx);
    if (ctx->stream_uploader)
       u_upload_destroy(ctx->stream_uploader);
    if (ctx->const_uploader)

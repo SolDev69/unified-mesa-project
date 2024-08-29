@@ -76,6 +76,7 @@ Linux, FreeBSD, and other operating systems.
    gallium-nine
    viewperf
    xlibdriver
+   teflon
 
 .. toctree::
    :maxdepth: 1
@@ -111,6 +112,7 @@ Linux, FreeBSD, and other operating systems.
    devinfo
    codingstyle
    submittingpatches
+   rust
    releasing
    release-calendar
    dispatch

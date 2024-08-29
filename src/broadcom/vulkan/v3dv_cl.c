@@ -83,8 +83,9 @@ cl_alloc_bo(struct v3dv_cl *cl, uint32_t space, enum
     * calling cl_submit to use this reserved space.
     */
    uint32_t unusable_space = 0;
-   uint32_t cle_readahead = V3DV_X(cl->job->device, CLE_READAHEAD);
-   uint32_t cle_buffer_min_size = V3DV_X(cl->job->device, CLE_BUFFER_MIN_SIZE);
+   struct v3d_device_info *devinfo = &cl->job->device->devinfo;
+   uint32_t cle_readahead = devinfo->cle_readahead;
+   uint32_t cle_buffer_min_size = devinfo->cle_buffer_min_size;
    switch (chain_type) {
    case V3D_CL_BO_CHAIN_WITH_BRANCH:
       unusable_space = cle_readahead + cl_packet_length(BRANCH);
@@ -124,6 +125,7 @@ cl_alloc_bo(struct v3dv_cl *cl, uint32_t space, enum
    if (cl->bo) {
       switch (chain_type) {
       case V3D_CL_BO_CHAIN_WITH_BRANCH:
+         cl->bo->cl_branch_offset = v3dv_cl_offset(cl);
          cl->size += cl_packet_length(BRANCH);
          assert(cl->size + cle_readahead <= cl->bo->size);
          cl_emit(cl, BRANCH, branch) {
@@ -182,7 +184,7 @@ v3dv_cl_ensure_space_with_branch(struct v3dv_cl *cl, uint32_t space)
       return;
 
    enum v3dv_cl_chain_type  chain_type = V3D_CL_BO_CHAIN_WITH_BRANCH;
-   if (cl->job->type == V3DV_JOB_TYPE_GPU_CL_SECONDARY)
+   if (cl->job->type == V3DV_JOB_TYPE_GPU_CL_INCOMPLETE)
       chain_type = V3D_CL_BO_CHAIN_WITH_RETURN_FROM_SUB_LIST;
 
    cl_alloc_bo(cl, space, chain_type);

@@ -29,20 +29,20 @@
 using namespace brw;
 
 bool
-fs_visitor::lower_pack()
+brw_fs_lower_pack(fs_visitor &s)
 {
    bool progress = false;
 
-   foreach_block_and_inst_safe(block, fs_inst, inst, cfg) {
+   foreach_block_and_inst_safe(block, fs_inst, inst, s.cfg) {
       if (inst->opcode != FS_OPCODE_PACK &&
           inst->opcode != FS_OPCODE_PACK_HALF_2x16_SPLIT)
          continue;
 
       assert(inst->dst.file == VGRF);
       assert(inst->saturate == false);
-      fs_reg dst = inst->dst;
+      brw_reg dst = inst->dst;
 
-      const fs_builder ibld(this, block, inst);
+      const fs_builder ibld(&s, block, inst);
       /* The lowering generates 2 instructions for what was previously 1. This
        * can trick the IR to believe we're doing partial writes, but the
        * register is actually fully written. Mark it as undef to help the IR
@@ -57,23 +57,16 @@ fs_visitor::lower_pack()
             ibld.MOV(subscript(dst, inst->src[i].type, i), inst->src[i]);
          break;
       case FS_OPCODE_PACK_HALF_2x16_SPLIT:
-         assert(dst.type == BRW_REGISTER_TYPE_UD);
+         assert(dst.type == BRW_TYPE_UD);
 
          for (unsigned i = 0; i < inst->sources; i++) {
             if (inst->src[i].file == IMM) {
                const uint32_t half = _mesa_float_to_half(inst->src[i].f);
-               ibld.MOV(subscript(dst, BRW_REGISTER_TYPE_UW, i),
+               ibld.MOV(subscript(dst, BRW_TYPE_UW, i),
                         brw_imm_uw(half));
-            } else if (i == 1 && devinfo->ver < 9) {
-               /* Pre-Skylake requires DWord aligned destinations */
-               fs_reg tmp = ibld.vgrf(BRW_REGISTER_TYPE_UD);
-               ibld.F32TO16(subscript(tmp, BRW_REGISTER_TYPE_HF, 0),
-                            inst->src[i]);
-               ibld.MOV(subscript(dst, BRW_REGISTER_TYPE_UW, 1),
-                        subscript(tmp, BRW_REGISTER_TYPE_UW, 0));
             } else {
-               ibld.F32TO16(subscript(dst, BRW_REGISTER_TYPE_HF, i),
-                            inst->src[i]);
+               ibld.MOV(subscript(dst, BRW_TYPE_HF, i),
+                        inst->src[i]);
             }
          }
          break;
@@ -86,7 +79,7 @@ fs_visitor::lower_pack()
    }
 
    if (progress)
-      invalidate_analysis(DEPENDENCY_INSTRUCTIONS);
+      s.invalidate_analysis(DEPENDENCY_INSTRUCTIONS);
 
    return progress;
 }

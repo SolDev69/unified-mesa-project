@@ -33,6 +33,9 @@ bool anv_xe_device_destroy_vm(struct anv_device *device)
    struct drm_xe_vm_destroy destroy = {
       .vm_id = device->vm_id,
    };
+
+   intel_bind_timeline_finish(&device->bind_timeline, device->fd);
+
    return intel_ioctl(device->fd, DRM_IOCTL_XE_VM_DESTROY, &destroy) == 0;
 }
 
@@ -46,6 +49,13 @@ VkResult anv_xe_device_setup_vm(struct anv_device *device)
                        "vm creation failed");
 
    device->vm_id = create.vm_id;
+
+   if (!intel_bind_timeline_init(&device->bind_timeline, device->fd)) {
+      anv_xe_device_destroy_vm(device);
+      return vk_errorf(device, VK_ERROR_INITIALIZATION_FAILED,
+                       "intel_bind_timeline_init failed");
+   }
+
    return VK_SUCCESS;
 }
 
@@ -76,6 +86,7 @@ anv_xe_physical_device_get_parameters(struct anv_physical_device *device)
                        "unable to query device config");
 
    device->has_exec_timeline = true;
+   device->has_vm_control = true;
    device->max_context_priority =
          drm_sched_priority_to_vk_priority(config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY]);
 
@@ -87,18 +98,24 @@ VkResult
 anv_xe_physical_device_init_memory_types(struct anv_physical_device *device)
 {
    if (anv_physical_device_has_vram(device)) {
-      device->memory.type_count = 3;
-      device->memory.types[0] = (struct anv_memory_type) {
+      if (device->info.ver >= 20 && !INTEL_DEBUG(DEBUG_NO_CCS)) {
+         device->memory.types[device->memory.type_count++] = (struct anv_memory_type) {
+            .propertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .heapIndex = 0,
+            .compressed = true,
+         };
+      }
+      device->memory.types[device->memory.type_count++] = (struct anv_memory_type) {
          .propertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
          .heapIndex = 0,
       };
-      device->memory.types[1] = (struct anv_memory_type) {
+      device->memory.types[device->memory.type_count++] = (struct anv_memory_type) {
          .propertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                           VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
          .heapIndex = 1,
       };
-      device->memory.types[2] = (struct anv_memory_type) {
+      device->memory.types[device->memory.type_count++] = (struct anv_memory_type) {
          .propertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -131,6 +148,13 @@ anv_xe_physical_device_init_memory_types(struct anv_physical_device *device)
          .heapIndex = 0,
       };
    } else {
+      if (device->info.ver >= 20 && !INTEL_DEBUG(DEBUG_NO_CCS)) {
+         device->memory.types[device->memory.type_count++] = (struct anv_memory_type) {
+            .propertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .heapIndex = 0,
+            .compressed = true,
+         };
+      }
       device->memory.types[device->memory.type_count++] = (struct anv_memory_type) {
          .propertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
@@ -140,7 +164,7 @@ anv_xe_physical_device_init_memory_types(struct anv_physical_device *device)
       device->memory.types[device->memory.type_count++] = (struct anv_memory_type) {
          .propertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                           VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
          .heapIndex = 0,
       };

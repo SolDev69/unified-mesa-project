@@ -146,6 +146,9 @@ disk_cache_type_create(const char *gpu_name,
          goto path_fail;
    }
 
+   if (!getenv("MESA_SHADER_CACHE_DIR") && !getenv("MESA_GLSL_CACHE_DIR"))
+      disk_cache_touch_cache_user_marker(cache->path);
+
    cache->type = cache_type;
 
    cache->stats.enabled = debug_get_bool_option("MESA_SHADER_CACHE_SHOW_STATS",
@@ -268,10 +271,16 @@ disk_cache_create(const char *gpu_name, const char *driver_id,
 
    if (debug_get_bool_option("MESA_DISK_CACHE_SINGLE_FILE", false))
       cache_type = DISK_CACHE_SINGLE_FILE;
-   else if (debug_get_bool_option("MESA_DISK_CACHE_DATABASE", false))
-      cache_type = DISK_CACHE_DATABASE;
-   else
+   else if (debug_get_bool_option("MESA_DISK_CACHE_MULTI_FILE", false))
       cache_type = DISK_CACHE_MULTI_FILE;
+   else {
+      cache_type = DISK_CACHE_DATABASE;
+      /* Since switching the default cache to <mesa_shader_cache_db>, remove the
+       * old cache folder if it hasn't been modified for more than 7 days.
+       */
+      if (!getenv("MESA_SHADER_CACHE_DIR") && !getenv("MESA_GLSL_CACHE_DIR"))
+         disk_cache_delete_old_cache();
+   }
 
    /* Create main writable cache. */
    cache = disk_cache_type_create(gpu_name, driver_id, driver_flags,

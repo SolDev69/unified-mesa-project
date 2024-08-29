@@ -1,25 +1,7 @@
 /*
- * Copyright (C) 2016 Rob Clark <robclark@freedesktop.org>
+ * Copyright © 2016 Rob Clark <robclark@freedesktop.org>
  * Copyright © 2018 Google, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * SPDX-License-Identifier: MIT
  */
 
 #define FD_BO_NO_HARDPIN 1
@@ -208,7 +190,7 @@ fd6_emit_ubos(const struct ir3_shader_variant *v, struct fd_ringbuffer *ring,
 
    for (int i = 0; i < num_ubos; i++) {
       /* NIR constant data is packed into the end of the shader. */
-      if (i == const_state->constant_data_ubo) {
+      if (i == const_state->consts_ubo.idx) {
          int size_vec4s = DIV_ROUND_UP(v->constant_data_size, 16);
          OUT_RELOC(ring, v->bo, v->info.constant_data_offset,
                    (uint64_t)A6XX_UBO_1_SIZE(size_vec4s) << 32, 0);
@@ -234,8 +216,8 @@ fd6_user_consts_cmdstream_size(const struct ir3_shader_variant *v)
    if (!v)
       return 0;
 
-   struct ir3_const_state *const_state = ir3_const_state(v);
-   struct ir3_ubo_analysis_state *ubo_state = &const_state->ubo_state;
+   const struct ir3_const_state *const_state = ir3_const_state(v);
+   const struct ir3_ubo_analysis_state *ubo_state = &const_state->ubo_state;
    unsigned packets, size;
 
    /* pre-calculate size required for userconst stateobj: */

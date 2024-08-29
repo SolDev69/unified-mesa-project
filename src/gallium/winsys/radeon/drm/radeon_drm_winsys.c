@@ -10,6 +10,7 @@
 
 #include "util/os_file.h"
 #include "util/simple_mtx.h"
+#include "util/thread_sched.h"
 #include "util/u_cpu_detect.h"
 #include "util/u_memory.h"
 #include "util/u_hash_table.h"
@@ -553,6 +554,7 @@ static bool do_winsys_init(struct radeon_drm_winsys *ws)
    ws->info.gfx_ib_pad_with_type2 = ws->info.gfx_level <= GFX6 ||
                                     (ws->info.family == CHIP_HAWAII &&
                                      ws->accel_working2 < 3);
+   ws->info.has_cp_dma = true;
    ws->info.tcc_cache_line_size = 64; /* TC L2 line size on GCN */
    ws->info.has_bo_metadata = false;
    ws->info.has_eqaa_surface_allocator = false;
@@ -579,6 +581,9 @@ static bool do_winsys_init(struct radeon_drm_winsys *ws)
    ws->info.min_wave64_vgpr_alloc = 4;
    ws->info.max_vgpr_alloc = 256;
    ws->info.wave64_vgpr_alloc_granularity = 4;
+   ws->info.lds_size_per_workgroup = ws->info.gfx_level == GFX7 ? 64 * 1024 : 32 * 1024;
+   ws->info.lds_encode_granularity = ws->info.gfx_level == GFX7 ? 128 * 4 : 64 * 4;
+   ws->info.lds_alloc_granularity = ws->info.lds_encode_granularity;
 
    for (unsigned se = 0; se < ws->info.max_se; se++) {
       for (unsigned sa = 0; sa < ws->info.max_sa_per_se; sa++)
@@ -825,14 +830,13 @@ static bool radeon_winsys_unref(struct radeon_winsys *ws)
 }
 
 static void radeon_pin_threads_to_L3_cache(struct radeon_winsys *ws,
-                                           unsigned cache)
+                                           unsigned cpu)
 {
    struct radeon_drm_winsys *rws = (struct radeon_drm_winsys*)ws;
 
    if (util_queue_is_initialized(&rws->cs_queue)) {
-      util_set_thread_affinity(rws->cs_queue.threads[0],
-                               util_get_cpu_caps()->L3_affinity_mask[cache],
-                               NULL, util_get_cpu_caps()->num_cpu_mask_bits);
+      util_thread_sched_apply_policy(rws->cs_queue.threads[0],
+                                     UTIL_THREAD_DRIVER_SUBMIT, cpu, NULL);
    }
 }
 
