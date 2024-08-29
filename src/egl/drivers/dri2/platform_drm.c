@@ -608,6 +608,9 @@ dri2_initialize_drm(_EGLDisplay *disp)
 
          dri2_dpy->fd_display_gpu =
             loader_open_device(drm->nodes[DRM_NODE_PRIMARY]);
+      } else if (disp->Options.Kgsl) {
+         dri2_dpy->fd_render_gpu = dri2_dpy->fd_display_gpu =
+            loader_open_device("/dev/kgsl-3d0");
       } else {
          char buf[64];
          int n = snprintf(buf, sizeof(buf), DRM_DEV_NAME, DRM_DIR_NAME, 0);
@@ -632,6 +635,8 @@ dri2_initialize_drm(_EGLDisplay *disp)
    if (!dri2_dpy->gbm_dri->software) {
       dri2_dpy->fd_render_gpu =
          get_fd_render_gpu_drm(dri2_dpy->gbm_dri, dri2_dpy->fd_display_gpu);
+      if (dri2_dpy->fd_render_gpu < 0 && disp->Options.Kgsl)
+         dri2_dpy->fd_render_gpu = dri2_dpy->fd_display_gpu;
       if (dri2_dpy->fd_render_gpu < 0) {
          err = "DRI2: failed to get compatible render device";
          goto cleanup;

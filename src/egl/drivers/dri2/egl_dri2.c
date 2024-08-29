@@ -1093,6 +1093,9 @@ dri2_setup_device(_EGLDisplay *disp, EGLBoolean software)
    /* If we're not software, we need a DRM node FD */
    assert(software || dri2_dpy->fd_render_gpu >= 0);
 
+   if (disp->Options.Kgsl)
+      software = true;
+
    /* fd_render_gpu is what we got from WSI, so might actually be a lie and
     * not a render node... */
    if (software) {

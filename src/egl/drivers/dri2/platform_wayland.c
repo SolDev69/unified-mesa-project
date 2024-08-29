@@ -2194,8 +2194,12 @@ dri2_initialize_wayland_drm(_EGLDisplay *disp)
    if (roundtrip(dri2_dpy) < 0)
       goto cleanup;
 
-   if (!dri2_initialize_wayland_drm_extensions(dri2_dpy))
-      goto cleanup;
+   if (!dri2_initialize_wayland_drm_extensions(dri2_dpy)) {
+      if (disp->Options.Kgsl)
+         dri2_dpy->fd_render_gpu = loader_open_device("/dev/kgsl-3d0");
+      else
+         goto cleanup;
+   }
 
    loader_get_user_preferred_fd(&dri2_dpy->fd_render_gpu,
                                 &dri2_dpy->fd_display_gpu);
