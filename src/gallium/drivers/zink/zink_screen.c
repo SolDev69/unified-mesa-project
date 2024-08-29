@@ -283,6 +283,10 @@ disk_cache_init(struct zink_screen *screen)
    if (zink_debug & ZINK_DEBUG_SHADERDB)
       return true;
 
+#ifdef ENABLE_SHADER_CACHE
+   struct mesa_blake3 ctx;
+   _mesa_blake3_init(&ctx);
+
 #ifdef HAVE_DL_ITERATE_PHDR
    /* Hash in the zink driver build. */
    const struct build_id_note *note =
@@ -290,9 +294,10 @@ disk_cache_init(struct zink_screen *screen)
    if (note != NULL) {
       unsigned build_id_len = build_id_length(note);
       assert(note && build_id_len == 20); /* sha1 */
+      _mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
    }
 #endif
-r
+
    /* Hash in the Vulkan pipeline cache UUID to identify the combination of
    *  vulkan device and driver (or any inserted layer that would invalidate our
    *  cached pipelines).
@@ -1613,7 +1618,13 @@ zink_destroy_screen(struct pipe_screen *pscreen)
       util_queue_finish(&screen->cache_get_thread);
       util_queue_destroy(&screen->cache_get_thread);
    }
-
+#ifdef ENABLE_SHADER_CACHE
+   if (screen->disk_cache && util_queue_is_initialized(&screen->cache_put_thread)) {
+      util_queue_finish(&screen->cache_put_thread);
+      disk_cache_wait_for_idle(screen->disk_cache);
+      util_queue_destroy(&screen->cache_put_thread);
+   }
+#endif
    disk_cache_destroy(screen->disk_cache);
 
    /* we don't have an API to check if a set is already initialized */
