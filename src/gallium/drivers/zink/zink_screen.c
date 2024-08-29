@@ -294,7 +294,7 @@ disk_cache_init(struct zink_screen *screen)
    if (note != NULL) {
       unsigned build_id_len = build_id_length(note);
       assert(note && build_id_len == 20); /* sha1 */
-      _mesa_sha1_update(&ctx, build_id_data(note), build_id_len);
+      _mesa_blake3_update(&ctx, build_id_data(note), build_id_len);
    }
 #endif
 
