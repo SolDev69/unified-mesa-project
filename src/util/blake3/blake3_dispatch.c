@@ -264,12 +264,6 @@ void blake3_hash_many(const uint8_t *const *inputs, size_t num_inputs,
 #endif
 #endif
 
-#if BLAKE3_USE_NEON == 1
-  blake3_hash_many_neon(inputs, num_inputs, blocks, key, counter,
-                        increment_counter, flags, flags_start, flags_end, out);
-  return;
-#endif
-
   blake3_hash_many_portable(inputs, num_inputs, blocks, key, counter,
                             increment_counter, flags, flags_start, flags_end,
                             out);
@@ -300,9 +294,6 @@ size_t blake3_simd_degree(void) {
     return 4;
   }
 #endif
-#endif
-#if BLAKE3_USE_NEON == 1
-  return 4;
 #endif
   return 1;
 }
