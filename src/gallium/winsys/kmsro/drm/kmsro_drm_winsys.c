@@ -103,8 +103,23 @@ struct pipe_screen *kmsro_drm_screen_create(int kms_fd,
 #endif
    } else if (strcmp(render_dev_name, "panfrost") == 0) {
 #if defined(GALLIUM_PANFROST)
+
+   bool noop = getenv("KBASE_NOOP");
+
+   if (!noop) {
+      ro->gpu_fd = drmOpenWithType("panfrost", NULL, DRM_NODE_RENDER);
+      if (ro->gpu_fd < 0)
+         ro->gpu_fd = open("/dev/mali0", O_RDWR | O_CLOEXEC | O_NONBLOCK);
+   }
+
+   if ((ro->gpu_fd >= 0) || noop) {
       ro->create_for_resource = panfrost_create_kms_dumb_buffer_for_resource;
       screen = panfrost_drm_screen_create_renderonly(ro->gpu_fd, ro, config);
+      if (!screen)
+         goto out_free;
+
+      return screen;
+   }
 #endif
    } else if (strcmp(render_dev_name, "v3d") == 0) {
 #if defined(GALLIUM_V3D)
