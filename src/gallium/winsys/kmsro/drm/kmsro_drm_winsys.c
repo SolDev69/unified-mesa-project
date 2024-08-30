@@ -116,7 +116,13 @@ struct pipe_screen *kmsro_drm_screen_create(int kms_fd,
       ro->create_for_resource = panfrost_create_kms_dumb_buffer_for_resource;
       screen = panfrost_drm_screen_create_renderonly(ro->gpu_fd, ro, config);
       if (!screen)
-         goto out_free;
+      {
+         if (ro->gpu_fd >= 0)
+            close(ro->gpu_fd);
+         FREE(ro);
+
+         return NULL;
+      }
 
       return screen;
    }
