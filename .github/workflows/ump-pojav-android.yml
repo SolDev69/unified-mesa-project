@@ -83,7 +83,7 @@ jobs:
           cd /tmp/mesa/toupload
           mv libOSMesa.so.8.0.0 libOSMesa.so
       - name: Upload libraries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: UMP_${{matrix.arch}}
           path: /tmp/mesa/toupload
