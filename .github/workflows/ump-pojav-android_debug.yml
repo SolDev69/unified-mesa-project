@@ -22,8 +22,8 @@ jobs:
       - name: Build
         run: |
           sudo apt update
-          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
-          pip3 install mako
+          sudo apt install -y libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          pip3 install mako meson ninja
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
