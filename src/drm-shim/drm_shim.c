@@ -72,7 +72,7 @@ REAL_FUNCTION_POINTER(closedir);
 REAL_FUNCTION_POINTER(dup);
 REAL_FUNCTION_POINTER(fcntl);
 REAL_FUNCTION_POINTER(fopen);
-REAL_FUNCTION_POINTER(ioctl);
+// REAL_FUNCTION_POINTER(ioctl);
 REAL_FUNCTION_POINTER(mmap);
 REAL_FUNCTION_POINTER(mmap64);
 REAL_FUNCTION_POINTER(open);
@@ -81,6 +81,10 @@ REAL_FUNCTION_POINTER(readdir);
 REAL_FUNCTION_POINTER(readdir64);
 REAL_FUNCTION_POINTER(readlink);
 REAL_FUNCTION_POINTER(realpath);
+
+int (*real_ioctl)(int, unsigned int, ...) = ioctl;
+
+static int __attribute__((overloadable)) ioctl(int fd, unsigned long request, ...);
 
 #define HAS_XSTAT __GLIBC__ == 2 && __GLIBC_MINOR__ < 33
 
@@ -773,7 +777,7 @@ realpath(const char *path, char *resolved_path)
 /* Main entrypoint to DRM drivers: the ioctl syscall.  We send all ioctls on
  * our DRM fd to drm_shim_ioctl().
  */
-PUBLIC int
+PUBLIC int __attribute__((overloadable))
 ioctl(int fd, unsigned long request, ...)
 {
    init_shim();
