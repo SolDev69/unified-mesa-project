@@ -40,8 +40,7 @@ jobs:
             -Dfreedreno=enabled \
             -Dvc4=disabled \
             -Detnaviv=disabled \
-            -Dfreedreno-kgsl=true \
-            -Dinstall-mesa-clc=true
+            -Dfreedreno-kgsl=true
           ninja -C "build-android" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
@@ -61,7 +60,8 @@ jobs:
             -Dosmesa=true \
             -Dvulkan-drivers= \
             -Dgallium-drivers=panfrost \
-            -Dbuildtype=debug
+            -Dbuildtype=debug \
+            -Dinstall-mesa-clc=true
           ninja -C "build-android" install
           # envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
           # meson setup "build-android-turnip" \
