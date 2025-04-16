@@ -40,7 +40,8 @@ jobs:
             -Dfreedreno=enabled \
             -Dvc4=disabled \
             -Detnaviv=disabled \
-            -Dfreedreno-kgsl=true
+            -Dfreedreno-kgsl=true \
+            -Dinstall-mesa-clc=true
           ninja -C "build-android" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
