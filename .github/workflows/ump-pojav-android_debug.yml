@@ -59,25 +59,23 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dllvm=false \
-            -Dgallium-drivers=freedreno,zink,panfrost \
-            -Dfreedreno-kmds=kgsl \
+            -Dgallium-drivers=panfrost \
             -Dbuildtype=debug
           ninja -C "build-android" install
-          envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
-          meson setup "build-android-turnip" \
-            --cross-file "build-crossfile-turnip" \
-            -Dbuildtype=debug \
-            --prefix=/tmp/mesa \
-            -Dplatforms=android \
-            -Dplatform-sdk-version=33 \
-            -Dandroid-stub=true \
-            -Dgallium-drivers= \
-            -Dvulkan-drivers=freedreno,panfrost \
-            -Dfreedreno-kmds=kgsl \
-            -Dandroid-strict=false \
-            -Db_lto=true
-          ninja -C "build-android-turnip" install
+          # envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
+          # meson setup "build-android-turnip" \
+          #   --cross-file "build-crossfile-turnip" \
+          #   -Dbuildtype=debug \
+          #   --prefix=/tmp/mesa \
+          #   -Dplatforms=android \
+          #   -Dplatform-sdk-version=33 \
+          #   -Dandroid-stub=true \
+          #   -Dgallium-drivers= \
+          #   -Dvulkan-drivers=freedreno,panfrost \
+          #   -Dfreedreno-kmds=kgsl \
+          #   -Dandroid-strict=false \
+          #   -Db_lto=true
+          # ninja -C "build-android-turnip" install
           mkdir /tmp/mesa/toupload
           mv /tmp/mesa/lib/* /tmp/mesa/toupload/
           cd /tmp/mesa/toupload
