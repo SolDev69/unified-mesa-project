@@ -249,6 +249,7 @@ debian-build-testing:
     BUILDTYPE: "debugoptimized"
     EXTRA_OPTION: >
       -D spirv-to-dxil=true
+      -D osmesa=true
       -D tools=drm-shim,etnaviv,freedreno,glsl,intel,intel-ui,nir,nouveau,lima,panfrost,asahi
       -D perfetto=true
     S3_ARTIFACT_NAME: debian-build-testing
@@ -280,6 +281,7 @@ debian-release:
     VULKAN_DRIVERS: "swrast,intel_hasvk,imagination-experimental,microsoft-experimental"
     EXTRA_OPTION: >
       -D spirv-to-dxil=true
+      -D osmesa=true
       -D tools=all
       -D mesa-clc=enabled
       -D precomp-compiler=enabled
@@ -354,6 +356,7 @@ fedora-release:
       -D glvnd=enabled
       -D platforms=x11,wayland
     EXTRA_OPTION: >
+      -D osmesa=true
       -D tools=drm-shim,etnaviv,freedreno,glsl,intel,nir,nouveau,lima,panfrost,imagination
       -D vulkan-layers=device-select,overlay
       -D intel-rt=enabled
@@ -465,6 +468,7 @@ debian-android:
       -D gbm=enabled
       -D egl=enabled
       -D platforms=x11,wayland
+      -D osmesa=false
     GALLIUM_ST: >
       -D gallium-vdpau=disabled
       -D gallium-va=disabled
@@ -690,6 +694,7 @@ debian-clang:
     VULKAN_DRIVERS: intel,amd,freedreno,broadcom,virtio,swrast,panfrost,imagination-experimental,microsoft-experimental,nouveau
     EXTRA_OPTION:
       -D spirv-to-dxil=true
+      -D osmesa=true
       -D imagination-srv=true
       -D tools=drm-shim,etnaviv,freedreno,glsl,intel,intel-ui,nir,nouveau,lima,panfrost,asahi,imagination
       -D vulkan-layers=device-select,overlay
@@ -754,6 +759,7 @@ debian-vulkan:
       -D gles2=disabled
       -D glvnd=disabled
       -D platforms=x11,wayland
+      -D osmesa=false
     GALLIUM_ST: >
       -D gallium-vdpau=disabled
       -D gallium-va=disabled

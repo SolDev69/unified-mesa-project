@@ -66,6 +66,7 @@ Linux, FreeBSD, and other operating systems.
    egl
    opengles
    envvars
+   osmesa
    debugging
    perf
    gpu-perf-tracing
