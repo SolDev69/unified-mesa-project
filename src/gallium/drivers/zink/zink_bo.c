@@ -35,7 +35,7 @@
 #include "zink_screen.h"
 #include "util/u_hash_table.h"
 
-#ifdef HAVE_LIBDRM
+#ifdef HAVE_LIBDRM && !defined(__ANDROID__)
 #define ZINK_USE_DMABUF
 #include <xf86drm.h>
 #endif

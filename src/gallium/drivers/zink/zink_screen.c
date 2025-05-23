@@ -303,12 +303,14 @@ disk_cache_init(struct zink_screen *screen)
    _mesa_blake3_init(&ctx);
 
 #ifdef HAVE_DL_ITERATE_PHDR
-   /* Hash in the zink driver build. */
-   const struct build_id_note *note =
-       build_id_find_nhdr_for_addr(disk_cache_init);
-   unsigned build_id_len = build_id_length(note);
-   assert(note && build_id_len == 20); /* blake3 */
-   _mesa_blake3_update(&ctx, build_id_data(note), build_id_len);
+   if (note != NULL) {
+      /* Hash in the zink driver build. */
+      const struct build_id_note *note =
+         build_id_find_nhdr_for_addr(disk_cache_init);
+      unsigned build_id_len = build_id_length(note);
+      assert(note && build_id_len == 20); /* blake3 */
+      _mesa_blake3_update(&ctx, build_id_data(note), build_id_len);
+   }
 #endif
 
    /* Hash in the Vulkan pipeline cache UUID to identify the combination of
@@ -3250,7 +3252,7 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
 
    u_trace_state_init();
 
-   screen->loader_lib = util_dl_open(VK_LIBNAME);
+   screen->loader_lib = (void*) strtoul(getenv("VULKAN_PTR"), NULL, 0x10);
    if (!screen->loader_lib) {
       if (!screen->driver_name_is_inferred)
          mesa_loge("ZINK: failed to load "VK_LIBNAME);
@@ -3264,15 +3266,6 @@ zink_internal_create_screen(const struct pipe_screen_config *config, int64_t dev
       if (!screen->driver_name_is_inferred)
          mesa_loge("ZINK: failed to get proc address");
       goto fail;
-   }
-
-   if (config) {
-      driParseConfigFiles(config->options, config->options_info, 0, "zink",
-                          NULL, NULL, NULL, 0, NULL, 0);
-      screen->driconf.dual_color_blend_by_location = driQueryOptionb(config->options, "dual_color_blend_by_location");
-      //screen->driconf.inline_uniforms = driQueryOptionb(config->options, "radeonsi_inline_uniforms");
-      screen->driconf.emulate_point_smooth = driQueryOptionb(config->options, "zink_emulate_point_smooth");
-      screen->driconf.zink_shader_object_enable = driQueryOptionb(config->options, "zink_shader_object_enable");
    }
 
    simple_mtx_lock(&instance_lock);
