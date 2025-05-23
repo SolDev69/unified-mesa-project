@@ -52,24 +52,6 @@
       if (unlikely(util_perfetto_is_tracing_enabled()))                             \
          util_perfetto_trace_full_end(name, track_id, clock, timestamp);            \
    } while (0)
-
-/* NOTE: for now disable atrace for C++ to workaround a ndk bug with ordering
- * between stdatomic.h and atomic.h.  See:
- *
- *   https://github.com/android/ndk/issues/1178
- */
-#elif DETECT_OS_ANDROID && !defined(__cplusplus)
-
-#include <cutils/trace.h>
-
-#define _MESA_TRACE_BEGIN(name)                                              \
-   atrace_begin(ATRACE_TAG_GRAPHICS, name)
-#define _MESA_TRACE_END() atrace_end(ATRACE_TAG_GRAPHICS)
-#define _MESA_TRACE_FLOW_BEGIN(name, id)                                     \
-   atrace_begin(ATRACE_TAG_GRAPHICS, name)
-#define _MESA_TRACE_SET_COUNTER(name, value)
-#define _MESA_TRACE_TIMESTAMP_BEGIN(name, track_id, flow_id, clock, timestamp)
-#define _MESA_TRACE_TIMESTAMP_END(name, track_id, clock, timestamp)
 #else
 
 #define _MESA_TRACE_BEGIN(name)
