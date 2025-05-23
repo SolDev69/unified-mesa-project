@@ -76,11 +76,24 @@ const struct panfrost_model panfrost_model_list[] = {
         MODEL(0xac74, 2, "G310",   "TVAx", HAS_ANISO,         16384,  8192,  {}),
         MODEL(0xac74, 3, "G310",   "TVAx", HAS_ANISO,         32768, 16384, {}),
         MODEL(0xac74, 4, "G310",   "TVAx", HAS_ANISO,         32768, 16384, {}),
+        MODEL(0xa802, 0, "G710",   "TODx", HAS_ANISO,         65536, 16384,  {}),
 
         MODEL(0xc870, 4, "G720",   "TTIx", HAS_ANISO,         65536, 32768, {}),
 
         MODEL(0xd830, 4, "G725",   "TKRx", HAS_ANISO,         65536, 65536, {}),
 };
+
+const struct panfrost_model panfrost_unknown_model = {
+   .gpu_id = 0,
+   .gpu_variant = 0,
+   .name = "Unknowm Mali device (Panfrost)",
+   .performance_counters = "AAAA",
+   .min_rev_anisotropic = NO_ANISO, 
+   .tilebuffer_size = 8192, 
+   .tilebuffer_z_size = 8192,
+   .quirks = {}, 
+};
+
 /* clang-format on */
 
 #undef NO_ANISO
@@ -100,7 +113,7 @@ panfrost_get_model(uint32_t gpu_id, uint32_t gpu_variant)
          return &panfrost_model_list[i];
    }
 
-   return NULL;
+   return &panfrost_unknown_model;
 }
 
 unsigned
