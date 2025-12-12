@@ -1,4 +1,4 @@
-name: Build Android
+name: Build UMP
 
 on:
   [push, pull_request, workflow_dispatch]
@@ -8,7 +8,7 @@ jobs:
   build:
     strategy:
       matrix:
-        arch: [ "arm32", "aarch64" ]
+        arch: [ "arm32", "aarch64", "x86_64" ]
       fail-fast: false
 
     name: "Build for ${{matrix.arch}}"
@@ -17,7 +17,7 @@ jobs:
 
     steps:
         
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
       - name: Build
         run: |
@@ -37,19 +37,21 @@ jobs:
             -Damdgpu=disabled \
             -Dnouveau=disabled \
             -Dvmwgfx=disabled \
-            -Dfreedreno=disabled \
+            -Dfreedreno=enabled \
             -Dvc4=disabled \
-            -Detnaviv=disabled
+            -Detnaviv=disabled \
+            -Dfreedreno-kgsl=true
           ninja -C "build-android" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
           meson setup "build-android" \
-            --prefix=/tmp/pan \
+            --prefix=/tmp/mesa \
             --cross-file "build-crossfile" \
             -Dplatforms=android \
-            -Dplatform-sdk-version=26 \
+            -Dplatform-sdk-version=25 \
             -Dandroid-stub=true \
-            -Dllvm=disabled \
+            -Dandroid-libbacktrace=disabled \
+            -Dandroid-strict=false \
             -Dxlib-lease=disabled \
             -Degl=disabled \
             -Dgbm=disabled \
@@ -57,11 +59,31 @@ jobs:
             -Dopengl=true \
             -Dosmesa=true \
             -Dvulkan-drivers= \
-            -Dgallium-drivers=swrast,panfrost \
-            -Dshared-glapi=false
+            -Dgallium-drivers=panfrost \
+            -Dfreedreno-kmds=kgsl \
+            -Dshared-glapi=false \
+            -Dbuildtype=release
           ninja -C "build-android" install
+          envsubst <android-turnip-${{matrix.arch}} >build-crossfile-turnip
+          meson setup "build-android-turnip" \
+            --cross-file "build-crossfile-turnip" \
+            -Dbuildtype=release \
+            --prefix=/tmp/mesa \
+            -Dplatforms=android \
+            -Dplatform-sdk-version=33 \
+            -Dandroid-stub=true \
+            -Dgallium-drivers= \
+            -Dvulkan-drivers=freedreno,panfrost \
+            -Dfreedreno-kmds=kgsl \
+            -Dandroid-strict=false \
+            -Db_lto=true
+          ninja -C "build-android-turnip" install
+          mkdir /tmp/mesa/toupload
+          mv /tmp/mesa/lib/libOSMesa.so.8.0.0 /tmp/mesa/lib/libvulkan_* /tmp/mesa/toupload/
+          cd /tmp/mesa/toupload
+          mv libOSMesa.so.8.0.0 libOSMesa.so
       - name: Upload libraries
         uses: actions/upload-artifact@v4
         with:
-          name: panfrost_${{matrix.arch}}
-          path: /tmp/pan
+          name: panfrost_test_${{matrix.arch}}
+          path: /tmp/mesa/toupload
