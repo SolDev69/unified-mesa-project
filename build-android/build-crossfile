@@ -1,0 +1,14 @@
+[binaries]
+ar = '/home/maks/Android/Sdk/ndk/28.2.13676358//toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar'
+c = ['/home/maks/Android/Sdk/ndk/28.2.13676358//toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang', '-O3', '-fPIC']
+cpp = ['/home/maks/Android/Sdk/ndk/28.2.13676358//toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++', '-O3', '-fPIC', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-static-libstdc++']
+c_ld = 'lld'
+cpp_ld = 'lld'
+strip = '/home/maks/Android/Sdk/ndk/28.2.13676358//toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip'
+pkg-config = ['env', 'PKG_CONFIG_LIBDIR=.:/tmp/drm-static/lib/pkgconfig', '/usr/bin/pkg-config']
+
+[host_machine]
+system = 'linux'
+cpu_family = 'aarch64'
+cpu = 'armv8'
+endian = 'little'
