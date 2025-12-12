@@ -31,6 +31,9 @@
 #include "util/simple_mtx.h"
 #include "util/sparse_array.h"
 #include "util/u_atomic.h"
+#include "util/perf/cpu_trace.h"
+
+#include "kmod/panthor_kmod.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -45,10 +48,21 @@ enum pan_kmod_vm_flags {
     * must have va=PAN_KMOD_VM_MAP_AUTO_VA.
     */
    PAN_KMOD_VM_FLAG_AUTO_VA = BITFIELD_BIT(0),
+
+   /* Let the backend know whether it should track the VM activity or not.
+    * Needed if PAN_KMOD_VM_OP_MODE_DEFER_TO_NEXT_IDLE_POINT is used.
+    */
+   PAN_KMOD_VM_FLAG_TRACK_ACTIVITY = BITFIELD_BIT(1),
 };
+
+#define PAN_PGSIZE_4K (uint64_t)0x1000
+#define PAN_PGSIZE_2M (uint64_t)0x200000
 
 /* Object representing a GPU VM. */
 struct pan_kmod_vm {
+   /* Page sizes supported by this VM. */
+   uint64_t pgsize_bitmap;
+
    /* Combination of pan_kmod_vm_flags flags. */
    uint32_t flags;
 
@@ -90,6 +104,21 @@ enum pan_kmod_bo_flags {
    PAN_KMOD_BO_FLAG_GPU_UNCACHED = BITFIELD_BIT(5),
 };
 
+/* Allowed group priority flags. */
+enum pan_kmod_group_allow_priority_flags {
+   /* Allow low priority group. */
+   PAN_KMOD_GROUP_ALLOW_PRIORITY_LOW = BITFIELD_BIT(0),
+
+   /* Allow medium priority group. */
+   PAN_KMOD_GROUP_ALLOW_PRIORITY_MEDIUM = BITFIELD_BIT(1),
+
+   /* Allow high priority group. */
+   PAN_KMOD_GROUP_ALLOW_PRIORITY_HIGH = BITFIELD_BIT(2),
+
+   /* Allow realtime priority group. */
+   PAN_KMOD_GROUP_ALLOW_PRIORITY_REALTIME = BITFIELD_BIT(3),
+};
+
 /* Buffer object. */
 struct pan_kmod_bo {
    /* Atomic reference count. The only reason we need to refcnt BOs at this
@@ -102,7 +131,7 @@ struct pan_kmod_bo {
    int32_t refcnt;
 
    /* Size of the buffer object. */
-   size_t size;
+   uint64_t size;
 
    /* Handle attached to the buffer object. */
    uint32_t handle;
@@ -126,11 +155,11 @@ struct pan_kmod_bo {
 
 /* List of GPU properties needed by the UMD. */
 struct pan_kmod_dev_props {
-   /* GPU product ID. */
-   uint32_t gpu_prod_id;
+   /* GPU ID. */
+   uint32_t gpu_id;
 
-   /* GPU revision. */
-   uint32_t gpu_revision;
+   /* GPU variant. */
+   uint32_t gpu_variant;
 
    /* Bitmask encoding the number of shader cores exposed by the GPU. */
    uint64_t shader_present;
@@ -149,10 +178,38 @@ struct pan_kmod_dev_props {
    uint32_t texture_features[4];
 
    /* Maximum number of threads per core. */
-   uint32_t thread_tls_alloc;
+   uint32_t max_threads_per_core;
+
+   /* Maximum number of compute tasks per core. */
+   uint8_t max_tasks_per_core;
+
+   /* Maximum number of threads per workgroup. */
+   uint32_t max_threads_per_wg;
+
+   /* Number of registers per core. Can be used to determine the maximum
+    * number of threads that can be allocated for a specific shader based on
+    * the number of registers assigned to this shader.
+    */
+   uint32_t num_registers_per_core;
+
+   /* Maximum number of thread-local storage instance per core.
+    * If the GPU doesn't have a THREAD_TLS_ALLOC register or the register
+    * value is zero, the backend should assign the value of max_threads_per_core
+    * here.
+    */
+   uint32_t max_tls_instance_per_core;
 
    /* AFBC feature bits. */
    uint32_t afbc_features;
+
+   /* Support cycle count and timestamp propagation as job requirement */
+   bool gpu_can_query_timestamp;
+
+   /* GPU Timestamp frequency */
+   uint64_t timestamp_frequency;
+
+   /* A mask of flags containing the allowed group priorities. */
+   enum pan_kmod_group_allow_priority_flags allowed_group_priorities_mask;
 };
 
 /* Memory allocator for kmod internal allocations. */
@@ -244,7 +301,7 @@ struct pan_kmod_vm_op {
       uint64_t start;
 
       /* Size of the VA range */
-      size_t size;
+      uint64_t size;
    } va;
 
    union {
@@ -326,7 +383,7 @@ struct pan_kmod_ops {
     */
    struct pan_kmod_bo *(*bo_alloc)(struct pan_kmod_dev *dev,
                                    struct pan_kmod_vm *exclusive_vm,
-                                   size_t size, uint32_t flags);
+                                   uint64_t size, uint32_t flags);
 
    /* Free buffer object. */
    void (*bo_free)(struct pan_kmod_bo *bo);
@@ -335,7 +392,7 @@ struct pan_kmod_ops {
     * Return NULL if the import fails for any reason.
     */
    struct pan_kmod_bo *(*bo_import)(struct pan_kmod_dev *dev, uint32_t handle,
-                                    size_t size, uint32_t flags);
+                                    uint64_t size, uint32_t flags);
 
    /* Post export operations.
     * Return 0 on success, -1 otherwise.
@@ -378,6 +435,12 @@ struct pan_kmod_ops {
     * usable.
     */
    enum pan_kmod_vm_state (*vm_query_state)(struct pan_kmod_vm *vm);
+
+   /* Query the current GPU timestamp */
+   uint64_t (*query_timestamp)(const struct pan_kmod_dev *dev);
+
+   /* Label the BO */
+   void (*bo_set_label)(struct pan_kmod_dev *dev, struct pan_kmod_bo *bo, const char *label);
 };
 
 /* KMD information. */
@@ -421,6 +484,12 @@ struct pan_kmod_dev {
    void *user_priv;
 };
 
+#define pan_kmod_ioctl(fd, op, arg)                                          \
+   ({                                                                        \
+      MESA_TRACE_SCOPE("pan_kmod_ioctl op=" #op);                            \
+      drmIoctl(fd, op, arg);                                                 \
+   })
+
 struct pan_kmod_dev *
 pan_kmod_dev_create(int fd, uint32_t flags,
                     const struct pan_kmod_allocator *allocator);
@@ -463,7 +532,7 @@ pan_kmod_dev_get_user_priv(struct pan_kmod_dev *dev)
 
 struct pan_kmod_bo *pan_kmod_bo_alloc(struct pan_kmod_dev *dev,
                                       struct pan_kmod_vm *exclusive_vm,
-                                      size_t size, uint32_t flags);
+                                      uint64_t size, uint32_t flags);
 
 static inline struct pan_kmod_bo *
 pan_kmod_bo_get(struct pan_kmod_bo *bo)
@@ -509,7 +578,8 @@ pan_kmod_bo_export(struct pan_kmod_bo *bo)
 {
    int fd;
 
-   if (drmPrimeHandleToFD(bo->dev->fd, bo->handle, DRM_CLOEXEC, &fd)) {
+   if (drmPrimeHandleToFD(bo->dev->fd, bo->handle, DRM_CLOEXEC | DRM_RDWR,
+                          &fd)) {
       mesa_loge("drmPrimeHandleToFD() failed (err=%d)", errno);
       return -1;
    }
@@ -552,7 +622,7 @@ pan_kmod_bo_mmap(struct pan_kmod_bo *bo, off_t bo_offset, size_t size, int prot,
 {
    off_t mmap_offset;
 
-   if (bo_offset + size > bo->size)
+   if ((uint64_t)bo_offset + (uint64_t)size > bo->size)
       return MAP_FAILED;
 
    mmap_offset = bo->dev->ops->bo_get_mmap_offset(bo);
@@ -562,12 +632,20 @@ pan_kmod_bo_mmap(struct pan_kmod_bo *bo, off_t bo_offset, size_t size, int prot,
    host_addr = os_mmap(host_addr, size, prot, flags, bo->dev->fd,
                        mmap_offset + bo_offset);
    if (host_addr == MAP_FAILED)
-      mesa_loge("mmap() failed (err=%d)", errno);
+      mesa_loge("mmap(..., size=%zu, prot=%d, flags=0x%x) failed: %s",
+                size, prot, flags, strerror(errno));
 
    return host_addr;
 }
 
-static inline size_t
+static inline void
+pan_kmod_set_bo_label(struct pan_kmod_dev *dev, struct pan_kmod_bo *bo, const char *label)
+{
+   if (dev->ops->bo_set_label)
+      dev->ops->bo_set_label(dev, bo, label);
+}
+
+static inline uint64_t
 pan_kmod_bo_size(struct pan_kmod_bo *bo)
 {
    return bo->size;
@@ -612,6 +690,12 @@ static inline uint32_t
 pan_kmod_vm_handle(struct pan_kmod_vm *vm)
 {
    return vm->handle;
+}
+
+static inline uint64_t
+pan_kmod_query_timestamp(const struct pan_kmod_dev *dev)
+{
+   return dev->ops->query_timestamp(dev);
 }
 
 #if defined(__cplusplus)

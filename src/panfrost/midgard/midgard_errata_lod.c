@@ -33,13 +33,9 @@ bool midgard_nir_lod_errata(nir_shader *shader);
  */
 
 static bool
-nir_lod_errata_instr(nir_builder *b, nir_instr *instr, void *data)
+nir_lod_errata_instr(nir_builder *b, nir_tex_instr *tex, void *data)
 {
-   if (instr->type != nir_instr_type_tex)
-      return false;
-
-   nir_tex_instr *tex = nir_instr_as_tex(instr);
-   b->cursor = nir_before_instr(instr);
+   b->cursor = nir_before_instr(&tex->instr);
 
    /* The errata only applies to textureLod ("TEXGRD") */
    if (tex->op != nir_texop_txl)
@@ -49,7 +45,7 @@ nir_lod_errata_instr(nir_builder *b, nir_instr *instr, void *data)
    nir_def *sampler = nir_imm_int(b, tex->texture_index);
 
    /* Let's grab the sampler parameters */
-   nir_def *params = nir_load_sampler_lod_parameters_pan(b, 3, 32, sampler);
+   nir_def *params = nir_load_sampler_lod_parameters(b, 3, 32, sampler);
 
    /* Extract the individual components */
    nir_def *min_lod = nir_channel(b, params, 0);
@@ -75,7 +71,6 @@ nir_lod_errata_instr(nir_builder *b, nir_instr *instr, void *data)
 bool
 midgard_nir_lod_errata(nir_shader *shader)
 {
-   return nir_shader_instructions_pass(
-      shader, nir_lod_errata_instr,
-      nir_metadata_block_index | nir_metadata_dominance, NULL);
+   return nir_shader_tex_pass(shader, nir_lod_errata_instr,
+                              nir_metadata_control_flow, NULL);
 }

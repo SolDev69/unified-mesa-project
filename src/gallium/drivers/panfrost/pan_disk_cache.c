@@ -34,7 +34,9 @@
 
 #include "pan_context.h"
 
+#ifdef ENABLE_SHADER_CACHE
 static bool debug = false;
+#endif
 
 extern int midgard_debug;
 extern int bifrost_debug;
@@ -71,6 +73,8 @@ panfrost_disk_cache_store(struct disk_cache *cache,
 #ifdef ENABLE_SHADER_CACHE
    if (!cache)
       return;
+
+   MESA_TRACE_FUNC();
 
    cache_key cache_key;
    panfrost_disk_cache_compute_key(cache, uncompiled, key, cache_key);
@@ -113,6 +117,8 @@ panfrost_disk_cache_retrieve(struct disk_cache *cache,
 #ifdef ENABLE_SHADER_CACHE
    if (!cache)
       return false;
+
+   MESA_TRACE_FUNC();
 
    cache_key cache_key;
    panfrost_disk_cache_compute_key(cache, uncompiled, key, cache_key);
@@ -161,7 +167,13 @@ panfrost_disk_cache_init(struct panfrost_screen *screen)
 #ifdef ENABLE_SHADER_CACHE
    const char *renderer = screen->base.get_name(&screen->base);
 
-   const uint8_t *id_sha1 = "1";
+   const struct build_id_note *note =
+      build_id_find_nhdr_for_addr(panfrost_disk_cache_init);
+   assert(note && build_id_length(note) == 20); /* sha1 */
+
+   const uint8_t *id_sha1 = build_id_data(note);
+   assert(id_sha1);
+
    char timestamp[41];
    _mesa_sha1_format(timestamp, id_sha1);
 

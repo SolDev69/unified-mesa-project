@@ -75,7 +75,7 @@ pan_kmod_dev_free(const struct pan_kmod_dev *dev, void *data)
 
 static inline void
 pan_kmod_bo_init(struct pan_kmod_bo *bo, struct pan_kmod_dev *dev,
-                 struct pan_kmod_vm *exclusive_vm, size_t size, uint32_t flags,
+                 struct pan_kmod_vm *exclusive_vm, uint64_t size, uint32_t flags,
                  uint32_t handle)
 {
    bo->dev = dev;
@@ -88,16 +88,17 @@ pan_kmod_bo_init(struct pan_kmod_bo *bo, struct pan_kmod_dev *dev,
 
 static inline void
 pan_kmod_vm_init(struct pan_kmod_vm *vm, struct pan_kmod_dev *dev,
-                 uint32_t handle, uint32_t flags)
+                 uint32_t handle, uint32_t flags, uint64_t pgsize_bitmap)
 {
    vm->dev = dev;
    vm->handle = handle;
    vm->flags = flags;
+   vm->pgsize_bitmap = pgsize_bitmap;
 }
 
 static inline int
-pank_kmod_vm_op_check(struct pan_kmod_vm *vm, enum pan_kmod_vm_op_mode mode,
-                      struct pan_kmod_vm_op *op)
+pan_kmod_vm_op_check(struct pan_kmod_vm *vm, enum pan_kmod_vm_op_mode mode,
+                     struct pan_kmod_vm_op *op)
 {
    /* We should only have sync operations on an async VM bind request. */
    if (mode != PAN_KMOD_VM_OP_MODE_ASYNC && op->syncs.count) {

@@ -117,6 +117,12 @@ instrs_equal(const void *_i1, const void *_i2)
          return false;
    }
 
+   if (i1->table != i2->table)
+      return false;
+
+   if (i1->index != i2->index)
+      return false;
+
    return true;
 }
 
@@ -136,7 +142,7 @@ instr_can_cse(const bi_instr *I)
    /* Be conservative about which message-passing instructions we CSE,
     * since most are not pure even within a thread.
     */
-   if (bi_opcode_props[I->op].message && I->op != BI_OPCODE_LEA_BUF_IMM)
+   if (bi_get_opcode_props(I)->message && I->op != BI_OPCODE_LEA_BUF_IMM)
       return false;
 
    if (I->branch_target)
@@ -149,9 +155,9 @@ void
 bi_opt_cse(bi_context *ctx)
 {
    struct set *instr_set = _mesa_set_create(NULL, hash_instr, instrs_equal);
+   bi_index *replacement = calloc(sizeof(bi_index), ctx->ssa_alloc);
 
    bi_foreach_block(ctx, block) {
-      bi_index *replacement = calloc(sizeof(bi_index), ctx->ssa_alloc);
       _mesa_set_clear(instr_set, NULL);
 
       bi_foreach_instr_in_block(block, instr) {
@@ -180,9 +186,8 @@ bi_opt_cse(bi_context *ctx)
             }
          }
       }
-
-      free(replacement);
    }
 
+   free(replacement);
    _mesa_set_destroy(instr_set, NULL);
 }

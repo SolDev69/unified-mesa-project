@@ -82,14 +82,13 @@ nir_fuse_io_16(nir_shader *shader)
 
             /* The f2f32(f2fmp(x)) will cancel by opt_algebraic */
             nir_def *conv = nir_f2f32(&b, &intr->def);
-            nir_def_rewrite_uses_after(&intr->def, conv, conv->parent_instr);
+            nir_def_rewrite_uses_after(&intr->def, conv);
 
             progress |= true;
          }
       }
 
-      nir_metadata_preserve(impl,
-                            nir_metadata_block_index | nir_metadata_dominance);
+      nir_progress(true, impl, nir_metadata_control_flow);
    }
 
    return progress;
